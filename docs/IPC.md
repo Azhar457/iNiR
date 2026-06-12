@@ -259,6 +259,18 @@ Quick settings panel. Toggles, sliders, and system controls without opening full
 
 ---
 
+### dashboard
+
+Centered welcome hub panel (ii family): greeting, clock, notifications, media, weather, calendar, todo, system usage and GitHub activity.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Open/close dashboard |
+| `open` | Open dashboard |
+| `close` | Close dashboard |
+
+---
+
 ### sidebarLeft
 
 Left sidebar (AI chat, apps).

@@ -127,6 +127,13 @@ Singleton {
             desc: Translation.tr("Per-monitor shell visibility"),
             essential: true,
             component: "modules/settings/MonitorVisibilityConfig.qml"
+        },
+        {
+            name: Translation.tr("Dashboard"),
+            icon: "space_dashboard",
+            desc: Translation.tr("Welcome hub panel & widgets"),
+            essential: false,
+            component: "modules/settings/DashboardConfig.qml"
         }
     ]
 
@@ -135,7 +142,7 @@ Singleton {
     readonly property var categories: [
         { label: Translation.tr("Essentials"), pages: [0] },
         { label: Translation.tr("Appearance"), pages: [4, 3, 14] },
-        { label: Translation.tr("Shell"), pages: [2, 5, 10, 11] },
+        { label: Translation.tr("Shell"), pages: [2, 5, 16, 10, 11] },
         { label: Translation.tr("System"), pages: [1, 7, 6, 12, 15, 8] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
     ]
@@ -1404,6 +1411,14 @@ Singleton {
         // =====================================================================
         { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Shell visibility"), label: Translation.tr("Primary monitor"), description: Translation.tr("Choose the default output for shell popups"), keywords: ["monitor", "display", "primary", "screen", "output"] },
         { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Material shell surfaces"), label: Translation.tr("Bar, dock, and media controls"), description: Translation.tr("Choose which monitors show Material shell surfaces"), keywords: ["monitor", "visibility", "bar", "dock", "media", "workspace", "secondary"] },
-        { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Shared popups and widgets"), label: Translation.tr("Shared popups and widgets"), description: Translation.tr("Choose which monitors show notifications, OSD, and desktop widgets"), keywords: ["monitor", "visibility", "notifications", "osd", "widgets", "secondary", "workspace"] }
+        { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Shared popups and widgets"), label: Translation.tr("Shared popups and widgets"), description: Translation.tr("Choose which monitors show notifications, OSD, and desktop widgets"), keywords: ["monitor", "visibility", "notifications", "osd", "widgets", "secondary", "workspace"] },
+
+        // =====================================================================
+        // Dashboard (page 16)
+        // =====================================================================
+        { pageIndex: 16, pageName: root.pages[16].name, section: Translation.tr("General"), label: Translation.tr("Dashboard"), description: Translation.tr("Centered welcome hub panel with configurable widgets"), keywords: ["dashboard", "hub", "welcome", "panel", "home", "greeting"] },
+        { pageIndex: 16, pageName: root.pages[16].name, section: Translation.tr("General"), label: Translation.tr("Panel width"), description: Translation.tr("Dashboard width as a percentage of the screen"), keywords: ["dashboard", "width", "size", "ratio", "screen"] },
+        { pageIndex: 16, pageName: root.pages[16].name, section: Translation.tr("General"), label: Translation.tr("GitHub username"), description: Translation.tr("GitHub user for the contributions heatmap widget"), keywords: ["dashboard", "github", "contributions", "heatmap", "username", "activity"] },
+        { pageIndex: 16, pageName: root.pages[16].name, section: Translation.tr("Widgets"), label: Translation.tr("Dashboard widgets"), description: Translation.tr("Place, hide and reorder dashboard widgets per column"), keywords: ["dashboard", "widgets", "layout", "column", "reorder", "clock", "weather", "media", "todo", "calendar", "notifications", "system"] }
     ]
 }

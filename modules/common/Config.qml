@@ -394,7 +394,7 @@ Singleton {
             id: configOptionsJsonAdapter
 
             // Panel system
-            property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate"]
+            property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard"]
             property list<string> knownPanels: [] // Tracks panels the user has seen; used to distinguish "user disabled" from "new in update"
             property string panelFamily: "ii" // "ii" or "waffle"
             property bool familyTransitionAnimation: true // Show animated overlay when switching families
@@ -1380,6 +1380,26 @@ Singleton {
                 property bool showSlidersSection: true
                 property bool showQuickActionsSection: true
                 property bool showWallpaperSchemeChips: false
+            }
+
+            // Dashboard hub panel (ii family). Widget ids per column:
+            //   welcome, clock, weather, calendar, media, notifications, todo,
+            //   system, github. Columns collapse when empty.
+            property JsonObject dashboard: JsonObject {
+                property bool enable: true
+                property bool keepLoaded: false
+                property bool showHeader: true
+                property bool showPowerButtons: true
+                property string subtitle: "" // Custom phrase under the welcome greeting
+                property real widthRatio: 0.62 // Panel width as fraction of screen width (0.4–0.9)
+                property JsonObject layout: JsonObject {
+                    property list<string> left: ["welcome", "clock", "system", "github"]
+                    property list<string> center: ["notifications", "todo"]
+                    property list<string> right: ["media", "weather", "calendar"]
+                }
+                property JsonObject github: JsonObject {
+                    property string username: "" // GitHub user for the contributions widget. Empty disables fetching.
+                }
             }
 
             property JsonObject interactions: JsonObject {

@@ -3,6 +3,7 @@ import qs.modules.bar
 import qs.modules.bootGreeting
 import qs.modules.cheatsheet
 import qs.modules.controlPanel
+import qs.modules.dashboard
 import qs.modules.dock
 import qs.modules.lock
 import qs.modules.mediaControls
@@ -67,6 +68,7 @@ Item {
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }
     DeferredPanelLoader { identifier: "iiCheatsheet"; component: Cheatsheet {} }
     DeferredPanelLoader { identifier: "iiControlPanel"; component: ControlPanel {} }
+    DeferredPanelLoader { identifier: "iiDashboard"; extraCondition: Config.options?.dashboard?.enable ?? true; component: Dashboard {} }
     DeferredPanelLoader { identifier: "iiLock"; component: Lock {} }
     DeferredPanelLoader { identifier: "iiMediaControls"; component: MediaControls {} }
     DeferredPanelLoader { identifier: "iiOnScreenKeyboard"; component: OnScreenKeyboard {} }

@@ -830,6 +830,22 @@
         "showQuickActionsSection": true,
         "showWallpaperSchemeChips": false
     },
+    "dashboard": {
+        "enable": true,
+        "keepLoaded": false,
+        "showHeader": true,
+        "showPowerButtons": true,
+        "subtitle": "",
+        "widthRatio": 0.62,
+        "layout": {
+            "left": ["welcome", "clock", "system", "github"],
+            "center": ["notifications", "todo"],
+            "right": ["media", "weather", "calendar"]
+        },
+        "github": {
+            "username": ""
+        }
+    },
     "settingsUi": {
         "overlayMode": true,
         "easyMode": false,
@@ -1701,7 +1717,8 @@
         "iiWallpaperSelector",
         "iiCoverflowSelector",
         "iiClipboard",
-        "iiShellUpdate"
+        "iiShellUpdate",
+        "iiDashboard"
     ],
     "knownPanels": [],
     "powerProfiles": {
