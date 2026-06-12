@@ -10,6 +10,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.common.models
+import qs.modules.sidebarRight.events
 
 /**
  * Dashboard hub composition. Three widget columns driven by
@@ -38,9 +39,24 @@ Item {
         "todo": todoComponent,
         "system": systemComponent,
         "github": githubComponent,
+        "agenda": agendaComponent,
     })
     // Widgets that absorb the column's remaining height
     readonly property var _fillIds: ["notifications", "todo"]
+
+    // ═══ Shared events dialog (agenda widget) ══════════════════════════
+    property var _agendaEditEvent: null
+    property bool _agendaDialogShown: false
+    property bool _agendaDialogLoaded: false
+    function openAgendaDialog(evt) {
+        root._agendaEditEvent = evt ?? null
+        root._agendaDialogLoaded = true
+        if (agendaDialogLoader.item) {
+            if (evt) agendaDialogLoader.item.loadEvent(evt)
+            else agendaDialogLoader.item.resetForm()
+        }
+        root._agendaDialogShown = true
+    }
 
     function _column(name, fallback) {
         const a = Config.options?.dashboard?.layout?.[name]
@@ -59,6 +75,12 @@ Item {
     Component { id: todoComponent; DashTodo {} }
     Component { id: systemComponent; DashSystem {} }
     Component { id: githubComponent; DashGithub {} }
+    Component {
+        id: agendaComponent
+        DashAgenda {
+            onRequestEventsDialog: evt => root.openAgendaDialog(evt)
+        }
+    }
 
     readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
     readonly property bool useWallpaperBackdrop: root.auroraEverywhere && !root.inirEverywhere && !Appearance.gameModeMinimal && root.wallpaperUrl.length > 0
@@ -204,6 +226,25 @@ Item {
                 WidgetColumn { ids: root.leftIds; widthWeight: 27 }
                 WidgetColumn { ids: root.centerIds; widthWeight: 46 }
                 WidgetColumn { ids: root.rightIds; widthWeight: 27 }
+            }
+        }
+
+        // Events dialog overlay (created on first use, covers the panel)
+        Loader {
+            id: agendaDialogLoader
+            anchors.fill: parent
+            z: 30
+            active: root._agendaDialogLoaded
+            sourceComponent: EventsDialog {}
+            onLoaded: {
+                item.show = Qt.binding(() => root._agendaDialogShown)
+                if (root._agendaEditEvent) item.loadEvent(root._agendaEditEvent)
+                else item.resetForm()
+                item.forceActiveFocus()
+            }
+            Connections {
+                target: agendaDialogLoader.item
+                function onDismiss() { root._agendaDialogShown = false }
             }
         }
     }

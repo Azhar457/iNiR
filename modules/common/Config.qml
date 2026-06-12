@@ -1383,8 +1383,8 @@ Singleton {
             }
 
             // Dashboard hub panel (ii family). Widget ids per column:
-            //   welcome, clock, weather, calendar, media, notifications, todo,
-            //   system, github. Columns collapse when empty.
+            //   welcome, clock, weather, calendar, agenda, media, notifications,
+            //   todo, system, github. Columns collapse when empty.
             property JsonObject dashboard: JsonObject {
                 property bool enable: true
                 property bool keepLoaded: false
