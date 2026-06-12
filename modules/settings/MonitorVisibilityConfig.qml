@@ -403,7 +403,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: true
+        expanded: false
         icon: "web_asset"
         title: Translation.tr("Material shell surfaces")
 
@@ -429,7 +429,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: true
+        expanded: false
         icon: "notifications"
         title: Translation.tr("Shared popups and widgets")
 

@@ -1,4 +1,5 @@
 module qs.modules.settings
+singleton SettingsPageRegistry 1.0 SettingsPageRegistry.qml
 QuickWallpaperItem 1.0 QuickWallpaperItem.qml
 ThemePresetCard 1.0 ThemePresetCard.qml
 ColorPickerRow 1.0 ColorPickerRow.qml

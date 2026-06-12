@@ -1651,7 +1651,7 @@ ContentPage {
 
     SettingsCardSection {
         visible: root.isIiActive
-        expanded: true
+        expanded: false
         icon: "wallpaper"
         title: Translation.tr("Wallpaper effects")
 

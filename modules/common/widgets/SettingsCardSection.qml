@@ -107,7 +107,8 @@ Item {
         width: 2
         radius: 1
         color: SettingsMaterialPreset.accentColor
-        opacity: root.expanded ? 0.6 : 0
+        // Hint the accent on hover so collapsed cards read as interactive
+        opacity: root.expanded ? 0.6 : (headerMouseArea.containsMouse ? 0.3 : 0)
         z: 1
 
         Behavior on opacity {
@@ -200,13 +201,16 @@ Item {
 
                     MaterialSymbol {
                         visible: root.collapsible
-                        text: root.expanded ? "expand_less" : "expand_more"
+                        text: "expand_more"
                         iconSize: Appearance.font.pixelSize.normal
                         color: Appearance.angelEverywhere
                             ? Appearance.angel.colTextMuted
                             : Appearance.colors.colSubtext
-                        Behavior on text {
-                            enabled: false
+                        // One glyph that rotates instead of swapping icons
+                        rotation: root.expanded ? 180 : 0
+                        Behavior on rotation {
+                            enabled: Appearance.animationsEnabled
+                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                         }
                     }
                 }

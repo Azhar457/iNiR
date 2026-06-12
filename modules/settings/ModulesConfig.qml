@@ -117,7 +117,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: true
+        expanded: false
         icon: "style"
         title: Translation.tr("Panel Style")
 
@@ -194,7 +194,7 @@ ContentPage {
     // ==================== DEFAULT TERMINAL ====================
     SettingsCardSection {
         id: terminalSection
-        expanded: true
+        expanded: false
         icon: "terminal"
         title: Translation.tr("Default Terminal")
 
@@ -416,7 +416,7 @@ ContentPage {
     // ==================== MATERIAL II ====================
     SettingsCardSection {
         visible: !modulesPage.isWaffle
-        expanded: true
+        expanded: false
         icon: "dashboard"
         title: Translation.tr("Core")
 
@@ -629,7 +629,7 @@ ContentPage {
     // ==================== WAFFLE ====================
     SettingsCardSection {
         visible: modulesPage.isWaffle
-        expanded: true
+        expanded: false
         icon: "window"
         title: Translation.tr("Waffle Core")
 

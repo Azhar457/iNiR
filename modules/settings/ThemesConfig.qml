@@ -538,7 +538,7 @@ ContentPage {
 
     // Scheme Variant Section
     SettingsCardSection {
-        expanded: true
+        expanded: false
         icon: "tune"
         title: Translation.tr("Scheme Variant")
 
@@ -1288,7 +1288,7 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: true
+        expanded: false
         icon: "style"
         title: Translation.tr("Global Style")
 
@@ -1440,7 +1440,7 @@ ContentPage {
 
     SettingsCardSection {
         visible: ThemeService.currentTheme === "custom" && !(Config.options?.settingsUi?.easyMode ?? false)
-        expanded: true
+        expanded: false
         icon: "edit"
         title: Translation.tr("Custom Theme Editor")
 
