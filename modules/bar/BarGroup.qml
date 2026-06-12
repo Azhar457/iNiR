@@ -8,6 +8,8 @@ Item {
     property bool vertical: false
     property real padding: 8
     readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
+    // Islands bar appearance: each group is its own floating surface
+    readonly property bool islandStyle: !vertical && (Config.options?.bar?.appearanceStyle ?? "classic") === "islands"
     implicitWidth: vertical ? Appearance.sizes.baseVerticalBarWidth : (gridLayout.implicitWidth + padding * 2)
     implicitHeight: vertical ? (gridLayout.implicitHeight + padding * 2) : Appearance.sizes.baseBarHeight
     // Natural content width regardless of any implicitWidth override, so the bar
@@ -28,18 +30,33 @@ Item {
             leftMargin: root.vertical ? 4 : 0
             rightMargin: root.vertical ? 4 : 0
         }
-        color: (Config.options?.bar?.borderless ?? false) ? "transparent"
+        color: root.islandStyle
+            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+              : Appearance.inirEverywhere ? Appearance.inir.colLayer0
+              : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+              : Appearance.colors.colLayer0)
+            : (Config.options?.bar?.borderless ?? false) ? "transparent"
             : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
               : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-              : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
+              : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
               : Appearance.colors.colLayer1)
-        border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+        border.width: root.islandStyle ? 1
+                    : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                     : Appearance.inirEverywhere ? 1 : (root.cardStyleEverywhere ? 1 : 0)
         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                     : Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-              : Appearance.inirEverywhere ? Appearance.inir.roundingNormal 
+        radius: root.islandStyle ? Math.min(width, height) / 2
+              : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+              : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
               : (root.cardStyleEverywhere ? Appearance.rounding.normal : Appearance.rounding.small)
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
     }
 
     GridLayout {

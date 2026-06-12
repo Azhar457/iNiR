@@ -633,6 +633,7 @@
         "borderless": true,
         "bottom": false,
         "cornerStyle": 1,
+        "appearanceStyle": "classic",
         "customRounding": -1,
         "floatStyleShadow": true,
         "height": 40,

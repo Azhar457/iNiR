@@ -137,6 +137,31 @@ ContentPage {
                 }
             }
 
+            ContentSubsection {
+                title: Translation.tr("Bar appearance")
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.bar?.appearanceStyle ?? "classic"
+                    onSelected: newValue => {
+                        Config.setNestedValue("bar.appearanceStyle", newValue);
+                    }
+                    options: [
+                        { displayName: Translation.tr("Classic"), icon: "toolbar", value: "classic" },
+                        { displayName: Translation.tr("Islands"), icon: "linear_scale", value: "islands" },
+                        { displayName: Translation.tr("Scenic"), icon: "gradient", value: "scenic" },
+                        { displayName: Translation.tr("Frame"), icon: "crop_free", value: "frame" }
+                    ]
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Islands floats every module group as its own capsule. Scenic fades the bar into the wallpaper. Frame draws an outlined floating frame. They apply to the horizontal bar.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+            }
+
             // Corner style conflict notes
             ConflictNote {
                 visible: root.hugNeedsBackground
@@ -470,7 +495,7 @@ ContentPage {
     // ═══════════════════════════════════════════════════════════════════
     SettingsCardSection {
         visible: root.isIiActive
-        expanded: true
+        expanded: false
         icon: "widgets"
         title: Translation.tr("Modules")
 

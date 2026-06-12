@@ -127,6 +127,15 @@ Item { // Bar content region
 
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool angelEverywhere: Appearance.angelEverywhere
+    // Bar appearance style: how the bar surface itself is drawn.
+    //   classic — single full-width background (per cornerStyle, current default)
+    //   islands — no bar surface; every section floats as its own island
+    //   scenic  — gradient scrim fading into the wallpaper, content on top
+    //   frame   — outlined floating frame, transparent inside
+    readonly property string barAppearance: Config.options?.bar?.appearanceStyle ?? "classic"
+    readonly property bool isIslands: root.barAppearance === "islands"
+    readonly property bool isScenic: root.barAppearance === "scenic"
+    readonly property bool isFrame: root.barAppearance === "frame"
     readonly property string leftAction: Config.options?.bar?.leftScrollAction ?? "brightness"
     readonly property string rightAction: Config.options?.bar?.rightScrollAction ?? "volume"
 
@@ -167,6 +176,57 @@ Item { // Bar content region
         if (action === "volume") return Translation.tr("Scroll to change volume");
         if (action === "workspace") return Translation.tr("Scroll to switch workspaces");
         return "";
+    }
+
+    // Islands appearance: in the edge zones every module floats as its own
+    // capsule, visually identical to the BarGroup island look. Bare ids (the
+    // window title and gaps) sit directly on the wallpaper like the pivot text.
+    readonly property var _bareInIslands: ["activeWindow", "spacer"]
+    component EdgeIsland: Rectangle {
+        color: root.angelEverywhere ? Appearance.angel.colGlassCard
+            : root.inirEverywhere ? Appearance.inir.colLayer0
+            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+            : Appearance.colors.colLayer0
+        border.width: 1
+        border.color: root.angelEverywhere ? Appearance.angel.colCardBorder
+            : root.inirEverywhere ? Appearance.inir.colBorder
+            : Appearance.colors.colLayer0Border
+        radius: Math.min(width, height) / 2
+        Behavior on width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+        }
+    }
+    // Edge-zone layout cell: hosts the module Loader and, in islands mode, the
+    // capsule behind it. Layout hints live HERE (the real layout child).
+    component EdgeZoneCell: Item {
+        id: cell
+        required property string modelData
+        property string zone: "left"
+        readonly property bool islandized: root.isIslands
+            && root._bareInIslands.indexOf(modelData) === -1
+            && cellLoader.implicitWidth > 1
+        Layout.alignment: Qt.AlignVCenter
+        Layout.fillWidth: root._fillWidth(modelData, zone)
+        Layout.fillHeight: root._fillHeight(modelData)
+        implicitWidth: cellLoader.implicitWidth + (islandized ? 16 : 0)
+        implicitHeight: cellLoader.implicitHeight
+        visible: cellLoader.status !== Loader.Ready || (cellLoader.item?.visible ?? true)
+        EdgeIsland {
+            visible: cell.islandized
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Math.min(Math.max(cell.height, cellLoader.implicitHeight + 8), Appearance.sizes.baseBarHeight - 8)
+        }
+        Loader {
+            id: cellLoader
+            anchors.fill: parent
+            anchors.leftMargin: cell.islandized ? 8 : 0
+            anchors.rightMargin: cell.islandized ? 8 : 0
+            sourceComponent: root._allComponents[cell.modelData] ?? null
+            onLoaded: if (cell.modelData === "activeWindow" && item) item.fillSlot = Qt.binding(() => root._fillSlot(cell.zone) && !root.isIslands)
+        }
     }
 
     component VerticalBarSeparator: Rectangle {
@@ -231,6 +291,10 @@ Item { // Bar content region
     readonly property string _spacerMode: Config.options?.bar?.layout?.spacerMode ?? "auto"
     function _fillWidth(id, zone) {
         if (id === "spacer") {
+            // Islands: edge sections size to content so the island can wrap
+            // them — a stretching spacer would inflate the island to the whole
+            // edge section. Always degrade to a fixed gap there.
+            if (root.isIslands && root._fillSlot(zone)) return false
             // "auto": only stretch where the layout actually has slack (edge
             // zones); inside content-sized centre pills a greedy spacer fights
             // the pill sizing and breaks the look — fall back to a fixed gap.
@@ -238,7 +302,9 @@ Item { // Bar content region
             if (root._spacerMode === "fill") return true
             return root._fillSlot(zone)
         }
-        if (id === "activeWindow") return root._fillSlot(zone)
+        // Islands: edge sections size to content so the island can wrap them —
+        // activeWindow adopts its clamped intrinsic width instead of filling.
+        if (id === "activeWindow") return root._fillSlot(zone) && !root.isIslands
         if (id === "resources") return root.useShortenedForm === 2
         return false
     }
@@ -345,7 +411,8 @@ Item { // Bar content region
 
     // Background shadow
     Loader {
-        active: !root.inirEverywhere
+        active: root.barAppearance === "classic"
+            && !root.inirEverywhere
             && (Appearance.angelEverywhere || !Appearance.auroraEverywhere)
             && !Appearance.gameModeMinimal
             && (Config.options?.bar?.showBackground ?? true)
@@ -363,8 +430,10 @@ Item { // Bar content region
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
         readonly property bool gameModeMinimal: Appearance.gameModeMinimal
         readonly property int cornerStyle: Config.options?.bar?.cornerStyle ?? 0
-        // Float (1) and Card (3) are floating; Aurora makes everything floating except Hug and Rect
-        readonly property bool floatingStyle: (cornerStyle === 1 || cornerStyle === 3) || (auroraEverywhere && cornerStyle !== 0 && cornerStyle !== 2)
+        // Float (1) and Card (3) are floating; Aurora makes everything floating except Hug and Rect.
+        // Frame appearance always floats; scenic hugs the edge by definition.
+        readonly property bool floatingStyle: root.isFrame
+            || (!root.isScenic && ((cornerStyle === 1 || cornerStyle === 3) || (auroraEverywhere && cornerStyle !== 0 && cornerStyle !== 2)))
 
         anchors {
             fill: parent
@@ -375,7 +444,7 @@ Item { // Bar content region
 
         readonly property QtObject blendedColors: root.blendedColors
 
-        visible: (Config.options?.bar?.showBackground ?? true) && !gameModeMinimal
+        visible: (Config.options?.bar?.showBackground ?? true) && !gameModeMinimal && !root.isIslands
         // User-configurable background opacity (lets you make the bar translucent
         // without changing the global style). Applied as Item.opacity so border,
         // blurredWallpaper, inset glow and partial borders all fade together.
@@ -386,8 +455,32 @@ Item { // Bar content region
             animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
 
+        // Scenic scrim: the surface is a vertical fade from the screen edge into
+        // the wallpaper. Edge strength follows colLayer0; bar.opacity still
+        // applies on top as the whole-item fade.
+        gradient: root.isScenic ? scenicScrim : null
+        Gradient {
+            id: scenicScrim
+            orientation: Gradient.Vertical
+            GradientStop {
+                position: 0
+                color: barBackground.isBottom ? "transparent"
+                    : ColorUtils.transparentize(root.inirEverywhere ? Appearance.inir.colLayer0 : Appearance.colors.colLayer0, 0.15)
+            }
+            GradientStop {
+                position: 1
+                color: barBackground.isBottom
+                    ? ColorUtils.transparentize(root.inirEverywhere ? Appearance.inir.colLayer0 : Appearance.colors.colLayer0, 0.15)
+                    : "transparent"
+            }
+        }
+
         // Color logic per global style and corner style
         color: {
+            // Frame is an outline only; scenic paints via the gradient above
+            if (root.isFrame || root.isScenic) {
+                return ColorUtils.transparentize(Appearance.colors.colLayer0, 1)
+            }
             if (root.angelEverywhere) {
                 const base = blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
                 if (Appearance.compositorBlurActive)
@@ -412,10 +505,16 @@ Item { // Bar content region
 
         // Radius logic per global style and corner style
         radius: {
+            if (root.isScenic) return 0
             // Custom rounding override (-1 means use theme default)
             const customRounding = Config.options?.bar?.customRounding ?? -1
             if (customRounding >= 0) {
                 return customRounding
+            }
+            if (root.isFrame) {
+                return root.angelEverywhere ? Appearance.angel.roundingNormal
+                    : root.inirEverywhere ? Appearance.inir.roundingNormal
+                    : Appearance.rounding.windowRounding
             }
             if (root.angelEverywhere) {
                 return (cornerStyle === 1 || cornerStyle === 3) ? Appearance.angel.roundingNormal : 0
@@ -436,6 +535,8 @@ Item { // Bar content region
 
         // Border logic per global style
         border.width: {
+            if (root.isScenic) return 0
+            if (root.isFrame) return root.angelEverywhere ? Appearance.angel.panelBorderWidth : 1
             if (root.angelEverywhere) return Appearance.angel.panelBorderWidth
             if (root.inirEverywhere) {
                 return (cornerStyle === 1 || cornerStyle === 3) ? 1 : 0
@@ -446,6 +547,10 @@ Item { // Bar content region
             return floatingStyle ? 1 : 0
         }
         border.color: {
+            // Frame is defined by its outline — use the visible outline token
+            if (root.isFrame && !root.angelEverywhere && !root.inirEverywhere) {
+                return Appearance.colors.colOutlineVariant
+            }
             if (root.angelEverywhere) return Appearance.angel.colPanelBorder
             if (root.inirEverywhere) {
                 return Appearance.inir.colBorder
@@ -458,7 +563,7 @@ Item { // Bar content region
 
         clip: true
 
-        layer.enabled: auroraEverywhere && !root.inirEverywhere && !gameModeMinimal
+        layer.enabled: auroraEverywhere && !root.inirEverywhere && !gameModeMinimal && root.barAppearance === "classic"
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: barBackground.width
@@ -473,7 +578,7 @@ Item { // Bar content region
             y: barBackground.isBottom ? -(root.screen?.height ?? 1080) + barBackground.height + barBackground.barMargin : -barBackground.barMargin
             width: root.screen?.width ?? 1920
             height: root.screen?.height ?? 1080
-            visible: barBackground.auroraEverywhere && !root.inirEverywhere && !barBackground.gameModeMinimal && !Appearance.compositorBlurActive
+            visible: barBackground.auroraEverywhere && !root.inirEverywhere && !barBackground.gameModeMinimal && !Appearance.compositorBlurActive && root.barAppearance === "classic"
             source: Appearance.compositorBlurActive ? "" : root.wallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true
@@ -511,7 +616,7 @@ Item { // Bar content region
             anchors.left: parent.left
             anchors.right: parent.right
             height: Appearance.angel.insetGlowHeight
-            visible: root.angelEverywhere
+            visible: root.angelEverywhere && root.barAppearance === "classic"
             color: Appearance.angel.colInsetGlow
         }
 
@@ -566,14 +671,7 @@ Item { // Bar content region
 
             Repeater {
                 model: root._leftIds
-                delegate: Loader {
-                    required property string modelData
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.fillWidth: root._fillWidth(modelData, "left")
-                    Layout.fillHeight: root._fillHeight(modelData)
-                    sourceComponent: root._allComponents[modelData] ?? null
-                    onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = true
-                }
+                delegate: EdgeZoneCell { zone: "left" }
             }
         }
     }
@@ -621,7 +719,7 @@ Item { // Bar content region
 
         VerticalBarSeparator {
             id: leftSeparator
-            visible: (Config.options?.bar.borderless ?? false) && !leftCenterGroup.empty && !middleCenterGroup.empty
+            visible: (Config.options?.bar.borderless ?? false) && !root.isIslands && !leftCenterGroup.empty && !middleCenterGroup.empty
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: middleCenterGroup.left
             anchors.rightMargin: 4
@@ -632,7 +730,7 @@ Item { // Bar content region
             id: leftCenterGroup
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: (Config.options?.bar.borderless ?? false) ? leftSeparator.left : middleCenterGroup.left
-            anchors.rightMargin: 4
+            anchors.rightMargin: root.isIslands ? 8 : 4
             // Collapse to nothing when this zone has no visible modules;
             // otherwise take the symmetric target width. Modules elide/clip.
             visible: !empty
@@ -654,7 +752,7 @@ Item { // Bar content region
 
         VerticalBarSeparator {
             id: rightSeparator
-            visible: (Config.options?.bar.borderless ?? false) && !rightCenterGroupPill.empty && !middleCenterGroup.empty
+            visible: (Config.options?.bar.borderless ?? false) && !root.isIslands && !rightCenterGroupPill.empty && !middleCenterGroup.empty
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: middleCenterGroup.right
             anchors.leftMargin: 4
@@ -665,7 +763,7 @@ Item { // Bar content region
             id: rightCenterGroup
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: (Config.options?.bar.borderless ?? false) ? rightSeparator.right : middleCenterGroup.right
-            anchors.leftMargin: 4
+            anchors.leftMargin: root.isIslands ? 8 : 4
             visible: !rightCenterGroupPill.empty
             implicitWidth: rightCenterGroupPill.empty ? 0 : rightCenterGroupPill.width
             implicitHeight: rightCenterGroupPill.height
@@ -794,14 +892,9 @@ Item { // Bar content region
 
             Repeater {
                 model: root._rightIds
-                delegate: Loader {
-                    required property string modelData
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.fillWidth: root._fillWidth(modelData, "right")
-                    Layout.fillHeight: root._fillHeight(modelData)
+                delegate: EdgeZoneCell {
+                    zone: "right"
                     Layout.leftMargin: modelData === "weather" ? 4 : 0
-                    sourceComponent: root._allComponents[modelData] ?? null
-                    onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = true
                 }
             }
         }
