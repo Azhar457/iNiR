@@ -3845,5 +3845,15 @@
   "Welcome, %1!": "Welcome, %1!",
   "Wider center groups, plus the date next to the clock, the media title and the utility buttons. Off = compact bar.": "Wider center groups, plus the date next to the clock, the media title and the utility buttons. Off = compact bar.",
   "contributions in the last year": "contributions in the last year",
-  "âdistroâ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "âdistroâ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic)."
+  "âdistroâ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "âdistroâ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).",
+  "Bare essentials over a wallpaper fade": "Bare essentials over a wallpaper fade",
+  "Command cluster": "Command cluster",
+  "Each section floats as its own capsule": "Each section floats as its own capsule",
+  "Everything gathered around the centre": "Everything gathered around the centre",
+  "Full-width bar, modules at the edges": "Full-width bar, modules at the edges",
+  "Layout presets": "Layout presets",
+  "One-click bar arrangements. Applying a preset rewrites the module placement and surface style â fine-tune afterwards in the module layout editor below.": "One-click bar arrangements. Applying a preset rewrites the module placement and surface style â fine-tune afterwards in the module layout editor below.",
+  "Scenic minimal": "Scenic minimal",
+  "Twin pills": "Twin pills",
+  "Two corner capsules, open middle": "Two corner capsules, open middle"
 }

@@ -178,10 +178,10 @@ Item { // Bar content region
         return "";
     }
 
-    // Islands appearance: in the edge zones every module floats as its own
-    // capsule, visually identical to the BarGroup island look. Bare ids (the
-    // window title and gaps) sit directly on the wallpaper like the pivot text.
-    readonly property var _bareInIslands: ["activeWindow", "spacer"]
+    // Islands appearance: each SECTION floats as one cohesive capsule (left
+    // edge, centre pills, right edge), matching the BarGroup island look. The
+    // centre pills get it via BarGroup.islandStyle; the edge zones draw one
+    // EdgeIsland behind their whole content row.
     component EdgeIsland: Rectangle {
         color: root.angelEverywhere ? Appearance.angel.colGlassCard
             : root.inirEverywhere ? Appearance.inir.colLayer0
@@ -197,33 +197,21 @@ Item { // Bar content region
             NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
         }
     }
-    // Edge-zone layout cell: hosts the module Loader and, in islands mode, the
-    // capsule behind it. Layout hints live HERE (the real layout child).
+    // Edge-zone layout cell: hosts the module Loader. Layout hints live HERE
+    // (the real layout child) — hints inside the loaded item are ignored.
     component EdgeZoneCell: Item {
         id: cell
         required property string modelData
         property string zone: "left"
-        readonly property bool islandized: root.isIslands
-            && root._bareInIslands.indexOf(modelData) === -1
-            && cellLoader.implicitWidth > 1
         Layout.alignment: Qt.AlignVCenter
         Layout.fillWidth: root._fillWidth(modelData, zone)
         Layout.fillHeight: root._fillHeight(modelData)
-        implicitWidth: cellLoader.implicitWidth + (islandized ? 16 : 0)
+        implicitWidth: cellLoader.implicitWidth
         implicitHeight: cellLoader.implicitHeight
         visible: cellLoader.status !== Loader.Ready || (cellLoader.item?.visible ?? true)
-        EdgeIsland {
-            visible: cell.islandized
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: Math.min(Math.max(cell.height, cellLoader.implicitHeight + 8), Appearance.sizes.baseBarHeight - 8)
-        }
         Loader {
             id: cellLoader
             anchors.fill: parent
-            anchors.leftMargin: cell.islandized ? 8 : 0
-            anchors.rightMargin: cell.islandized ? 8 : 0
             sourceComponent: root._allComponents[cell.modelData] ?? null
             onLoaded: if (cell.modelData === "activeWindow" && item) item.fillSlot = Qt.binding(() => root._fillSlot(cell.zone) && !root.isIslands)
         }
@@ -662,10 +650,21 @@ Item { // Bar content region
             z: 1
         }
 
+        // Islands: one capsule wraps the whole left section content.
+        EdgeIsland {
+            visible: root.isIslands && leftSectionRowLayout.implicitWidth > 1
+            anchors.verticalCenter: parent.verticalCenter
+            x: leftSectionRowLayout.anchors.leftMargin - 12
+            width: leftSectionRowLayout.implicitWidth + 24
+            height: Appearance.sizes.baseBarHeight - 8
+        }
+
         RowLayout {
             id: leftSectionRowLayout
             anchors.fill: parent
-            anchors.leftMargin: Appearance.rounding.screenRounding
+            anchors.leftMargin: root.isIslands
+                ? Appearance.sizes.hyprlandGapsOut + 12
+                : Appearance.rounding.screenRounding
             anchors.rightMargin: Appearance.rounding.screenRounding
             spacing: 10
 
@@ -882,11 +881,23 @@ Item { // Bar content region
             z: 1
         }
 
+        // Islands: one capsule wraps the whole right section content (RTL — the
+        // content sits flush against the right margin).
+        EdgeIsland {
+            visible: root.isIslands && rightSectionRowLayout.implicitWidth > 1
+            anchors.verticalCenter: parent.verticalCenter
+            x: parent.width - rightSectionRowLayout.anchors.rightMargin - rightSectionRowLayout.implicitWidth - 12
+            width: rightSectionRowLayout.implicitWidth + 24
+            height: Appearance.sizes.baseBarHeight - 8
+        }
+
         RowLayout {
             id: rightSectionRowLayout
             anchors.fill: parent
             anchors.leftMargin: Appearance.rounding.screenRounding
-            anchors.rightMargin: Appearance.rounding.screenRounding
+            anchors.rightMargin: root.isIslands
+                ? Appearance.sizes.hyprlandGapsOut + 12
+                : Appearance.rounding.screenRounding
             spacing: 5
             layoutDirection: Qt.RightToLeft
 

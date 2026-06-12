@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 
 ContentPage {
     id: root
@@ -159,6 +160,179 @@ ContentPage {
                     color: Appearance.colors.colSubtext
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     wrapMode: Text.WordWrap
+                }
+            }
+
+            ContentSubsection {
+                id: layoutPresetsSubsection
+                title: Translation.tr("Layout presets")
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("One-click bar arrangements. Applying a preset rewrites the module placement and surface style — fine-tune afterwards in the module layout editor below.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+
+                // Each preset is an atomic bundle: surface style + the five
+                // layout zones. `preview` drives the mini bar mockup:
+                // segments of {a: alignment 0=left 1=center 2=right, w: width
+                // fraction of the mini bar} — or full:true for one slab.
+                readonly property var layoutPresets: [
+                    {
+                        name: Translation.tr("Classic"),
+                        desc: Translation.tr("Full-width bar, modules at the edges"),
+                        preview: { full: true },
+                        values: {
+                            "bar.appearanceStyle": "classic",
+                            "bar.layout.migrated": true,
+                            "bar.layout.left": ["leftSidebarButton", "activeWindow"],
+                            "bar.layout.centerLeft": ["resources", "media"],
+                            "bar.layout.center": ["workspaces"],
+                            "bar.layout.centerRight": ["clock", "utilButtons", "battery"],
+                            "bar.layout.right": ["rightSidebarButton", "tray", "timer", "shellUpdate", "spacer", "weather"]
+                        }
+                    },
+                    {
+                        name: Translation.tr("Islands"),
+                        desc: Translation.tr("Each section floats as its own capsule"),
+                        preview: { segments: [{ a: 0, w: 0.22 }, { a: 1, w: 0.34 }, { a: 2, w: 0.22 }] },
+                        values: {
+                            "bar.appearanceStyle": "islands",
+                            "bar.layout.migrated": true,
+                            "bar.layout.left": ["leftSidebarButton", "activeWindow"],
+                            "bar.layout.centerLeft": ["resources", "media"],
+                            "bar.layout.center": ["workspaces"],
+                            "bar.layout.centerRight": ["clock", "utilButtons", "battery"],
+                            "bar.layout.right": ["rightSidebarButton", "tray", "timer", "shellUpdate", "spacer", "weather"]
+                        }
+                    },
+                    {
+                        name: Translation.tr("Command cluster"),
+                        desc: Translation.tr("Everything gathered around the centre"),
+                        preview: { segments: [{ a: 1, w: 0.62 }] },
+                        values: {
+                            "bar.appearanceStyle": "islands",
+                            "bar.layout.migrated": true,
+                            "bar.layout.left": [],
+                            "bar.layout.centerLeft": ["leftSidebarButton", "media"],
+                            "bar.layout.center": ["workspaces"],
+                            "bar.layout.centerRight": ["clock", "battery", "tray", "rightSidebarButton"],
+                            "bar.layout.right": []
+                        }
+                    },
+                    {
+                        name: Translation.tr("Twin pills"),
+                        desc: Translation.tr("Two corner capsules, open middle"),
+                        preview: { segments: [{ a: 0, w: 0.36 }, { a: 2, w: 0.36 }] },
+                        values: {
+                            "bar.appearanceStyle": "islands",
+                            "bar.layout.migrated": true,
+                            "bar.layout.left": ["leftSidebarButton", "workspaces", "activeWindow"],
+                            "bar.layout.centerLeft": [],
+                            "bar.layout.center": [],
+                            "bar.layout.centerRight": [],
+                            "bar.layout.right": ["rightSidebarButton", "tray", "battery", "clock", "spacer", "weather"]
+                        }
+                    },
+                    {
+                        name: Translation.tr("Scenic minimal"),
+                        desc: Translation.tr("Bare essentials over a wallpaper fade"),
+                        preview: { segments: [{ a: 0, w: 0.16 }, { a: 1, w: 0.2 }, { a: 2, w: 0.16 }], scrim: true },
+                        values: {
+                            "bar.appearanceStyle": "scenic",
+                            "bar.layout.migrated": true,
+                            "bar.layout.left": ["leftSidebarButton", "activeWindow"],
+                            "bar.layout.centerLeft": [],
+                            "bar.layout.center": ["workspaces"],
+                            "bar.layout.centerRight": [],
+                            "bar.layout.right": ["rightSidebarButton", "clock"]
+                        }
+                    }
+                ]
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Repeater {
+                        model: layoutPresetsSubsection.layoutPresets
+                        delegate: RippleButton {
+                            id: presetCard
+                            required property var modelData
+                            implicitWidth: 150
+                            implicitHeight: presetCardColumn.implicitHeight + 20
+                            buttonRadius: Appearance.rounding.small
+                            colBackground: Appearance.colors.colLayer1
+                            colBackgroundHover: Appearance.colors.colLayer1Hover
+                            colRipple: Appearance.colors.colLayer1Active
+                            StyledToolTip { text: presetCard.modelData.desc }
+                            onClicked: Config.setNestedValues(presetCard.modelData.values)
+
+                            contentItem: ColumnLayout {
+                                id: presetCardColumn
+                                spacing: 8
+
+                                // Mini bar mockup
+                                Rectangle {
+                                    id: presetPreview
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 26
+                                    radius: Appearance.rounding.verysmall
+                                    color: Appearance.colors.colLayer0
+                                    border.width: 1
+                                    border.color: Appearance.colors.colLayer0Border
+
+                                    // Full-width slab (classic)
+                                    Rectangle {
+                                        visible: presetCard.modelData.preview.full ?? false
+                                        anchors.fill: parent
+                                        anchors.margins: 4
+                                        radius: Math.min(width, height) / 2
+                                        color: Appearance.colors.colSecondaryContainer
+                                    }
+                                    // Scenic scrim hint
+                                    Rectangle {
+                                        visible: presetCard.modelData.preview.scrim ?? false
+                                        anchors.fill: parent
+                                        anchors.margins: 1
+                                        radius: presetPreview.radius - 1
+                                        gradient: Gradient {
+                                            orientation: Gradient.Vertical
+                                            GradientStop { position: 0; color: ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.55) }
+                                            GradientStop { position: 1; color: "transparent" }
+                                        }
+                                    }
+                                    // Floating segment pills
+                                    Repeater {
+                                        model: presetCard.modelData.preview.segments ?? []
+                                        delegate: Rectangle {
+                                            required property var modelData
+                                            readonly property real segWidth: presetPreview.width * modelData.w
+                                            width: segWidth
+                                            height: presetPreview.height - 10
+                                            y: 5
+                                            x: modelData.a === 0 ? 5
+                                                : modelData.a === 1 ? (presetPreview.width - segWidth) / 2
+                                                : presetPreview.width - segWidth - 5
+                                            radius: Math.min(width, height) / 2
+                                            color: Appearance.colors.colSecondaryContainer
+                                        }
+                                    }
+                                }
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: presetCard.modelData.name
+                                    horizontalAlignment: Text.AlignHCenter
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    color: Appearance.colors.colOnLayer1
+                                    elide: Text.ElideRight
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

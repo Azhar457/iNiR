@@ -3845,5 +3845,15 @@
   "Welcome, %1!": "¡Bienvenido, %1!",
   "Wider center groups, plus the date next to the clock, the media title and the utility buttons. Off = compact bar.": "Grupos centrales más anchos, más la fecha junto al reloj, el título multimedia y los botones de utilidades. Desactivado = bar compacto.",
   "contributions in the last year": "contribuciones en el último año",
-  "âdistroâ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "âdistroâ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic)."
+  "âdistroâ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "âdistroâ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).",
+  "Bare essentials over a wallpaper fade": "Lo esencial sobre un degradado del fondo",
+  "Command cluster": "Clúster de comando",
+  "Each section floats as its own capsule": "Cada sección flota como su propia cápsula",
+  "Everything gathered around the centre": "Todo agrupado alrededor del centro",
+  "Full-width bar, modules at the edges": "Bar de ancho completo, módulos en los bordes",
+  "Layout presets": "Presets de layout",
+  "One-click bar arrangements. Applying a preset rewrites the module placement and surface style â fine-tune afterwards in the module layout editor below.": "One-click bar arrangements. Applying a preset rewrites the module placement and surface style â fine-tune afterwards in the module layout editor below.",
+  "Scenic minimal": "Escénico mínimo",
+  "Twin pills": "Píldoras gemelas",
+  "Two corner capsules, open middle": "Dos cápsulas en las esquinas, centro libre"
 }
