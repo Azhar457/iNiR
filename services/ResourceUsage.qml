@@ -98,6 +98,23 @@ Singleton {
                 fi
             done
 
+            # Intel (i915/xe) has no global sysfs busy counter — utilization only via the
+            # i915 PMU, which intel_gpu_top reads. Probe it once: it succeeds only when the
+            # PMU is accessible (perf_event_paranoid <= 1, CAP_PERFMON, or render-group access).
+            # If the probe can't read busy data we fall through rather than spawn it every poll.
+            is_intel=""
+            for vendor_file in /sys/class/drm/card*/device/vendor; do
+                [ -f "$vendor_file" ] || continue
+                [ "$(cat "$vendor_file" 2>/dev/null)" = "0x8086" ] && is_intel=1 && break
+            done
+            if [ -n "$is_intel" ] && command -v intel_gpu_top >/dev/null 2>&1; then
+                igt_path=$(command -v intel_gpu_top)
+                if timeout 2 "$igt_path" -J -s 500 2>/dev/null | grep -q '"busy"'; then
+                    echo "intel:$igt_path"
+                    exit 0
+                fi
+            fi
+
             if [ -n "$nvidia_path" ]; then
                 echo "nvidia-smi:$nvidia_path"
                 exit 0
@@ -113,6 +130,9 @@ Singleton {
                 } else if (line.startsWith("nvidia-smi:")) {
                     root._gpuUsageSource = "nvidia-smi";
                     root._nvidiaSmiPath = line.slice(11);
+                } else if (line.startsWith("intel:")) {
+                    root._gpuUsageSource = "intel";
+                    root._intelGpuTopPath = line.slice(6);
                 } else if (line === "none") {
                     root._gpuUsageSource = "none";
                 }
@@ -135,6 +155,27 @@ Singleton {
                 root.gpuUsage = !isNaN(rawUsage) ? root.clampPercentToUnit(rawUsage / 100) : 0;
                 if (!isNaN(rawTemp))
                     root.gpuTemp = rawTemp;
+            }
+        }
+    }
+
+    Process {
+        id: intelGpuProc
+        // One short PMU sample (~one 500ms period, killed by timeout). intel_gpu_top -J emits
+        // per-engine "busy" percentages; aggregate GPU usage = the busiest engine this window.
+        command: ["/usr/bin/bash", "-c", "timeout 1 " + root._intelGpuTopPath + " -J -s 500 2>/dev/null"]
+        running: false
+        stdout: StdioCollector {
+            id: intelGpuCollector
+            onStreamFinished: {
+                const re = /"busy"\s*:\s*([\d.]+)/g;
+                let m, maxBusy = -1;
+                while ((m = re.exec(intelGpuCollector.text)) !== null) {
+                    const v = parseFloat(m[1]);
+                    if (!isNaN(v) && v > maxBusy)
+                        maxBusy = v;
+                }
+                root.gpuUsage = maxBusy < 0 ? 0 : root.clampPercentToUnit(maxBusy / 100);
             }
         }
     }
@@ -295,6 +336,8 @@ Singleton {
             }
         } else if (root._gpuUsageSource === "nvidia-smi" && !nvidiaGpuProc.running) {
             nvidiaGpuProc.running = true;
+        } else if (root._gpuUsageSource === "intel" && !intelGpuProc.running) {
+            intelGpuProc.running = true;
         } else if (root._gpuUsageSource === "none") {
             gpuUsage = 0;
         }
@@ -347,6 +390,7 @@ Singleton {
     property string _gpuUsagePath: ""
     property string _gpuUsageSource: "none"
     property string _nvidiaSmiPath: ""
+    property string _intelGpuTopPath: ""
     // Hybrid GPU: path to dGPU power/runtime_status (empty = not hybrid or detection pending)
     property string _dGpuRuntimeStatusPath: ""
 
