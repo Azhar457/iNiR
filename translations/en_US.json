@@ -3858,5 +3858,10 @@
   "Two corner capsules, open middle": "Two corner capsules, open middle",
   "+%1 more in the next two weeks": "+%1 more in the next two weeks",
   "Agenda": "Agenda",
-  "New event": "New event"
+  "New event": "New event",
+  "Card opacity (%)": "Card opacity (%)",
+  "Comfortable": "Comfortable",
+  "Density": "Density",
+  "Icon and name header on each widget card": "Icon and name header on each widget card",
+  "Show card titles": "Show card titles"
 }

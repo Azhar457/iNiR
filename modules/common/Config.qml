@@ -1390,6 +1390,11 @@ Singleton {
                 property bool keepLoaded: false
                 property bool showHeader: true
                 property bool showPowerButtons: true
+                property JsonObject appearance: JsonObject {
+                    property string density: "comfortable" // "comfortable" | "compact"
+                    property real cardOpacity: 1.0 // Card surface opacity (0.3–1); content stays opaque
+                    property bool showCardTitles: true
+                }
                 property string subtitle: "" // Custom phrase under the welcome greeting
                 property real widthRatio: 0.62 // Panel width as fraction of screen width (0.4–0.9)
                 property JsonObject layout: JsonObject {

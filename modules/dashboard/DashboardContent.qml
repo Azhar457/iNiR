@@ -178,9 +178,10 @@ Item {
         }
 
         ColumnLayout {
+            readonly property bool compact: (Config.options?.dashboard?.appearance?.density ?? "comfortable") === "compact"
             anchors.fill: parent
-            anchors.margins: 16
-            spacing: 12
+            anchors.margins: compact ? 12 : 16
+            spacing: compact ? 8 : 12
 
             Loader {
                 Layout.fillWidth: true

@@ -171,6 +171,41 @@ ContentPage {
     SettingsCardSection {
         visible: root.isIiActive
         expanded: true
+        icon: "palette"
+        title: Translation.tr("Appearance")
+
+        SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Density")
+                ConfigSelectionArray {
+                    currentValue: Config.options?.dashboard?.appearance?.density ?? "comfortable"
+                    onSelected: newValue => Config.setNestedValue("dashboard.appearance.density", newValue)
+                    options: [
+                        { displayName: Translation.tr("Comfortable"), icon: "expand", value: "comfortable" },
+                        { displayName: Translation.tr("Compact"), icon: "compress", value: "compact" }
+                    ]
+                }
+            }
+            ConfigSpinBox {
+                text: Translation.tr("Card opacity (%)")
+                value: Math.round((Config.options?.dashboard?.appearance?.cardOpacity ?? 1) * 100)
+                from: 30
+                to: 100
+                stepSize: 5
+                onValueChanged: Config.setNestedValue("dashboard.appearance.cardOpacity", value / 100)
+            }
+            ConfigSwitch {
+                text: Translation.tr("Show card titles")
+                description: Translation.tr("Icon and name header on each widget card")
+                checked: Config.options?.dashboard?.appearance?.showCardTitles ?? true
+                onCheckedChanged: Config.setNestedValue("dashboard.appearance.showCardTitles", checked)
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: true
         icon: "widgets"
         title: Translation.tr("Widgets")
 

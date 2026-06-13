@@ -3858,5 +3858,10 @@
   "Two corner capsules, open middle": "Dos cápsulas en las esquinas, centro libre",
   "+%1 more in the next two weeks": "+%1 más en las próximas dos semanas",
   "Agenda": "Agenda/*keep*/",
-  "New event": "Nuevo evento"
+  "New event": "Nuevo evento",
+  "Card opacity (%)": "Opacidad de las cards (%)",
+  "Comfortable": "Cómoda",
+  "Density": "Densidad",
+  "Icon and name header on each widget card": "Encabezado con ícono y nombre en cada card de widget",
+  "Show card titles": "Mostrar títulos de las cards"
 }
