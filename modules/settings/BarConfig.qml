@@ -167,6 +167,30 @@ ContentPage {
                 id: layoutPresetsSubsection
                 title: Translation.tr("Layout presets")
 
+                // Live snapshot of the preset-relevant config, with static
+                // property reads so the binding re-evaluates on any change.
+                readonly property string liveSnapshot: {
+                    const L = Config.options?.bar?.layout
+                    return JSON.stringify({
+                        style: Config.options?.bar?.appearanceStyle ?? "classic",
+                        left: (L?.left ?? []).slice(),
+                        centerLeft: (L?.centerLeft ?? []).slice(),
+                        center: (L?.center ?? []).slice(),
+                        centerRight: (L?.centerRight ?? []).slice(),
+                        right: (L?.right ?? []).slice()
+                    })
+                }
+                function presetSnapshot(v) {
+                    return JSON.stringify({
+                        style: v["bar.appearanceStyle"],
+                        left: v["bar.layout.left"],
+                        centerLeft: v["bar.layout.centerLeft"],
+                        center: v["bar.layout.center"],
+                        centerRight: v["bar.layout.centerRight"],
+                        right: v["bar.layout.right"]
+                    })
+                }
+
                 StyledText {
                     Layout.fillWidth: true
                     text: Translation.tr("One-click bar arrangements. Applying a preset rewrites the module placement and surface style — fine-tune afterwards in the module layout editor below.")
@@ -261,14 +285,45 @@ ContentPage {
                         delegate: RippleButton {
                             id: presetCard
                             required property var modelData
+                            // A preset is "active" when surface style and all
+                            // five zones match the current config.
+                            readonly property bool isActive: layoutPresetsSubsection.liveSnapshot
+                                === layoutPresetsSubsection.presetSnapshot(presetCard.modelData.values)
                             implicitWidth: 150
                             implicitHeight: presetCardColumn.implicitHeight + 20
                             buttonRadius: Appearance.rounding.small
-                            colBackground: Appearance.colors.colLayer1
-                            colBackgroundHover: Appearance.colors.colLayer1Hover
+                            colBackground: presetCard.isActive ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer1
+                            colBackgroundHover: presetCard.isActive ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer1Hover
                             colRipple: Appearance.colors.colLayer1Active
                             StyledToolTip { text: presetCard.modelData.desc }
                             onClicked: Config.setNestedValues(presetCard.modelData.values)
+
+                            // Active check badge, morphs in from the corner
+                            Rectangle {
+                                anchors.top: parent.top
+                                anchors.right: parent.right
+                                anchors.margins: 6
+                                width: 18
+                                height: 18
+                                radius: Math.min(width, height) / 2
+                                color: Appearance.colors.colPrimary
+                                scale: presetCard.isActive ? 1 : 0
+                                opacity: presetCard.isActive ? 1 : 0
+                                Behavior on scale {
+                                    enabled: Appearance.animationsEnabled
+                                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
+                                Behavior on opacity {
+                                    enabled: Appearance.animationsEnabled
+                                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
+                                MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "check"
+                                    iconSize: 13
+                                    color: Appearance.colors.colOnPrimary
+                                }
+                            }
 
                             contentItem: ColumnLayout {
                                 id: presetCardColumn
