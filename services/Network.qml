@@ -198,6 +198,13 @@ Singleton {
     Process {
         id: updateConnectionType
         property string buffer
+        // LANG=C: nmcli localizes device STATE ("connected" → "conectado" etc.), and the
+        // parser below matches English keywords. Without this, wifi state detection silently
+        // fails on non-English desktops — indicator shows disconnected while actually connected.
+        environment: ({
+            LANG: "C",
+            LC_ALL: "C"
+        })
         command: ["sh", "-c", "nmcli -t -f TYPE,STATE d status && nmcli -t -f CONNECTIVITY g"]
         running: false
         function startCheck() {
