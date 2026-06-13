@@ -40,9 +40,10 @@ Item {
         "system": systemComponent,
         "github": githubComponent,
         "agenda": agendaComponent,
+        "notes": notesComponent,
     })
     // Widgets that absorb the column's remaining height
-    readonly property var _fillIds: ["notifications", "todo"]
+    readonly property var _fillIds: ["notifications", "todo", "notes"]
 
     // ═══ Shared events dialog (agenda widget) ══════════════════════════
     property var _agendaEditEvent: null
@@ -70,7 +71,7 @@ Item {
         welcome: "waving_hand", clock: "schedule", system: "monitoring",
         github: "deployed_code", notifications: "notifications", todo: "checklist",
         media: "music_note", weather: "partly_cloudy_day", calendar: "calendar_month",
-        agenda: "event_upcoming"
+        agenda: "event_upcoming", notes: "edit_note"
     })
     function _colArr(name) {
         const a = Config.options?.dashboard?.layout?.[name]
@@ -133,6 +134,7 @@ Item {
     Component { id: todoComponent; DashTodo {} }
     Component { id: systemComponent; DashSystem {} }
     Component { id: githubComponent; DashGithub {} }
+    Component { id: notesComponent; DashNotes {} }
     Component {
         id: agendaComponent
         DashAgenda {

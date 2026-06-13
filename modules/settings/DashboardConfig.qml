@@ -23,7 +23,8 @@ ContentPage {
         { id: "media", name: Translation.tr("Media player"), icon: "music_note" },
         { id: "weather", name: Translation.tr("Weather"), icon: "partly_cloudy_day" },
         { id: "calendar", name: Translation.tr("Calendar"), icon: "calendar_month" },
-        { id: "agenda", name: Translation.tr("Agenda"), icon: "event_upcoming" }
+        { id: "agenda", name: Translation.tr("Agenda"), icon: "event_upcoming" },
+        { id: "notes", name: Translation.tr("Notes"), icon: "edit_note" }
     ]
     readonly property var columnIds: ["left", "center", "right"]
 
