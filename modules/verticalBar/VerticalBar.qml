@@ -71,7 +71,10 @@ Scope {
                     (GlobalStates.coverflowSelectorOpen || (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows))) ? 0 :
                     Appearance.sizes.baseVerticalBarWidth + ((Config.options?.bar?.cornerStyle ?? 0) === 1 ? Appearance.sizes.hyprlandGapsOut : 0)
                 WlrLayershell.namespace: "quickshell:verticalBar"
-                // WlrLayershell.layer: WlrLayer.Overlay // TODO enable this when bar can hide when fullscreen
+                // Default Top layer ON PURPOSE: fullscreen surfaces render
+                // above Top, so videos/games naturally cover the bar. Overlay
+                // would draw the bar over fullscreen content (GameMode only
+                // detects games, not videos).
                 implicitWidth: Appearance.sizes.verticalBarWidth + Appearance.rounding.screenRounding
                 Item { id: emptyMask; width: 0; height: 0 }
                 mask: Region {
