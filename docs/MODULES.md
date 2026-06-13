@@ -39,6 +39,7 @@ Users can disable any panel from Settings without touching config files.
 | `clipboard/` | `iiClipboard` | Clipboard history browser with search and image preview. |
 | `cheatsheet/` | `iiCheatsheet` | Keybind viewer pulled from compositor config. |
 | `controlPanel/` | `iiControlPanel` | Quick settings panel. |
+| `dashboard/` | `iiDashboard` | Centered hub panel: welcome, clock, agenda (local events + ICS), notifications, todo, notes, media, weather, calendar, system usage, GitHub heatmap. Modular three-column layout with in-panel edit mode; configured in Settings › Dashboard. IPC target `dashboard`. |
 | `mediaControls/` | `iiMediaControls` | MPRIS media player popup with multiple layout presets. |
 | `wallpaperSelector/` | `iiWallpaperSelector` | Wallpaper browser with directory navigation. |
 | `sessionScreen/` | `iiSessionScreen` | Logout, reboot, shutdown, suspend screen. |
