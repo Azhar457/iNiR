@@ -334,7 +334,16 @@ Singleton {
         if (pos >= 0) root.currentPosition = pos
     }
     
+    // P0-13: do nothing until the user enables the feature — no process spawns,
+    // no disk reads. Initializes lazily when enabled flips at runtime.
+    property bool _initialized: false
     Component.onCompleted: {
+        if (root.enabled) root._initialize()
+    }
+
+    function _initialize() {
+        if (root._initialized) return
+        root._initialized = true
         // Kill any mpv orphans from previous sessions before doing anything else
         _killOrphanedMpvProc.running = true
 
@@ -448,7 +457,9 @@ Singleton {
     property bool isPlaying: _mpvPlayer?.isPlaying ?? !_ipcPaused
 
     onEnabledChanged: {
-        if (!enabled) {
+        if (enabled) {
+            root._initialize()
+        } else {
             root.stop()
         }
     }
