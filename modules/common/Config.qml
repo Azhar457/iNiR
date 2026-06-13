@@ -1759,12 +1759,6 @@ Singleton {
                     // Examples: "https://9animetv.to/search?keyword=%s", "https://anitaku.pe/search.html?keyword=%s"
                     property string watchSite: ""
                 }
-                // Reddit tab - public JSON API
-                property JsonObject reddit: JsonObject {
-                    property bool enable: false
-                    property list<string> subreddits: ["unixporn", "linux", "archlinux", "kde", "gnome"]
-                    property int limit: 25
-                }
                 // Tools tab - Niri debug options and quick actions
                 property JsonObject tools: JsonObject {
                     property bool enable: false

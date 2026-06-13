@@ -153,7 +153,6 @@ Left sidebar (app drawer):
 - **YT Music** — full player with search, queue, and controls
 - **Wallhaven browser** — search and apply wallpapers directly
 - **Anime tracker** — AniList integration with schedule view
-- **Reddit feed** — browse subreddits inline
 - **Translator** — via Gemini or translate-shell
 - **Draggable widgets** — crypto, media player, quick notes, status rings, weekly calendar
 

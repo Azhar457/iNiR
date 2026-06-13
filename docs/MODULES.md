@@ -27,7 +27,7 @@ Users can disable any panel from Settings without touching config files.
 
 | Module | Panel ID | Description |
 |--------|----------|-------------|
-| `sidebarLeft/` | `iiSidebarLeft` | AI chat (Gemini/OpenAI/Ollama), YT Music player, Wallhaven browser, anime tracker, Reddit feed, translator, draggable widgets, World Clock. |
+| `sidebarLeft/` | `iiSidebarLeft` | AI chat (Gemini/OpenAI/Ollama), YT Music player, Wallhaven browser, anime tracker, translator, draggable widgets, World Clock. |
 | `sidebarRight/` | `iiSidebarRight` | Quick toggles, calendar with external sync, notification center, volume mixer, Bluetooth/WiFi management, pomodoro timer, todo, calculator, notepad, system monitor, Screen Time. |
 
 ### Overlays

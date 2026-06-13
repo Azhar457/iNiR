@@ -974,16 +974,6 @@ ContentPage {
                 }
 
                 SettingsSwitch {
-                    buttonIcon: "forum"
-                    text: Translation.tr("Reddit")
-                    checked: Config.options.sidebar?.reddit?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.reddit.enable", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Browse posts from your favorite subreddits")
-                    }
-                }
-
-                SettingsSwitch {
                     buttonIcon: "build"
                     text: Translation.tr("Tools")
                     checked: Config.options.sidebar?.tools?.enable ?? false
@@ -1179,105 +1169,6 @@ ContentPage {
                     }
                 }
             }
-            ContentSubsection {
-                title: Translation.tr("Reddit")
-                visible: Config.options.sidebar?.reddit?.enable ?? false
-
-                ConfigSpinBox {
-                    icon: "format_list_numbered"
-                    text: Translation.tr("Posts per page")
-                    value: Config.options.sidebar?.reddit?.limit ?? 25
-                    from: 10
-                    to: 50
-                    stepSize: 5
-                    onValueChanged: Config.setNestedValue("sidebar.reddit.limit", value)
-                    StyledToolTip {
-                        text: Translation.tr("Number of posts to fetch per request")
-                    }
-                }
-
-                // Subreddits editor
-                ColumnLayout {
-                    id: subredditEditor
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    property var subreddits: []
-
-                    Component.onCompleted: {
-                        subreddits = Config.options?.sidebar?.reddit?.subreddits ?? ["unixporn", "linux", "archlinux", "kde", "gnome"]
-                    }
-
-                    Connections {
-                        target: Config
-                        function onConfigChanged() {
-                            subredditEditor.subreddits = Config.options?.sidebar?.reddit?.subreddits ?? ["unixporn", "linux", "archlinux", "kde", "gnome"]
-                        }
-                    }
-
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        Repeater {
-                            model: subredditEditor.subreddits
-
-                            InputChip {
-                                required property string modelData
-                                required property int index
-                                text: "r/" + modelData
-                                onRemoved: {
-                                    const newSubs = subredditEditor.subreddits.filter((_, i) => i !== index)
-                                    Config.setNestedValue("sidebar.reddit.subreddits", newSubs)
-                                }
-                            }
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        MaterialTextField {
-                            id: subInput
-                            Layout.fillWidth: true
-                            placeholderText: Translation.tr("Add subreddit...")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.m3colors.m3onSurface
-                            placeholderTextColor: Appearance.colors.colSubtext
-                            background: Rectangle {
-                                color: Appearance.colors.colLayer1
-                                radius: Appearance.rounding.small
-                                border.width: subInput.activeFocus ? 2 : 1
-                                border.color: subInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
-                            }
-                            onAccepted: {
-                                const sub = text.trim().replace(/^r\//, "")
-                                if (sub && !subredditEditor.subreddits.includes(sub)) {
-                                    Config.setNestedValue("sidebar.reddit.subreddits", [...subredditEditor.subreddits, sub])
-                                    text = ""
-                                }
-                            }
-                        }
-
-                        RippleButton {
-                            implicitWidth: 32
-                            implicitHeight: 32
-                            buttonRadius: Appearance.rounding.small
-                            colBackgroundHover: Appearance.colors.colPrimaryContainer
-                            onClicked: subInput.accepted()
-
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "add"
-                                iconSize: 18
-                                color: Appearance.colors.colPrimary
-                            }
-                        }
-                    }
-                }
-            }
-
             ContentSubsection {
                 title: Translation.tr("Anime Schedule")
                 visible: Config.options.sidebar?.animeSchedule?.enable ?? false

@@ -144,7 +144,6 @@ Linke Seitenleiste (App-Schublade):
 - **YT Music** — vollständiger Player mit Suche, Warteschlange und Steuerung
 - **Wallhaven-Browser** — Hintergrundbilder direkt suchen und anwenden
 - **Anime-Tracker** — AniList-Integration mit Sendeplan
-- **Reddit-Feed** — Subreddits inline durchsuchen
 - **Übersetzer** — über Gemini oder translate-shell
 - **Verschiebbare Widgets** — Krypto, Medienplayer, Schnellnotizen, Statusringe, Wochenkalender
 

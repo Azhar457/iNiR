@@ -144,7 +144,6 @@ Wayland → GPU
 - **YT Music** — 完整播放器，支持搜索、队列和控制
 - **Wallhaven 浏览器** — 直接搜索和应用壁纸
 - **番剧追踪** — AniList 集成，支持放送日程
-- **Reddit 订阅** — 内联浏览 subreddit
 - **翻译器** — 通过 Gemini 或 translate-shell
 - **可拖拽小部件** — 加密货币、媒体播放器、快速笔记、状态环、周历
 

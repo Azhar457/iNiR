@@ -1227,17 +1227,6 @@
             "enable": false,
             "showNsfw": false
         },
-        "reddit": {
-            "enable": true,
-            "subreddits": [
-                "unixporn",
-                "linux",
-                "archlinux",
-                "kde",
-                "gnome"
-            ],
-            "limit": 25
-        },
         "widgets": {
             "enable": true,
             "media": true,

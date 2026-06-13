@@ -5,7 +5,6 @@ import qs.modules.common.models
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.sidebarLeft.animeSchedule
-import qs.modules.sidebarLeft.reddit
 // DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
 // import qs.modules.sidebarLeft.plugins
 import QtQuick
@@ -30,7 +29,6 @@ Item {
     property bool animeEnabled: (Config.options?.policies?.weeb ?? 0) !== 0
     property bool animeCloset: (Config.options?.policies?.weeb ?? 0) === 2
     property bool animeScheduleEnabled: Config.options?.sidebar?.animeSchedule?.enable ?? false
-    property bool redditEnabled: Config.options?.sidebar?.reddit?.enable ?? false
     property bool wallhavenEnabled: Config.options?.sidebar?.wallhaven?.enable !== false
     property bool widgetsEnabled: Config.options?.sidebar?.widgets?.enable ?? true
     property bool toolsEnabled: Config.options?.sidebar?.tools?.enable ?? false
@@ -73,7 +71,6 @@ Item {
         if (root.translatorEnabled) result.push({ icon: "translate", name: Translation.tr("Translator") })
         if (root.animeEnabled && !root.animeCloset) result.push({ icon: "bookmark_heart", name: Translation.tr("Anime") })
         if (root.animeScheduleEnabled) result.push({ icon: "calendar_month", name: Translation.tr("Schedule") })
-        if (root.redditEnabled) result.push({ icon: "forum", name: Translation.tr("Reddit") })
         if (root.wallhavenEnabled) result.push({ icon: "collections", name: Translation.tr("Wallhaven") })
         if (root.ytMusicEnabled) result.push({ icon: "library_music", name: Translation.tr("YT Music") })
         if (root.toolsEnabled) result.push({ icon: "build", name: Translation.tr("Tools") })
@@ -289,7 +286,6 @@ Item {
                                     case "translate": return translatorComp
                                     case "bookmark_heart": return animeComp
                                     case "calendar_month": return animeScheduleComp
-                                    case "forum": return redditComp
                                     case "collections": return wallhavenComp
                                     case "library_music": return ytMusicComp
                                     case "build": return toolsComp
@@ -320,7 +316,6 @@ Item {
         Component { id: translatorComp; Translator {} }
         Component { id: animeComp; Anime {} }
         Component { id: animeScheduleComp; AnimeScheduleView {} }
-        Component { id: redditComp; RedditView {} }
         Component { id: wallhavenComp; WallhavenView {} }
         Component { id: ytMusicComp; YtMusicView {} }
         Component { id: toolsComp; ToolsView {} }

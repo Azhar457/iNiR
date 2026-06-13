@@ -144,7 +144,6 @@ Barre latérale gauche (tiroir d'apps) :
 - **YT Music** — lecteur complet avec recherche, file d'attente et contrôles
 - **Navigateur Wallhaven** — cherchez et appliquez des fonds d'écran directement
 - **Suivi d'anime** — intégration AniList avec calendrier de sorties
-- **Flux Reddit** — parcourez les subreddits en ligne
 - **Traducteur** — via Gemini ou translate-shell
 - **Widgets déplaçables** — crypto, lecteur média, notes rapides, anneaux de statut, calendrier hebdomadaire
 

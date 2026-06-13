@@ -100,7 +100,6 @@
 |---------|-------------|
 | **Ai** | LLM chat. Gemini, OpenAI, Mistral, OpenRouter, Ollama. Tool use, streaming, conversation history. IPC target: `ai`. |
 | **AnimeService** | AniList GraphQL API. Anime schedule, seasonal listing. |
-| **RedditService** | Reddit public JSON API. Browse subreddits inline. |
 | **Wallhaven** | Wallhaven.cc wallpaper search with rate limiting. |
 | **Booru** | Multi-booru image board API (yande.re, konachan, danbooru, etc.). |
 | **VoiceSearch** | Voice recording + Gemini transcription + web search. IPC target: `voiceSearch`. |

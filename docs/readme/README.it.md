@@ -144,7 +144,6 @@ Barra laterale sinistra (cassetto app):
 - **YT Music** — lettore completo con ricerca, coda e controlli
 - **Browser Wallhaven** — cerca e applica sfondi direttamente
 - **Anime tracker** — integrazione AniList con vista del palinsesto
-- **Feed Reddit** — sfoglia subreddit inline
 - **Traduttore** — via Gemini o translate-shell
 - **Widget trascinabili** — crypto, lettore multimediale, note rapide, anelli di stato, calendario settimanale
 

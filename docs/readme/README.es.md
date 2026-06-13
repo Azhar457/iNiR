@@ -144,7 +144,6 @@ Sidebar izquierdo (cajón de apps):
 - **YT Music** — reproductor completo con búsqueda, cola y controles
 - **Browser de Wallhaven** — buscá y aplicá wallpapers directamente
 - **Anime tracker** — integración con AniList y vista de schedule
-- **Feed de Reddit** — navegá subreddits inline
 - **Traductor** — vía Gemini o translate-shell
 - **Widgets arrastrables** — crypto, media player, notas rápidas, status rings, calendario semanal
 
