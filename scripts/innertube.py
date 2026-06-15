@@ -23,10 +23,18 @@ import sys
 import json
 import os
 
-OAUTH_PATH = os.path.join(
-    os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")),
-    "illogical-impulse", "ytmusic_oauth.json"
-)
+_CFG_DIR = os.path.join(
+    os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "illogical-impulse")
+# iNiR's existing YouTube Data API OAuth (reused if present).
+OAUTH_PATH = os.path.join(_CFG_DIR, "ytmusic_oauth.json")
+# Native ytmusicapi OAuth token written by our own one-tap device flow.
+ITUBE_OAUTH_PATH = os.path.join(_CFG_DIR, "innertube_oauth.json")
+
+# Public "YouTube on TV" OAuth client (limited-input device flow). This is the well-known
+# client ytmusicapi shipped by default; it lets users sign in by entering a code at
+# youtube.com/activate with no Google Cloud project — InnerTune-style frictionless login.
+TV_CLIENT_ID = "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com"
+TV_CLIENT_SECRET = "SboVhoG9s0rNafixCSGGKXAT"
 
 
 def _fail(msg, detail=""):
@@ -37,20 +45,101 @@ def _fail(msg, detail=""):
     sys.exit(1)
 
 
+def _tv_creds():
+    from ytmusicapi.auth.oauth import OAuthCredentials
+    return OAuthCredentials(TV_CLIENT_ID, TV_CLIENT_SECRET)
+
+
+def _authenticated_client():
+    """Build an authenticated YTMusic. Prefer our native ytmusicapi OAuth token; otherwise
+    reuse iNiR's existing ytmusic_oauth.json (Google device-flow token, scope youtube).
+    Any failure returns None so public browsing is never broken."""
+    from ytmusicapi import YTMusic
+    from ytmusicapi.auth.oauth import OAuthCredentials
+    # 1) Native one-tap token (TV client).
+    if os.path.exists(ITUBE_OAUTH_PATH):
+        try:
+            return YTMusic(ITUBE_OAUTH_PATH, oauth_credentials=_tv_creds())
+        except Exception:
+            pass
+    # 2) Reuse iNiR's OAuth (its own TV/limited-input client).
+    if os.path.exists(OAUTH_PATH):
+        try:
+            with open(OAUTH_PATH) as f:
+                o = json.load(f)
+            if o.get("client_id") and o.get("client_secret") and o.get("refresh_token"):
+                token = {
+                    "access_token": o.get("access_token", ""),
+                    "refresh_token": o["refresh_token"],
+                    "scope": "https://www.googleapis.com/auth/youtube",
+                    "token_type": "Bearer",
+                    "expires_at": int(o.get("expires_at", 0)),
+                    "expires_in": 3600,
+                }
+                return YTMusic(token, oauth_credentials=OAuthCredentials(o["client_id"], o["client_secret"]))
+        except Exception:
+            pass
+    return None
+
+
+def cmd_oauth_request():
+    """Start the device flow: return a user code + verification URL for youtube.com/activate."""
+    try:
+        code = _tv_creds().get_code()
+    except Exception as e:
+        _fail("oauth request failed", e)
+    print(json.dumps({
+        "device_code": code.get("device_code", ""),
+        "user_code": code.get("user_code", ""),
+        "verification_url": code.get("verification_url", ""),
+        "interval": code.get("interval", 5),
+        "expires_in": code.get("expires_in", 1800),
+    }))
+
+
+def cmd_oauth_poll(device_code):
+    """Poll once for the token. Prints {status: authorized|pending|error}."""
+    try:
+        token = _tv_creds().token_from_code(device_code)
+    except Exception as e:
+        msg = str(e).lower()
+        if "pending" in msg or "authorization_pending" in msg:
+            print(json.dumps({"status": "pending"})); return
+        if "slow_down" in msg:
+            print(json.dumps({"status": "pending"})); return
+        print(json.dumps({"status": "error", "error": str(e)[:200]})); return
+    try:
+        data = dict(token)
+        data.setdefault("scope", "https://www.googleapis.com/auth/youtube")
+        data.setdefault("token_type", "Bearer")
+        os.makedirs(_CFG_DIR, exist_ok=True)
+        with open(ITUBE_OAUTH_PATH, "w") as f:
+            json.dump(data, f, indent=2)
+        os.chmod(ITUBE_OAUTH_PATH, 0o600)
+        print(json.dumps({"status": "authorized"}))
+    except Exception as e:
+        _fail("oauth save failed", e)
+
+
+def cmd_logout():
+    for p in (ITUBE_OAUTH_PATH,):
+        try:
+            if os.path.exists(p):
+                os.remove(p)
+        except Exception:
+            pass
+    print(json.dumps({"status": "ok"}))
+
+
 def _client():
-    """Construct a YTMusic client — authenticated if an oauth file exists, else public."""
+    """Construct a YTMusic client — authenticated if iNiR's OAuth is set up, else public.
+    Public browsing works fully unauthenticated; auth only adds personalization, so a
+    broken/expired token must never break public browsing."""
     try:
         from ytmusicapi import YTMusic
     except ImportError:
         _fail("ytmusicapi not installed")
-    # Public browsing works fully unauthenticated. Auth only adds personalization;
-    # an invalid/expired oauth file must never break public browsing, so fall back.
-    if os.path.exists(OAUTH_PATH):
-        try:
-            return YTMusic(OAUTH_PATH)
-        except Exception:
-            pass
-    return YTMusic()
+    return _authenticated_client() or YTMusic()
 
 
 def _best_thumb(thumbs):
@@ -125,6 +214,24 @@ def _card(item):
 
 
 # ---- subcommands ----
+
+def cmd_authstatus():
+    """Report whether InnerTube has a usable authenticated session."""
+    if not (os.path.exists(ITUBE_OAUTH_PATH) or os.path.exists(OAUTH_PATH)):
+        print(json.dumps({"authenticated": False, "account": ""}))
+        return
+    yt = _authenticated_client()
+    if yt is None:
+        print(json.dumps({"authenticated": False, "account": ""}))
+        return
+    name = ""
+    try:
+        info = yt.get_account_info()
+        name = (info or {}).get("accountName", "") or ""
+    except Exception:
+        pass
+    print(json.dumps({"authenticated": True, "account": name}))
+
 
 def cmd_ping():
     try:
@@ -328,6 +435,10 @@ def cmd_song(video_id):
 
 _COMMANDS = {
     "ping": (cmd_ping, 0),
+    "auth-status": (cmd_authstatus, 0),
+    "oauth-request": (cmd_oauth_request, 0),
+    "oauth-poll": (cmd_oauth_poll, 1),
+    "logout": (cmd_logout, 0),
     "search": (cmd_search, 1),       # +optional filter
     "home": (cmd_home, 0),           # +optional limit
     "radio": (cmd_radio, 1),

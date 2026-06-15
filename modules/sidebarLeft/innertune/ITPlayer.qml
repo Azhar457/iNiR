@@ -22,6 +22,7 @@ Item {
     }
     readonly property real playPauseRoundness: YtMusic.isPlaying ? 24 : 36
     property bool showLyrics: false
+    property bool showQueue: false
 
     signal collapseRequested()
 
@@ -88,12 +89,27 @@ Item {
                 Layout.preferredHeight: 44
                 buttonRadius: Appearance.rounding.full
                 colBackground: root.showLyrics ? Appearance.m3colors.m3secondaryContainer : "transparent"
-                releaseAction: () => root.showLyrics = !root.showLyrics
+                releaseAction: () => { root.showLyrics = !root.showLyrics; if (root.showLyrics) root.showQueue = false; }
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "lyrics"
                     iconSize: Appearance.font.pixelSize.huge
                     fill: root.showLyrics ? 1 : 0
+                    color: Appearance.m3colors.m3onSurface
+                }
+            }
+            // Queue toggle.
+            RippleButton {
+                Layout.preferredWidth: 44
+                Layout.preferredHeight: 44
+                buttonRadius: Appearance.rounding.full
+                colBackground: root.showQueue ? Appearance.m3colors.m3secondaryContainer : "transparent"
+                releaseAction: () => { root.showQueue = !root.showQueue; if (root.showQueue) root.showLyrics = false; }
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "queue_music"
+                    iconSize: Appearance.font.pixelSize.huge
+                    fill: root.showQueue ? 1 : 0
                     color: Appearance.m3colors.m3onSurface
                 }
             }
@@ -107,7 +123,7 @@ Item {
             // Large album art (square, centered).
             Item {
                 anchors.centerIn: parent
-                visible: !root.showLyrics
+                visible: !root.showLyrics && !root.showQueue
                 width: Math.min(parent.width - root.hp * 2, parent.height * 0.9)
                 height: width
                 ITThumbnail {
@@ -127,6 +143,12 @@ Item {
                 anchors.fill: parent
                 visible: root.showLyrics
                 lyrics: InnerTube.lyrics
+            }
+
+            // Up-next queue.
+            ITQueue {
+                anchors.fill: parent
+                visible: root.showQueue
             }
         }
 
@@ -226,7 +248,7 @@ Item {
                 color: Appearance.m3colors.m3secondaryContainer
                 Behavior on radius {
                     enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: 100; easing.type: Easing.Linear }
+                    NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration); easing.type: Easing.Linear }
                 }
                 MaterialSymbol {
                     anchors.centerIn: parent

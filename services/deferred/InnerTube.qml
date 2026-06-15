@@ -17,7 +17,9 @@ Singleton {
 
     readonly property bool enabled: Config.options?.sidebar?.ytmusic?.enable ?? false
     property bool ready: false
-    property bool available: false   // ytmusicapi importable (probed via ping)
+    property bool available: false       // ytmusicapi importable (probed via ping)
+    property bool authenticated: false   // iNiR OAuth present & usable
+    property string accountName: ""
 
     // Per-surface results (InnerTune screens map onto these).
     property var searchResults: []
@@ -61,9 +63,100 @@ Singleton {
                     const d = JSON.parse(this.text);
                     root.available = !!d.available;
                     if (!d.available) root._log("unavailable:", d.error);
+                    else root.refreshAuth();
                 } catch (e) {
                     root.available = false;
                 }
+            }
+        }
+    }
+
+    // ---- login (device flow with the public YouTube-TV client) ----
+    property bool loggingIn: false
+    property string loginUserCode: ""
+    property string loginVerificationUrl: ""
+    property string _loginDeviceCode: ""
+
+    function startLogin(): void {
+        if (!root.available || root.loggingIn) return;
+        root.loggingIn = true;
+        root.loginUserCode = "";
+        root.loginVerificationUrl = "";
+        _loginReqProc.exec(["python3", root._script, "oauth-request"]);
+    }
+    function cancelLogin(): void {
+        root.loggingIn = false;
+        _loginPollTimer.stop();
+        root.loginUserCode = "";
+    }
+    function logout(): void {
+        _logoutProc.exec(["python3", root._script, "logout"]);
+    }
+
+    Process {
+        id: _loginReqProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse(this.text);
+                    if (d.error || !d.user_code) { root.loggingIn = false; root.error = d.error || "login failed"; return; }
+                    root.loginUserCode = d.user_code;
+                    root.loginVerificationUrl = d.verification_url;
+                    root._loginDeviceCode = d.device_code;
+                    _loginPollTimer.interval = Math.max(3, d.interval || 5) * 1000;
+                    _loginPollTimer.start();
+                } catch (e) { root.loggingIn = false; }
+            }
+        }
+    }
+    // Raw poll timer (not a visual token) — device-flow polling cadence.
+    Timer {
+        id: _loginPollTimer
+        repeat: true
+        onTriggered: if (root.loggingIn && root._loginDeviceCode) _loginPollProc.exec(["python3", root._script, "oauth-poll", root._loginDeviceCode])
+    }
+    Process {
+        id: _loginPollProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse(this.text);
+                    if (d.status === "authorized") {
+                        _loginPollTimer.stop();
+                        root.loggingIn = false;
+                        root.loginUserCode = "";
+                        root.refreshAuth();
+                    } else if (d.status === "error") {
+                        _loginPollTimer.stop();
+                        root.loggingIn = false;
+                        root.error = d.error || "login failed";
+                    }
+                } catch (e) {}
+            }
+        }
+    }
+    Process {
+        id: _logoutProc
+        stdout: StdioCollector { onStreamFinished: root.refreshAuth() }
+    }
+
+    // ---- auth status (reuses iNiR OAuth; re-probe when login state changes) ----
+    function refreshAuth(): void {
+        if (!root.available) return;
+        _authProc.exec(["python3", root._script, "auth-status"]);
+    }
+    Process {
+        id: _authProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const d = JSON.parse(this.text);
+                    const was = root.authenticated;
+                    root.authenticated = !!d.authenticated;
+                    root.accountName = d.account || "";
+                    // Refresh personalized home once we transition to signed-in.
+                    if (root.authenticated && !was) root.loadHome();
+                } catch (e) {}
             }
         }
     }

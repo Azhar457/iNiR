@@ -54,7 +54,11 @@ Item {
         opacity: root.isActive ? 1 : 0
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: 500; easing.type: Easing.OutCubic }
+            NumberAnimation {
+                duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveEnter.duration)
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+            }
         }
 
         // Animated equalizer bars (playing). InnerTune: 3 bars, 4dp wide, 6dp gap, 24dp tall.
@@ -75,7 +79,7 @@ Item {
                     height: 24 * level
                     Behavior on height {
                         enabled: Appearance.animationsEnabled
-                        NumberAnimation { duration: 200; easing.type: Easing.InOutSine }
+                        NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration); easing.type: Easing.InOutSine }
                     }
                 }
             }

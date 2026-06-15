@@ -46,16 +46,25 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        // Search app bar.
-        Item {
+        // Search app bar + account button.
+        RowLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: ITDimens.appBarHeight
+            Layout.leftMargin: 8
+            Layout.rightMargin: 8
+            spacing: 4
             MaterialTextField {
                 id: searchField
-                anchors.fill: parent
-                anchors.margins: 8
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
                 placeholderText: Translation.tr("Search songs, albums, artists")
                 onAccepted: if (text.trim().length > 0) YtMusic.search(text.trim())
+            }
+            ITIconButton {
+                Layout.alignment: Qt.AlignVCenter
+                symbol: InnerTube.authenticated ? "account_circle" : "account_circle"
+                color: InnerTube.authenticated ? Appearance.m3colors.m3primary : Appearance.m3colors.m3onSurfaceVariant
+                onClicked: root.detail = (root.detail === "account" ? "" : "account")
             }
         }
 
@@ -116,6 +125,13 @@ Item {
                 onAlbumRequested: (browseId) => root.openAlbum(browseId)
             }
 
+            // Account / login.
+            ITAccountScreen {
+                anchors.fill: parent
+                visible: root.detail === "account"
+                onBackRequested: root.detail = ""
+            }
+
             InnerTuneSearch {
                 anchors.fill: parent
                 results: YtMusic.searchResults
@@ -128,7 +144,7 @@ Item {
             // Library routes (Songs/Artists/Albums/Playlists) need account data — placeholder.
             StyledText {
                 anchors.centerIn: parent
-                visible: !root.searchMode && root.route !== "home"
+                visible: !root.searchMode && root.route !== "home" && root.detail === ""
                 text: Translation.tr("Sign in to see your library")
                 color: Appearance.m3colors.m3onSurfaceVariant
             }
