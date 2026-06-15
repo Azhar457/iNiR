@@ -170,11 +170,11 @@ Item {
         id: player
         width: parent.width
         height: parent.height
-        y: root.playerExpanded ? 0 : parent.height
+        y: dragging ? dragY : (root.playerExpanded ? 0 : parent.height)
         visible: y < parent.height
         onCollapseRequested: root.playerExpanded = false
         Behavior on y {
-            enabled: Appearance.animationsEnabled
+            enabled: Appearance.animationsEnabled && !player.dragging
             NumberAnimation {
                 duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveEnter.duration)
                 easing.type: Appearance.animation.elementMoveEnter.type

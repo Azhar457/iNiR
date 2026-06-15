@@ -23,6 +23,9 @@ Item {
     readonly property real playPauseRoundness: YtMusic.isPlaying ? 24 : 36
     property bool showLyrics: false
     property bool showQueue: false
+    // Drag-to-dismiss state (consumed by the parent's y binding).
+    property bool dragging: false
+    property real dragY: 0
 
     signal collapseRequested()
 
@@ -64,11 +67,28 @@ Item {
         anchors.bottomMargin: 16
         spacing: 0
 
-        // Top bar: collapse chevron.
+        // Top bar: collapse chevron. Doubles as the drag handle to swipe the player down.
         RowLayout {
             Layout.fillWidth: true
             Layout.leftMargin: 8
             Layout.rightMargin: 8
+
+            DragHandler {
+                target: null
+                xAxis.enabled: false
+                yAxis.enabled: true
+                onActiveChanged: {
+                    if (active) {
+                        root.dragging = true;
+                    } else {
+                        if (root.dragY > root.height * 0.25) root.collapseRequested();
+                        root.dragging = false;
+                        root.dragY = 0;
+                    }
+                }
+                onTranslationChanged: if (active) root.dragY = Math.max(0, translation.y)
+            }
+
             RippleButton {
                 Layout.preferredWidth: 44
                 Layout.preferredHeight: 44
@@ -152,8 +172,8 @@ Item {
             }
         }
 
-        // Title.
-        StyledText {
+        // Title (marquee on overflow).
+        ITMarqueeText {
             Layout.fillWidth: true
             Layout.leftMargin: root.hp
             Layout.rightMargin: root.hp
@@ -162,8 +182,6 @@ Item {
             font.pixelSize: Appearance.font.pixelSize.title
             font.weight: Font.Bold
             color: Appearance.m3colors.m3onSurface
-            maximumLineCount: 1
-            elide: Text.ElideRight
         }
         Item { Layout.preferredHeight: 6 }
         // Artists.

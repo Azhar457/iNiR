@@ -46,14 +46,12 @@ Item {
                     Layout.leftMargin: 6
                     Layout.rightMargin: 6
                     spacing: 0
-                    StyledText {
+                    ITMarqueeText {
                         Layout.fillWidth: true
                         text: YtMusic.currentTitle
                         font.pixelSize: Appearance.font.pixelSize.normal
                         font.weight: Font.Bold
                         color: Appearance.m3colors.m3onSurface
-                        maximumLineCount: 1
-                        elide: Text.ElideRight
                     }
                     StyledText {
                         Layout.fillWidth: true

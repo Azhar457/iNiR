@@ -8,6 +8,7 @@ ITGridItem 1.0 ITGridItem.qml
 ITSongListItem 1.0 ITSongListItem.qml
 ITMiniPlayer 1.0 ITMiniPlayer.qml
 ITIconButton 1.0 ITIconButton.qml
+ITMarqueeText 1.0 ITMarqueeText.qml
 ITPlayer 1.0 ITPlayer.qml
 ITLyrics 1.0 ITLyrics.qml
 ITQueue 1.0 ITQueue.qml
