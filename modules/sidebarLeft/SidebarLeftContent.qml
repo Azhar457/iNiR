@@ -5,6 +5,7 @@ import qs.modules.common.models
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.sidebarLeft.animeSchedule
+import qs.modules.sidebarLeft.innertune
 // DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
 // import qs.modules.sidebarLeft.plugins
 import QtQuick
@@ -317,7 +318,7 @@ Item {
         Component { id: animeComp; Anime {} }
         Component { id: animeScheduleComp; AnimeScheduleView {} }
         Component { id: wallhavenComp; WallhavenView {} }
-        Component { id: ytMusicComp; YtMusicView {} }
+        Component { id: ytMusicComp; InnerTuneView {} }
         Component { id: toolsComp; ToolsView {} }
         Component { id: softwareComp; SoftwareView {} }
         // DISABLED: webapps — requires quickshell-webengine rebuild

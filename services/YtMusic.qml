@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs.modules.common
+import qs.services.deferred
 
 Singleton {
     id: root
@@ -493,8 +494,30 @@ Singleton {
         root.searching = true
         root.searchResults = []
         _searchQuery = trimmed
-        _searchProc.running = true
+        // Prefer the InnerTube engine (no browser cookies, real YT Music songs).
+        // Fall back to yt-dlp only when ytmusicapi is unavailable.
+        if (InnerTube.available) {
+            root._searchViaInnerTube = true
+            InnerTube.search(trimmed, "songs")
+        } else {
+            root._searchViaInnerTube = false
+            _searchProc.running = true
+        }
         _addToRecentSearches(trimmed)
+    }
+
+    // Bridges InnerTube's async results back onto YtMusic's existing surface so the
+    // current UI keeps binding to YtMusic.searchResults unchanged.
+    property bool _searchViaInnerTube: false
+    Connections {
+        target: InnerTube
+        function onSearchResultsChanged() {
+            if (!root._searchViaInnerTube) return
+            root.searchResults = InnerTube.searchResults
+            root.searching = false
+            root._searchViaInnerTube = false
+        }
+        function onRadioTracksChanged() { root._onRadioTracks() }
     }
     
     // clearArtistInfo() removed — currentArtistInfo was dead code
@@ -628,9 +651,41 @@ Singleton {
         root._relatedSeedUrl = item.url || `https://www.youtube.com/watch?v=${item.videoId}`
         root._relatedQueueTriedFallback = false
         root._relatedQueuePending = true
-        if (!_relatedQueueProc.running) {
+        // Prefer InnerTube's watch-playlist (radio) — same source InnerTune uses.
+        if (InnerTube.available) {
+            InnerTube.loadRadio(item.videoId)
+        } else if (!_relatedQueueProc.running) {
             _relatedQueueProc.running = true
         }
+    }
+
+    // Builds the autoplay playlist from InnerTube radio tracks, mirroring the
+    // yt-dlp related-queue fill: seed first, then continuation, source "related".
+    function _onRadioTracks(): void {
+        const tracks = InnerTube.radioTracks
+        if (!root._relatedSeedVideoId || root.currentVideoId !== root._relatedSeedVideoId) return
+        if (!tracks || tracks.length === 0) {
+            // Fall back to yt-dlp related mix if the radio came back empty.
+            if (!_relatedQueueProc.running) _relatedQueueProc.running = true
+            return
+        }
+        let playlist = [...tracks]
+        let currentIdx = playlist.findIndex(t => t.videoId === root._relatedSeedVideoId)
+        if (currentIdx < 0) {
+            playlist.unshift({
+                videoId: root._relatedSeedVideoId,
+                title: root._relatedSeedTitle || root.currentTitle,
+                artist: root._relatedSeedArtist || root.currentArtist,
+                duration: root._relatedSeedDuration || root.currentDuration,
+                thumbnail: root._relatedSeedThumbnail || root.currentThumbnail,
+                url: root._relatedSeedUrl || root.currentUrl
+            })
+            currentIdx = 0
+        }
+        root.activePlaylist = playlist
+        root.currentIndex = currentIdx
+        root.activePlaylistSource = "related"
+        root._clearRelatedQueue()
     }
 
     function _clearRelatedQueue(): void {

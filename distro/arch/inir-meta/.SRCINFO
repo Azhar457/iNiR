@@ -36,6 +36,7 @@ pkgbase = inir-meta
 	depends = pavucontrol
 	depends = plasma-browser-integration
 	depends = plasma-integration
+	depends = python-ytmusicapi
 	depends = qt6ct
 	depends = socat
 	depends = songrec
