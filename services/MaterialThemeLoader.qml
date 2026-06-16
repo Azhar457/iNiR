@@ -48,6 +48,7 @@ Singleton {
 
     // Toggle dark/light mode by running switchwall.sh with --mode and scheduling a reload.
     function setDarkMode(dark: bool): void {
+        Config.setNestedValue("appearance.customTheme.darkmode", dark)
         darkModeProc.command = [
             "/usr/bin/bash",
             Directories.wallpaperSwitchScriptPath,
@@ -157,7 +158,13 @@ Singleton {
             }
         }
         
-        Appearance.m3colors.darkmode = (Appearance.m3colors.m3background.hslLightness < 0.5)
+        if (typeof json.darkmode === "boolean") {
+            Appearance.m3colors.darkmode = json.darkmode
+        } else if (typeof json.darkmode === "string") {
+            Appearance.m3colors.darkmode = json.darkmode === "true"
+        } else {
+            Appearance.m3colors.darkmode = (Appearance.m3colors.m3background.hslLightness < 0.5)
+        }
         _log("[MaterialThemeLoader] Colors applied successfully, darkmode:", Appearance.m3colors.darkmode)
     }
 

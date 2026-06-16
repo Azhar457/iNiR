@@ -546,6 +546,13 @@ switch() {
         fi
     fi
     if [[ -z "$mode_flag" ]]; then
+        if [[ "$cfg_preferred_darkmode" == "false" ]]; then
+            mode_flag="light"
+        else
+            mode_flag="dark"
+        fi
+    fi
+    if [[ -z "$mode_flag" ]]; then
         current_mode=$(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null | tr -d "'")
         if [[ "$current_mode" == "prefer-dark" ]]; then
             mode_flag="dark"
@@ -766,6 +773,7 @@ main() {
             (.appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode // false),
             (.appearance.wallpaperTheming.enableVesktop // true),
             (.background.hideUpscaleNotification // false),
+            (if .appearance.customTheme.darkmode == null then true else .appearance.customTheme.darkmode end),
             (.appearance.wallpaperTheming.autoDarkLightMode // false)
         ] | .[]' "$SHELL_CONFIG_FILE" 2>/dev/null)
     fi
@@ -793,7 +801,8 @@ main() {
     cfg_force_dark_terminal="${_cfg[21]:-false}"
     cfg_enable_vesktop="${_cfg[22]:-true}"
     cfg_hide_upscale="${_cfg[23]:-false}"
-    cfg_auto_dark_light="${_cfg[24]:-false}"
+    cfg_preferred_darkmode="${_cfg[24]:-true}"
+    cfg_auto_dark_light="${_cfg[25]:-false}"
 
     set_accent_color() {
         local color="$1"
