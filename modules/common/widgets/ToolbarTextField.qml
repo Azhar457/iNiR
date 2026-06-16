@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
@@ -11,7 +13,12 @@ TextField {
 
     Layout.fillHeight: true
     implicitWidth: 200
-    padding: 10
+    implicitHeight: Math.max(Appearance.sizes.baseBarHeight, contentHeight + Math.round(12 * Appearance.fontSizeScale))
+    leftPadding: 10
+    rightPadding: 10
+    topPadding: 0
+    bottomPadding: 0
+    verticalAlignment: TextInput.AlignVCenter
 
     placeholderTextColor: Appearance.colors.colSubtext
     color: Appearance.colors.colOnLayer1
