@@ -36,6 +36,40 @@ Singleton {
         Quickshell.execDetached([Quickshell.shellPath("scripts/inir")].concat(args ?? []))
     }
 
+    function _cornerStyleForGlobalStyle(styleId: string): int {
+        const styles = Config.options?.appearance?.globalStyleCornerStyles
+        if (!styles) return styleId === "cards" ? 3 : 1
+        if (styleId === "cards") return styles.cards ?? 3
+        if (styleId === "aurora") return styles.aurora ?? 1
+        if (styleId === "inir") return styles.inir ?? 1
+        if (styleId === "angel") return styles.angel ?? 1
+        return styles.material ?? 1
+    }
+
+    function applyGlobalStyle(styleId: string): void {
+        let cornerStyle = _cornerStyleForGlobalStyle(styleId)
+        const values = {
+            "appearance.globalStyle": styleId,
+            "dock.cardStyle": false,
+            "sidebar.cardStyle": false,
+            "bar.cornerStyle": cornerStyle,
+            "appearance.transparency.enable": false,
+        }
+
+        if (styleId === "cards") {
+            values["dock.cardStyle"] = true
+            values["sidebar.cardStyle"] = true
+            values["bar.cornerStyle"] = cornerStyle
+        } else if (styleId === "aurora") {
+            values["appearance.transparency.enable"] = true
+        } else if (styleId === "angel") {
+            values["bar.cornerStyle"] = cornerStyle === 0 ? 1 : cornerStyle
+            values["appearance.transparency.enable"] = true
+        }
+
+        Config.setNestedValues(values)
+    }
+
     function fuzzyQuery(query: string): list<var> {
         if (!query || query.trim() === "") return allActions
         const q = query.toLowerCase().trim()
@@ -311,7 +345,7 @@ Singleton {
             icon: "format_paint",
             category: "appearance",
             keywords: ["style", "material", "theme"],
-            execute: () => { Config.setNestedValue("appearance.globalStyle", "material") }
+            execute: () => { root.applyGlobalStyle("material") }
         },
         {
             id: "style-cards",
@@ -320,7 +354,7 @@ Singleton {
             icon: "dashboard",
             category: "appearance",
             keywords: ["style", "cards", "theme"],
-            execute: () => { Config.setNestedValue("appearance.globalStyle", "cards") }
+            execute: () => { root.applyGlobalStyle("cards") }
         },
         {
             id: "style-aurora",
@@ -329,7 +363,7 @@ Singleton {
             icon: "auto_awesome",
             category: "appearance",
             keywords: ["style", "aurora", "theme", "blur"],
-            execute: () => { Config.setNestedValue("appearance.globalStyle", "aurora") }
+            execute: () => { root.applyGlobalStyle("aurora") }
         },
         {
             id: "style-inir",
@@ -338,7 +372,7 @@ Singleton {
             icon: "terminal",
             category: "appearance",
             keywords: ["style", "inir", "theme"],
-            execute: () => { Config.setNestedValue("appearance.globalStyle", "inir") }
+            execute: () => { root.applyGlobalStyle("inir") }
         },
         {
             id: "style-angel",
@@ -347,7 +381,7 @@ Singleton {
             icon: "stars",
             category: "appearance",
             keywords: ["style", "angel", "theme", "glass"],
-            execute: () => { Config.setNestedValue("appearance.globalStyle", "angel") }
+            execute: () => { root.applyGlobalStyle("angel") }
         },
     ]
 
