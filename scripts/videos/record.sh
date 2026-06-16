@@ -24,6 +24,14 @@ is_hw_codec() {
     is_vaapi_codec "$1" || is_nvenc_codec "$1"
 }
 
+normalize_acceleration_mode() {
+    case "$1" in
+        cpu|software) printf '%s\n' "software" ;;
+        gpu|hardware) printf '%s\n' "gpu" ;;
+        *) printf '%s\n' "auto" ;;
+    esac
+}
+
 is_nvidia_gpu() {
     command -v nvidia-smi &>/dev/null && nvidia-smi &>/dev/null
 }
@@ -361,6 +369,13 @@ build_safe_fallback_common_args() {
         -t
         -r "$FPS"
     )
+    if has_ffmpeg_encoder libx264; then
+        fallback_common_args+=(
+            -c libx264
+            -p preset=veryfast
+            -p crf=23
+        )
+    fi
 }
 
 start_recording_command() {
@@ -462,6 +477,7 @@ if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
 fi
 
 HARDWARE_DEVICE="$(resolve_hardware_device "$HARDWARE_DEVICE")"
+ACCELERATION_MODE="$(normalize_acceleration_mode "$ACCELERATION_MODE")"
 
 if printf '%s\n' "$*" | grep -q -- '--probe-capabilities'; then
     probe_capabilities "$HARDWARE_DEVICE"
