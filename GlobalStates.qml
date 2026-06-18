@@ -21,6 +21,10 @@ Singleton {
     property bool crosshairOpen: false
     property bool sidebarLeftOpen: false
     property bool sidebarLeftExpanded: false
+    // A left-sidebar feature requests the panel stay open through implicit closes
+    // (backdrop click / focus loss) and yield keyboard focus — e.g. the InnerTune
+    // device-flow login, where the user must type a code into an external browser.
+    property bool sidebarLeftHoldOpen: false
     property bool aiChatDetached: false
     property bool sidebarRightOpen: false
     property bool mediaControlsOpen: false

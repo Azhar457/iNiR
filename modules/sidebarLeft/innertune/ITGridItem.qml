@@ -26,6 +26,19 @@ Item {
     signal clicked()
     signal longPressed()
 
+    // Material state layer behind the card (InnerTune cards react to hover/press).
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 6
+        radius: ITDimens.gridCardCornerRadius
+        color: Appearance.m3colors.m3onSurface
+        opacity: cardMouse.pressed ? 0.10 : (cardMouse.containsMouse ? 0.05 : 0)
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) }
+        }
+    }
+
     ColumnLayout {
         id: col
         anchors.fill: parent
@@ -70,6 +83,7 @@ Item {
     }
 
     MouseArea {
+        id: cardMouse
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor

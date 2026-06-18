@@ -8,6 +8,7 @@ ITGridItem 1.0 ITGridItem.qml
 ITSongListItem 1.0 ITSongListItem.qml
 ITMiniPlayer 1.0 ITMiniPlayer.qml
 ITIconButton 1.0 ITIconButton.qml
+ITButton 1.0 ITButton.qml
 ITMarqueeText 1.0 ITMarqueeText.qml
 ITPlayer 1.0 ITPlayer.qml
 ITLyrics 1.0 ITLyrics.qml
@@ -16,6 +17,7 @@ ITNavigationBar 1.0 ITNavigationBar.qml
 ITAlbumScreen 1.0 ITAlbumScreen.qml
 ITArtistScreen 1.0 ITArtistScreen.qml
 ITAccountScreen 1.0 ITAccountScreen.qml
+ITLibraryScreen 1.0 ITLibraryScreen.qml
 InnerTuneHome 1.0 InnerTuneHome.qml
 InnerTuneSearch 1.0 InnerTuneSearch.qml
 InnerTuneView 1.0 InnerTuneView.qml

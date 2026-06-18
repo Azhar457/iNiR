@@ -7,15 +7,27 @@ import qs.services
 import qs.services.deferred
 import qs.modules.sidebarLeft.innertune
 
-// Account / login surface (translates LoginScreen.kt + AccountScreen.kt). Signed-out shows a
-// one-tap device-flow sign-in (YouTube-TV client → youtube.com/activate); signed-in shows the
-// account and a sign-out. Auth is owned by InnerTube; personalized home/library follow.
+// Account / sign-in surface. YouTube disabled the frictionless device-flow OAuth client, so the
+// working auth (the same one InnerTune uses) is the logged-in browser's YouTube session: the user
+// signs into YouTube Music in their browser, then "Connect" reuses those cookies. Signed-in shows
+// the account avatar + name and a disconnect. Auth is owned by InnerTube; home/library follow.
 StyledFlickable {
     id: root
     contentHeight: column.implicitHeight
     clip: true
 
     signal backRequested()
+
+    property bool showManual: false
+
+    Component.onCompleted: InnerTube.detectBrowsers()
+
+    // Friendly label for the browser an active session came from.
+    function _browserName(id) {
+        for (let i = 0; i < InnerTube.detectedBrowsers.length; i++)
+            if (InnerTube.detectedBrowsers[i].id === id) return InnerTube.detectedBrowsers[i].name;
+        return id;
+    }
 
     ColumnLayout {
         id: column
@@ -34,14 +46,28 @@ StyledFlickable {
             }
         }
 
-        // Hero icon.
-        MaterialSymbol {
+        // Avatar (real account photo when connected) or fallback glyph.
+        Item {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 24
-            text: InnerTube.authenticated ? "account_circle" : "account_circle"
-            iconSize: 96
-            fill: InnerTube.authenticated ? 1 : 0
-            color: Appearance.m3colors.m3primary
+            implicitWidth: 96
+            implicitHeight: 96
+            MaterialSymbol {
+                anchors.fill: parent
+                visible: !(InnerTube.authenticated && InnerTube.accountAvatar !== "")
+                text: "account_circle"
+                iconSize: 96
+                fill: InnerTube.authenticated ? 1 : 0
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                color: Appearance.m3colors.m3primary
+            }
+            ITThumbnail {
+                anchors.fill: parent
+                visible: InnerTube.authenticated && InnerTube.accountAvatar !== ""
+                thumbnailUrl: InnerTube.accountAvatar
+                circle: true
+            }
         }
 
         StyledText {
@@ -61,85 +87,160 @@ StyledFlickable {
             color: Appearance.m3colors.m3onSurface
         }
 
+        // Sub-text: instructions / connecting / error / connected-via.
         StyledText {
             Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 4
+            Layout.topMargin: 6
             Layout.leftMargin: 24
             Layout.rightMargin: 24
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            visible: !InnerTube.authenticated && !InnerTube.loggingIn
-            text: Translation.tr("Personalized home, your library, liked songs and playlists.")
+            text: InnerTube.connecting
+                ? Translation.tr("Connecting to your YouTube session…")
+                : (InnerTube.authenticated
+                    ? (InnerTube.connectedBrowser === "manual"
+                        ? Translation.tr("Connected with imported cookies.")
+                        : (InnerTube.connectedBrowser !== ""
+                            ? Translation.tr("Connected via %1.").arg(root._browserName(InnerTube.connectedBrowser))
+                            : Translation.tr("Connected.")))
+                    : (InnerTube.connectError === "not_logged_in"
+                        ? Translation.tr("No signed-in YouTube session found. Sign into YouTube Music in your browser, then connect.")
+                        : (InnerTube.connectError === "no_browser"
+                            ? Translation.tr("No supported browser detected. Import a cookies file instead.")
+                            : (InnerTube.connectError !== ""
+                                ? Translation.tr("Couldn't read your YouTube session. Make sure you're signed in, then retry.")
+                                : Translation.tr("Connect to get your library, liked songs and a personalized home.")))))
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.m3colors.m3onSurfaceVariant
+            color: InnerTube.connectError !== "" ? Appearance.m3colors.m3error : Appearance.m3colors.m3onSurfaceVariant
         }
 
-        // Device-code panel (while logging in).
-        Rectangle {
+        MaterialLoadingIndicator {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: 16
+            visible: InnerTube.connecting
+            opacity: InnerTube.connecting ? 1 : 0
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration); easing.type: Easing.OutCubic }
+            }
+        }
+
+        // Primary action: Connect automatically (signed out) / Disconnect (signed in).
+        ITButton {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 20
+            visible: !InnerTube.connecting
+            kind: InnerTube.authenticated ? "outlined" : "filled"
+            icon: InnerTube.authenticated ? "logout" : "link"
+            label: InnerTube.authenticated ? Translation.tr("Disconnect")
+                : (InnerTube.connectError !== "" ? Translation.tr("Retry") : Translation.tr("Connect"))
+            onClicked: {
+                if (InnerTube.authenticated) InnerTube.disconnect();
+                else InnerTube.connect("auto");
+            }
+        }
+
+        // Browser picker — pick which signed-in browser to read the session from. The system
+        // default is highlighted. Hidden while connecting or once signed in.
+        StyledText {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: 14
+            visible: !InnerTube.authenticated && !InnerTube.connecting && InnerTube.detectedBrowsers.length > 0
+            text: Translation.tr("Or pick a browser")
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            color: Appearance.m3colors.m3onSurfaceVariant
+        }
+        Flow {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: 6
             Layout.leftMargin: 24
             Layout.rightMargin: 24
             Layout.fillWidth: true
-            visible: InnerTube.loggingIn
-            implicitHeight: codeCol.implicitHeight + 32
-            radius: Appearance.rounding.normal
-            color: Appearance.m3colors.m3secondaryContainer
-
-            ColumnLayout {
-                id: codeCol
-                anchors.centerIn: parent
-                width: parent.width - 32
-                spacing: 6
-                StyledText {
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: Translation.tr("Go to %1 and enter:").arg(InnerTube.loginVerificationUrl || "google.com/device")
-                    wrapMode: Text.Wrap
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.m3colors.m3onSecondaryContainer
-                }
-                StyledText {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: InnerTube.loginUserCode || "…"
-                    font.family: Appearance.font.family.monospace
-                    font.pixelSize: Appearance.font.pixelSize.hugeass
-                    font.weight: Font.Bold
-                    color: Appearance.m3colors.m3primary
-                }
-                MaterialLoadingIndicator {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.topMargin: 4
+            spacing: 8
+            visible: !InnerTube.authenticated && !InnerTube.connecting && InnerTube.detectedBrowsers.length > 0
+            Repeater {
+                model: InnerTube.detectedBrowsers
+                ITButton {
+                    required property var modelData
+                    kind: modelData.id === InnerTube.defaultBrowser ? "tonal" : "outlined"
+                    icon: "public"
+                    label: modelData.name
+                    onClicked: InnerTube.connect(modelData.id)
                 }
             }
         }
 
-        // Action button.
-        RippleButtonWithIcon {
+        // Secondary: open YouTube Music so the user can sign in there first.
+        ITButton {
             Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 20
-            buttonRadius: Appearance.rounding.full
-            colBackground: InnerTube.authenticated ? "transparent" : Appearance.m3colors.m3primary
-            materialIcon: InnerTube.authenticated ? "logout" : (InnerTube.loggingIn ? "open_in_new" : "login")
-            mainText: InnerTube.authenticated ? Translation.tr("Sign out")
-                : (InnerTube.loggingIn ? Translation.tr("Open page") : Translation.tr("Sign in"))
-            releaseAction: () => {
-                if (InnerTube.authenticated) InnerTube.logout();
-                else if (InnerTube.loggingIn) Qt.openUrlExternally(InnerTube.loginVerificationUrl || "https://www.google.com/device");
-                else InnerTube.startLogin();
-            }
+            Layout.topMargin: 12
+            visible: !InnerTube.authenticated && !InnerTube.connecting
+            kind: "text"
+            icon: "open_in_new"
+            label: Translation.tr("Open YouTube Music")
+            onClicked: Qt.openUrlExternally("https://music.youtube.com")
         }
-        // Cancel during login.
-        RippleButtonWithIcon {
+
+        // "Having trouble?" expander → manual cookie import (the reliable incognito method).
+        StyledText {
+            id: manualToggle
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: 8
-            visible: InnerTube.loggingIn
-            buttonRadius: Appearance.rounding.full
-            colBackground: "transparent"
-            materialIcon: "close"
-            mainText: Translation.tr("Cancel")
-            releaseAction: () => InnerTube.cancelLogin()
+            visible: !InnerTube.authenticated && !InnerTube.connecting
+            text: (root.showManual ? "▾ " : "▸ ") + Translation.tr("Having trouble? Import cookies manually")
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            color: Appearance.m3colors.m3primary
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.showManual = !root.showManual
+            }
+        }
+
+        // Morphing container — grows to reveal the manual import controls.
+        Item {
+            Layout.fillWidth: true
+            Layout.leftMargin: 24
+            Layout.rightMargin: 24
+            clip: true
+            implicitHeight: (root.showManual && !InnerTube.authenticated && !InnerTube.connecting) ? manualCol.implicitHeight : 0
+            opacity: (root.showManual && !InnerTube.authenticated && !InnerTube.connecting) ? 1 : 0
+            Behavior on implicitHeight {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMove.duration); easing.type: Easing.OutCubic }
+            }
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration); easing.type: Easing.OutCubic }
+            }
+            ColumnLayout {
+                id: manualCol
+                width: parent.width
+                spacing: 8
+                StyledText {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 8
+                    wrapMode: Text.Wrap
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.m3colors.m3onSurfaceVariant
+                    text: Translation.tr("YouTube rotates cookies on open tabs, which can break auto-connect. For a stable login: open a private/incognito window, sign into YouTube, visit youtube.com/robots.txt, export youtube.com cookies to a cookies.txt, then close the window. Paste the file path below.")
+                }
+                MaterialTextField {
+                    id: cookiePathField
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("/path/to/cookies.txt")
+                    onAccepted: if (text.trim().length > 0) InnerTube.connectManual(text.trim())
+                }
+                ITButton {
+                    Layout.alignment: Qt.AlignHCenter
+                    kind: "tonal"
+                    icon: "upload_file"
+                    label: Translation.tr("Import cookies file")
+                    enabled: cookiePathField.text.trim().length > 0
+                    onClicked: InnerTube.connectManual(cookiePathField.text.trim())
+                }
+            }
         }
 
         Item { Layout.preferredHeight: 24 }

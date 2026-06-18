@@ -1184,6 +1184,7 @@
             "connected": false,
             "resolvedBrowserArg": "",
             "audioQuality": "best",
+            "normalizeVolume": true,
             "verbose": false,
             "shuffleMode": false,
             "repeatMode": 0,

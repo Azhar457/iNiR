@@ -28,10 +28,26 @@ StyledFlickable {
         width: root.width
         spacing: 0
 
-        ITNavigationTitle {
+        Item {
             Layout.fillWidth: true
-            title: Translation.tr("Queue")
-            label: root.queue.length > 0 ? Translation.tr("%1 songs").arg(root.queue.length) : ""
+            implicitHeight: queueHeader.implicitHeight
+            ITNavigationTitle {
+                id: queueHeader
+                anchors.left: parent.left
+                anchors.right: parent.right
+                title: Translation.tr("Queue")
+                label: root.queue.length > 0 ? Translation.tr("%1 songs").arg(root.queue.length) : ""
+            }
+            // Shuffle toggle (InnerTune keeps shuffle in the queue, not the player row).
+            ITIconButton {
+                anchors.right: parent.right
+                anchors.rightMargin: 6
+                anchors.verticalCenter: parent.verticalCenter
+                symbol: "shuffle"
+                color: Appearance.m3colors.m3onSurfaceVariant
+                active: YtMusic.shuffleMode
+                onClicked: YtMusic.toggleShuffle()
+            }
         }
 
         Repeater {
@@ -45,6 +61,22 @@ StyledFlickable {
                 isActive: index === YtMusic.currentIndex
                 isPlaying: isActive && YtMusic.isPlaying
                 onClicked: YtMusic.playFromPlaylist(root.queue, index, YtMusic.activePlaylistSource || "queue")
+
+                // Reorder this track up / down in the queue.
+                ITIconButton {
+                    symbol: "keyboard_arrow_up"
+                    iconSize: 22
+                    color: Appearance.m3colors.m3onSurfaceVariant
+                    enabled: index > 0
+                    onClicked: YtMusic.moveActivePlaylistItem(index, index - 1)
+                }
+                ITIconButton {
+                    symbol: "keyboard_arrow_down"
+                    iconSize: 22
+                    color: Appearance.m3colors.m3onSurfaceVariant
+                    enabled: index < root.queue.length - 1
+                    onClicked: YtMusic.moveActivePlaylistItem(index, index + 1)
+                }
             }
         }
     }

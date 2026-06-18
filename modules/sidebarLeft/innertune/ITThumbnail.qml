@@ -15,8 +15,17 @@ Item {
     property bool isPlaying: false
     property int cornerRadius: ITDimens.thumbnailCornerRadius
     property bool circle: false
+    // Request a sharper source for large surfaces (player art / blurred backdrop). List/grid
+    // thumbnails stay on the small variant — no extra bandwidth where it isn't visible.
+    property bool highRes: false
 
     readonly property int effRadius: circle ? Math.round(Math.min(width, height) / 2) : cornerRadius
+
+    // ytimg fallback chain: sddefault(640²) → hqdefault(480²) → original. sd/maxres can 404 on
+    // some tracks, so we step down on Image.Error instead of risking a broken cover.
+    property int _ytTier: 0
+    readonly property string _src: root.highRes ? ITDimens.highResThumb(root.thumbnailUrl, root._ytTier) : root.thumbnailUrl
+    onThumbnailUrlChanged: root._ytTier = 0
 
     // Track-number variant (used inside album track lists).
     StyledText {
@@ -31,10 +40,12 @@ Item {
         id: img
         anchors.fill: parent
         visible: root.albumIndex < 0
-        source: root.albumIndex < 0 ? root.thumbnailUrl : ""
+        source: root.albumIndex < 0 ? root._src : ""
         asynchronous: true
         cache: true
         fillMode: Image.PreserveAspectCrop
+        // Step down the ytimg quality tier if a high-res variant isn't available.
+        onStatusChanged: if (status === Image.Error && root.highRes && root._ytTier < 2) root._ytTier++
         layer.enabled: true
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {

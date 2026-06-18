@@ -1783,6 +1783,7 @@ Singleton {
                     property bool connected: false
                     property string resolvedBrowserArg: ""
                     property string audioQuality: "best"
+                    property bool normalizeVolume: true   // EBU R128 loudness normalization (YouTube-style, ~-14 LUFS)
                     property bool verbose: false
                     property bool shuffleMode: false
                     property int repeatMode: 0

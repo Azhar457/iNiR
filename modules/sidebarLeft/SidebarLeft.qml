@@ -76,8 +76,16 @@ Scope {
         exclusiveZone: 0
         implicitWidth: screen?.width ?? 1920
         WlrLayershell.namespace: "quickshell:sidebarLeft"
-        WlrLayershell.keyboardFocus: GlobalStates.sidebarLeftOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        // While a feature holds the sidebar open (e.g. InnerTube login), yield the keyboard
+        // so an external browser can receive the device code the user must type in.
+        WlrLayershell.keyboardFocus: (GlobalStates.sidebarLeftOpen && !GlobalStates.sidebarLeftHoldOpen) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         color: "transparent"
+
+        // While a feature holds the sidebar open (InnerTube login), shrink the input region
+        // to just the sidebar content so the fullscreen-transparent backdrop becomes
+        // click-through — the external browser stays reachable and a stray click can't close us.
+        Region { id: holdInputRegion; item: sidebarContentLoader }
+        mask: GlobalStates.sidebarLeftHoldOpen ? holdInputRegion : null
 
         anchors {
             top: true
@@ -89,9 +97,9 @@ Scope {
         CompositorFocusGrab {
             id: grab
             windows: [ sidebarRoot ]
-            active: CompositorService.isHyprland && sidebarRoot.visible
+            active: CompositorService.isHyprland && sidebarRoot.visible && !GlobalStates.sidebarLeftHoldOpen
             onCleared: () => {
-                if (!active) sidebarRoot.hide()
+                if (!active && !GlobalStates.sidebarLeftHoldOpen) sidebarRoot.hide()
             }
         }
 
@@ -99,6 +107,7 @@ Scope {
             id: backdropClickArea
             anchors.fill: parent
             onClicked: mouse => {
+                if (GlobalStates.sidebarLeftHoldOpen) return
                 const localPos = mapToItem(sidebarContentLoader, mouse.x, mouse.y)
                 if (localPos.x < 0 || localPos.x > sidebarContentLoader.width
                         || localPos.y < 0 || localPos.y > sidebarContentLoader.height) {

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import qs
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
@@ -19,19 +20,40 @@ Item {
     property string route: "home"
     readonly property bool searchMode: searchField.text.trim().length > 0
     property bool playerExpanded: false
-    property string detail: ""        // "" | "album" | "artist"
+    property string detail: ""        // "" | "album" | "artist" | "account"
+    property string searchFilter: "songs"   // songs | albums | artists | playlists
+    function _runSearch() {
+        if (searchField.text.trim().length > 0) YtMusic.search(searchField.text.trim(), root.searchFilter);
+    }
 
-    property bool _homeLoaded: false
     onVisibleChanged: if (visible) _ensureHome()
     Component.onCompleted: if (visible) _ensureHome()
+    // Load home whenever we're open and have nothing yet — don't latch on a failed/empty load, so
+    // reopening (or a recovered session) retries instead of getting stuck on the placeholder.
     function _ensureHome() {
-        if (_homeLoaded || !InnerTube.available) return;
-        _homeLoaded = true;
+        if (!InnerTube.available || InnerTube.homeLoading || InnerTube.homeShelves.length > 0) return;
         InnerTube.loadHome();
     }
+    function _ensureRoute() {
+        if (root.route === "home") {
+            root._ensureHome();
+            return;
+        }
+        if (InnerTube.authenticated)
+            InnerTube.loadLibrary(root.route);
+    }
+    // Hold the sidebar open + yield keyboard while the device-flow login is in progress,
+    // so the external browser can receive the code and a stray click doesn't abort login.
     Connections {
         target: InnerTube
-        function onAvailableChanged() { if (InnerTube.available && root.visible) root._ensureHome(); }
+        function onLoggingInChanged() { GlobalStates.sidebarLeftHoldOpen = InnerTube.loggingIn; }
+    }
+    Component.onDestruction: GlobalStates.sidebarLeftHoldOpen = false
+
+    Connections {
+        target: InnerTube
+        function onAvailableChanged() { if (InnerTube.available && root.visible) root._ensureRoute(); }
+        function onAuthenticatedChanged() { if (root.visible) root._ensureRoute(); }
         // Playlists (from Home cards) play directly; albums/artists open a detail screen.
         function onPlaylistPageChanged() {
             const t = InnerTube.playlistPage?.tracks;
@@ -46,25 +68,114 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        // Search app bar + account button.
-        RowLayout {
+        // InnerTune-style Material 3 SearchBar (pill): leading search glyph, embedded
+        // input with a faded placeholder, trailing clear button (typing) / account avatar.
+        Item {
             Layout.fillWidth: true
             Layout.preferredHeight: ITDimens.appBarHeight
             Layout.leftMargin: 8
             Layout.rightMargin: 8
-            spacing: 4
-            MaterialTextField {
-                id: searchField
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                placeholderText: Translation.tr("Search songs, albums, artists")
-                onAccepted: if (text.trim().length > 0) YtMusic.search(text.trim())
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.topMargin: 6
+                anchors.bottomMargin: 6
+                radius: Appearance.rounding.full
+                color: Appearance.m3colors.m3surfaceContainerHigh
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 14
+                    anchors.rightMargin: 4
+                    spacing: 8
+
+                    MaterialSymbol {
+                        text: "search"
+                        iconSize: Appearance.font.pixelSize.huge
+                        color: Appearance.m3colors.m3onSurfaceVariant
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        StyledTextInput {
+                            id: searchField
+                            anchors.fill: parent
+                            verticalAlignment: TextInput.AlignVCenter
+                            color: Appearance.m3colors.m3onSurface
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                            clip: true
+                            onAccepted: root._runSearch()
+                        }
+                        StyledText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width
+                            visible: searchField.text.length === 0
+                            text: Translation.tr("Search songs, albums, artists")
+                            color: Appearance.m3colors.m3onSurfaceVariant
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    ITIconButton {
+                        Layout.alignment: Qt.AlignVCenter
+                        visible: root.searchMode
+                        symbol: "close"
+                        color: Appearance.m3colors.m3onSurfaceVariant
+                        onClicked: searchField.text = ""
+                    }
+                    ITIconButton {
+                        Layout.alignment: Qt.AlignVCenter
+                        visible: !root.searchMode
+                        symbol: "account_circle"
+                        color: InnerTube.authenticated ? Appearance.m3colors.m3primary : Appearance.m3colors.m3onSurfaceVariant
+                        onClicked: root.detail = (root.detail === "account" ? "" : "account")
+                    }
+                }
             }
-            ITIconButton {
-                Layout.alignment: Qt.AlignVCenter
-                symbol: InnerTube.authenticated ? "account_circle" : "account_circle"
-                color: InnerTube.authenticated ? Appearance.m3colors.m3primary : Appearance.m3colors.m3onSurfaceVariant
-                onClicked: root.detail = (root.detail === "account" ? "" : "account")
+        }
+
+        // Search-filter chips (OnlineSearchResult.kt filter row) — visible while searching.
+        Flow {
+            Layout.fillWidth: true
+            Layout.leftMargin: 12
+            Layout.rightMargin: 12
+            Layout.topMargin: root.searchMode ? 2 : 0
+            Layout.bottomMargin: root.searchMode ? 6 : 0
+            spacing: 8
+            visible: root.searchMode
+            Repeater {
+                model: [
+                    { id: "songs", label: Translation.tr("Songs") },
+                    { id: "albums", label: Translation.tr("Albums") },
+                    { id: "artists", label: Translation.tr("Artists") },
+                    { id: "playlists", label: Translation.tr("Playlists") },
+                ]
+                delegate: Rectangle {
+                    id: chip
+                    required property var modelData
+                    readonly property bool active: root.searchFilter === modelData.id
+                    implicitHeight: 32
+                    implicitWidth: chipLabel.implicitWidth + 28
+                    radius: Appearance.rounding.full
+                    color: chip.active ? Appearance.m3colors.m3secondaryContainer : "transparent"
+                    border.width: chip.active ? 0 : 1
+                    border.color: Appearance.m3colors.m3outline
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) } }
+                    StyledText {
+                        id: chipLabel
+                        anchors.centerIn: parent
+                        text: chip.modelData.label
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: chip.active ? Appearance.m3colors.m3onSecondaryContainer : Appearance.m3colors.m3onSurfaceVariant
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: { root.searchFilter = chip.modelData.id; root._runSearch(); }
+                    }
+                }
             }
         }
 
@@ -84,11 +195,13 @@ Item {
                 onArtistRequested: (browseId) => root.openArtist(browseId)
             }
 
-            // Opaque backing behind detail screens.
+            // Opaque backing behind detail screens. The account/login screen uses the active
+            // global-style ground surface (Appearance.colors.colLayer0) so it matches the rest
+            // of the shell instead of the raw Material palette; browse screens keep m3 fidelity.
             Rectangle {
                 anchors.fill: parent
                 visible: root.detail !== ""
-                color: Appearance.m3colors.m3background
+                color: root.detail === "account" ? Appearance.colors.colLayer0 : Appearance.m3colors.m3background
             }
 
             // Album detail.
@@ -132,6 +245,20 @@ Item {
                 onBackRequested: root.detail = ""
             }
 
+            ITLibraryScreen {
+                anchors.fill: parent
+                route: root.route
+                items: InnerTube.libraryPages[root.route] ?? []
+                loading: InnerTube.libraryLoading
+                authenticated: InnerTube.authenticated
+                visible: !root.searchMode && root.route !== "home" && root.detail === ""
+                onLoginRequested: root.detail = "account"
+                onPlayRequested: (index) => YtMusic.playFromPlaylist(InnerTube.libraryPages[root.route] ?? [], index, "library:" + root.route)
+                onAlbumRequested: (browseId) => root.openAlbum(browseId)
+                onArtistRequested: (browseId) => root.openArtist(browseId)
+                onPlaylistRequested: (playlistId) => InnerTube.loadPlaylist(playlistId)
+            }
+
             InnerTuneSearch {
                 anchors.fill: parent
                 results: YtMusic.searchResults
@@ -139,15 +266,11 @@ Item {
                 visible: opacity > 0
                 Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) } }
                 onPlayRequested: (index) => YtMusic.playFromSearch(index)
+                onAlbumRequested: (browseId) => root.openAlbum(browseId)
+                onArtistRequested: (browseId) => root.openArtist(browseId)
+                onPlaylistRequested: (playlistId) => InnerTube.loadPlaylist(playlistId)
             }
 
-            // Library routes (Songs/Artists/Albums/Playlists) need account data — placeholder.
-            StyledText {
-                anchors.centerIn: parent
-                visible: !root.searchMode && root.route !== "home" && root.detail === ""
-                text: Translation.tr("Sign in to see your library")
-                color: Appearance.m3colors.m3onSurfaceVariant
-            }
         }
 
         // Mini player (above nav bar).
@@ -161,7 +284,7 @@ Item {
         ITNavigationBar {
             Layout.fillWidth: true
             currentRoute: root.route
-            onSelected: (r) => { root.route = r; searchField.text = ""; }
+            onSelected: (r) => { root.route = r; root.detail = ""; searchField.text = ""; root._ensureRoute(); }
         }
     }
 
@@ -173,6 +296,7 @@ Item {
         y: dragging ? dragY : (root.playerExpanded ? 0 : parent.height)
         visible: y < parent.height
         onCollapseRequested: root.playerExpanded = false
+        onGoToAlbumRequested: (browseId) => { if (browseId) { root.playerExpanded = false; root.openAlbum(browseId); } }
         Behavior on y {
             enabled: Appearance.animationsEnabled && !player.dragging
             NumberAnimation {

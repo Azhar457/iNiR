@@ -75,21 +75,19 @@ StyledFlickable {
             Layout.fillWidth: true
             Layout.margins: 12
             spacing: 12
-            RippleButtonWithIcon {
+            ITButton {
                 Layout.fillWidth: true
-                buttonRadius: Appearance.rounding.full
-                colBackground: Appearance.m3colors.m3primary
-                materialIcon: "shuffle"
-                mainText: Translation.tr("Shuffle")
-                releaseAction: () => root.shuffleRequested()
+                kind: "filled"
+                icon: "shuffle"
+                label: Translation.tr("Shuffle")
+                onClicked: root.shuffleRequested()
             }
-            RippleButtonWithIcon {
+            ITButton {
                 Layout.fillWidth: true
-                buttonRadius: Appearance.rounding.full
-                colBackground: "transparent"
-                materialIcon: "radio"
-                mainText: Translation.tr("Radio")
-                releaseAction: () => root.radioRequested()
+                kind: "outlined"
+                icon: "radio"
+                label: Translation.tr("Radio")
+                onClicked: root.radioRequested()
             }
         }
 

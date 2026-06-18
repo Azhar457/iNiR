@@ -101,15 +101,41 @@ Singleton {
     readonly property bool suppressUpNextInFullscreen: Config.options?.sidebar?.ytmusic?.suppressUpNextInFullscreen ?? true
     
     property string audioQuality: Config.options?.sidebar?.ytmusic?.audioQuality ?? "best"
-    onAudioQualityChanged: Config.setNestedValue('sidebar.ytmusic.audioQuality', audioQuality)
+    onAudioQualityChanged: {
+        Config.setNestedValue('sidebar.ytmusic.audioQuality', audioQuality)
+        // Apply the new quality to what's playing NOW (mpv's --ytdl-format is fixed at launch),
+        // so the Settings control visibly correlates instead of only affecting the next track.
+        if (root.currentVideoId !== "") root._reloadCurrentTrack()
+    }
+    // EBU R128 loudness normalization — matches YouTube Music's consistent ~-14 LUFS so tracks
+    // don't jump between quiet/harsh. Applied as an mpv audio filter; reloads live like quality.
+    readonly property bool normalizeVolume: Config.options?.sidebar?.ytmusic?.normalizeVolume ?? true
+    onNormalizeVolumeChanged: if (root.currentVideoId !== "") root._reloadCurrentTrack()
 
-    // Maps audioQuality setting to yt-dlp format string for mpv's --ytdl-format
+    // Maps audioQuality setting to yt-dlp format string for mpv's --ytdl-format.
+    // YouTube serves audio-only DASH at roughly ~50 kbps and ~130-135 kbps tiers (no middle), so:
+    //   best   → highest available, preferring Opus (best codec; ~135k itag 251)
+    //   medium → ≤130k, lands on the 130k m4a (itag 140) — broad device compatibility
+    //   low    → smallest stream (~50k, data saver)
+    // ([abr<=128] wrongly dropped the 130k tier and fell to ~50k — the old "medium" sounded bad.)
     readonly property string _ytdlFormat: {
         switch (root.audioQuality) {
             case "low": return "worstaudio"
-            case "medium": return "bestaudio[abr<=128]/bestaudio"
-            default: return "bestaudio"
+            case "medium": return "bestaudio[abr<=130]/bestaudio"
+            default: return "bestaudio[acodec=opus]/bestaudio/best"
         }
+    }
+
+    // One-shot seek (seconds) applied to the next mpv launch — used to resume the current
+    // track in place after a quality change so playback doesn't jump back to the start.
+    property real _resumeAtPosition: 0
+    function _reloadCurrentTrack(): void {
+        if (root.currentVideoId === "" || !root.available || root._playUrl === "") return
+        root._resumeAtPosition = Math.max(0, root.currentPosition)
+        root._userInitiatedPlay = true
+        root._ipcEofReached = false
+        root._stopMpv()
+        _playDelayTimer.restart()
     }
 
     onShuffleModeChanged: Config.setNestedValue('sidebar.ytmusic.shuffleMode', shuffleMode)
@@ -145,7 +171,10 @@ Singleton {
     property var ytMusicPlaylists: []
     property string defaultBrowser: ""
     property bool autoConnectAttempted: false
-    property bool autoConnectEnabled: Config.options?.sidebar?.ytmusic?.autoConnect ?? true
+    // Account connect/auto-heal is owned by the InnerTube service now (rotation-safe direct cookie
+    // read + YTM validation). This legacy yt-dlp-based auto-connect is disabled so the two flows
+    // don't compete writing yt-cookies.txt (the old path rotated and clobbered a good session).
+    readonly property bool autoConnectEnabled: false
     
     // OAuth state
     property bool oauthConfigured: false
@@ -326,7 +355,9 @@ Singleton {
         const vid = root._extractVideoId(url)
         if (vid) {
             root.currentVideoId = vid
-            root.currentThumbnail = root._getThumbnailUrl(vid)
+            // Keep the square YТM art set when the track was played; only derive the (16:9 video)
+            // ytimg thumbnail as a fallback. Overwriting here is what letterboxed the player art.
+            if (!root.currentThumbnail) root.currentThumbnail = root._getThumbnailUrl(vid)
         } else if (art && !root.currentThumbnail) {
             root.currentThumbnail = art
         }
@@ -390,10 +421,18 @@ Singleton {
             if (root._mpvPlayer) {
                 root.currentPosition = root._mpvPlayer.position
                 root._ipcPaused = !root._mpvPlayer.isPlaying
+                if (root.currentDuration <= 0 && root._mpvPlayer.length > 0)
+                    root.currentDuration = root._mpvPlayer.length
             } else if (!root._userInitiatedPlay) {
                 _ipcQueryProc.running = true
                 _ipcPauseQueryProc.running = true
             }
+
+            // mpv knows the real duration once the stream is loaded; MPRIS `length` is often
+            // missing for yt-dlp-streamed tracks, leaving the player stuck at 0:00. Query it
+            // directly until we have it (stops firing once known).
+            if (root.currentDuration <= 0 && root.ipcSocket)
+                _ipcDurationQueryProc.running = true
 
             // Don't query EOF while a new play is pending — the old socket
             // would return stale eof-reached=true and cause double-advance.
@@ -423,6 +462,19 @@ Singleton {
         }
     }
     
+    Process {
+        id: _ipcDurationQueryProc
+        command: ["/bin/sh", "-c", "echo '{ \"command\": [\"get_property\", \"duration\"] }' | socat - " + root.ipcSocket + " 2>/dev/null"]
+        stdout: SplitParser {
+            onRead: line => {
+                try {
+                    const res = JSON.parse(line)
+                    if (typeof res.data === "number" && res.data > 0) root.currentDuration = res.data
+                } catch(e) {}
+            }
+        }
+    }
+
     Process {
         id: _ipcPauseQueryProc
         command: ["/bin/sh", "-c", "echo '{ \"command\": [\"get_property\", \"pause\"] }' | socat - " + root.ipcSocket + " 2>/dev/null"]
@@ -465,10 +517,11 @@ Singleton {
         }
     }
 
-    function search(query): void {
+    function search(query, filter): void {
         if (!query.trim() || !root.available) return
         root.error = ""
         const trimmed = query.trim()
+        const f = filter || "songs"
         if (root._isYoutubeUrl(trimmed)) {
             root.searching = true
             root.searchResults = []
@@ -498,7 +551,7 @@ Singleton {
         // Fall back to yt-dlp only when ytmusicapi is unavailable.
         if (InnerTube.available) {
             root._searchViaInnerTube = true
-            InnerTube.search(trimmed, "songs")
+            InnerTube.search(trimmed, f)
         } else {
             root._searchViaInnerTube = false
             _searchProc.running = true
@@ -539,11 +592,15 @@ Singleton {
         root.currentTitle = item.title || ""
         root.currentArtist = item.artist || ""
         root.currentVideoId = item.videoId || ""
-        root.currentThumbnail = _getThumbnailUrl(item.videoId)
+        // Prefer the item's real (square) YT Music art; fall back to the derived 16:9 video
+        // thumbnail only when none was provided. Using the video thumbnail unconditionally is what
+        // letterboxed the player art with black bars.
+        root.currentThumbnail = item.thumbnail || _getThumbnailUrl(item.videoId)
         root.currentUrl = item.url || `https://www.youtube.com/watch?v=${item.videoId}`
         root.currentDuration = item.duration || 0
         root.currentPosition = 0
-        
+        root._resumeAtPosition = 0   // normal play starts from the top
+
         root._playUrl = root.currentUrl
         root._pendingItem = item
         
@@ -879,6 +936,22 @@ Singleton {
         }
     }
 
+    function moveActivePlaylistItem(from, to): void {
+        if (from < 0 || to < 0 || from >= root.activePlaylist.length || to >= root.activePlaylist.length || from === to) return
+        let playlist = [...root.activePlaylist]
+        const item = playlist.splice(from, 1)[0]
+        playlist.splice(to, 0, item)
+        root.activePlaylist = playlist
+        if (root.currentIndex === from) {
+            root.currentIndex = to
+        } else if (from < root.currentIndex && to >= root.currentIndex) {
+            root.currentIndex -= 1
+        } else if (from > root.currentIndex && to <= root.currentIndex) {
+            root.currentIndex += 1
+        }
+        if (root.currentVideoId) root._persistResume()
+    }
+
     function clearQueue(): void {
         root.queue = []
         _persistQueue()
@@ -958,8 +1031,10 @@ Singleton {
         if (liked.length > root.maxLikedSongs) liked = liked.slice(0, root.maxLikedSongs)
         root.likedSongs = liked
         Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
-        // Send real like to YouTube via OAuth
-        if (root.oauthConfigured) {
+        // Prefer the InnerTube account login; fall back to the legacy YouTube Data OAuth.
+        if (InnerTube.authenticated) {
+            InnerTube.rateSong(root.currentVideoId, true)
+        } else if (root.oauthConfigured) {
             _rateLikeProc._videoId = root.currentVideoId
             _rateLikeProc.running = true
         }
@@ -972,8 +1047,10 @@ Singleton {
         liked.splice(idx, 1)
         root.likedSongs = liked
         Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
-        // Send real unlike to YouTube via OAuth
-        if (root.oauthConfigured) {
+        // Prefer the InnerTube account login; fall back to the legacy YouTube Data OAuth.
+        if (InnerTube.authenticated) {
+            InnerTube.rateSong(videoId, false)
+        } else if (root.oauthConfigured) {
             _rateUnlikeProc._videoId = videoId
             _rateUnlikeProc.running = true
         }
@@ -1542,9 +1619,14 @@ print("")
     // Unless user manually provided a cookies.txt file
     readonly property string _browserArgForYtdlp: root._resolvedBrowserArg || root.googleBrowser
 
-    property var _cookieArgs: root._useManualCookies && root.customCookiesPath
-        ? ["--cookies", root.customCookiesPath, "--js-runtimes", "node", "--remote-components", "ejs:github"]
-        : ["--cookies-from-browser", root._browserArgForYtdlp, "--js-runtimes", "node", "--remote-components", "ejs:github"]
+    // Unified cookie source: the InnerTube account flow now owns connecting and maintains the
+    // shared yt-cookies.txt (rotation-safe direct read). Playback reads that static file rather
+    // than yt-dlp's --cookies-from-browser, whose completed YouTube request rotates and invalidates
+    // the session. When no account is connected, omit cookies entirely (public playback still works).
+    readonly property bool _hasCookieSession: Config.options?.sidebar?.ytmusic?.connected ?? false
+    property var _cookieArgs: root._hasCookieSession
+        ? ["--cookies", root._mpvCookiesFile, "--js-runtimes", "node", "--remote-components", "ejs:github"]
+        : ["--js-runtimes", "node", "--remote-components", "ejs:github"]
 
     // Static cookie file — used by mpv (which can't use --cookies-from-browser)
     // When user provides a manual cookies file, use that instead of the auto-exported one
@@ -1554,7 +1636,10 @@ print("")
     function _getThumbnailUrl(videoId): string {
         if (!videoId) return ""
         if (videoId.length !== 11 || videoId.startsWith("UC")) return ""
-        return `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`
+        // hqdefault (480x360) always exists and is far sharper than mqdefault (320x180); the player's
+        // highRes path steps up to sddefault (640x480) with graceful fallback. Square YTM cover art
+        // (from InnerTube) is preferred when the track carries it — this is the videoId-only fallback.
+        return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
     }
     
     Connections {
@@ -2169,6 +2254,9 @@ print("")
             "--force-media-title=" + root.currentTitle + (root.currentArtist ? " - " + root.currentArtist : ""),
             "--metadata-codepage=utf-8",
             "--volume=" + root._savedVolume,
+            "--volume-max=100",
+            ...(root.normalizeVolume ? ["--af=loudnorm=I=-14:TP=-1.5:LRA=11"] : []),
+            ...(root._resumeAtPosition > 1 ? ["--start=+" + Math.floor(root._resumeAtPosition)] : []),
             "--audio-buffer=1",
             "--initial-audio-sync=yes",
             "--demuxer-max-bytes=50MiB",
@@ -2189,6 +2277,8 @@ print("")
 
         onStarted: {
             _stderr = ""
+            // Consume the one-shot resume seek so a later natural play starts from the top.
+            root._resumeAtPosition = 0
             root._log("[YtMusic] mpv started. URL:", root._playUrl)
         }
         onRunningChanged: {
@@ -2297,7 +2387,7 @@ print("")
     
     IpcHandler {
         target: "ytmusic"
-        
+
         function playPause(): void {
             root.togglePlaying()
         }

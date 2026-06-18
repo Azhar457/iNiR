@@ -1021,6 +1021,16 @@ ContentPage {
                 visible: Config.options.sidebar?.ytmusic?.enable ?? false
 
                 SettingsSwitch {
+                    buttonIcon: "sync"
+                    text: Translation.tr("Reconnect account on launch")
+                    checked: Config.options.sidebar?.ytmusic?.autoConnect ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.autoConnect", checked)
+                    StyledToolTip {
+                        text: Translation.tr("If you've signed in before, silently re-read your browser's YouTube session on startup so a stale login heals itself. Sign in and import cookies from the account screen (avatar) in the YT Music tab.")
+                    }
+                }
+
+                SettingsSwitch {
                     buttonIcon: "music_note"
                     text: Translation.tr("Up Next notifications")
                     checked: Config.options.sidebar?.ytmusic?.upNextNotifications ?? true
@@ -1051,6 +1061,16 @@ ContentPage {
                     onSelected: (newValue) => Config.setNestedValue("sidebar.ytmusic.audioQuality", newValue)
                     StyledToolTip {
                         text: Translation.tr("Audio quality for playback — lower quality uses less bandwidth")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "graphic_eq"
+                    text: Translation.tr("Normalize loudness")
+                    checked: Config.options.sidebar?.ytmusic?.normalizeVolume ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.normalizeVolume", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Even out volume across tracks (EBU R128, like YouTube Music). Disable for the unprocessed stream.")
                     }
                 }
             }

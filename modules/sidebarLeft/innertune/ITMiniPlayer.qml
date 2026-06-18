@@ -16,6 +16,15 @@ Item {
     readonly property real progress: YtMusic.currentDuration > 0
         ? Math.max(0, Math.min(1, YtMusic.currentPosition / YtMusic.currentDuration)) : 0
 
+    Rectangle {
+        anchors.fill: parent
+        color: Appearance.m3colors.m3surfaceContainer
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) }
+        }
+    }
+
     RowLayout {
         anchors.fill: parent
         anchors.rightMargin: 6
@@ -70,13 +79,13 @@ Item {
             Layout.preferredWidth: 44
             Layout.preferredHeight: 44
             buttonRadius: Appearance.rounding.full
-            colBackground: "transparent"
+            colBackground: YtMusic.isPlaying ? Appearance.m3colors.m3secondaryContainer : "transparent"
             releaseAction: () => YtMusic.togglePlaying()
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
                 text: YtMusic.isPlaying ? "pause" : "play_arrow"
                 iconSize: Appearance.font.pixelSize.huge
-                color: Appearance.m3colors.m3onSurface
+                color: YtMusic.isPlaying ? Appearance.m3colors.m3onSecondaryContainer : Appearance.m3colors.m3onSurface
             }
         }
 

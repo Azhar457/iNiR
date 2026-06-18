@@ -38,6 +38,17 @@ Item {
         }
     }
 
+    // Whole-row click handler — BELOW the content so trailing controls (e.g. queue
+    // reorder arrows) keep their own clicks; non-interactive areas fall through to here.
+    MouseArea {
+        id: mouse
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.clicked()
+        onPressAndHold: root.longPressed()
+    }
+
     RowLayout {
         anchors.fill: parent
         anchors.leftMargin: 6
@@ -105,14 +116,5 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             spacing: 0
         }
-    }
-
-    MouseArea {
-        id: mouse
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.clicked()
-        onPressAndHold: root.longPressed()
     }
 }

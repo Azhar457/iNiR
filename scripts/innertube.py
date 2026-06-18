@@ -16,12 +16,22 @@ Usage:
   innertube.py artist <browseId>
   innertube.py album <browseId>
   innertube.py playlist <playlistId>
+  innertube.py library <songs|artists|albums|playlists> [limit]
+  innertube.py rate <videoId> <LIKE|INDIFFERENT>
   innertube.py lyrics <videoId>
   innertube.py song <videoId>
 """
 import sys
 import json
 import os
+import signal
+import time
+import hashlib
+
+try:
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+except (AttributeError, ValueError):
+    pass
 
 _CFG_DIR = os.path.join(
     os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "illogical-impulse")
@@ -29,6 +39,11 @@ _CFG_DIR = os.path.join(
 OAUTH_PATH = os.path.join(_CFG_DIR, "ytmusic_oauth.json")
 # Native ytmusicapi OAuth token written by our own one-tap device flow.
 ITUBE_OAUTH_PATH = os.path.join(_CFG_DIR, "innertube_oauth.json")
+# Browser session cookies (Netscape format) exported by scripts/ytmusic_auth.py. This is the
+# auth that actually works for personalized browse — the public device-flow OAuth client was
+# disabled by YouTube (Nov 2024 ytmusicapi requires your OWN Cloud client), so cookie auth
+# (the same session a logged-in browser uses, InnerTune-style) is the primary path.
+YTCOOKIE_PATH = os.path.join(_CFG_DIR, "yt-cookies.txt")
 
 # Public "YouTube on TV" OAuth client (limited-input device flow). This is the well-known
 # client ytmusicapi shipped by default; it lets users sign in by entering a code at
@@ -50,19 +65,96 @@ def _tv_creds():
     return OAuthCredentials(TV_CLIENT_ID, TV_CLIENT_SECRET)
 
 
+# Only these cookies belong in the YTM API `Cookie:` header. Sending the WHOLE google.com jar
+# (every Google service's cookies — often ~190 KB) makes YouTube reject the request with HTTP 413
+# (Request Entity Too Large) and return an empty body, which breaks ALL authenticated browse. A
+# real music.youtube.com request only carries this auth subset (~1.7 KB).
+_YTM_HEADER_COOKIES = {
+    "SID", "HSID", "SSID", "APISID", "SAPISID",
+    "__Secure-1PSID", "__Secure-3PSID", "__Secure-1PAPISID", "__Secure-3PAPISID",
+    "__Secure-1PSIDCC", "__Secure-3PSIDCC", "SIDCC",
+    "__Secure-1PSIDTS", "__Secure-3PSIDTS",
+    "LOGIN_INFO", "VISITOR_INFO1_LIVE", "VISITOR_PRIVACY_METADATA", "YSC", "PREF",
+}
+
+
+def _read_cookie_header():
+    """Build a `Cookie:` header string for YTM API requests from the Netscape cookie jar.
+    Returns (cookie_str, cookies_dict) or (None, None) if no logged-in session is present. Only the
+    auth-relevant cookies go into the header string (see `_YTM_HEADER_COOKIES`) — the full dict is
+    still returned so callers can check markers like LOGIN_INFO."""
+    if not os.path.exists(YTCOOKIE_PATH):
+        return None, None
+    cookies = {}
+    try:
+        with open(YTCOOKIE_PATH) as f:
+            for line in f:
+                if line.startswith("#") or not line.strip():
+                    continue
+                p = line.rstrip("\n").split("\t")
+                # The session auth cookies (SAPISID/HSID/SSID/APISID) live on .google.com, while
+                # YTM-specific ones live on .youtube.com — we need BOTH for an authenticated request.
+                if len(p) >= 7 and ("youtube.com" in p[0] or "google.com" in p[0]):
+                    cookies[p[5]] = p[6]
+    except Exception:
+        return None, None
+    # SAPISID (or its __Secure variants) is the signal that we have a real logged-in session.
+    sapisid = cookies.get("SAPISID") or cookies.get("__Secure-3PAPISID") or cookies.get("__Secure-1PAPISID")
+    if not sapisid:
+        return None, None
+    header = "; ".join(f"{k}={v}" for k, v in cookies.items() if k in _YTM_HEADER_COOKIES)
+    return header, cookies
+
+
+def _sapisid_hash(sapisid, origin="https://music.youtube.com"):
+    ts = int(time.time())
+    digest = hashlib.sha1(f"{ts} {sapisid} {origin}".encode()).hexdigest()
+    return f"SAPISIDHASH {ts}_{digest}"
+
+
+def _browser_client():
+    """Authenticate the way InnerTune/a logged-in browser does: reuse the YouTube session
+    cookies. This is the path that actually works for personalized browse (library, home,
+    account) — the public device-flow OAuth client is dead (HTTP 400)."""
+    cookie_str, cookies = _read_cookie_header()
+    if not cookie_str:
+        return None
+    sapisid = cookies.get("SAPISID") or cookies.get("__Secure-3PAPISID") or cookies.get("__Secure-1PAPISID")
+    headers = {
+        "cookie": cookie_str,
+        "authorization": _sapisid_hash(sapisid),
+        "x-goog-authuser": "0",
+        "origin": "https://music.youtube.com",
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
+        "accept": "*/*",
+        "accept-language": "en-US,en;q=0.5",
+        "content-type": "application/json",
+        "x-origin": "https://music.youtube.com",
+    }
+    try:
+        from ytmusicapi import YTMusic
+        return YTMusic(json.dumps(headers))
+    except Exception:
+        return None
+
+
 def _authenticated_client():
-    """Build an authenticated YTMusic. Prefer our native ytmusicapi OAuth token; otherwise
-    reuse iNiR's existing ytmusic_oauth.json (Google device-flow token, scope youtube).
-    Any failure returns None so public browsing is never broken."""
+    """Build an authenticated YTMusic. Cookie auth (logged-in browser session) is preferred
+    because it's the only method YouTube still honours for personalized browse; OAuth tokens
+    are kept as a fallback. Any failure returns None so public browsing is never broken."""
     from ytmusicapi import YTMusic
     from ytmusicapi.auth.oauth import OAuthCredentials
-    # 1) Native one-tap token (TV client).
+    # 1) Browser session cookies — the working path.
+    yt = _browser_client()
+    if yt is not None:
+        return yt
+    # 2) Native one-tap token (TV client) — fallback (currently 400s on browse upstream).
     if os.path.exists(ITUBE_OAUTH_PATH):
         try:
             return YTMusic(ITUBE_OAUTH_PATH, oauth_credentials=_tv_creds())
         except Exception:
             pass
-    # 2) Reuse iNiR's OAuth (its own TV/limited-input client).
+    # 3) Reuse iNiR's OAuth (its own TV/limited-input client).
     if os.path.exists(OAUTH_PATH):
         try:
             with open(OAUTH_PATH) as f:
@@ -108,6 +200,17 @@ def cmd_oauth_poll(device_code):
         if "slow_down" in msg:
             print(json.dumps({"status": "pending"})); return
         print(json.dumps({"status": "error", "error": str(e)[:200]})); return
+    # ytmusicapi's token_from_code returns the raw token endpoint JSON WITHOUT raising on
+    # OAuth errors, so a still-pending device returns {"error": "authorization_pending"}.
+    # Treat any error payload — or a response missing access_token — as not-yet-authorized,
+    # otherwise we'd save that error dict as the token and report a false "authorized".
+    err = token.get("error") if isinstance(token, dict) else None
+    if err:
+        if err in ("authorization_pending", "slow_down"):
+            print(json.dumps({"status": "pending"})); return
+        print(json.dumps({"status": "error", "error": str(err)[:200]})); return
+    if not (isinstance(token, dict) and token.get("access_token")):
+        print(json.dumps({"status": "pending"})); return
     try:
         data = dict(token)
         data.setdefault("scope", "https://www.googleapis.com/auth/youtube")
@@ -131,15 +234,47 @@ def cmd_logout():
     print(json.dumps({"status": "ok"}))
 
 
+class _FallbackClient:
+    """Wraps an authenticated YTMusic. A stale/rotated cookie session doesn't just lose
+    personalization — it makes EVERY browse call (even public data) return an empty body
+    ('Expecting value: line 1 column 1'), which would break all of InnerTune. So if an authed call
+    raises or returns nothing, transparently retry the same call on a fresh public client. Personal
+    data still comes through when the session is valid; public browse never breaks when it isn't."""
+    def __init__(self, authed):
+        self._authed = authed
+        self._public = None
+
+    def _pub(self):
+        from ytmusicapi import YTMusic
+        if self._public is None:
+            self._public = YTMusic()
+        return self._public
+
+    def __getattr__(self, name):
+        attr = getattr(self._authed, name)
+        if not callable(attr):
+            return attr
+        def wrapped(*a, **k):
+            try:
+                res = attr(*a, **k)
+                if res:
+                    return res
+            except Exception:
+                pass
+            return getattr(self._pub(), name)(*a, **k)
+        return wrapped
+
+
 def _client():
-    """Construct a YTMusic client — authenticated if iNiR's OAuth is set up, else public.
-    Public browsing works fully unauthenticated; auth only adds personalization, so a
-    broken/expired token must never break public browsing."""
+    """Construct a YTMusic client for PUBLIC/mixed browse. When a cookie session exists it's wrapped
+    so a stale session can never break public browsing (auth only adds personalization). Auth-only
+    commands (library, rate) use `_authenticated_client()` directly instead."""
     try:
         from ytmusicapi import YTMusic
     except ImportError:
         _fail("ytmusicapi not installed")
-    return _authenticated_client() or YTMusic()
+    authed = _authenticated_client()
+    return _FallbackClient(authed) if authed is not None else YTMusic()
 
 
 def _best_thumb(thumbs):
@@ -215,22 +350,144 @@ def _card(item):
 
 # ---- subcommands ----
 
-def cmd_authstatus():
-    """Report whether InnerTube has a usable authenticated session."""
-    if not (os.path.exists(ITUBE_OAUTH_PATH) or os.path.exists(OAUTH_PATH)):
-        print(json.dumps({"authenticated": False, "account": ""}))
-        return
+def _auth_helper():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "ytmusic_auth.py")
+
+
+def _account_probe():
+    """Validate the current yt-cookies.txt against the real YTM API.
+    Returns (authenticated, account_name, avatar_url). `LOGIN_INFO` is YouTube's signed-in marker —
+    Google-only cookies (SID/SAPISID) without it mean the browser is logged into Google but NOT
+    YouTube, so YTM serves anonymous/empty data. We require it AND a successful account call so the
+    UI never claims a login that yields an empty library."""
+    cookie_str, cookies = _read_cookie_header()
+    signed_in = bool(cookies and cookies.get("LOGIN_INFO"))
+    if not signed_in and not (os.path.exists(ITUBE_OAUTH_PATH) or os.path.exists(OAUTH_PATH)):
+        return False, "", ""
     yt = _authenticated_client()
     if yt is None:
-        print(json.dumps({"authenticated": False, "account": ""}))
-        return
-    name = ""
+        return False, "", ""
+    # The ONLY reliable signed-in signal is `get_account_info` returning a real account name.
+    # A rotated/anonymous session still has cookies and still answers browse calls (200), and
+    # `get_library_songs` returns [] without raising — indistinguishable from a real-but-empty
+    # library — so we must NOT use it to prove sign-in. On an anonymous session, get_account_info
+    # hits the signed-out account menu (no activeAccountHeaderRenderer) and raises → not signed in.
     try:
-        info = yt.get_account_info()
-        name = (info or {}).get("accountName", "") or ""
+        info = yt.get_account_info() or {}
+    except Exception:
+        return False, "", ""
+    name = info.get("accountName", "") or ""
+    if not name:
+        return False, "", ""
+    photo = info.get("accountPhotoUrl") or info.get("thumbnails") or ""
+    if isinstance(photo, str):
+        avatar = photo
+    elif isinstance(photo, list):
+        avatar = _best_thumb(photo)
+    else:
+        avatar = ""
+    return True, name, avatar
+
+
+def cmd_authstatus():
+    """Report whether the stored session works for personalized browse, plus account + avatar."""
+    auth, name, avatar = _account_probe()
+    print(json.dumps({"authenticated": auth, "account": name, "avatar": avatar}))
+
+
+def cmd_detect_browsers():
+    """Enumerate installed browsers (+ system default) that have a usable cookie store."""
+    import subprocess
+    try:
+        out = subprocess.run([sys.executable, _auth_helper(), "detect"],
+                             capture_output=True, text=True, timeout=15)
+        sys.stdout.write(out.stdout or '{"browsers": [], "default": null}')
+    except Exception as e:
+        print(json.dumps({"browsers": [], "default": None, "error": str(e)[:200]}))
+
+
+def _extract_for(browser):
+    import subprocess
+    try:
+        subprocess.run([sys.executable, _auth_helper(), browser], capture_output=True, timeout=90)
     except Exception:
         pass
-    print(json.dumps({"authenticated": True, "account": name}))
+
+
+def _extract_and_probe(browser, attempts=3):
+    """Extract this browser's cookies and validate against YTM, retrying a few times. Live browser
+    cookies rotate constantly; a single extraction can momentarily catch a mid-rotation/anonymous
+    state even though the browser IS logged in. Retrying a couple of times with a short pause lands
+    on the settled, authenticating set. Returns (authenticated, name, avatar)."""
+    for i in range(attempts):
+        _extract_for(browser)
+        auth, name, avatar = _account_probe()
+        if auth:
+            return True, name, avatar
+        if i < attempts - 1:
+            time.sleep(1.5)
+    return False, "", ""
+
+
+def cmd_connect(browser="auto"):
+    """Connect by reusing the logged-in browser's YouTube session cookies (InnerTune-style).
+    `auto` (default) detects installed browsers and tries each — system default first — until one
+    yields a session that actually works for personalized browse. An explicit browser id extracts
+    only from that browser. Reports {authenticated, account, avatar, browser}."""
+    import subprocess
+    if not browser or browser == "auto":
+        try:
+            det = json.loads(subprocess.run([sys.executable, _auth_helper(), "detect"],
+                                            capture_output=True, text=True, timeout=15).stdout or "{}")
+        except Exception:
+            det = {}
+        order = []
+        if det.get("default"):
+            order.append(det["default"])
+        for b in det.get("browsers", []):
+            if b.get("id") and b["id"] not in order:
+                order.append(b["id"])
+        if not order:
+            print(json.dumps({"authenticated": False, "error": "no_browser"})); return
+        # Give the system-default browser more retries (it's the most likely to be the logged-in one).
+        for idx, b in enumerate(order):
+            auth, name, avatar = _extract_and_probe(b, attempts=3 if idx == 0 else 1)
+            if auth:
+                print(json.dumps({"authenticated": True, "account": name, "avatar": avatar, "browser": b})); return
+        print(json.dumps({"authenticated": False, "error": "not_logged_in"})); return
+    auth, name, avatar = _extract_and_probe(browser, attempts=3)
+    if not auth:
+        print(json.dumps({"authenticated": False, "error": "not_logged_in"})); return
+    print(json.dumps({"authenticated": True, "account": name, "avatar": avatar, "browser": browser}))
+
+
+def cmd_connect_manual(path):
+    """Connect from a manually-exported cookies.txt (the reliable incognito-export method). YouTube
+    rotates cookies on open tabs, so a file exported from a closed incognito session stays valid
+    far longer than live extraction from the user's active profile."""
+    import subprocess
+    try:
+        r = subprocess.run([sys.executable, _auth_helper(), "import", path],
+                          capture_output=True, text=True, timeout=15)
+        imp = json.loads(r.stdout or "{}")
+    except Exception as e:
+        print(json.dumps({"authenticated": False, "error": str(e)[:200]})); return
+    if imp.get("status") != "success":
+        print(json.dumps({"authenticated": False, "error": imp.get("message", "import failed")})); return
+    auth, name, avatar = _account_probe()
+    if not auth:
+        print(json.dumps({"authenticated": False, "error": "not_logged_in"})); return
+    print(json.dumps({"authenticated": True, "account": name, "avatar": avatar, "browser": "manual"}))
+
+
+def cmd_disconnect():
+    for p in (YTCOOKIE_PATH, ITUBE_OAUTH_PATH):
+        try:
+            if os.path.exists(p):
+                os.remove(p)
+        except Exception:
+            pass
+    print(json.dumps({"connected": False}))
 
 
 def cmd_ping():
@@ -350,6 +607,43 @@ def cmd_playlist(playlist_id):
     print(json.dumps({"_done": True, "count": count}), flush=True)
 
 
+def cmd_library(kind, limit="50"):
+    yt = _authenticated_client()
+    if yt is None:
+        _fail("auth required")
+    try:
+        n = int(limit or 50)
+    except ValueError:
+        n = 50
+    try:
+        if kind == "songs":
+            items = [_track(t) for t in yt.get_library_songs(limit=n)]
+        elif kind == "artists":
+            items = [_card(t) for t in yt.get_library_artists(limit=n)]
+        elif kind == "albums":
+            items = [_card(t) for t in yt.get_library_albums(limit=n)]
+        elif kind == "playlists":
+            items = [_card(t) for t in yt.get_library_playlists(limit=n)]
+        else:
+            _fail("unknown library kind")
+    except Exception as e:
+        _fail("library failed", e)
+    print(json.dumps({"kind": kind, "items": items}))
+
+
+def cmd_rate(video_id, rating):
+    yt = _authenticated_client()
+    if yt is None:
+        _fail("auth required")
+    try:
+        from ytmusicapi.models.content.enums import LikeStatus
+        status = LikeStatus[rating] if rating in LikeStatus.__members__ else LikeStatus.INDIFFERENT
+        yt.rate_song(video_id, status)
+    except Exception as e:
+        _fail("rate failed", e)
+    print(json.dumps({"status": "ok", "videoId": video_id, "rating": status.value}))
+
+
 def _parse_lrc(lrc):
     """Parse LRC text into [{t: seconds, line: str}] sorted by time."""
     import re
@@ -438,6 +732,10 @@ _COMMANDS = {
     "auth-status": (cmd_authstatus, 0),
     "oauth-request": (cmd_oauth_request, 0),
     "oauth-poll": (cmd_oauth_poll, 1),
+    "connect": (cmd_connect, 0),       # +optional browser id ("auto" default)
+    "connect-manual": (cmd_connect_manual, 1),
+    "detect-browsers": (cmd_detect_browsers, 0),
+    "disconnect": (cmd_disconnect, 0),
     "logout": (cmd_logout, 0),
     "search": (cmd_search, 1),       # +optional filter
     "home": (cmd_home, 0),           # +optional limit
@@ -445,6 +743,8 @@ _COMMANDS = {
     "artist": (cmd_artist, 1),
     "album": (cmd_album, 1),
     "playlist": (cmd_playlist, 1),
+    "library": (cmd_library, 1),
+    "rate": (cmd_rate, 2),
     "lyrics": (cmd_lyrics, 1),
     "song": (cmd_song, 1),
 }

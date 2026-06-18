@@ -87,21 +87,19 @@ StyledFlickable {
             Layout.bottomMargin: 12
             spacing: 12
 
-            RippleButtonWithIcon {
+            ITButton {
                 Layout.fillWidth: true
-                buttonRadius: Appearance.rounding.full
-                colBackground: Appearance.m3colors.m3primary
-                materialIcon: "play_arrow"
-                mainText: Translation.tr("Play")
-                releaseAction: () => root.playRequested(0, false)
+                kind: "filled"
+                icon: "play_arrow"
+                label: Translation.tr("Play")
+                onClicked: root.playRequested(0, false)
             }
-            RippleButtonWithIcon {
+            ITButton {
                 Layout.fillWidth: true
-                buttonRadius: Appearance.rounding.full
-                colBackground: "transparent"
-                materialIcon: "shuffle"
-                mainText: Translation.tr("Shuffle")
-                releaseAction: () => root.playRequested(0, true)
+                kind: "outlined"
+                icon: "shuffle"
+                label: Translation.tr("Shuffle")
+                onClicked: root.playRequested(0, true)
             }
         }
 

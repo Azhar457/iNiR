@@ -15,6 +15,9 @@ StyledFlickable {
     contentHeight: column.implicitHeight
     clip: true
 
+    // Two-column quick-picks once the sidebar is widened (Ctrl+O); single column + peek otherwise.
+    readonly property bool wide: width >= 620
+
     signal playRequested(var item)
     signal albumRequested(string browseId)
     signal playlistRequested(string playlistId)
@@ -34,20 +37,43 @@ StyledFlickable {
         width: root.width
         spacing: 0
 
+        // Breathing room under the search bar / filter chips.
+        Item { Layout.fillWidth: true; Layout.preferredHeight: 8 }
+
         // Loading / empty placeholder.
         Item {
             Layout.fillWidth: true
-            Layout.preferredHeight: 200
+            Layout.preferredHeight: ITDimens.homePlaceholderHeight
             visible: InnerTube.homeLoading || (InnerTube.homeShelves.length === 0)
             MaterialLoadingIndicator {
                 anchors.centerIn: parent
                 visible: InnerTube.homeLoading
             }
-            StyledText {
+            ColumnLayout {
+                id: homePlaceholder
                 anchors.centerIn: parent
+                spacing: 8
                 visible: !InnerTube.homeLoading && InnerTube.homeShelves.length === 0
-                text: InnerTube.available ? Translation.tr("Pull to load home") : Translation.tr("Install python-ytmusicapi")
-                color: Appearance.m3colors.m3onSurfaceVariant
+                MaterialSymbol {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: InnerTube.available ? "refresh" : "extension_off"
+                    iconSize: 40
+                    color: Appearance.m3colors.m3onSurfaceVariant
+                }
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    text: InnerTube.available ? Translation.tr("Tap to load home") : Translation.tr("Install python-ytmusicapi")
+                    color: Appearance.m3colors.m3onSurfaceVariant
+                }
+            }
+            // Tap-to-retry covers the placeholder (kept out of the layout to avoid anchor conflicts).
+            MouseArea {
+                anchors.fill: parent
+                visible: homePlaceholder.visible
+                enabled: InnerTube.available
+                cursorShape: Qt.PointingHandCursor
+                onClicked: InnerTube.loadHome()
             }
         }
 
@@ -56,6 +82,7 @@ StyledFlickable {
             delegate: ColumnLayout {
                 required property var modelData
                 Layout.fillWidth: true
+                Layout.bottomMargin: ITDimens.shelfSpacing
                 spacing: 0
 
                 ITNavigationTitle {
@@ -81,11 +108,16 @@ StyledFlickable {
                         id: songGrid
                         rows: 4
                         flow: Grid.TopToBottom
+                        leftPadding: ITDimens.shelfEdgePadding
+                        rightPadding: ITDimens.shelfEdgePadding
                         Repeater {
                             model: songShelf ? (modelData.items ?? []) : []
                             delegate: ITSongListItem {
                                 required property var modelData
-                                width: 300
+                                // Wide: two clean columns fill the row. Narrow: ~1 card + a peek.
+                                width: root.wide
+                                    ? Math.floor((root.width - ITDimens.shelfEdgePadding * 2) / 2)
+                                    : Math.min(ITDimens.quickPicksColumnMax, Math.round(root.width * 0.82))
                                 height: ITDimens.listItemHeight
                                 song: modelData
                                 isActive: modelData.videoId === YtMusic.currentVideoId
@@ -109,8 +141,8 @@ StyledFlickable {
                     Row {
                         id: shelfRow
                         height: parent.height
-                        leftPadding: 6
-                        rightPadding: 6
+                        leftPadding: ITDimens.shelfEdgePadding
+                        rightPadding: ITDimens.shelfEdgePadding
                         Repeater {
                             model: songShelf ? [] : (modelData.items ?? [])
                             delegate: ITGridItem {
