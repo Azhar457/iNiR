@@ -1317,12 +1317,12 @@ ContentPage {
                     MaterialSymbol {
                         text: "key"
                         iconSize: Appearance.font.pixelSize.larger
-                        color: Appearance.colors.colOnSecondaryContainer
+                        color: Appearance.colors.colSubtext
                     }
                     StyledText {
                         text: Translation.tr("API key")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSecondaryContainer
+                        color: Appearance.colors.colOnSurface
                     }
                     MaterialTextField {
                         id: wallhavenApiInput

@@ -101,7 +101,7 @@ RowLayout {
                 text: root.text
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                     : Appearance.inirEverywhere ? Appearance.inir.colText
-                    : Appearance.colors.colOnSecondaryContainer
+                    : Appearance.colors.colOnSurface
                 opacity: root.enabled ? 1 : 0.4
             }
 
