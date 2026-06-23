@@ -121,7 +121,7 @@ Item { // Bar content region
         : (wallpaperColorQuantizer?.colors?.[0] ?? Appearance.colors.colPrimary)
     AdaptedMaterialScheme {
         id: _localBlendedColors
-        color: ColorUtils.mix(root.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
+        color: ColorUtils.mix(root.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
     }
     readonly property QtObject blendedColors: root._useGlobalQuantizer
         ? Appearance.wallpaperBlendedColors : _localBlendedColors
@@ -1085,7 +1085,7 @@ Item { // Bar content region
             toggled: GlobalStates.sidebarRightOpen
             property color colText: root.zzzEverywhere
                 ? (toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
-                : toggled ? Appearance.m3colors.m3onSecondaryContainer : Appearance.colors.colOnLayer0
+                : toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
 
             Behavior on colText {
                 animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

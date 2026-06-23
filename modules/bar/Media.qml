@@ -287,7 +287,7 @@ Item {
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                         : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
                         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
-                        : Appearance.m3colors.m3onSecondaryContainer
+                        : Appearance.colors.colOnSecondaryContainer
                 }
             }
         }

@@ -44,8 +44,8 @@ Item {
             value: percentage
             implicitSize: 20
             colPrimary: root.warning ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError) :
-                        root.caution ? (Appearance.inirEverywhere ? Appearance.inir.colWarning : Appearance.m3colors.m3tertiary) :
-                        (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.zzzEverywhere ? Appearance.colors.colOnSurfaceVariant : Appearance.colors.colOnSecondaryContainer)
+                        root.caution ? (Appearance.inirEverywhere ? Appearance.inir.colWarning : Appearance.colors.colTertiary) :
+                        (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant)
             accountForLightBleeding: !root.warning && !root.caution
             enableAnimation: false
 
@@ -60,7 +60,7 @@ Item {
                     fill: 1
                     text: iconName
                     iconSize: Appearance.font.pixelSize.normal
-                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.zzzEverywhere ? Appearance.colors.colOnSurfaceVariant : Appearance.m3colors.m3onSecondaryContainer
+                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant
                 }
             }
         }

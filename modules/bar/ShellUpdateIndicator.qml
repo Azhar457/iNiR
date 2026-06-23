@@ -27,9 +27,9 @@ MouseArea {
     acceptedButtons: Qt.LeftButton | Qt.RightButton
 
     readonly property color accentColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary)
-        : Appearance.auroraEverywhere ? (Appearance.aurora?.colAccent ?? Appearance.m3colors.m3primary)
-        : Appearance.m3colors.m3primary
+        : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.colors.colPrimary)
+        : Appearance.auroraEverywhere ? (Appearance.aurora?.colAccent ?? Appearance.colors.colPrimary)
+        : Appearance.colors.colPrimary
 
     onClicked: (mouse) => {
         if (ShellUpdates.isUpdating) return;
@@ -52,9 +52,9 @@ MouseArea {
         color: {
             if (ShellUpdates.isUpdating) {
                 if (Appearance.angelEverywhere) return ColorUtils.transparentize(Appearance.angel.colPrimary, 0.92)
-                if (Appearance.inirEverywhere) return ColorUtils.transparentize(Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary, 0.92)
-                if (Appearance.auroraEverywhere) return ColorUtils.transparentize(Appearance.aurora?.colAccent ?? Appearance.m3colors.m3primary, 0.92)
-                return ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.92)
+                if (Appearance.inirEverywhere) return ColorUtils.transparentize(Appearance.inir?.colAccent ?? Appearance.colors.colPrimary, 0.92)
+                if (Appearance.auroraEverywhere) return ColorUtils.transparentize(Appearance.aurora?.colAccent ?? Appearance.colors.colPrimary, 0.92)
+                return ColorUtils.transparentize(Appearance.colors.colPrimary, 0.92)
             }
             if (root.pressed) {
                 if (Appearance.angelEverywhere) return Appearance.angel.colGlassCardActive
@@ -69,9 +69,9 @@ MouseArea {
                 return Appearance.colors.colLayer1Hover
             }
             if (Appearance.angelEverywhere) return ColorUtils.transparentize(Appearance.angel.colPrimary, 0.85)
-            if (Appearance.inirEverywhere) return ColorUtils.transparentize(Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary, 0.85)
-            if (Appearance.auroraEverywhere) return ColorUtils.transparentize(Appearance.aurora?.colAccent ?? Appearance.m3colors.m3primary, 0.85)
-            return ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.88)
+            if (Appearance.inirEverywhere) return ColorUtils.transparentize(Appearance.inir?.colAccent ?? Appearance.colors.colPrimary, 0.85)
+            if (Appearance.auroraEverywhere) return ColorUtils.transparentize(Appearance.aurora?.colAccent ?? Appearance.colors.colPrimary, 0.85)
+            return ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
         }
 
         border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
@@ -310,7 +310,7 @@ MouseArea {
                         text: "account_tree"
                         iconSize: Appearance.font.pixelSize.large
                         color: ShellUpdates.isNonMainBranch
-                            ? Appearance.m3colors.m3tertiary
+                            ? Appearance.colors.colTertiary
                             : Appearance.colors.colOnSurfaceVariant
                     }
                     StyledText {
@@ -324,7 +324,7 @@ MouseArea {
                         text: ShellUpdates.currentBranch
                         font.family: Appearance.font.family.monospace
                         color: ShellUpdates.isNonMainBranch
-                            ? Appearance.m3colors.m3tertiary
+                            ? Appearance.colors.colTertiary
                             : Appearance.colors.colOnSurfaceVariant
                     }
                 }
@@ -335,7 +335,7 @@ MouseArea {
                     Layout.fillWidth: true
                     text: Translation.tr("You are on a non-release branch. Updates track this branch.")
                     font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.m3colors.m3tertiary
+                    color: Appearance.colors.colTertiary
                     wrapMode: Text.WordWrap
                     opacity: 0.85
                 }

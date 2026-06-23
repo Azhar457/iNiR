@@ -82,11 +82,11 @@ MouseArea {
         }
         if (pomodoroActive) {
             return (TimerService?.pomodoroBreak ?? false)
-                ? (Appearance.colors.colTertiary ?? Appearance.m3colors.m3tertiary)
+                ? Appearance.colors.colTertiary
                 : Appearance.colors.colPrimary
         }
         if (countdownActive)
-            return Appearance.m3colors.m3secondary
+            return Appearance.colors.colSecondary
         return Appearance.colors.colOnLayer1
     }
 

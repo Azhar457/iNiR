@@ -301,9 +301,9 @@ Item {
                 
                 color: Appearance.angelEverywhere
                     ? Appearance.angel.colGlassCard
-                    : Appearance.auroraEverywhere 
-                    ? Appearance.aurora.colSubSurface 
-                    : ColorUtils.transparentize(Appearance.m3colors.m3secondaryContainer, 0.4)
+                    : Appearance.auroraEverywhere
+                    ? Appearance.aurora.colSubSurface
+                    : ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.4)
                 opacity: (workspaceOccupied[index] && !(!activeWindow?.activated && currentWorkspaceNumber === index+1)) ? 1 : 0
 
                 Behavior on opacity {
@@ -438,9 +438,9 @@ Item {
                             return wsConfig.numberMap?.[button.workspaceValue - 1] || button.workspaceValue
                         }
                         elide: Text.ElideRight
-                        color: (currentWorkspaceNumber == button.workspaceValue) ? 
-                            Appearance.m3colors.m3onPrimary : 
-                            (workspaceOccupied[index] ? Appearance.m3colors.m3onSecondaryContainer : 
+                        color: (currentWorkspaceNumber == button.workspaceValue) ?
+                            Appearance.colors.colOnPrimary :
+                            (workspaceOccupied[index] ? Appearance.colors.colOnSecondaryContainer :
                                 Appearance.colors.colOnLayer1Inactive)
 
                         Behavior on opacity {
@@ -458,9 +458,9 @@ Item {
                         width: workspaceButtonWidth * 0.18
                         height: width
                         radius: width / 2
-                        color: (currentWorkspaceNumber == button.workspaceValue) ? 
-                            Appearance.m3colors.m3onPrimary : 
-                            (workspaceOccupied[index] ? Appearance.m3colors.m3onSecondaryContainer : 
+                        color: (currentWorkspaceNumber == button.workspaceValue) ?
+                            Appearance.colors.colOnPrimary :
+                            (workspaceOccupied[index] ? Appearance.colors.colOnSecondaryContainer :
                                 Appearance.colors.colOnLayer1Inactive)
 
                         Behavior on opacity {
@@ -558,9 +558,9 @@ Item {
                 topRightRadius: root.vertical ? radiusPrev : radiusNext
                 bottomRightRadius: radiusNext
                 
-                color: Appearance.auroraEverywhere 
-                    ? Appearance.aurora.colSubSurface 
-                    : ColorUtils.transparentize(Appearance.m3colors.m3secondaryContainer, 0.4)
+                color: Appearance.auroraEverywhere
+                    ? Appearance.aurora.colSubSurface
+                    : ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.4)
 
                 Behavior on radiusPrev {
                     animation: NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
@@ -635,7 +635,7 @@ Item {
                     
                     property string appIconSource: AppSearch.getIconSource(columnButton.modelData?.app_id ?? "")
                     property bool isActive: columnButton.index === root.currentWindowIndex
-                    property color dotColor: isActive ? Appearance.m3colors.m3onPrimary : Appearance.m3colors.m3onSecondaryContainer
+                    property color dotColor: isActive ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer
 
                     // Dot (when showAppIcons is off) - always hidden in column mode
                     Rectangle {
