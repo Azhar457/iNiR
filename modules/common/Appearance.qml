@@ -961,11 +961,16 @@ Singleton {
         // chroma reserved for signal accents and registration marks.
         readonly property real surfaceHue: root.m3colors.m3background.hslSaturation > 0.02
             ? root.m3colors.m3background.hslHue : root.m3colors.m3primary.hslHue
-        // Saturation is held LOW on the structural plates so the wallpaper hue is
-        // reserved for signal accents/registration marks; chrome stays carbon/paper.
+        // Saturation is held MODERATE on the structural plates: enough that the
+        // wallpaper's hue reads through on cards (like material's tinted
+        // surfaces) instead of flat carbon, but more restrained than raw
+        // material so signal accents still pop. Earlier 0.10 cap killed the
+        // wallpaper character and cards read as ugly near-black.
+        // (Keeping the 16% / 9% lift factor so warm/anime wallpapers stay
+        // tasteful — surfaceSat never reaches raw wallpaper saturation.)
         readonly property real surfaceSat: dark
-            ? Math.min(0.10, Math.max(0.03, root.m3colors.m3primary.hslSaturation * 0.16))
-            : Math.min(0.08, Math.max(0.02, root.m3colors.m3primary.hslSaturation * 0.09))
+            ? Math.min(0.22, Math.max(0.08, root.m3colors.m3primary.hslSaturation * 0.32))
+            : Math.min(0.16, Math.max(0.06, root.m3colors.m3primary.hslSaturation * 0.20))
         // Dark ramp deliberately WIDENED so the 5 plates stay distinguishable — the
         // earlier compressed ramp made the layering read as one flat black.
         readonly property color bg0: Qt.hsla(surfaceHue, surfaceSat, dark ? 0.030 : 0.978, 1.0)
