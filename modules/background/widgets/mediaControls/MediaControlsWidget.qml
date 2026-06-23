@@ -36,7 +36,7 @@ AbstractBackgroundWidget {
     readonly property color accentPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
         : Appearance.colors.colPrimary
 
     readonly property string vizType: Config.getNestedValue("background.widgets.mediaControls.visualizerType", "wave")

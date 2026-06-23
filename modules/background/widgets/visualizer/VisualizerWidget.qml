@@ -163,17 +163,17 @@ AbstractBackgroundWidget {
         colorLow: Appearance.zzzEverywhere ? Appearance.zzz.chrome
             : Appearance.angelEverywhere ? Appearance.angel.colSecondaryContainer
             : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
-            : Appearance.auroraEverywhere ? Appearance.m3colors.m3secondaryContainer
+            : Appearance.auroraEverywhere ? Appearance.colors.colSecondaryContainer
             : Appearance.colors.colSecondaryContainer
         colorMed: Appearance.zzzEverywhere ? Appearance.zzz.accent
             : Appearance.angelEverywhere ? Appearance.angel.colPrimary
             : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-            : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+            : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
             : Appearance.colors.colPrimary
         colorHigh: Appearance.zzzEverywhere ? Appearance.zzz.signal
             : Appearance.angelEverywhere ? Appearance.angel.colTertiary
             : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-            : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
+            : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
             : Appearance.colors.colTertiary
         opacity: 1.0 - dimFactor * 0.6
     }
@@ -188,7 +188,7 @@ AbstractBackgroundWidget {
         color: Appearance.zzzEverywhere ? Appearance.zzz.accent
             : Appearance.angelEverywhere ? Appearance.angel.colPrimary
             : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-            : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+            : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
             : Appearance.colors.colPrimary
         opacity: 1.0 - dimFactor * 0.6
     }

@@ -33,22 +33,22 @@ Item {
     readonly property color _primaryColor: Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
         : Appearance.colors.colPrimary
     readonly property color _secondaryColor: Appearance.zzzEverywhere ? Appearance.zzz.secondary
         : Appearance.angelEverywhere ? Appearance.angel.colSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colSecondary
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3secondary
+        : Appearance.auroraEverywhere ? Appearance.colors.colSecondary
         : Appearance.colors.colSecondary
     readonly property color _tertiaryColor: Appearance.zzzEverywhere ? Appearance.zzz.tertiary
         : Appearance.angelEverywhere ? Appearance.angel.colTertiary
         : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
+        : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
         : Appearance.colors.colTertiary
     readonly property color _primaryContainerColor: Appearance.zzzEverywhere ? Appearance.zzz.chrome
         : Appearance.angelEverywhere ? Appearance.angel.colPrimaryContainer
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
+        : Appearance.auroraEverywhere ? Appearance.colors.colPrimaryContainer
         : Appearance.colors.colPrimaryContainer
 
     property color colShadow: Appearance.colors.colShadow

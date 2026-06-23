@@ -54,17 +54,17 @@ AbstractBackgroundWidget {
     readonly property color accentPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
         : Appearance.colors.colPrimary
     readonly property color accentPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.chrome
-        : Appearance.angelEverywhere ? Appearance.m3colors.m3primaryContainer
+        : Appearance.angelEverywhere ? Appearance.colors.colPrimaryContainer
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
+        : Appearance.auroraEverywhere ? Appearance.colors.colPrimaryContainer
         : Appearance.colors.colPrimaryContainer
     readonly property color accentOnPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.ink
-        : Appearance.angelEverywhere ? Appearance.m3colors.m3onPrimaryContainer
+        : Appearance.angelEverywhere ? Appearance.colors.colOnPrimaryContainer
         : Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
-        : Appearance.auroraEverywhere ? Appearance.m3colors.m3onPrimaryContainer
+        : Appearance.auroraEverywhere ? Appearance.colors.colOnPrimaryContainer
         : Appearance.colors.colOnPrimaryContainer
 
     // ── Style tokens ──

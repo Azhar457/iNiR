@@ -92,12 +92,12 @@ AbstractBackgroundWidget {
             ? (Appearance.zzzEverywhere ? Appearance.zzz.tertiary
                 : Appearance.angelEverywhere ? Appearance.angel.colTertiary
                 : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-                : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
+                : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
                 : Appearance.colors.colTertiary)
             : (Appearance.zzzEverywhere ? Appearance.zzz.accent
                 : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                 : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+                : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                 : Appearance.colors.colPrimary)
 
     readonly property color trackColor: Appearance.zzzEverywhere ? Appearance.zzz.chrome

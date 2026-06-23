@@ -1223,11 +1223,11 @@ Scope {
                     readonly property bool gridVisible: Config.getNestedValue("background.widgets.editGrid.snap", true)
                     readonly property color gridColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                         : Appearance.inirEverywhere ? Appearance.inir.colAccent
-                        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+                        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                         : Appearance.colors.colPrimary
                     readonly property color crosshairColor: Appearance.angelEverywhere ? Appearance.angel.colTertiary
                         : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-                        : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
+                        : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
                         : Appearance.colors.colTertiary
                     readonly property int zoneMargin: 48
 
