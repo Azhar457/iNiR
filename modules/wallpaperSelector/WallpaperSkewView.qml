@@ -1005,7 +1005,7 @@ Item {
                     for (let i = 0; i < layers.length; i++) {
                         const l = layers[i]
                         ctx.globalAlpha = l.alpha
-                        ctx.fillStyle = "#000000"
+                        ctx.fillStyle = Appearance.colors.colScrim
                         ctx.beginPath()
                         ctx.moveTo(ox + sk + l.dx, oy + l.dy)
                         ctx.lineTo(ox + w + l.dx, oy + l.dy)
@@ -1267,7 +1267,7 @@ Item {
                         // Surface background
                         Rectangle {
                             anchors.fill: parent
-                            color: Appearance.m3colors.m3surfaceContainer
+                            color: Appearance.colors.colSurfaceContainer
                         }
 
                         // Faded thumbnail behind
@@ -1478,7 +1478,7 @@ Item {
                                     text: deleteBtn.confirmMode
                                         ? Translation.tr("CONFIRM DELETE")
                                         : Translation.tr("DELETE")
-                                    color: backDeleteMouse.containsMouse ? "#ff6b6b"
+                                    color: backDeleteMouse.containsMouse ? Appearance.colors.colError
                                         : Appearance.colors.colTertiary
                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                     font.weight: Font.Medium
@@ -1706,7 +1706,7 @@ Item {
         GlassBackground {
             id: filterBarGlass
             anchors.fill: parent
-            fallbackColor: Appearance.m3colors.m3surfaceContainer
+            fallbackColor: Appearance.colors.colSurfaceContainer
             inirColor: Appearance.inir.colLayer2
             auroraTransparency: Appearance.aurora.overlayTransparentize
             screenX: { const p = filterBar.mapToGlobal(0, 0); return p.x }
@@ -2025,13 +2025,13 @@ Item {
                     color: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
                         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                         : Appearance.auroraEverywhere ? Appearance.aurora.colOverlay
-                        : Appearance.m3colors.m3surfaceContainer
+                        : Appearance.colors.colSurfaceContainer
                     border.width: 1
                     border.color: root.borderColor
                     layer.enabled: true
                     layer.effect: MultiEffect {
                         shadowEnabled: true
-                        shadowColor: ColorUtils.applyAlpha("#000000", 0.25)
+                        shadowColor: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.25)
                         shadowVerticalOffset: 4
                         shadowBlur: 0.4
                     }

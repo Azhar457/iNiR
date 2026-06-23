@@ -37,7 +37,7 @@ RippleButton {
         ? ((button.down || button.keyboardDown) ? Appearance.zzz.onSignal
             : (button.focus || button.hovered) ? Appearance.zzz.onSticker : Appearance.zzz.ink)
         : (button.down || button.keyboardDown || button.focus || button.hovered) ?
-        (Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.m3colors.m3onPrimary)
+        (Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary)
         : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0)
 
     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter

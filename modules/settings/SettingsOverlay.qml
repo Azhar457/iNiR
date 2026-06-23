@@ -440,7 +440,7 @@ Scope {
             Rectangle {
                 id: scrimBg
                 anchors.fill: parent
-                color: Appearance.m3colors.m3scrim
+                color: Appearance.colors.colScrim
                 opacity: (GlobalStates.settingsOverlayOpen ?? false) ? (Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35) / 100 : 0
                 // Must remain interactive even when fully transparent (scrimDim = 0)
                 visible: (GlobalStates.settingsOverlayOpen ?? false)
