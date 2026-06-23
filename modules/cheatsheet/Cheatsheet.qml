@@ -105,7 +105,7 @@ Scope {
         Rectangle {
             anchors.fill: parent
             z: -1
-            color: ColorUtils.transparentize(Appearance.m3colors.m3background, 1 - 0.85)
+            color: ColorUtils.transparentize(Appearance.colors.colBackground, 1 - 0.85)
             opacity: root.cheatsheetOpen ? 1 : 0
 
             Behavior on color {
@@ -294,7 +294,7 @@ Scope {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    color: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.m3colors.m3surfaceContainerLow
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colSurfaceContainerLow
                     radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
 
                     Item {

@@ -30,7 +30,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             text: Translation.tr("No matches found")
             font.pixelSize: Appearance.font.pixelSize.large
-            color: Appearance.m3colors.m3onSurface
+            color: Appearance.colors.colOnSurface
         }
         
         StyledText {
@@ -60,13 +60,13 @@ Item {
                 MaterialSymbol {
                     text: "backspace"
                     iconSize: Appearance.font.pixelSize.small
-                    color: Appearance.m3colors.m3onSurface
+                    color: Appearance.colors.colOnSurface
                 }
                 
                 StyledText {
                     text: Translation.tr("Clear search")
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.m3colors.m3onSurface
+                    color: Appearance.colors.colOnSurface
                 }
             }
         }

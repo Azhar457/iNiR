@@ -119,7 +119,7 @@ RippleButton {
             Appearance.font.pixelSize.large
         horizontalAlignment: Text.AlignHCenter
         color: root.toggled
-            ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.m3colors.m3onPrimary)
+            ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary)
             : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1)
         text: root.isBackspace ? "backspace" : root.isEnter ? "subdirectory_arrow_left" :
             (root.toggled && root.keyData.labelToggled) ? root.keyData.labelToggled :

@@ -343,7 +343,7 @@ MouseArea {
     // Wallpaper dim overlay
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
+        color: Appearance.colors.colScrim
         opacity: (Config.options?.lock?.dim?.enable ?? false) ? (Config.options?.lock?.dim?.opacity ?? 0.3) : 0
         z: 0
 

@@ -211,7 +211,7 @@ Scope { // Scope
                                     text: root.pinned ? "lock" : "keep"
                                     horizontalAlignment: Text.AlignHCenter
                                     iconSize: Appearance.font.pixelSize.larger
-                                    color: root.pinned ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer0
+                                    color: root.pinned ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer0
                                 }
                             }
                             OskControlButton { // Keep on top of other overlays (launcher, sidebars, ...)
@@ -221,7 +221,7 @@ Scope { // Scope
                                     text: "flip_to_front"
                                     horizontalAlignment: Text.AlignHCenter
                                     iconSize: Appearance.font.pixelSize.larger
-                                    color: root.keepOnTop ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer0
+                                    color: root.keepOnTop ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer0
                                 }
                                 StyledToolTip {
                                     text: Translation.tr("Keep keyboard above launcher and other overlays")

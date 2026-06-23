@@ -456,7 +456,7 @@ Item {
     // Dim backdrop — tap to dismiss.
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
+        color: Appearance.colors.colScrim
         opacity: root.showMore ? 0.45 : 0
         visible: opacity > 0
         Behavior on opacity {

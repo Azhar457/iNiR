@@ -83,7 +83,7 @@ Item {
                     Layout.fillWidth: true
                     text: root.appTitle || root.appId || Translation.tr("Unknown")
                     font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.m3colors.m3onSurface
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnSurface
                     elide: Text.ElideMiddle
                     maximumLineCount: 1
                 }
