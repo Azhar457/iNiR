@@ -4,7 +4,7 @@ import "shapes/morph.js" as Morph
 
 Canvas {
     id: root
-    property color color: Appearance.m3colors.m3primary
+    property color color: Appearance.colors.colPrimary
     property var roundedPolygon: null
     property bool polygonIsNormalized: true
 

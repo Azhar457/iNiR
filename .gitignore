@@ -148,3 +148,8 @@ modules/ii/overlay/floatingImage/undefined/
 docs-site/
 prompt-framework-opencode.md
 version.json
+
+# Local-only dev tooling & scratch docs — not distributed
+scripts/zzz-audit.sh
+docs/superpowers/
+docs/powerspec/
