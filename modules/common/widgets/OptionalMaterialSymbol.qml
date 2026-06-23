@@ -20,7 +20,7 @@ Loader {
             anchors.centerIn: parent
 
             iconSize: root.iconSize
-            color: root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSecondaryContainer
+            color: root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
             text: root.icon
         }
     }
