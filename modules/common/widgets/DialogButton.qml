@@ -21,7 +21,7 @@ RippleButton {
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary : (Appearance?.colors.colPrimary ?? "#65558F")
     property color colDisabled: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
-        : Appearance.inirEverywhere ? Appearance.inir.colTextDisabled : (Appearance?.m3colors.m3outline ?? "#8D8C96")
+        : Appearance.inirEverywhere ? Appearance.inir.colTextDisabled : Appearance.colors.colOutline
     colBackground: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2 

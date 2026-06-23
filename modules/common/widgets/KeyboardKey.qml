@@ -43,6 +43,10 @@ Rectangle {
         enabled: Appearance.animationsEnabled
         animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
+    Behavior on radius {
+        enabled: Appearance.animationsEnabled
+        animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
 
     Rectangle {
         id: keyFace
@@ -64,6 +68,10 @@ Rectangle {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
 
         Item {
             id: keyContent
@@ -77,7 +85,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: root.specialKeyIcon
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+                color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
             }
 
             StyledText {
@@ -86,7 +94,7 @@ Rectangle {
                 anchors.centerIn: parent
                 font.family: Appearance.font.family.monospace
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+                color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
                 text: root.key
             }
         }

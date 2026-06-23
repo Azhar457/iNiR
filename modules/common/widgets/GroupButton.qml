@@ -151,7 +151,7 @@ Button {
         // tab/segment labels readable instead of washed default ink on a pop plate.
         color: Appearance.zzzEverywhere
             ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
-            : (Appearance?.m3colors.m3onBackground ?? "black")
+            : Appearance.colors.colOnLayer0
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

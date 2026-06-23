@@ -12,10 +12,9 @@ Switch {
     property real scale: 0.6 // Default in m3 spec is huge af
     implicitHeight: 32 * root.scale
     implicitWidth: 52 * root.scale
-    property color activeColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance?.colors.colPrimary ?? "#685496"
+    property color activeColor: Appearance.colors.colPrimary
     property color inactiveColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance?.colors.colSurfaceContainerHighest ?? "#45464F"
+        : Appearance.colors.colSurfaceContainerHighest
 
     PointingHandInteraction {}
 
@@ -26,9 +25,12 @@ Switch {
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (Appearance?.rounding.full ?? 9999)
         color: root.checked ? root.activeColor : root.inactiveColor
         border.width: 2 * root.scale
-        border.color: root.checked ? root.activeColor
-            : Appearance.angelEverywhere ? Appearance.angel.colBorder : Appearance.m3colors.m3outline
+        border.color: root.checked ? root.activeColor : Appearance.colors.colOutline
 
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -44,8 +46,8 @@ Switch {
         width: (root.pressed || root.down) ? (28 * root.scale) : root.checked ? (24 * root.scale) : (16 * root.scale)
         height: (root.pressed || root.down) ? (28 * root.scale) : root.checked ? (24 * root.scale) : (16 * root.scale)
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Math.min(width, height) / 2
-        color: root.checked ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary : Appearance.m3colors.m3onPrimary)
-            : (Appearance.angelEverywhere ? Appearance.angel.colBorder : Appearance.m3colors.m3outline)
+        color: root.checked ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary : Appearance.colors.colOnPrimary)
+            : Appearance.colors.colOutline
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: root.checked ? ((root.pressed || root.down) ? (22 * root.scale) : 24 * root.scale) : ((root.pressed || root.down) ? (2 * root.scale) : 8 * root.scale)
@@ -73,6 +75,10 @@ Switch {
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial
             }
+        }
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
         Behavior on color {
             enabled: Appearance.animationsEnabled

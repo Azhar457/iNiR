@@ -45,6 +45,6 @@ RippleButton {
         text: buttonText
         color: Appearance.zzzEverywhere
             ? (urgency == NotificationUrgency.Critical ? Appearance.zzz.onSecondary : Appearance.zzz.ink)
-            : (urgency == NotificationUrgency.Critical) ? Appearance.m3colors.m3onSurfaceVariant : Appearance.m3colors.m3onSurface
+            : (urgency == NotificationUrgency.Critical) ? Appearance.colors.colOnSurfaceVariant : Appearance.colors.colOnSurface
     }
 }
