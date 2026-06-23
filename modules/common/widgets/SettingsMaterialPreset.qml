@@ -91,12 +91,18 @@ QtObject {
         : Appearance.colors.colOnSurfaceVariant
 
     // ── Icon colors ──
+    // ZZZ: the card header icon rides a ZzzGlyphBadge plate (sticker when
+    // expanded, secondary when collapsed); the INK on that plate must be the
+    // corresponding on-plate ink, not a raw accent (which can compute near-
+    // black on a low-chroma wallpaper and render as a black glyph).
     readonly property color iconExpandedColor: Appearance.angelEverywhere
         ? Appearance.angel.colPrimary
+        : Appearance.zzzEverywhere ? Appearance.zzz.onSticker
         : Appearance.inirEverywhere ? Appearance.inir.colAccent
         : Appearance.colors.colPrimary
     readonly property color iconCollapsedColor: Appearance.angelEverywhere
         ? Appearance.angel.colTextMuted
+        : Appearance.zzzEverywhere ? Appearance.zzz.onSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colOnSurfaceVariant
 
