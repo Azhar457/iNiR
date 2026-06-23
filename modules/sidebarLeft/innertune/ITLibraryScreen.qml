@@ -66,7 +66,7 @@ StyledFlickable {
                 StyledText {
                     Layout.fillWidth: true
                     text: root.authenticated ? Translation.tr("No results") : Translation.tr("Sign in to see your library")
-                    color: Appearance.m3colors.m3onSurfaceVariant
+                    color: Appearance.colors.colOnSurfaceVariant
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                 }

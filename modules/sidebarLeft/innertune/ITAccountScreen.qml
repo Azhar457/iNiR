@@ -60,7 +60,7 @@ StyledFlickable {
                 fill: InnerTube.authenticated ? 1 : 0
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                color: Appearance.m3colors.m3primary
+                color: Appearance.colors.colPrimary
             }
             ITThumbnail {
                 anchors.fill: parent
@@ -84,7 +84,7 @@ StyledFlickable {
             font.family: Appearance.font.family.title
             font.pixelSize: Appearance.font.pixelSize.title
             font.weight: Font.Bold
-            color: Appearance.m3colors.m3onSurface
+            color: Appearance.colors.colOnSurface
         }
 
         // Sub-text: instructions / connecting / error / connected-via.
@@ -112,7 +112,7 @@ StyledFlickable {
                                 ? Translation.tr("Couldn't read your YouTube session. Make sure you're signed in, then retry.")
                                 : Translation.tr("Connect to get your library, liked songs and a personalized home.")))))
             font.pixelSize: Appearance.font.pixelSize.small
-            color: InnerTube.connectError !== "" ? Appearance.m3colors.m3error : Appearance.m3colors.m3onSurfaceVariant
+            color: InnerTube.connectError !== "" ? Appearance.colors.colError : Appearance.colors.colOnSurfaceVariant
         }
 
         MaterialLoadingIndicator {
@@ -149,7 +149,7 @@ StyledFlickable {
             visible: !InnerTube.authenticated && !InnerTube.connecting && InnerTube.detectedBrowsers.length > 0
             text: Translation.tr("Or pick a browser")
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.m3colors.m3onSurfaceVariant
+            color: Appearance.colors.colOnSurfaceVariant
         }
         Flow {
             Layout.alignment: Qt.AlignHCenter
@@ -190,7 +190,7 @@ StyledFlickable {
             visible: !InnerTube.authenticated && !InnerTube.connecting
             text: (root.showManual ? "▾ " : "▸ ") + Translation.tr("Having trouble? Import cookies manually")
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.m3colors.m3primary
+            color: Appearance.colors.colPrimary
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
@@ -223,7 +223,7 @@ StyledFlickable {
                     Layout.topMargin: 8
                     wrapMode: Text.Wrap
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.m3colors.m3onSurfaceVariant
+                    color: Appearance.colors.colOnSurfaceVariant
                     text: Translation.tr("YouTube rotates cookies on open tabs, which can break auto-connect. For a stable login: open a private/incognito window, sign into YouTube, visit youtube.com/robots.txt, export youtube.com cookies to a cookies.txt, then close the window. Paste the file path below.")
                 }
                 MaterialTextField {

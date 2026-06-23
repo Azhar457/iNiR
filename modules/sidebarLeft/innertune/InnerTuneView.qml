@@ -81,7 +81,7 @@ Item {
                 anchors.topMargin: 6
                 anchors.bottomMargin: 6
                 radius: Appearance.rounding.full
-                color: Appearance.m3colors.m3surfaceContainerHigh
+                color: Appearance.colors.colSurfaceContainerHigh
 
                 RowLayout {
                     anchors.fill: parent
@@ -92,7 +92,7 @@ Item {
                     MaterialSymbol {
                         text: "search"
                         iconSize: Appearance.font.pixelSize.huge
-                        color: Appearance.m3colors.m3onSurfaceVariant
+                        color: Appearance.colors.colOnSurfaceVariant
                     }
 
                     Item {
@@ -102,7 +102,7 @@ Item {
                             id: searchField
                             anchors.fill: parent
                             verticalAlignment: TextInput.AlignVCenter
-                            color: Appearance.m3colors.m3onSurface
+                            color: Appearance.colors.colOnSurface
                             font.pixelSize: Appearance.font.pixelSize.normal
                             clip: true
                             onAccepted: root._runSearch()
@@ -112,7 +112,7 @@ Item {
                             width: parent.width
                             visible: searchField.text.length === 0
                             text: Translation.tr("Search songs, albums, artists")
-                            color: Appearance.m3colors.m3onSurfaceVariant
+                            color: Appearance.colors.colOnSurfaceVariant
                             font.pixelSize: Appearance.font.pixelSize.normal
                             elide: Text.ElideRight
                         }
@@ -122,14 +122,14 @@ Item {
                         Layout.alignment: Qt.AlignVCenter
                         visible: root.searchMode
                         symbol: "close"
-                        color: Appearance.m3colors.m3onSurfaceVariant
+                        color: Appearance.colors.colOnSurfaceVariant
                         onClicked: searchField.text = ""
                     }
                     ITIconButton {
                         Layout.alignment: Qt.AlignVCenter
                         visible: !root.searchMode
                         symbol: "account_circle"
-                        color: InnerTube.authenticated ? Appearance.m3colors.m3primary : Appearance.m3colors.m3onSurfaceVariant
+                        color: InnerTube.authenticated ? Appearance.colors.colPrimary : Appearance.colors.colOnSurfaceVariant
                         onClicked: root.detail = (root.detail === "account" ? "" : "account")
                     }
                 }
@@ -159,16 +159,16 @@ Item {
                     implicitHeight: 32
                     implicitWidth: chipLabel.implicitWidth + 28
                     radius: Appearance.rounding.full
-                    color: chip.active ? Appearance.m3colors.m3secondaryContainer : "transparent"
+                    color: chip.active ? Appearance.colors.colSecondaryContainer : "transparent"
                     border.width: chip.active ? 0 : 1
-                    border.color: Appearance.m3colors.m3outline
+                    border.color: Appearance.colors.colOutline
                     Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) } }
                     StyledText {
                         id: chipLabel
                         anchors.centerIn: parent
                         text: chip.modelData.label
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: chip.active ? Appearance.m3colors.m3onSecondaryContainer : Appearance.m3colors.m3onSurfaceVariant
+                        color: chip.active ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurfaceVariant
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -201,7 +201,7 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 visible: root.detail !== ""
-                color: root.detail === "account" ? Appearance.colors.colLayer0 : Appearance.m3colors.m3background
+                color: root.detail === "account" ? Appearance.colors.colLayer0 : Appearance.colors.colLayer0Base
             }
 
             // Album detail.

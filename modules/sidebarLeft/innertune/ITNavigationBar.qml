@@ -52,7 +52,7 @@ Item {
                             width: 64
                             height: 32
                             radius: height / 2
-                            color: Appearance.m3colors.m3secondaryContainer
+                            color: Appearance.colors.colSecondaryContainer
                             opacity: navItem.active ? 1 : 0
                             Behavior on opacity {
                                 enabled: Appearance.animationsEnabled
@@ -64,7 +64,7 @@ Item {
                             text: navItem.modelData.icon
                             iconSize: Appearance.font.pixelSize.huge
                             fill: navItem.active ? 1 : 0
-                            color: navItem.active ? Appearance.m3colors.m3onSecondaryContainer : Appearance.m3colors.m3onSurfaceVariant
+                            color: navItem.active ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurfaceVariant
                         }
                     }
 
@@ -73,7 +73,7 @@ Item {
                         text: navItem.modelData.label
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.weight: navItem.active ? Font.Bold : Font.Medium
-                        color: navItem.active ? Appearance.m3colors.m3onSurface : Appearance.m3colors.m3onSurfaceVariant
+                        color: navItem.active ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
                     }
                 }
 

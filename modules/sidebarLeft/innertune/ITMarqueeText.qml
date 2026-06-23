@@ -8,7 +8,7 @@ Item {
     id: root
     property string text: ""
     property alias font: label.font
-    property color color: Appearance.m3colors.m3onSurface
+    property color color: Appearance.colors.colOnSurface
     property int horizontalAlignment: Text.AlignLeft
     implicitHeight: label.implicitHeight
     clip: true

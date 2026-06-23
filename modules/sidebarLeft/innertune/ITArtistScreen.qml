@@ -45,7 +45,7 @@ StyledFlickable {
                 anchors.fill: parent
                 gradient: Gradient {
                     GradientStop { position: 0.4; color: "transparent" }
-                    GradientStop { position: 1.0; color: Appearance.m3colors.m3background }
+                    GradientStop { position: 1.0; color: Appearance.colors.colLayer0Base }
                 }
             }
             ITIconButton {
@@ -63,7 +63,7 @@ StyledFlickable {
                 font.family: Appearance.font.family.expressive
                 font.pixelSize: Appearance.font.pixelSize.hugeass
                 font.weight: Font.Bold
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
                 maximumLineCount: 2
                 elide: Text.ElideRight
                 wrapMode: Text.Wrap

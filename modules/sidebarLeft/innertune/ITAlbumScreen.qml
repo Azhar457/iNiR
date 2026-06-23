@@ -55,7 +55,7 @@ StyledFlickable {
                     font.family: Appearance.font.family.title
                     font.pixelSize: Appearance.font.pixelSize.title
                     font.weight: Font.Bold
-                    color: Appearance.m3colors.m3onSurface
+                    color: Appearance.colors.colOnSurface
                     maximumLineCount: 2
                     elide: Text.ElideRight
                     wrapMode: Text.Wrap
@@ -71,7 +71,7 @@ StyledFlickable {
                         return parts.join(" • ");
                     }
                     font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.m3colors.m3secondary
+                    color: Appearance.colors.colSecondary
                     maximumLineCount: 2
                     elide: Text.ElideRight
                     wrapMode: Text.Wrap

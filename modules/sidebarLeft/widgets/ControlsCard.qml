@@ -117,12 +117,12 @@ Item {
                     ? (Appearance.zzzEverywhere ? Appearance.zzz.accent
                         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+                        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                         : Appearance.colors.colPrimary)
                     : (Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
                         : Appearance.angelEverywhere ? Appearance.angel.colText
                         : Appearance.inirEverywhere ? Appearance.inir.colText
-                        : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface
+                        : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface
                         : Appearance.colors.colOnLayer0)
                 Behavior on fill { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
                 Behavior on color { enabled: Appearance.animationsEnabled; animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }

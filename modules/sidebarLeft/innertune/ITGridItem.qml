@@ -31,7 +31,7 @@ Item {
         anchors.fill: parent
         anchors.margins: 6
         radius: ITDimens.gridCardCornerRadius
-        color: Appearance.m3colors.m3onSurface
+        color: Appearance.colors.colOnSurface
         opacity: cardMouse.pressed ? 0.10 : (cardMouse.containsMouse ? 0.05 : 0)
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
@@ -62,7 +62,7 @@ Item {
             text: root.title
             font.pixelSize: Appearance.font.pixelSize.normal
             font.weight: Font.Bold
-            color: Appearance.m3colors.m3onSurface
+            color: Appearance.colors.colOnSurface
             maximumLineCount: 2
             elide: Text.ElideRight
             wrapMode: Text.Wrap
@@ -74,7 +74,7 @@ Item {
             visible: root.subtitle !== ""
             text: root.subtitle
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.m3colors.m3secondary
+            color: Appearance.colors.colSecondary
             maximumLineCount: 2
             elide: Text.ElideRight
             wrapMode: Text.Wrap

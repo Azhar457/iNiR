@@ -34,7 +34,7 @@ Item {
                 visible: root.label !== ""
                 text: root.label
                 font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.m3colors.m3onSurfaceVariant
+                color: Appearance.colors.colOnSurfaceVariant
                 elide: Text.ElideRight
             }
             StyledText {
@@ -43,7 +43,7 @@ Item {
                 font.family: Appearance.font.family.title
                 font.pixelSize: Appearance.font.pixelSize.title
                 font.weight: Font.Bold
-                color: Appearance.m3colors.m3primary
+                color: Appearance.colors.colPrimary
                 maximumLineCount: 1
                 elide: Text.ElideRight
             }
@@ -53,7 +53,7 @@ Item {
             visible: root.clickable
             text: "arrow_forward"
             iconSize: Appearance.font.pixelSize.larger
-            color: Appearance.m3colors.m3primary
+            color: Appearance.colors.colPrimary
         }
     }
 

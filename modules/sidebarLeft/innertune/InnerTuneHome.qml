@@ -58,13 +58,13 @@ StyledFlickable {
                     Layout.alignment: Qt.AlignHCenter
                     text: InnerTube.available ? "refresh" : "extension_off"
                     iconSize: 40
-                    color: Appearance.m3colors.m3onSurfaceVariant
+                    color: Appearance.colors.colOnSurfaceVariant
                 }
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     horizontalAlignment: Text.AlignHCenter
                     text: InnerTube.available ? Translation.tr("Tap to load home") : Translation.tr("Install python-ytmusicapi")
-                    color: Appearance.m3colors.m3onSurfaceVariant
+                    color: Appearance.colors.colOnSurfaceVariant
                 }
             }
             // Tap-to-retry covers the placeholder (kept out of the layout to avoid anchor conflicts).

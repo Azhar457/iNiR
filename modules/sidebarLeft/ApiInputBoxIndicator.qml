@@ -32,13 +32,13 @@ Item {
         MaterialSymbol {
             text: root.icon
             iconSize: Appearance.font.pixelSize.normal
-            color: Appearance.m3colors.m3onSurfaceVariant
+            color: Appearance.colors.colOnSurfaceVariant
         }
         StyledText {
             id: providerName
             visible: root.text.length > 0
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.m3colors.m3onSurface
+            color: Appearance.colors.colOnSurface
             elide: Text.ElideRight
             text: root.text
             animateChange: true
@@ -47,7 +47,7 @@ Item {
             visible: root.interactive
             text: "expand_more"
             iconSize: Appearance.font.pixelSize.small
-            color: Appearance.m3colors.m3onSurfaceVariant
+            color: Appearance.colors.colOnSurfaceVariant
         }
     }
 

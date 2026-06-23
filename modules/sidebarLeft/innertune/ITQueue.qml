@@ -44,7 +44,7 @@ StyledFlickable {
                 anchors.rightMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
                 symbol: "shuffle"
-                color: Appearance.m3colors.m3onSurfaceVariant
+                color: Appearance.colors.colOnSurfaceVariant
                 active: YtMusic.shuffleMode
                 onClicked: YtMusic.toggleShuffle()
             }
@@ -66,14 +66,14 @@ StyledFlickable {
                 ITIconButton {
                     symbol: "keyboard_arrow_up"
                     iconSize: 22
-                    color: Appearance.m3colors.m3onSurfaceVariant
+                    color: Appearance.colors.colOnSurfaceVariant
                     enabled: index > 0
                     onClicked: YtMusic.moveActivePlaylistItem(index, index - 1)
                 }
                 ITIconButton {
                     symbol: "keyboard_arrow_down"
                     iconSize: 22
-                    color: Appearance.m3colors.m3onSurfaceVariant
+                    color: Appearance.colors.colOnSurfaceVariant
                     enabled: index < root.queue.length - 1
                     onClicked: YtMusic.moveActivePlaylistItem(index, index + 1)
                 }

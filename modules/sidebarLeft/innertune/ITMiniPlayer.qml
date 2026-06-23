@@ -18,7 +18,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Appearance.m3colors.m3surfaceContainer
+        color: Appearance.colors.colSurfaceContainer
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) }
@@ -60,13 +60,13 @@ Item {
                         text: YtMusic.currentTitle
                         font.pixelSize: Appearance.font.pixelSize.normal
                         font.weight: Font.Bold
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                     }
                     StyledText {
                         Layout.fillWidth: true
                         text: YtMusic.currentArtist
                         font.pixelSize: ITDimens.subtitleTextSize
-                        color: Appearance.m3colors.m3secondary
+                        color: Appearance.colors.colSecondary
                         maximumLineCount: 1
                         elide: Text.ElideRight
                     }
@@ -79,13 +79,13 @@ Item {
             Layout.preferredWidth: 44
             Layout.preferredHeight: 44
             buttonRadius: Appearance.rounding.full
-            colBackground: YtMusic.isPlaying ? Appearance.m3colors.m3secondaryContainer : "transparent"
+            colBackground: YtMusic.isPlaying ? Appearance.colors.colSecondaryContainer : "transparent"
             releaseAction: () => YtMusic.togglePlaying()
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
                 text: YtMusic.isPlaying ? "pause" : "play_arrow"
                 iconSize: Appearance.font.pixelSize.huge
-                color: YtMusic.isPlaying ? Appearance.m3colors.m3onSecondaryContainer : Appearance.m3colors.m3onSurface
+                color: YtMusic.isPlaying ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurface
             }
         }
 
@@ -101,7 +101,7 @@ Item {
                 anchors.centerIn: parent
                 text: "skip_next"
                 iconSize: Appearance.font.pixelSize.huge
-                color: enabled ? Appearance.m3colors.m3onSurface : Appearance.m3colors.m3outline
+                color: enabled ? Appearance.colors.colOnSurface : Appearance.colors.colOutline
             }
         }
     }
@@ -112,13 +112,13 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         height: 3
-        color: Appearance.m3colors.m3secondaryContainer
+        color: Appearance.colors.colSecondaryContainer
         Rectangle {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: parent.width * root.progress
-            color: Appearance.m3colors.m3primary
+            color: Appearance.colors.colPrimary
             Behavior on width {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) }

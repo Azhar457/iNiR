@@ -30,7 +30,7 @@ Item {
         anchors.leftMargin: 6
         anchors.rightMargin: 6
         radius: Appearance.rounding.small
-        color: Appearance.m3colors.m3onSurface
+        color: Appearance.colors.colOnSurface
         opacity: mouse.pressed ? 0.10 : (mouse.containsMouse ? 0.05 : 0)
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
@@ -83,7 +83,7 @@ Item {
                 text: root.title
                 font.pixelSize: ITDimens.titleTextSize
                 font.weight: Font.Bold
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
                 maximumLineCount: 1
                 elide: Text.ElideRight
             }
@@ -97,13 +97,13 @@ Item {
                     visible: root.liked
                     text: "favorite"
                     iconSize: ITDimens.subtitleTextSize + 2
-                    color: Appearance.m3colors.m3secondary
+                    color: Appearance.colors.colSecondary
                 }
                 StyledText {
                     Layout.fillWidth: true
                     text: root.subtitle
                     font.pixelSize: ITDimens.subtitleTextSize
-                    color: Appearance.m3colors.m3secondary
+                    color: Appearance.colors.colSecondary
                     maximumLineCount: 1
                     elide: Text.ElideRight
                 }

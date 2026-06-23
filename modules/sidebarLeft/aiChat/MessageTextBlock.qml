@@ -157,7 +157,7 @@ ColumnLayout {
             font.family: Appearance.font.family.reading
             font.hintingPreference: Font.PreferNoHinting // Prevent weird bold text
             font.pixelSize: Appearance.font.pixelSize.small
-            selectedTextColor: Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.m3colors.m3onSecondaryContainer
+            selectedTextColor: Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnSecondaryContainer
             selectionColor: Appearance.inirEverywhere ? Appearance.inir.colSelection : Appearance.colors.colSecondaryContainer
             wrapMode: TextEdit.Wrap
             color: root.messageData?.thinking ? (Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext) : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1)

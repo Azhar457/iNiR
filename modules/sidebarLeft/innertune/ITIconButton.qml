@@ -7,9 +7,9 @@ import qs.modules.common.widgets
 Item {
     id: root
     property string symbol: ""
-    property color color: Appearance.m3colors.m3onSurface
-    property color activeColor: Appearance.m3colors.m3onSecondaryContainer
-    property color activeBackground: Appearance.m3colors.m3secondaryContainer
+    property color color: Appearance.colors.colOnSurface
+    property color activeColor: Appearance.colors.colOnSecondaryContainer
+    property color activeBackground: Appearance.colors.colSecondaryContainer
     property bool active: false
     property bool enabled: true
     property int iconSize: 32
@@ -66,7 +66,7 @@ Item {
         anchors.centerIn: parent
         text: root.symbol
         iconSize: root.iconSize
-        color: root.enabled ? (root.active ? root.activeColor : root.color) : Appearance.m3colors.m3outline
+        color: root.enabled ? (root.active ? root.activeColor : root.color) : Appearance.colors.colOutline
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) }

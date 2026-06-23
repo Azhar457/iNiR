@@ -76,7 +76,7 @@ Item {
     }
     Rectangle {
         anchors.fill: parent
-        color: Appearance.m3colors.m3background
+        color: Appearance.colors.colLayer0Base
         opacity: 0.82
     }
 
@@ -135,7 +135,7 @@ Item {
             font.family: Appearance.font.family.title
             font.pixelSize: Appearance.font.pixelSize.title
             font.weight: Font.Bold
-            color: Appearance.m3colors.m3onSurface
+            color: Appearance.colors.colOnSurface
         }
         Item { Layout.preferredHeight: 6 }
         // Artists.
@@ -145,7 +145,7 @@ Item {
             Layout.rightMargin: root.hp
             text: YtMusic.currentArtist
             font.pixelSize: Appearance.font.pixelSize.larger
-            color: Appearance.m3colors.m3secondary
+            color: Appearance.colors.colSecondary
             maximumLineCount: 1
             elide: Text.ElideRight
         }
@@ -177,13 +177,13 @@ Item {
             StyledText {
                 text: root._fmt(seekSlider._dragging ? seekSlider.value : YtMusic.currentPosition)
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.m3colors.m3onSurfaceVariant
+                color: Appearance.colors.colOnSurfaceVariant
             }
             Item { Layout.fillWidth: true }
             StyledText {
                 text: root._fmt(YtMusic.currentDuration)
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.m3colors.m3onSurfaceVariant
+                color: Appearance.colors.colOnSurfaceVariant
             }
         }
 
@@ -202,7 +202,7 @@ Item {
             ITIconButton {
                 Layout.fillWidth: true
                 symbol: root.liked ? "favorite" : "favorite_border"
-                color: root.liked ? Appearance.m3colors.m3error : Appearance.m3colors.m3onSurfaceVariant
+                color: root.liked ? Appearance.colors.colError : Appearance.colors.colOnSurfaceVariant
                 onClicked: root.liked ? YtMusic.unlikeSong(YtMusic.currentVideoId) : YtMusic.likeSong()
             }
             // Previous.
@@ -218,7 +218,7 @@ Item {
                 Layout.preferredWidth: 64
                 Layout.preferredHeight: 64
                 radius: root.playPauseRoundness
-                color: Appearance.m3colors.m3secondaryContainer
+                color: Appearance.colors.colSecondaryContainer
                 Behavior on radius {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration); easing.type: Easing.Linear }
@@ -227,7 +227,7 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     radius: parent.radius
-                    color: Appearance.m3colors.m3onSurface
+                    color: Appearance.colors.colOnSurface
                     opacity: playMouse.pressed ? 0.14 : (playMouse.containsMouse ? 0.08 : 0)
                     Behavior on opacity {
                         enabled: Appearance.animationsEnabled
@@ -239,7 +239,7 @@ Item {
                     visible: !YtMusic.loading
                     text: YtMusic.isPlaying ? "pause" : "play_arrow"
                     iconSize: 36
-                    color: Appearance.m3colors.m3onSurface
+                    color: Appearance.colors.colOnSurface
                 }
                 MaterialSymbol {
                     id: bufferGlyph
@@ -247,7 +247,7 @@ Item {
                     visible: YtMusic.loading
                     text: "progress_activity"
                     iconSize: 30
-                    color: Appearance.m3colors.m3onSurface
+                    color: Appearance.colors.colOnSurface
                     RotationAnimator on rotation {
                         running: bufferGlyph.visible && Appearance.animationsEnabled
                         loops: Animation.Infinite
@@ -274,7 +274,7 @@ Item {
             ITIconButton {
                 Layout.fillWidth: true
                 symbol: YtMusic.repeatMode === 1 ? "repeat_one" : "repeat"
-                color: Appearance.m3colors.m3onSurfaceVariant
+                color: Appearance.colors.colOnSurfaceVariant
                 active: YtMusic.repeatMode > 0
                 onClicked: YtMusic.cycleRepeatMode()
             }
@@ -318,7 +318,7 @@ Item {
                 anchors.centerIn: parent
                 text: "expand_more"
                 iconSize: Appearance.font.pixelSize.huge
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
             }
         }
         Item { Layout.fillWidth: true }
@@ -327,14 +327,14 @@ Item {
             Layout.preferredWidth: 44
             Layout.preferredHeight: 44
             buttonRadius: Appearance.rounding.full
-            colBackground: root._showLyricsPane ? Appearance.m3colors.m3secondaryContainer : "transparent"
+            colBackground: root._showLyricsPane ? Appearance.colors.colSecondaryContainer : "transparent"
             releaseAction: () => { root.showLyrics = !root.showLyrics; if (root.showLyrics) root.showQueue = false; }
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
                 text: "lyrics"
                 iconSize: Appearance.font.pixelSize.huge
                 fill: root._showLyricsPane ? 1 : 0
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
             }
         }
         // Queue toggle.
@@ -342,14 +342,14 @@ Item {
             Layout.preferredWidth: 44
             Layout.preferredHeight: 44
             buttonRadius: Appearance.rounding.full
-            colBackground: root._showQueuePane ? Appearance.m3colors.m3secondaryContainer : "transparent"
+            colBackground: root._showQueuePane ? Appearance.colors.colSecondaryContainer : "transparent"
             releaseAction: () => { root.showQueue = !root.showQueue; if (root.showQueue) root.showLyrics = false; }
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
                 text: "queue_music"
                 iconSize: Appearance.font.pixelSize.huge
                 fill: root._showQueuePane ? 1 : 0
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
             }
         }
         // More options (volume, go to album, radio, copy link).
@@ -357,13 +357,13 @@ Item {
             Layout.preferredWidth: 44
             Layout.preferredHeight: 44
             buttonRadius: Appearance.rounding.full
-            colBackground: root.showMore ? Appearance.m3colors.m3secondaryContainer : "transparent"
+            colBackground: root.showMore ? Appearance.colors.colSecondaryContainer : "transparent"
             releaseAction: () => root.showMore = !root.showMore
             contentItem: MaterialSymbol {
                 anchors.centerIn: parent
                 text: "more_vert"
                 iconSize: Appearance.font.pixelSize.huge
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
             }
         }
     }
@@ -474,7 +474,7 @@ Item {
         y: root.showMore ? (parent.height - height) : parent.height
         topLeftRadius: Appearance.rounding.large
         topRightRadius: Appearance.rounding.large
-        color: Appearance.m3colors.m3surfaceContainerHigh
+        color: Appearance.colors.colSurfaceContainerHigh
         Behavior on y {
             enabled: Appearance.animationsEnabled
             NumberAnimation {
@@ -497,8 +497,8 @@ Item {
                 anchors.leftMargin: 16
                 anchors.rightMargin: 16
                 spacing: 16
-                MaterialSymbol { text: moreRowRoot.rowIcon; iconSize: Appearance.font.pixelSize.larger; color: Appearance.m3colors.m3onSurface }
-                StyledText { Layout.fillWidth: true; text: moreRowRoot.rowLabel; font.pixelSize: Appearance.font.pixelSize.normal; color: Appearance.m3colors.m3onSurface }
+                MaterialSymbol { text: moreRowRoot.rowIcon; iconSize: Appearance.font.pixelSize.larger; color: Appearance.colors.colOnSurface }
+                StyledText { Layout.fillWidth: true; text: moreRowRoot.rowLabel; font.pixelSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colOnSurface }
             }
         }
 
@@ -515,7 +515,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.bottomMargin: 6
                 implicitWidth: 32; implicitHeight: 4; radius: 2
-                color: Appearance.m3colors.m3outline
+                color: Appearance.colors.colOutline
             }
 
             // Volume.
@@ -527,7 +527,7 @@ Item {
                 MaterialSymbol {
                     text: YtMusic.volume <= 0 ? "volume_off" : (YtMusic.volume < 0.5 ? "volume_down" : "volume_up")
                     iconSize: Appearance.font.pixelSize.larger
-                    color: Appearance.m3colors.m3onSurfaceVariant
+                    color: Appearance.colors.colOnSurfaceVariant
                 }
                 StyledSlider {
                     id: volSlider

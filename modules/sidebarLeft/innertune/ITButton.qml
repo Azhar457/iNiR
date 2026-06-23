@@ -22,13 +22,13 @@ Item {
     implicitHeight: 40
     implicitWidth: row.implicitWidth + 40
 
-    readonly property color _bg: kind === "filled" ? Appearance.m3colors.m3primary
-        : kind === "tonal" ? Appearance.m3colors.m3secondaryContainer
+    readonly property color _bg: kind === "filled" ? Appearance.colors.colPrimary
+        : kind === "tonal" ? Appearance.colors.colSecondaryContainer
         : "transparent"
-    readonly property color _fg: !root.enabled ? Appearance.m3colors.m3outline
-        : kind === "filled" ? Appearance.m3colors.m3onPrimary
-        : kind === "tonal" ? Appearance.m3colors.m3onSecondaryContainer
-        : Appearance.m3colors.m3primary
+    readonly property color _fg: !root.enabled ? Appearance.colors.colOutline
+        : kind === "filled" ? Appearance.colors.colOnPrimary
+        : kind === "tonal" ? Appearance.colors.colOnSecondaryContainer
+        : Appearance.colors.colPrimary
 
     Rectangle {
         id: bg
@@ -36,7 +36,7 @@ Item {
         radius: Appearance.rounding.full
         color: root._bg
         border.width: root.kind === "outlined" ? 1 : 0
-        border.color: Appearance.m3colors.m3outline
+        border.color: Appearance.colors.colOutline
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) }

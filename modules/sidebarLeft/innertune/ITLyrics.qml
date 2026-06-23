@@ -49,7 +49,7 @@ Item {
                 wrapMode: Text.Wrap
                 font.pixelSize: Appearance.font.pixelSize.larger
                 font.weight: Font.Bold
-                color: index === root.currentLine ? Appearance.m3colors.m3primary : Appearance.m3colors.m3secondary
+                color: index === root.currentLine ? Appearance.colors.colPrimary : Appearance.colors.colSecondary
                 opacity: index === root.currentLine ? 1.0 : 0.5
                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) } }
                 Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.calcEffectiveDuration(Appearance.animation.elementMoveFast.duration) } }
@@ -76,7 +76,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
             font.pixelSize: Appearance.font.pixelSize.larger
-            color: Appearance.m3colors.m3onSurface
+            color: Appearance.colors.colOnSurface
         }
     }
 
@@ -84,6 +84,6 @@ Item {
         anchors.centerIn: parent
         visible: !root.isSynced && root.plain === ""
         text: Translation.tr("No lyrics")
-        color: Appearance.m3colors.m3onSurfaceVariant
+        color: Appearance.colors.colOnSurfaceVariant
     }
 }

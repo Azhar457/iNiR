@@ -32,7 +32,7 @@ Item {
         anchors.centerIn: parent
         visible: root.albumIndex >= 0 && !root.isActive
         text: root.albumIndex >= 0 ? (root.albumIndex + 1).toString() : ""
-        color: Appearance.m3colors.m3onSurface
+        color: Appearance.colors.colOnSurface
         font.pixelSize: Appearance.font.pixelSize.small
     }
 
@@ -84,7 +84,7 @@ Item {
                 Rectangle {
                     width: 4
                     radius: ITDimens.thumbnailCornerRadius
-                    color: root.albumIndex >= 0 ? Appearance.m3colors.m3onSurface : "white"
+                    color: root.albumIndex >= 0 ? Appearance.colors.colOnSurface : "white"
                     anchors.bottom: parent.bottom
                     property real level: 0.1
                     height: 24 * level
@@ -103,7 +103,7 @@ Item {
             text: "play_arrow"
             font.family: Appearance.font.family.iconMaterial
             font.pixelSize: 24
-            color: root.albumIndex >= 0 ? Appearance.m3colors.m3onSurface : "white"
+            color: root.albumIndex >= 0 ? Appearance.colors.colOnSurface : "white"
         }
     }
 
