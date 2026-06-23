@@ -1434,6 +1434,7 @@ ContentPage {
     }
 
     SettingsCardSection {
+        id: angelStyleEditorSection
         visible: Appearance.angelEverywhere
         expanded: false
         icon: "raven"
