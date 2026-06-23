@@ -408,7 +408,7 @@ ContentPage {
         radius: Appearance.rounding.small
         color: Appearance.colors.colSurfaceContainerHigh ?? Appearance.colors.colLayer1
         border.width: 1
-        border.color: Appearance.m3colors.m3outlineVariant ?? ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.85)
+        border.color: Appearance.colors.colOutlineVariant ?? ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.85)
 
         StyledText {
             id: keyLabel

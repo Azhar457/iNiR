@@ -828,10 +828,10 @@ ContentPage {
                                 ? (Appearance.inir?.colBorder
                                     ?? Appearance.colors?.colLayer0Border
                                     ?? Appearance.colors?.colLayer0Border
-                                    ?? Appearance.m3colors.m3outlineVariant)
+                                    ?? Appearance.colors.colOutlineVariant)
                                 : (Appearance.colors?.colLayer0Border
                                     ?? Appearance.colors?.colLayer0Border
-                                    ?? Appearance.m3colors.m3outlineVariant)
+                                    ?? Appearance.colors.colOutlineVariant)
                             opacity: 0.5
                         }
 
@@ -1366,7 +1366,7 @@ ContentPage {
                             text: "open_with"
                             iconSize: 16
                             color: Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                                 : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
+                                 : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                                  : Appearance.colors.colPrimary
                         }
 
@@ -1375,7 +1375,7 @@ ContentPage {
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.Medium
                             color: Appearance.inirEverywhere ? Appearance.inir.colText
-                                 : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface
+                                 : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface
                                  : Appearance.colors.colOnLayer1
                         }
 
@@ -1417,7 +1417,7 @@ ContentPage {
                                 text: "restart_alt"
                                 iconSize: 14
                                 color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
-                                     : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                                     : Appearance.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                                      : Appearance.colors.colSubtext
                             }
                             StyledToolTip { text: Translation.tr("Reset position and zoom") }
@@ -1434,7 +1434,7 @@ ContentPage {
                         color: Appearance.colors.colLayer0
                         clip: true
                         border.width: panDragArea.drag.active ? 2 : 0
-                        border.color: Appearance.m3colors.m3primary
+                        border.color: Appearance.colors.colPrimary
 
                         Behavior on border.width {
                             enabled: Appearance.animationsEnabled

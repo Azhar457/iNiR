@@ -273,7 +273,7 @@ ContentPage {
                                 })
                                 text: formatIcons[providerItem.modelData?.api_format] ?? "smart_toy"
                                 iconSize: 20
-                                color: Appearance.m3colors.m3tertiary
+                                color: Appearance.colors.colTertiary
                             }
 
                             ColumnLayout {
@@ -301,7 +301,7 @@ ContentPage {
                                 width: fmtLabel.implicitWidth + 12
                                 height: 22
                                 radius: Appearance.rounding.full
-                                color: ColorUtils.transparentize(Appearance.m3colors.m3tertiary, 0.88)
+                                color: ColorUtils.transparentize(Appearance.colors.colTertiary, 0.88)
 
                                 readonly property var formatLabels: ({
                                     "openai": "OpenAI",
@@ -317,7 +317,7 @@ ContentPage {
                                     text: parent.formatLabels[providerItem.modelData?.api_format] ?? providerItem.modelData?.api_format ?? "OpenAI"
                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                     font.weight: Font.Medium
-                                    color: Appearance.m3colors.m3tertiary
+                                    color: Appearance.colors.colTertiary
                                 }
                             }
 
@@ -474,13 +474,13 @@ ContentPage {
                             Layout.fillWidth: true
                             placeholderText: Translation.tr("e.g. My Claude Proxy")
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.m3colors.m3onSurface
+                            color: Appearance.colors.colOnSurface
                             placeholderTextColor: Appearance.colors.colSubtext
                             background: Rectangle {
                                 color: Appearance.colors.colLayer1
                                 radius: Appearance.rounding.small
                                 border.width: providerNameInput.activeFocus ? 2 : 1
-                                border.color: providerNameInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                                border.color: providerNameInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
                             }
                         }
                     }
@@ -500,13 +500,13 @@ ContentPage {
                             Layout.fillWidth: true
                             placeholderText: "https://api.openai.com/v1/chat/completions"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.m3colors.m3onSurface
+                            color: Appearance.colors.colOnSurface
                             placeholderTextColor: Appearance.colors.colSubtext
                             background: Rectangle {
                                 color: Appearance.colors.colLayer1
                                 radius: Appearance.rounding.small
                                 border.width: providerEndpointInput.activeFocus ? 2 : 1
-                                border.color: providerEndpointInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                                border.color: providerEndpointInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
                             }
 
                             onTextChanged: {
@@ -566,13 +566,13 @@ ContentPage {
                             Layout.fillWidth: true
                             placeholderText: "gpt-4.1"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.m3colors.m3onSurface
+                            color: Appearance.colors.colOnSurface
                             placeholderTextColor: Appearance.colors.colSubtext
                             background: Rectangle {
                                 color: Appearance.colors.colLayer1
                                 radius: Appearance.rounding.small
                                 border.width: providerModelInput.activeFocus ? 2 : 1
-                                border.color: providerModelInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                                border.color: providerModelInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
                             }
                         }
                     }
@@ -592,14 +592,14 @@ ContentPage {
                             Layout.fillWidth: true
                             placeholderText: "sk-..."
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.m3colors.m3onSurface
+                            color: Appearance.colors.colOnSurface
                             placeholderTextColor: Appearance.colors.colSubtext
                             echoMode: TextInput.Password
                             background: Rectangle {
                                 color: Appearance.colors.colLayer1
                                 radius: Appearance.rounding.small
                                 border.width: providerApiKeyInput.activeFocus ? 2 : 1
-                                border.color: providerApiKeyInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                                border.color: providerApiKeyInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
                             }
                         }
                     }
@@ -1023,14 +1023,14 @@ ContentPage {
                 visible: Config.options?.shellUpdates?.enabled ?? true
 
                 color: {
-                    if (ShellUpdates.hasUpdate) return ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.92)
-                    if (ShellUpdates.lastError.length > 0) return ColorUtils.transparentize(Appearance.m3colors.m3error, 0.92)
+                    if (ShellUpdates.hasUpdate) return ColorUtils.transparentize(Appearance.colors.colPrimary, 0.92)
+                    if (ShellUpdates.lastError.length > 0) return ColorUtils.transparentize(Appearance.colors.colError, 0.92)
                     return Appearance.colors.colSurfaceContainerLow
                 }
                 border.width: 1
                 border.color: {
-                    if (ShellUpdates.hasUpdate) return ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.7)
-                    if (ShellUpdates.lastError.length > 0) return ColorUtils.transparentize(Appearance.m3colors.m3error, 0.7)
+                    if (ShellUpdates.hasUpdate) return ColorUtils.transparentize(Appearance.colors.colPrimary, 0.7)
+                    if (ShellUpdates.lastError.length > 0) return ColorUtils.transparentize(Appearance.colors.colError, 0.7)
                     return Appearance.colors.colLayer0Border
                 }
 
@@ -1055,10 +1055,10 @@ ContentPage {
                             height: 40
                             radius: Appearance.rounding.small
                             color: {
-                                if (ShellUpdates.hasUpdate) return ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.8)
+                                if (ShellUpdates.hasUpdate) return ColorUtils.transparentize(Appearance.colors.colPrimary, 0.8)
                                 if (ShellUpdates.isChecking || ShellUpdates.isUpdating) return ColorUtils.transparentize(Appearance.colors.colSubtext, 0.85)
-                                if (ShellUpdates.lastError.length > 0) return ColorUtils.transparentize(Appearance.m3colors.m3error, 0.8)
-                                return ColorUtils.transparentize(Appearance.m3colors.m3tertiary, 0.85)
+                                if (ShellUpdates.lastError.length > 0) return ColorUtils.transparentize(Appearance.colors.colError, 0.8)
+                                return ColorUtils.transparentize(Appearance.colors.colTertiary, 0.85)
                             }
 
                             MaterialSymbol {
@@ -1073,9 +1073,9 @@ ContentPage {
                                 }
                                 iconSize: Appearance.font.pixelSize.huge
                                 color: {
-                                    if (ShellUpdates.hasUpdate) return Appearance.m3colors.m3primary
-                                    if (ShellUpdates.lastError.length > 0) return Appearance.m3colors.m3error
-                                    if (ShellUpdates.available) return Appearance.m3colors.m3tertiary
+                                    if (ShellUpdates.hasUpdate) return Appearance.colors.colPrimary
+                                    if (ShellUpdates.lastError.length > 0) return Appearance.colors.colError
+                                    if (ShellUpdates.available) return Appearance.colors.colTertiary
                                     return Appearance.colors.colSubtext
                                 }
                             }
@@ -1105,8 +1105,8 @@ ContentPage {
                                     weight: Font.DemiBold
                                 }
                                 color: {
-                                    if (ShellUpdates.hasUpdate) return Appearance.m3colors.m3primary
-                                    if (ShellUpdates.lastError.length > 0) return Appearance.m3colors.m3error
+                                    if (ShellUpdates.hasUpdate) return Appearance.colors.colPrimary
+                                    if (ShellUpdates.lastError.length > 0) return Appearance.colors.colError
                                     return Appearance.colors.colOnSurface
                                 }
                             }
@@ -1125,7 +1125,7 @@ ContentPage {
                                     : ""
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: ShellUpdates.isNonMainBranch
-                                    ? Appearance.m3colors.m3tertiary
+                                    ? Appearance.colors.colTertiary
                                     : Appearance.colors.colSubtext
                             }
 
@@ -1133,7 +1133,7 @@ ContentPage {
                                 visible: ShellUpdates.isNonMainBranch && !ShellUpdates.isChecking && !ShellUpdates.isUpdating
                                 text: Translation.tr("Non-release branch — updates track %1").arg(ShellUpdates.currentBranch)
                                 font.pixelSize: Appearance.font.pixelSize.smallest
-                                color: Appearance.m3colors.m3tertiary
+                                color: Appearance.colors.colTertiary
                                 wrapMode: Text.WordWrap
                             }
 
@@ -1190,7 +1190,7 @@ ContentPage {
                             visible: ShellUpdates.hasUpdate && ShellUpdates.remoteCommit.length > 0
                             text: "arrow_forward"
                             iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.m3colors.m3primary
+                            color: Appearance.colors.colPrimary
                         }
 
                         Rectangle {
@@ -1198,9 +1198,9 @@ ContentPage {
                             Layout.fillWidth: true
                             implicitHeight: remoteCommitCol.implicitHeight + 12
                             radius: Appearance.rounding.small
-                            color: ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.88)
+                            color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.88)
                             border.width: 1
-                            border.color: ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.7)
+                            border.color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.7)
 
                             ColumnLayout {
                                 id: remoteCommitCol
@@ -1213,7 +1213,7 @@ ContentPage {
                                 StyledText {
                                     text: Translation.tr("Available")
                                     font.pixelSize: Appearance.font.pixelSize.smallest
-                                    color: Appearance.m3colors.m3primary
+                                    color: Appearance.colors.colPrimary
                                     opacity: 0.8
                                 }
                                 StyledText {
@@ -1223,7 +1223,7 @@ ContentPage {
                                         family: Appearance.font.family.monospace
                                         weight: Font.DemiBold
                                     }
-                                    color: Appearance.m3colors.m3primary
+                                    color: Appearance.colors.colPrimary
                                 }
                             }
                         }
@@ -1264,14 +1264,14 @@ ContentPage {
                         MaterialSymbol {
                             text: "warning"
                             iconSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.m3colors.m3error
+                            color: Appearance.colors.colError
                             Layout.alignment: Qt.AlignTop
                         }
                         StyledText {
                             Layout.fillWidth: true
                             text: ShellUpdates.lastError
                             font.pixelSize: Appearance.font.pixelSize.smallest
-                            color: Appearance.m3colors.m3error
+                            color: Appearance.colors.colError
                             wrapMode: Text.WordWrap
                         }
                     }
@@ -1351,7 +1351,7 @@ ContentPage {
                     implicitHeight: 36
                     visible: ShellUpdates.hasUpdate && ShellUpdates.selfUpdateSupported
                     buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.m3colors.m3primary
+                    colBackground: Appearance.colors.colPrimary
                     colBackgroundHover: Appearance.colors.colPrimaryHover
                     colRipple: Appearance.colors.colPrimaryActive
                     enabled: !ShellUpdates.isUpdating
@@ -1364,7 +1364,7 @@ ContentPage {
                         MaterialSymbol {
                             text: ShellUpdates.isUpdating ? "hourglass_top" : "upgrade"
                             iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.m3colors.m3onPrimary
+                            color: Appearance.colors.colOnPrimary
                         }
                         StyledText {
                             text: ShellUpdates.isUpdating
@@ -1376,7 +1376,7 @@ ContentPage {
                                 pixelSize: Appearance.font.pixelSize.smaller
                                 weight: Font.DemiBold
                             }
-                            color: Appearance.m3colors.m3onPrimary
+                            color: Appearance.colors.colOnPrimary
                         }
                     }
                 }
@@ -1417,7 +1417,7 @@ ContentPage {
                         anchors.centerIn: parent
                         text: "notifications_active"
                         iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                     }
 
                     StyledToolTip {
@@ -1482,14 +1482,14 @@ ContentPage {
                     Layout.fillWidth: true
                     placeholderText: Translation.tr("e.g. Buenos Aires, London, Tokyo")
                     font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.m3colors.m3onSurface
+                    color: Appearance.colors.colOnSurface
                     placeholderTextColor: Appearance.colors.colSubtext
                     text: Config.options?.bar?.weather?.city ?? ""
                     background: Rectangle {
                         color: Appearance.colors.colLayer1
                         radius: Appearance.rounding.small
                         border.width: weatherCityInput.activeFocus ? 2 : 1
-                        border.color: weatherCityInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                        border.color: weatherCityInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
                     }
                     onTextEdited: Config.setNestedValue("bar.weather.city", text)
                 }
@@ -1515,7 +1515,7 @@ ContentPage {
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Latitude (e.g. -34.6037)")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                         placeholderTextColor: Appearance.colors.colSubtext
                         text: {
                             const v = Config.options?.bar?.weather?.manualLat ?? 0;
@@ -1525,7 +1525,7 @@ ContentPage {
                             color: Appearance.colors.colLayer1
                             radius: Appearance.rounding.small
                             border.width: weatherLatInput.activeFocus ? 2 : 1
-                            border.color: weatherLatInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                            border.color: weatherLatInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
                         }
                         onTextEdited: {
                             const num = parseFloat(text);
@@ -1538,7 +1538,7 @@ ContentPage {
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Longitude (e.g. -58.3816)")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                         placeholderTextColor: Appearance.colors.colSubtext
                         text: {
                             const v = Config.options?.bar?.weather?.manualLon ?? 0;
@@ -1548,7 +1548,7 @@ ContentPage {
                             color: Appearance.colors.colLayer1
                             radius: Appearance.rounding.small
                             border.width: weatherLonInput.activeFocus ? 2 : 1
-                            border.color: weatherLonInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                            border.color: weatherLonInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
                         }
                         onTextEdited: {
                             const num = parseFloat(text);
@@ -1750,7 +1750,7 @@ ContentPage {
                                 }
                                 text: "error"
                                 iconSize: 16
-                                color: Appearance.m3colors.m3error
+                                color: Appearance.colors.colError
 
                                 StyledToolTip {
                                     text: CalendarSync.sourceStatuses?.[sourceItem.modelData?.id]?.error ?? ""
@@ -1876,13 +1876,13 @@ ContentPage {
                             Layout.fillWidth: true
                             placeholderText: Translation.tr("Work Calendar")
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.m3colors.m3onSurface
+                            color: Appearance.colors.colOnSurface
                             placeholderTextColor: Appearance.colors.colSubtext
                             background: Rectangle {
                                 color: Appearance.colors.colLayer1
                                 radius: Appearance.rounding.small
                                 border.width: sourceNameInput.activeFocus ? 2 : 1
-                                border.color: sourceNameInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                                border.color: sourceNameInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
                             }
                         }
                     }
@@ -1902,13 +1902,13 @@ ContentPage {
                             Layout.fillWidth: true
                             placeholderText: "https://calendar.google.com/calendar/ical/..."
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.m3colors.m3onSurface
+                            color: Appearance.colors.colOnSurface
                             placeholderTextColor: Appearance.colors.colSubtext
                             background: Rectangle {
                                 color: Appearance.colors.colLayer1
                                 radius: Appearance.rounding.small
                                 border.width: sourceUrlInput.activeFocus ? 2 : 1
-                                border.color: sourceUrlInput.activeFocus ? Appearance.m3colors.m3primary : Appearance.colors.colLayer0Border
+                                border.color: sourceUrlInput.activeFocus ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
                             }
                         }
                     }

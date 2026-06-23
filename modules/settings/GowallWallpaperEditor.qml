@@ -127,12 +127,12 @@ ColumnLayout {
         MaterialSymbol {
             text: "warning"
             iconSize: Appearance.font.pixelSize.larger
-            color: Appearance.m3colors.m3error
+            color: Appearance.colors.colError
         }
         StyledText {
             Layout.fillWidth: true
             text: Translation.tr("gowall is not installed. Install it from github.com/Achno/gowall to use this feature.")
-            color: Appearance.m3colors.m3error
+            color: Appearance.colors.colError
             font.pixelSize: Appearance.font.pixelSize.small
             wrapMode: Text.WordWrap
         }
@@ -198,7 +198,7 @@ ColumnLayout {
             Layout.fillWidth: true
             text: Translation.tr("Animated files are not supported. Choose a static image.")
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.m3colors.m3error
+            color: Appearance.colors.colError
             wrapMode: Text.WordWrap
         }
     }
@@ -500,7 +500,7 @@ ColumnLayout {
             MaterialSymbol {
                 text: "warning"
                 iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.m3colors.m3error
+                color: Appearance.colors.colError
             }
             StyledText {
                 Layout.fillWidth: true
@@ -660,7 +660,7 @@ ColumnLayout {
             Layout.fillWidth: true
             text: GowallService.error
             font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.m3colors.m3error
+            color: Appearance.colors.colError
             wrapMode: Text.WordWrap
         }
     }

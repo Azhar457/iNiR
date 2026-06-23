@@ -102,7 +102,7 @@ ContentPage {
                         MaterialSymbol {
                             text: "restart_alt"
                             iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.m3colors.m3onSurface
+                            color: Appearance.colors.colOnSurface
                         }
                         StyledText {
                             text: Translation.tr("Reset to defaults")
@@ -141,13 +141,13 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "dashboard"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: !modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: !modulesPage.isWaffle ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Material (ii)"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: !modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: !modulesPage.isWaffle ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                     }
 
@@ -172,13 +172,13 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "window"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: modulesPage.isWaffle ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Windows 11 (Waffle)"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: modulesPage.isWaffle ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: modulesPage.isWaffle ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                     }
 
@@ -236,13 +236,13 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Foot"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                     }
                     onClicked: {
@@ -266,13 +266,13 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Kitty"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                     }
                     onClicked: {
@@ -296,13 +296,13 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Ghostty"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                     }
                     onClicked: {
@@ -326,13 +326,13 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Alacritty"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                     }
                     onClicked: {
@@ -356,13 +356,13 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "WezTerm"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                     }
                     onClicked: {
@@ -386,13 +386,13 @@ ContentPage {
                             Layout.alignment: Qt.AlignHCenter
                             text: "terminal"
                             iconSize: Appearance.font.pixelSize.larger
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: "Konsole"
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: parent.parent.isSelected ? Appearance.m3colors.m3onPrimaryContainer : Appearance.m3colors.m3onSurface
+                            color: parent.parent.isSelected ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
                         }
                     }
                     onClicked: {
@@ -1009,7 +1009,7 @@ ContentPage {
                     MaterialSymbol {
                         text: (Config.options?.settingsUi?.overlayMode ?? false) ? "layers" : "open_in_new"
                         iconSize: Appearance.font.pixelSize.huge
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                     }
 
                     ColumnLayout {

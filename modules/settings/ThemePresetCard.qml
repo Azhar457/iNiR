@@ -117,7 +117,7 @@ Item {
             height: 28
             radius: 14
             color: starMouseArea.containsMouse
-                ? (root.isFavorite ? Appearance.colors.colLayer1Hover : Appearance.m3colors.m3tertiaryContainer)
+                ? (root.isFavorite ? Appearance.colors.colLayer1Hover : Appearance.colors.colTertiaryContainer)
                 : "transparent"
             visible: root.isFavorite || cardMouseArea.containsMouse || starMouseArea.containsMouse
 
@@ -131,9 +131,9 @@ Item {
                 text: root.isFavorite ? "star" : "star_outline"
                 iconSize: 16
                 color: root.isFavorite
-                    ? Appearance.m3colors.m3tertiary
+                    ? Appearance.colors.colTertiary
                     : starMouseArea.containsMouse
-                        ? Appearance.m3colors.m3onTertiaryContainer
+                        ? Appearance.colors.colOnTertiaryContainer
                         : Appearance.colors.colSubtext
             }
 

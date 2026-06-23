@@ -90,7 +90,7 @@ ContentPage {
                 MaterialSymbol {
                     text: "touch_app"
                     iconSize: 16
-                    color: Appearance.m3colors.m3tertiary
+                    color: Appearance.colors.colTertiary
                 }
 
                 StyledText {
@@ -115,7 +115,7 @@ ContentPage {
                     radius: 16
                     color: Appearance.colors.colLayer1
                     border.width: searchField.activeFocus ? 1.5 : 0
-                    border.color: Appearance.m3colors.m3primary
+                    border.color: Appearance.colors.colPrimary
 
                     RowLayout {
                         anchors.fill: parent
@@ -170,13 +170,13 @@ ContentPage {
                     width: 32
                     height: 32
                     radius: 16
-                    color: Config.options?.appearance?.softenColors ? Appearance.m3colors.m3primary : Appearance.colors.colLayer1
+                    color: Config.options?.appearance?.softenColors ? Appearance.colors.colPrimary : Appearance.colors.colLayer1
 
                     MaterialSymbol {
                         anchors.centerIn: parent
                         text: "opacity"
                         iconSize: 16
-                        color: Config.options?.appearance?.softenColors ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer1
+                        color: Config.options?.appearance?.softenColors ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
                     }
 
                     MouseArea {
@@ -214,7 +214,7 @@ ContentPage {
                             height: 28
                             radius: 14
                             color: themesGroup.selectedTab === index
-                                ? Appearance.m3colors.m3primary
+                                ? Appearance.colors.colPrimary
                                 : tabMouse.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
 
                             MaterialSymbol {
@@ -222,7 +222,7 @@ ContentPage {
                                 text: modelData.icon
                                 iconSize: 14
                                 color: themesGroup.selectedTab === index
-                                    ? Appearance.m3colors.m3onPrimary
+                                    ? Appearance.colors.colOnPrimary
                                     : Appearance.colors.colOnLayer1
                             }
 
@@ -361,7 +361,7 @@ ContentPage {
                     MaterialSymbol {
                         text: "bolt"
                         iconSize: 14
-                        color: Appearance.m3colors.m3primary
+                        color: Appearance.colors.colPrimary
                     }
 
                     StyledText {
@@ -377,7 +377,7 @@ ContentPage {
                         visible: (Config.options?.appearance?.favoriteThemes?.length ?? 0) > 0
                         text: "★ " + (Config.options?.appearance?.favoriteThemes?.length ?? 0)
                         font.pixelSize: Appearance.font.pixelSize.smallest
-                        color: Appearance.m3colors.m3tertiary
+                        color: Appearance.colors.colTertiary
                     }
                 }
 
@@ -1528,7 +1528,7 @@ ContentPage {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: modelData.icon
                                     iconSize: Appearance.font.pixelSize.normal
-                                    color: Appearance.m3colors.m3onSurface
+                                    color: Appearance.colors.colOnSurface
                                 }
 
                                 StyledText {

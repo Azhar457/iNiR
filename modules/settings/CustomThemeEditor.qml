@@ -682,8 +682,8 @@ ColumnLayout {
                     text: temperatureSlider.value > 0 ? Translation.tr("Warm") : (temperatureSlider.value < 0 ? Translation.tr("Cool") : "0")
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.family: Appearance.font.family.monospace
-                    color: temperatureSlider.value > 0 ? Appearance.m3colors.m3tertiary 
-                         : (temperatureSlider.value < 0 ? Appearance.m3colors.m3primary 
+                    color: temperatureSlider.value > 0 ? Appearance.colors.colTertiary
+                         : (temperatureSlider.value < 0 ? Appearance.colors.colPrimary
                          : Appearance.colors.colSubtext)
                     Layout.preferredWidth: 35
                     horizontalAlignment: Text.AlignRight
@@ -1032,7 +1032,7 @@ ColumnLayout {
                             text: root.selectedPresetName || Translation.tr("Select a preset...")
                             font.pixelSize: Appearance.font.pixelSize.small
                             elide: Text.ElideRight
-                            color: root.selectedPresetName ? Appearance.m3colors.m3onSurface : Appearance.colors.colSubtext
+                            color: root.selectedPresetName ? Appearance.colors.colOnSurface : Appearance.colors.colSubtext
                         }
 
                         MaterialSymbol {
@@ -1076,7 +1076,7 @@ ColumnLayout {
                             color: Appearance.colors.colLayer1
                             radius: Appearance.rounding.small
                         }
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                         placeholderTextColor: Appearance.colors.colSubtext
                     }
 
@@ -1129,9 +1129,9 @@ ColumnLayout {
                                     text: modelData.name
                                     font.pixelSize: Appearance.font.pixelSize.small
                                     elide: Text.ElideRight
-                                    color: modelData.name === root.selectedPresetName 
-                                        ? Appearance.m3colors.m3onPrimaryContainer 
-                                        : Appearance.m3colors.m3onSurface
+                                    color: modelData.name === root.selectedPresetName
+                                        ? Appearance.colors.colOnPrimaryContainer
+                                        : Appearance.colors.colOnSurface
                                 }
                             }
 
@@ -1850,13 +1850,13 @@ ColumnLayout {
                     width: 28
                     height: 28
                     radius: Appearance.rounding.small
-                    color: Appearance.m3colors.m3surfaceContainer
+                    color: Appearance.colors.colSurfaceContainer
 
                     MaterialSymbol {
                         anchors.centerIn: parent
                         text: "stacks"
                         iconSize: 16
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                     }
                 }
 

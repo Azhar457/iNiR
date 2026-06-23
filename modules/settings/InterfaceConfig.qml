@@ -85,7 +85,7 @@ ContentPage {
                     text: Translation.tr("Apply to")
                     font.pixelSize: Appearance.font.pixelSize.small
                     color: Boolean(Config.options?.appearance?.desaturation?.enable)
-                        ? Appearance.m3colors.m3onSurface
+                        ? Appearance.colors.colOnSurface
                         : Appearance.colors.colSubtext
                 }
 
@@ -1250,7 +1250,7 @@ ContentPage {
                             placeholderText: "https://9animetv.to/search?keyword=%s"
                             text: Config.options.sidebar?.animeSchedule?.watchSite ?? ""
                             font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.m3colors.m3onSurface
+                            color: Appearance.colors.colOnSurface
                             placeholderTextColor: Appearance.colors.colSubtext
                             background: Rectangle {
                                 color: Appearance.colors.colLayer1
@@ -1329,7 +1329,7 @@ ContentPage {
                         Layout.fillWidth: true
                         placeholderText: Translation.tr("Optional - for NSFW content")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                         placeholderTextColor: Appearance.colors.colSubtext
                         echoMode: TextInput.Password
                         text: Config.options.sidebar?.wallhaven?.apiKey ?? ""
@@ -1918,7 +1918,7 @@ ContentPage {
                         placeholderText: Translation.tr("Type to search coins...")
                         text: ""
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                         placeholderTextColor: Appearance.colors.colSubtext
                         background: Rectangle {
                             color: Appearance.colors.colLayer1
@@ -2287,7 +2287,7 @@ ContentPage {
                         placeholderText: Translation.tr("Search a city or region…")
                         text: ""
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                         placeholderTextColor: Appearance.colors.colSubtext
                         background: Rectangle {
                             color: Appearance.colors.colLayer1

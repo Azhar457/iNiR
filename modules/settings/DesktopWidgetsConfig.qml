@@ -518,7 +518,7 @@ ContentPage {
                             text: WidgetPowerManager.widgetsActive ? "play_circle" : "pause_circle"
                             iconSize: 16
                             color: WidgetPowerManager.widgetsActive 
-                                ? Appearance.m3colors.m3primary 
+                                ? Appearance.colors.colPrimary 
                                 : Appearance.colors.colSubtext
                         }
                         StyledText {
@@ -528,7 +528,7 @@ ContentPage {
                                 : Translation.tr("Paused")
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: WidgetPowerManager.widgetsActive 
-                                ? Appearance.m3colors.m3primary 
+                                ? Appearance.colors.colPrimary 
                                 : Appearance.colors.colSubtext
                         }
                     }

@@ -27,7 +27,7 @@ Rectangle {
     readonly property color colText: zzzEverywhere ? Appearance.zzz.ink
         : Appearance.angelEverywhere ? Appearance.angel.colText
         : inirEverywhere ? Appearance.inir.colText
-        : auroraEverywhere ? Appearance.m3colors.m3onSurface
+        : auroraEverywhere ? Appearance.colors.colOnSurface
         : Appearance.colors.colOnLayer1
     readonly property color colSubtext: zzzEverywhere ? Appearance.zzz.inkMuted
         : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
@@ -36,7 +36,7 @@ Rectangle {
     readonly property color colAccent: zzzEverywhere ? Appearance.zzz.accent
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : inirEverywhere ? Appearance.inir.colPrimary
-        : auroraEverywhere ? Appearance.m3colors.m3primary
+        : auroraEverywhere ? Appearance.colors.colPrimary
         : Appearance.colors.colPrimary
 
     Layout.fillWidth: true

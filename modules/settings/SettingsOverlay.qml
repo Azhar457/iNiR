@@ -480,7 +480,7 @@ Scope {
                 color: Appearance.auroraEverywhere ? "transparent"
                      : Appearance.inirEverywhere ? Appearance.inir.colLayer0
                      : Appearance.zzzEverywhere ? Appearance.zzz.chrome
-                     : Appearance.m3colors.m3background
+                     : Appearance.colors.colLayer0Base
                 clip: true
 
                 border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
@@ -677,14 +677,14 @@ Scope {
                                 : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                   : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                                   : Appearance.inirEverywhere ? Appearance.inir.colLayer0
-                                  : Appearance.m3colors.m3surfaceContainerLow)
+                                  : Appearance.colors.colSurfaceContainerLow)
                             border.width: overlaySearchField.activeFocus ? 2
                                 : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1)
                             border.color: overlaySearchField.activeFocus
                                 ? Appearance.colors.colPrimary
                                 : (Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                                   : Appearance.inirEverywhere ? Appearance.inir.colBorderMuted
-                                  : Appearance.m3colors.m3outlineVariant)
+                                  : Appearance.colors.colOutlineVariant)
 
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
@@ -1219,7 +1219,7 @@ Scope {
                                  : Appearance.rounding.normal
                             color: Appearance.auroraEverywhere ? "transparent"
                                  : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                                 : Appearance.m3colors.m3surfaceContainerLow
+                                 : Appearance.colors.colSurfaceContainerLow
                             border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                                         : Appearance.inirEverywhere ? 1 : 0
                             border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
@@ -1297,7 +1297,7 @@ Scope {
                                 Rectangle {
                                     anchors { bottom: parent.bottom; left: parent.left; right: parent.right; leftMargin: 16; rightMargin: 16 }
                                     height: 1
-                                    color: Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle : Appearance.m3colors.m3outlineVariant
+                                    color: Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle : Appearance.colors.colOutlineVariant
                                     opacity: 0.5
                                 }
                             }
@@ -1515,7 +1515,7 @@ Scope {
                         color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                              : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                              : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                             : Appearance.m3colors.m3surfaceContainerHigh
+                             : Appearance.colors.colSurfaceContainerHigh
                         border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                                     : Appearance.inirEverywhere ? 1 : 0
                         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
@@ -1598,7 +1598,7 @@ Scope {
                                     : Appearance.inirEverywhere ? 1 : 1
                         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                             : Appearance.inirEverywhere ? Appearance.inir.colBorder
-                            : Appearance.m3colors.m3outlineVariant
+                            : Appearance.colors.colOutlineVariant
 
                         ListView {
                             id: overlayResultsList

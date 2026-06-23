@@ -368,12 +368,12 @@ ContentPage {
                     MaterialSymbol {
                         text: "restart_alt"
                         iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                     }
                     StyledText {
                         text: Translation.tr("Reset to defaults")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.m3colors.m3onSurface
+                        color: Appearance.colors.colOnSurface
                     }
                 }
 

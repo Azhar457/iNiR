@@ -50,7 +50,7 @@ RowLayout {
             anchors.centerIn: parent
             iconSize: 20
             horizontalAlignment: Text.AlignHCenter
-            color: headerButton.toggled ? Appearance.m3colors.m3onSecondaryContainer : root.colText
+            color: headerButton.toggled ? Appearance.colors.colOnSecondaryContainer : root.colText
         }
         StyledToolTip { text: headerButton.tooltip }
     }
