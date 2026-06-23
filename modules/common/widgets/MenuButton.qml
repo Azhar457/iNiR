@@ -19,6 +19,7 @@ RippleButton {
         color: root.enabled ? Appearance.colors.colOnSurface : Appearance.colors.colOutline
 
         Behavior on color {
+            enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
     }

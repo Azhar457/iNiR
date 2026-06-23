@@ -46,5 +46,10 @@ RippleButton {
         color: Appearance.zzzEverywhere
             ? (urgency == NotificationUrgency.Critical ? Appearance.zzz.onSecondary : Appearance.zzz.ink)
             : (urgency == NotificationUrgency.Critical) ? Appearance.colors.colOnSurfaceVariant : Appearance.colors.colOnSurface
+
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
     }
 }
