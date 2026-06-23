@@ -452,7 +452,7 @@ Scope {
                         font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
                         font.italic: Appearance.zzzEverywhere
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
                         elide: Text.ElideRight
                     }
 
@@ -723,7 +723,7 @@ Scope {
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                                     : Appearance.inirEverywhere ? Appearance.inir.colText 
-                                    : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface 
+                                    : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface 
                                     : Appearance.colors.colOnPrimaryContainer
                                 elide: Text.ElideRight
                             }
@@ -734,7 +734,7 @@ Scope {
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                                     : Appearance.inirEverywhere ? Appearance.inir.colText 
-                                    : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface 
+                                    : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface 
                                     : Appearance.colors.colOnPrimaryContainer
                                 elide: Text.ElideRight
                             }
@@ -744,7 +744,7 @@ Scope {
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                                     : Appearance.inirEverywhere ? Appearance.inir.colText 
-                                    : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface 
+                                    : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface 
                                     : Appearance.colors.colOnPrimaryContainer
                                 elide: Text.ElideRight
                             }

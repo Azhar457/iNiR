@@ -570,7 +570,7 @@ Scope {
                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
                     : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base 
-                    : Appearance.m3colors.m3surfaceContainerHigh
+                    : Appearance.colors.colSurfaceContainerHigh
                 border.width: Appearance.zzzEverywhere ? 1
                     : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                     : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
@@ -1101,11 +1101,11 @@ Scope {
                                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                                        : Appearance.inirEverywhere ? Appearance.inir.colPrimary 
                                        : Appearance.auroraEverywhere ? Appearance.colors.colPrimaryContainer 
-                                       : Appearance.m3colors.m3primaryContainer)
+                                       : Appearance.colors.colPrimaryContainer)
                                    : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                        : Appearance.inirEverywhere ? Appearance.inir.colLayer3 
                                        : Appearance.auroraEverywhere ? Appearance.colors.colLayer2Base 
-                                       : Appearance.m3colors.m3surfaceContainerHighest)
+                                       : Appearance.colors.colSurfaceContainerHighest)
                             scale: compactMouseArea.pressed ? 0.92 : (compactMouseArea.containsMouse && !root.isHighLoad ? 1.05 : 1.0)
                             
                             Behavior on color { 
@@ -1161,7 +1161,7 @@ Scope {
                                 radius: height / 2
                                 visible: implicitWidth > 0
                                 clip: true
-                                color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.m3colors.m3primary
+                                color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
                                 Behavior on implicitWidth {
                                     enabled: Appearance.animationsEnabled
                                     NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
@@ -1463,7 +1463,7 @@ Scope {
                             radius: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut
                             visible: selected
                             color: root.altUseM3Layout
-                                   ? Appearance.m3colors.m3primaryContainer
+                                   ? Appearance.colors.colPrimaryContainer
                                    : Appearance.colors.colLayer1
                         }
 
@@ -1515,9 +1515,9 @@ Scope {
                                         const selected = row.selected
                                         const useM3 = root.altUseM3Layout
                                         if (useM3 && selected)
-                                            return Appearance.m3colors.m3onPrimaryContainer
+                                            return Appearance.colors.colOnPrimaryContainer
                                         if (useM3)
-                                            return Appearance.m3colors.m3onSurface
+                                            return Appearance.colors.colOnSurface
                                         return Appearance.colors.colOnLayer1
                                     }
                                     font.pixelSize: Appearance.font.pixelSize.large
@@ -1544,7 +1544,7 @@ Scope {
                                             const selected = row.selected
                                             const useM3 = root.altUseM3Layout
                                             if (useM3 && selected)
-                                                return Appearance.m3colors.m3onPrimaryContainer
+                                                return Appearance.colors.colOnPrimaryContainer
                                             if (useM3)
                                                 return Appearance.colors.colSubtext
                                             return ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.6)

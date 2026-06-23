@@ -176,7 +176,7 @@ RippleButton {
                 text: root.materialSymbol
                 iconSize: 30
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
             }
         }
 
@@ -186,7 +186,7 @@ RippleButton {
                 text: root.bigText
                 font.pixelSize: Appearance.font.pixelSize.larger
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
             }
         }
 
@@ -221,7 +221,7 @@ RippleButton {
                             text: "check"
                             font.pixelSize: Appearance.font.pixelSize.normal
                             color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker
-                                : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.m3colors.m3onPrimary
+                                : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
                         }
                     }
                 }
@@ -241,7 +241,7 @@ RippleButton {
                     font.family: Appearance.font.family[root.fontType]
                     color: Appearance.zzzEverywhere
                         ? ((root.down || root.keyboardDown) ? Appearance.zzz.onSignal : Appearance.zzz.ink)
-                        : (root.isSelected || root.hovered || root.focus) ? (Appearance.inirEverywhere ? Appearance.inir.colOnLayer3 : Appearance.colors.colOnLayer3) : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface)
+                        : (root.isSelected || root.hovered || root.focus) ? (Appearance.inirEverywhere ? Appearance.inir.colOnLayer3 : Appearance.colors.colOnLayer3) : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface)
                     horizontalAlignment: Text.AlignLeft
                     elide: Text.ElideRight
                     text: `${root.displayContent}`
@@ -315,7 +315,7 @@ RippleButton {
                                 text: actionButton.materialIconName
                                 font.pixelSize: Appearance.font.pixelSize.large
                                 color: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+                                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
                             }
                         }
                         Loader {
