@@ -26,6 +26,7 @@ Item {
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool angelEverywhere: Appearance.angelEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
     readonly property bool showHeader: Config.options?.dashboard?.showHeader ?? true
 
     // ═══ Modular widget registry ═══════════════════════════════════════

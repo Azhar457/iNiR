@@ -42,14 +42,18 @@ Item {
 
     // PipeWire stream fallback: players without MPRIS volume support (browser
     // MPRIS bridges, some Electron apps) still have an audio stream whose
-    // volume we can drive directly.
-    readonly property var playerStreamNode: {
+    // volume we can drive directly. Cached (not a reactive binding) to avoid a
+    // binding loop: the binding read Audio.outputAppNodes, and the
+    // PwObjectTracker holding the resolved node invalidates node-property reads
+    // that feed outputAppNodes. Recomputed on active-player + node-list change.
+    property var playerStreamNode: null
+    function _updatePlayerStreamNode() {
         const p = root.activePlayer
-        if (!p) return null
+        if (!p) { root.playerStreamNode = null; return }
         const id = (p.identity ?? "").toLowerCase()
         const entry = (p.desktopEntry ?? "").toLowerCase()
-        if (!id && !entry) return null
-        return Audio.outputAppNodes.find(n => {
+        if (!id && !entry) { root.playerStreamNode = null; return }
+        root.playerStreamNode = Audio.outputAppNodes.find(n => {
             const an = ((n.properties?.["application.name"] ?? n.name) ?? "").toLowerCase()
             if (!an) return false
             return (id && (an.includes(id) || id.includes(an)))
@@ -57,13 +61,19 @@ Item {
         }) ?? null
     }
     PwObjectTracker { objects: root.playerStreamNode ? [root.playerStreamNode] : [] }
+    Connections {
+        target: Audio
+        function onOutputAppNodesChanged() { root._updatePlayerStreamNode() }
+    }
 
     // Track switch can swap the active player object; a stale popup value
     // would then be applied to the new player on the next wheel tick.
     onActivePlayerChanged: {
         volumePopupVisible = false
         volumePopupValue = Math.max(0, Math.min(1, MprisController.getVolume()))
+        root._updatePlayerStreamNode()
     }
+    Component.onCompleted: root._updatePlayerStreamNode()
 
 
     // Bar-anchored media popup
