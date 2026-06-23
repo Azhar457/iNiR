@@ -44,14 +44,14 @@ Item {
             rotation: -24
             color: root.stripeColor
 
-            Behavior on color {
-                enabled: Appearance.animationsEnabled
-                ColorAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                }
-            }
+            // NOTE: no per-stripe `Behavior on color`. The hatch color only
+            // changes on a style switch or wallpaper regen — both of which
+            // also drive the parent `Behavior on opacity` (the whole pattern
+            // fades out before a new color lands, then fades back in), so the
+            // snap is invisible. Per-delegate ColorAnimation × ~42 stripes ×
+            // up to 136 cards on a busy settings page = thousands of always-
+            // resident animation evaluators; this is the single biggest idle-
+            // CPU cost under ZZZ. Keep exactly one Behavior (parent opacity).
         }
     }
 }
