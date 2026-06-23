@@ -33,11 +33,11 @@ Button {
         : (ColorUtils.transparentize(Appearance?.colors.colLayer1Hover, 1) || "transparent")
     property color colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : (Appearance?.colors.colLayer1Hover ?? "#E5DFED")
-    property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.chrome : (Appearance?.colors.colPrimary ?? "#65558F")
-    property color colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt : (Appearance?.colors.colPrimaryHover ?? "#77699C")
-    property color colRipple: Appearance.zzzEverywhere ? Appearance.zzz.chrome : (Appearance?.colors.colLayer1Active ?? "#D6CEE2")
-    property color colRippleToggled: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt : (Appearance?.colors.colPrimaryActive ?? "#D6CEE2")
+        : (Appearance.colors.colLayer1Hover)
+    property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.chrome : (Appearance.colors.colPrimary)
+    property color colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt : (Appearance.colors.colPrimaryHover)
+    property color colRipple: Appearance.zzzEverywhere ? Appearance.zzz.chrome : (Appearance.colors.colLayer1Active)
+    property color colRippleToggled: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt : (Appearance.colors.colPrimaryActive)
 
     opacity: root.enabled ? 1 : 0.4
     property color buttonColor: ColorUtils.transparentize(root.toggled ?

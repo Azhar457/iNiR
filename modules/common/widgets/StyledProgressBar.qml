@@ -13,7 +13,7 @@ ProgressBar {
     property real valueBarWidth: 120
     property real valueBarHeight: 4
     property real valueBarGap: 4
-    property color highlightColor: Appearance?.colors.colPrimary ?? "#685496"
+    property color highlightColor: Appearance.colors.colPrimary
     // ZZZ: carbon metric track; the lime/orange signal stays on the fill only.
     property color trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
         : Appearance.colors.colSecondaryContainer

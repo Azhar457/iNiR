@@ -33,7 +33,7 @@ RippleButton { // Expand button
         ? Appearance.inir.colLayer3Hover
         : Appearance.auroraEverywhere 
         ? Appearance.aurora.colSubSurfaceHover
-        : Appearance?.colors.colLayer2Hover ?? "#E5DFED"
+        : Appearance.colors.colLayer2Hover
     colRipple: Appearance.zzzEverywhere
         ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
         : Appearance.angelEverywhere
@@ -42,7 +42,7 @@ RippleButton { // Expand button
         ? Appearance.inir.colLayer3Active
         : Appearance.auroraEverywhere 
         ? Appearance.aurora.colSubSurfaceActive
-        : Appearance?.colors.colLayer2Active ?? "#D6CEE2"
+        : Appearance.colors.colLayer2Active
 
     contentItem: Item {
         anchors.centerIn: parent

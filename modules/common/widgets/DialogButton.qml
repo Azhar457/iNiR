@@ -19,7 +19,7 @@ RippleButton {
 
     property color colEnabled: Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary : (Appearance?.colors.colPrimary ?? "#65558F")
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimary : (Appearance.colors.colPrimary)
     property color colDisabled: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
         : Appearance.inirEverywhere ? Appearance.inir.colTextDisabled : Appearance.colors.colOutline
     colBackground: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt

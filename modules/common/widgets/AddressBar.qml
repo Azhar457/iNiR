@@ -111,8 +111,8 @@ Rectangle {
             id: dirEditButton
             toggled: !root.showBreadcrumb
             // ZZZ toggled = accent sticker plate so onSticker icon stays readable
-            colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : (Appearance?.colors.colPrimary ?? "#65558F")
-            colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : (Appearance?.colors.colPrimaryHover ?? "#77699C")
+            colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : (Appearance.colors.colPrimary)
+            colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : (Appearance.colors.colPrimaryHover)
             downAction: () => root.showBreadcrumb = !root.showBreadcrumb
             contentItem: MaterialSymbol {
                 text: "edit"

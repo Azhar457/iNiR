@@ -37,11 +37,11 @@ Button {
     implicitHeight: (root.down && bounce) ? clickedHeight : baseHeight
 
     property color colBackground: ColorUtils.transparentize(colBackgroundHover, 1) || "transparent"
-    property color colBackgroundHover: Appearance?.colors.colLayer1Hover ?? "#E5DFED"
-    property color colBackgroundActive: Appearance?.colors.colLayer1Active ?? "#D6CEE2"
-    property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : (Appearance?.colors.colPrimary ?? "#65558F")
-    property color colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : (Appearance?.colors.colPrimaryHover ?? "#77699C")
-    property color colBackgroundToggledActive: Appearance?.colors.colPrimaryActive ?? "#D6CEE2"
+    property color colBackgroundHover: Appearance.colors.colLayer1Hover
+    property color colBackgroundActive: Appearance.colors.colLayer1Active
+    property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : (Appearance.colors.colPrimary)
+    property color colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : (Appearance.colors.colPrimaryHover)
+    property color colBackgroundToggledActive: Appearance.colors.colPrimaryActive
 
     property real radius: root.down ? root.buttonRadiusPressed : root.buttonRadius
     property real leftRadius: root.down ? root.buttonRadiusPressed : root.buttonRadius

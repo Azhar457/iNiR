@@ -112,7 +112,7 @@ Scope {
                 layer.enabled: visible
                 layer.effect: MultiEffect {
                     shadowEnabled: true
-                    shadowColor: "#40000000"
+                    shadowColor: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.25)
                     shadowBlur: 0.8
                     shadowVerticalOffset: 8
                 }
@@ -169,7 +169,7 @@ Scope {
                 layer.enabled: visible
                 layer.effect: MultiEffect {
                     shadowEnabled: true
-                    shadowColor: "#50000000"
+                    shadowColor: ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.31)
                     shadowBlur: 1.0
                     shadowVerticalOffset: 12
                 }

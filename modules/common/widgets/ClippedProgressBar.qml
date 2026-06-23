@@ -16,9 +16,9 @@ ProgressBar {
     // ZZZ: use the lime/orange signal fill on a carbon track. The default
     // (colOnSecondaryContainer) resolves to near-black ink under ZZZ → invisible fill.
     property color highlightColor: Appearance.zzzEverywhere ? Appearance.zzz.metricFill
-        : (Appearance?.colors.colOnSecondaryContainer ?? "#685496")
+        : (Appearance.colors.colOnSecondaryContainer)
     property color trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
-        : (ColorUtils.transparentize(highlightColor, 0.5) ?? "#F1D3F9")
+        : (ColorUtils.transparentize(highlightColor, 0.5))
     property alias radius: contentItem.radius
     property string text
     default property Item textMask: Item {
