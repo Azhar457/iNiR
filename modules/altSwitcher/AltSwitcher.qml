@@ -531,10 +531,13 @@ Scope {
                 visible: !root.compactStyle && !root.listStyle && !root.skewStyle
                 z: 0
                 anchors.fill: parent
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                     : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
                     : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
                 color: {
+                    if (Appearance.zzzEverywhere)
+                        return Appearance.zzz.bg0
                     if (Appearance.angelEverywhere)
                         return Appearance.angel.colGlassPopup
                     if (Appearance.inirEverywhere)
@@ -546,9 +549,11 @@ Scope {
                     const base = ColorUtils.mix(Appearance.colors.colLayer0, Qt.rgba(0, 0, 0, 1), 0.35)
                     return ColorUtils.applyAlpha(base, root.altBackgroundOpacity)
                 }
-                border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
+                border.width: Appearance.zzzEverywhere ? 1
+                    : Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
                     : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : (root.altUseM3Layout ? 1 : 0)
-                border.color: Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                    : Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
                     : Appearance.inirEverywhere ? Appearance.inir.colBorder 
                     : Appearance.auroraEverywhere ? Appearance.colors.colLayer0Border 
                     : Appearance.colors.colLayer0Border
@@ -558,15 +563,19 @@ Scope {
                 id: compactBackground
                 visible: root.compactStyle
                 anchors.fill: parent
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                     : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
-                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                color: Appearance.zzzEverywhere ? Appearance.zzz.bg2
+                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
                     : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base 
                     : Appearance.m3colors.m3surfaceContainerHigh
-                border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                border.width: Appearance.zzzEverywhere ? 1
+                    : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                     : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
-                border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+                    : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                     : Appearance.inirEverywhere ? Appearance.inir.colBorder 
                     : Appearance.auroraEverywhere ? Appearance.colors.colLayer0Border 
                     : "transparent"
@@ -574,14 +583,14 @@ Scope {
 
             StyledRectangularShadow {
                 target: root.compactStyle ? compactBackground : panelBackground
-                visible: !root.listStyle && !root.skewStyle && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
+                visible: !root.listStyle && !root.skewStyle && !Appearance.zzzEverywhere && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
             }
 
             MultiEffect {
                 z: 0.5
                 anchors.fill: panelBackground
                 source: panelBackground
-                visible: !root.compactStyle && !root.listStyle && !root.skewStyle && !root.altUseM3Layout && Appearance.effectsEnabled && root.effectiveEnableBlurGlass && root.altBlurAmount > 0 && !root.isHighLoad
+                visible: !root.compactStyle && !root.listStyle && !root.skewStyle && !root.altUseM3Layout && !Appearance.zzzEverywhere && Appearance.effectsEnabled && root.effectiveEnableBlurGlass && root.altBlurAmount > 0 && !root.isHighLoad
                 blurEnabled: true
                 blur: root.altBlurAmount
                 blurMax: 64
@@ -1183,22 +1192,34 @@ Scope {
                 anchors.centerIn: parent
                 width: 400
                 implicitHeight: listHeader.height + listSeparator.height + listColumn.height
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                     : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
-                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                color: Appearance.zzzEverywhere ? Appearance.zzz.bg1
+                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1 
                     : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base 
                     : Appearance.colors.colSurfaceContainer
-                border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                border.width: Appearance.zzzEverywhere ? 1
+                    : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                     : Appearance.auroraEverywhere ? 1 : 0
-                border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+                    : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                     : Appearance.auroraEverywhere ? Appearance.colors.colLayer0Border : "transparent"
+
+                // ZZZ poster registration backdrop + accent bar.
+                ZzzPanelBackdrop {
+                    anchors.fill: parent
+                    visible: Appearance.zzzEverywhere
+                    z: 0
+                    accentColor: Appearance.zzz.accent
+                }
 
                 StyledRectangularShadow {
                     target: listContent
                     blur: 0.5 * Appearance.sizes.elevationMargin
                     spread: 0
-                    visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+                    visible: !Appearance.zzzEverywhere && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
                 }
 
                 Column {
@@ -1212,10 +1233,12 @@ Scope {
 
                         Item { width: 16 }
                         StyledText {
-                            text: Translation.tr("Switch windows")
+                            text: Appearance.zzzEverywhere ? Translation.tr("Switch windows").toUpperCase() : Translation.tr("Switch windows")
                             font.pixelSize: Appearance.font.pixelSize.larger
-                            font.weight: Font.DemiBold
-                            color: Appearance.inirEverywhere ? Appearance.inir.colText 
+                            font.weight: Appearance.zzzEverywhere ? Font.Black : Font.DemiBold
+                            font.italic: Appearance.zzzEverywhere
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                                : Appearance.inirEverywhere ? Appearance.inir.colText 
                                 : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer1 
                                 : Appearance.colors.colOnLayer1
                         }

@@ -30,19 +30,23 @@ Item {
     property real implicitSize: Math.round((Config.getNestedValue("background.widgets.clock.cookie.size", 230)) * scaleFactor)
 
     // ── Style-dispatched colors (overridable from parent) ──
-    readonly property color _primaryColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    readonly property color _primaryColor: Appearance.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
         : Appearance.colors.colPrimary
-    readonly property color _secondaryColor: Appearance.angelEverywhere ? Appearance.angel.colSecondary
+    readonly property color _secondaryColor: Appearance.zzzEverywhere ? Appearance.zzz.secondary
+        : Appearance.angelEverywhere ? Appearance.angel.colSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colSecondary
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3secondary
         : Appearance.colors.colSecondary
-    readonly property color _tertiaryColor: Appearance.angelEverywhere ? Appearance.angel.colTertiary
+    readonly property color _tertiaryColor: Appearance.zzzEverywhere ? Appearance.zzz.tertiary
+        : Appearance.angelEverywhere ? Appearance.angel.colTertiary
         : Appearance.inirEverywhere ? Appearance.inir.colTertiary
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
         : Appearance.colors.colTertiary
-    readonly property color _primaryContainerColor: Appearance.angelEverywhere ? Appearance.angel.colPrimaryContainer
+    readonly property color _primaryContainerColor: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimaryContainer
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
         : Appearance.colors.colPrimaryContainer

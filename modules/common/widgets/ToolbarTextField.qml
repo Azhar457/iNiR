@@ -20,8 +20,8 @@ TextField {
     bottomPadding: 0
     verticalAlignment: TextInput.AlignVCenter
 
-    placeholderTextColor: Appearance.colors.colSubtext
-    color: Appearance.colors.colOnLayer1
+    placeholderTextColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+    color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
     font {
         family: Appearance.font.family.main
         pixelSize: Appearance.font.pixelSize.small
@@ -29,13 +29,15 @@ TextField {
         variableAxes: Appearance.font.variableAxes.main
     }
     renderType: Text.NativeRendering
-    selectedTextColor: Appearance.colors.colOnSecondaryContainer
-    selectionColor: Appearance.colors.colSecondaryContainer
+    selectedTextColor: Appearance.zzzEverywhere ? Appearance.zzz.onSignal : Appearance.colors.colOnSecondaryContainer
+    selectionColor: Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.colors.colSecondaryContainer
 
     background: Rectangle {
         id: background
-        color: Appearance.colors.colLayer1
-        radius: Appearance.rounding.full
+        color: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colLayer1
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+        border.width: Appearance.zzzEverywhere ? 1 : 0
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
     }
 
     TextInputContextMenu {

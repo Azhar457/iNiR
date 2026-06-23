@@ -45,82 +45,43 @@ Item {
     // Widgets that absorb the column's remaining height
     readonly property var _fillIds: ["notifications", "todo", "notes"]
 
-    // ═══ Shared events dialog (agenda widget) ══════════════════════════
+    // ═══ Shared events dialog (agenda + calendar widgets) ══════════════
     property var _agendaEditEvent: null
+    property var _agendaPrefillDate: null
     property bool _agendaDialogShown: false
     property bool _agendaDialogLoaded: false
-    function openAgendaDialog(evt) {
-        root._agendaEditEvent = evt ?? null
+    // Accepts: an event object (edit), a Date (new event prefilled to that day),
+    // or null (blank new event). Calendar day-clicks pass a Date; agenda rows
+    // pass the event — both land in one shared dialog.
+    function openAgendaDialog(arg) {
+        const isDate = arg instanceof Date
+        root._agendaEditEvent = (arg && !isDate) ? arg : null
+        root._agendaPrefillDate = isDate ? arg : null
         root._agendaDialogLoaded = true
         if (agendaDialogLoader.item) {
-            if (evt) agendaDialogLoader.item.loadEvent(evt)
-            else agendaDialogLoader.item.resetForm()
+            if (root._agendaEditEvent) agendaDialogLoader.item.loadEvent(root._agendaEditEvent)
+            else {
+                agendaDialogLoader.item.resetForm()
+                if (root._agendaPrefillDate) agendaDialogLoader.item.eventDate = root._agendaPrefillDate
+            }
         }
         root._agendaDialogShown = true
     }
 
     function _column(name, fallback) {
+        // Respect a stored column even when empty (user cleared it in edit mode);
+        // fall back only when the key is absent entirely.
         const a = Config.options?.dashboard?.layout?.[name]
-        return (a && a.length >= 0) ? a : fallback
+        return Array.isArray(a) ? a : fallback
     }
 
     // ═══ In-panel edit mode ═════════════════════════════════════════════
     property bool editMode: false
-    readonly property var _columnOrder: ["left", "center", "right"]
-    readonly property var _editIconMap: ({
-        welcome: "waving_hand", clock: "schedule", system: "monitoring",
-        github: "deployed_code", notifications: "notifications", todo: "checklist",
-        media: "music_note", weather: "partly_cloudy_day", calendar: "calendar_month",
-        agenda: "event_upcoming", notes: "edit_note"
-    })
-    function _colArr(name) {
-        const a = Config.options?.dashboard?.layout?.[name]
-        return (a && a.length >= 0) ? a.slice() : []
-    }
-    function moveWithin(zone, idx, dir) {
-        const arr = root._colArr(zone)
-        const next = idx + dir
-        if (idx < 0 || next < 0 || next >= arr.length) return
-        const [m] = arr.splice(idx, 1)
-        arr.splice(next, 0, m)
-        Config.setNestedValue("dashboard.layout." + zone, arr)
-    }
-    function moveAcross(id, fromZone, dir) {
-        const ci = root._columnOrder.indexOf(fromZone)
-        const target = root._columnOrder[ci + dir]
-        if (!target) return
-        const src = root._colArr(fromZone)
-        const dst = root._colArr(target)
-        const idx = src.indexOf(id)
-        if (idx === -1) return
-        src.splice(idx, 1)
-        dst.push(id)
-        let u = {}
-        u["dashboard.layout." + fromZone] = src
-        u["dashboard.layout." + target] = dst
-        Config.setNestedValues(u)
-    }
-    function hideWidget(zone, idx) {
-        const arr = root._colArr(zone)
-        if (idx < 0 || idx >= arr.length) return
-        arr.splice(idx, 1)
-        Config.setNestedValue("dashboard.layout." + zone, arr)
-    }
-    function showWidget(id) {
-        // Re-add to the emptiest column so the layout stays balanced
-        let target = "center", best = Infinity
-        for (const z of root._columnOrder) {
-            const n = root._colArr(z).length
-            if (n < best) { best = n; target = z }
-        }
-        const arr = root._colArr(target)
-        arr.push(id)
-        Config.setNestedValue("dashboard.layout." + target, arr)
-    }
-    readonly property var hiddenIds: {
-        const placed = root.leftIds.concat(root.centerIds).concat(root.rightIds)
-        return Object.keys(root._editIconMap).filter(id => placed.indexOf(id) === -1)
-    }
+    // Latches true the first time editing opens, so the editor sheet Loader
+    // stays inactive (zero cost) until actually used.
+    property bool _editSheetSeen: false
+    onEditModeChanged: if (editMode) _editSheetSeen = true
+
     readonly property var leftIds: root._column("left", ["welcome", "clock", "system"])
     readonly property var centerIds: root._column("center", ["notifications", "todo"])
     readonly property var rightIds: root._column("right", ["media", "weather", "calendar"])
@@ -128,7 +89,12 @@ Item {
     Component { id: welcomeComponent; DashWelcome {} }
     Component { id: clockComponent; DashClock {} }
     Component { id: weatherComponent; DashWeather {} }
-    Component { id: calendarComponent; DashCalendar {} }
+    Component {
+        id: calendarComponent
+        DashCalendar {
+            onRequestEventsDialog: arg => root.openAgendaDialog(arg)
+        }
+    }
     Component { id: mediaComponent; DashMedia {} }
     Component { id: notificationsComponent; DashNotifications {} }
     Component { id: todoComponent; DashTodo {} }
@@ -171,19 +137,39 @@ Item {
              : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : Appearance.colors.colLayer0
 
-        radius: root.angelEverywhere ? Appearance.angel.roundingLarge
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : root.angelEverywhere ? Appearance.angel.roundingLarge
             : root.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
 
-        border.width: 1
-        border.color: root.angelEverywhere ? Appearance.angel.colBorder
+        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 1
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+                    : root.angelEverywhere ? Appearance.angel.colBorder
                     : root.inirEverywhere ? Appearance.inir.colBorder
                     : root.auroraEverywhere ? Appearance.aurora.colTooltipBorder
                     : Appearance.colors.colLayer0Border
 
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
         clip: true
 
-        layer.enabled: root.useWallpaperBackdrop
+        // ZZZ: mask to rounded shape so children never re-square the corners.
+        layer.enabled: root.useWallpaperBackdrop || (root.zzzEverywhere && !Appearance.gameModeMinimal)
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: background.width
@@ -237,6 +223,22 @@ Item {
             z: 10
         }
 
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            label: "AUTONOMIC STRIDER"
+            index: "52"
+            ghostText: "DASH"
+            accentColor: Appearance.zzz.accent
+            burstTriad: true
+            showTicks: false
+            showGrid: false
+            horizontalBias: 0.1
+            verticalBias: -0.06
+            ghostWidthFactor: 0.78
+            ghostStrength: 0.7
+            z: 0
+        }
+
         ColumnLayout {
             readonly property bool compact: (Config.options?.dashboard?.appearance?.density ?? "comfortable") === "compact"
             anchors.fill: parent
@@ -254,24 +256,6 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 12
-
-                component EditButton: RippleButton {
-                    id: editBtn
-                    property string buttonIcon: ""
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    buttonRadius: Appearance.rounding.full
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    colRipple: Appearance.colors.colLayer2Active
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: editBtn.buttonIcon
-                        iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.colors.colOnLayer2
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                }
 
                 component WidgetColumn: ColumnLayout {
                     id: widgetColumn
@@ -294,54 +278,13 @@ Item {
                             Layout.fillHeight: root._fillIds.indexOf(modelData) !== -1
                             sourceComponent: root._widgetMap[modelData] ?? null
                             visible: sourceComponent !== null
-
-                            // Edit-mode overlay: outlined scrim with move/hide
-                            // controls. One object, fades with the mode.
-                            Rectangle {
-                                anchors.fill: parent
-                                z: 5
-                                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-                                    : root.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                                color: ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.55)
-                                border.width: 2
-                                border.color: Appearance.colors.colPrimary
-                                opacity: root.editMode ? 1 : 0
-                                visible: opacity > 0
-                                Behavior on opacity {
-                                    enabled: Appearance.animationsEnabled
-                                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                }
-
-                                MouseArea { anchors.fill: parent } // swallow clicks under the controls
-
-                                RowLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-                                    EditButton {
-                                        buttonIcon: "chevron_left"
-                                        enabled: root._columnOrder.indexOf(widgetColumn.columnName) > 0
-                                        onClicked: root.moveAcross(widgetLoader.modelData, widgetColumn.columnName, -1)
-                                    }
-                                    EditButton {
-                                        buttonIcon: "keyboard_arrow_up"
-                                        enabled: widgetLoader.index > 0
-                                        onClicked: root.moveWithin(widgetColumn.columnName, widgetLoader.index, -1)
-                                    }
-                                    EditButton {
-                                        buttonIcon: "keyboard_arrow_down"
-                                        enabled: widgetLoader.index < widgetColumn.ids.length - 1
-                                        onClicked: root.moveWithin(widgetColumn.columnName, widgetLoader.index, 1)
-                                    }
-                                    EditButton {
-                                        buttonIcon: "chevron_right"
-                                        enabled: root._columnOrder.indexOf(widgetColumn.columnName) < root._columnOrder.length - 1
-                                        onClicked: root.moveAcross(widgetLoader.modelData, widgetColumn.columnName, 1)
-                                    }
-                                    EditButton {
-                                        buttonIcon: "visibility_off"
-                                        onClicked: root.hideWidget(widgetColumn.columnName, widgetLoader.index)
-                                    }
-                                }
+                            // Live widgets dim and stop taking input while editing;
+                            // all layout changes happen in the DashLayoutEditor sheet.
+                            opacity: root.editMode ? 0.5 : 1
+                            enabled: !root.editMode
+                            Behavior on opacity {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                             }
                         }
                     }
@@ -358,39 +301,77 @@ Item {
                 WidgetColumn { ids: root.centerIds; columnName: "center"; widthWeight: 46 }
                 WidgetColumn { ids: root.rightIds; columnName: "right"; widthWeight: 27 }
             }
+        }
 
-            // Hidden-widget tray, only while editing: tap a chip to bring the
-            // widget back into the emptiest column.
-            Flow {
-                Layout.fillWidth: true
-                spacing: 6
-                visible: root.editMode && root.hiddenIds.length > 0
+        // Edit sheet — the single drag-and-drop editor, shared with Settings.
+        // Morphs up from the bottom edge over the dimmed live widgets; one
+        // editing model wherever the user reaches it. Loaded on first edit.
+        Loader {
+            id: editSheetLoader
+            anchors.fill: parent
+            anchors.margins: 0
+            z: 20
+            active: root._editSheetSeen
+            visible: opacity > 0
+            opacity: root.editMode ? 1 : 0
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+            sourceComponent: Item {
+                anchors.fill: parent
 
-                Repeater {
-                    model: root.hiddenIds
-                    delegate: RippleButton {
-                        id: hiddenChip
-                        required property string modelData
-                        implicitHeight: 28
-                        implicitWidth: chipRow.implicitWidth + 20
-                        buttonRadius: Appearance.rounding.full
-                        colBackground: Appearance.colors.colLayer2
-                        colBackgroundHover: Appearance.colors.colLayer2Hover
-                        colRipple: Appearance.colors.colLayer2Active
-                        onClicked: root.showWidget(modelData)
-                        contentItem: RowLayout {
-                            id: chipRow
-                            spacing: 4
-                            MaterialSymbol {
-                                text: root._editIconMap[hiddenChip.modelData] ?? "widgets"
-                                iconSize: Appearance.font.pixelSize.normal
-                                color: Appearance.colors.colOnLayer2
+                // Scrim catches outside clicks → exit edit mode.
+                MouseArea { anchors.fill: parent; onClicked: root.editMode = false }
+
+                Rectangle {
+                    id: editSheet
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.margins: root.angelEverywhere ? 12 : 14
+                    height: Math.min(parent.height - 28, editScroll.contentHeight + editHeader.implicitHeight + 36)
+                    radius: root.angelEverywhere ? Appearance.angel.roundingLarge
+                        : root.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
+                    color: root.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1
+                    border.width: 1
+                    border.color: root.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+                    // Grow from the bottom edge (origin) — organic morph.
+                    transform: Translate { y: root.editMode ? 0 : 24 }
+                    Behavior on height { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+
+                    StyledRectangularShadow { target: editSheet }
+
+                    MouseArea { anchors.fill: parent } // swallow clicks inside the sheet
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 16
+                        spacing: 10
+
+                        RowLayout {
+                            id: editHeader
+                            Layout.fillWidth: true
+                            spacing: 8
+                            MaterialSymbol { text: "dashboard_customize"; iconSize: Appearance.font.pixelSize.larger; color: Appearance.colors.colPrimary }
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: Translation.tr("Customize dashboard")
+                                font.pixelSize: Appearance.font.pixelSize.large
+                                font.weight: Font.DemiBold
+                                color: Appearance.colors.colOnLayer1
                             }
-                            MaterialSymbol {
-                                text: "add"
-                                iconSize: Appearance.font.pixelSize.small
-                                color: Appearance.colors.colOnLayer2
-                            }
+                        }
+
+                        Flickable {
+                            id: editScroll
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            contentWidth: width
+                            contentHeight: editorInner.implicitHeight
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
+                            DashLayoutEditor { id: editorInner; width: editScroll.width }
                         }
                     }
                 }
@@ -434,7 +415,10 @@ Item {
             onLoaded: {
                 item.show = Qt.binding(() => root._agendaDialogShown)
                 if (root._agendaEditEvent) item.loadEvent(root._agendaEditEvent)
-                else item.resetForm()
+                else {
+                    item.resetForm()
+                    if (root._agendaPrefillDate) item.eventDate = root._agendaPrefillDate
+                }
                 item.forceActiveFocus()
             }
             Connections {

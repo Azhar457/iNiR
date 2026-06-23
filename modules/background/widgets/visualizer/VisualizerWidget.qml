@@ -110,13 +110,16 @@ AbstractBackgroundWidget {
     }
 
     // ── 5-style tokens ─────────────────────────────────────────
-    readonly property color colCard: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color colCard: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer1
-    readonly property color colBorder: Appearance.angelEverywhere ? "transparent"
+    readonly property color colBorder: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+        : Appearance.angelEverywhere ? "transparent"
         : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
 
     // Dimmed text color for overlay
@@ -157,15 +160,18 @@ AbstractBackgroundWidget {
         barSpacing: Config.getNestedValue("background.widgets.visualizer.barSpacing", 2)
         barMinHeight: Config.getNestedValue("background.widgets.visualizer.barMinHeight", 1)
         barRadius: Config.getNestedValue("background.widgets.visualizer.barRadius", 2)
-        colorLow: Appearance.angelEverywhere ? Appearance.angel.colSecondaryContainer
+        colorLow: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+            : Appearance.angelEverywhere ? Appearance.angel.colSecondaryContainer
             : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
             : Appearance.auroraEverywhere ? Appearance.m3colors.m3secondaryContainer
             : Appearance.colors.colSecondaryContainer
-        colorMed: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+        colorMed: Appearance.zzzEverywhere ? Appearance.zzz.accent
+            : Appearance.angelEverywhere ? Appearance.angel.colPrimary
             : Appearance.inirEverywhere ? Appearance.inir.colPrimary
             : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
             : Appearance.colors.colPrimary
-        colorHigh: Appearance.angelEverywhere ? Appearance.angel.colTertiary
+        colorHigh: Appearance.zzzEverywhere ? Appearance.zzz.signal
+            : Appearance.angelEverywhere ? Appearance.angel.colTertiary
             : Appearance.inirEverywhere ? Appearance.inir.colTertiary
             : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
             : Appearance.colors.colTertiary
@@ -179,7 +185,8 @@ AbstractBackgroundWidget {
         points: cavaProcess.points
         live: root._active
         fillOpacity: (root.waveOpacity >= 0 ? root.waveOpacity : (Config.options?.appearance?.cava?.waveOpacity ?? 30)) / 100
-        color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+        color: Appearance.zzzEverywhere ? Appearance.zzz.accent
+            : Appearance.angelEverywhere ? Appearance.angel.colPrimary
             : Appearance.inirEverywhere ? Appearance.inir.colPrimary
             : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
             : Appearance.colors.colPrimary

@@ -9,7 +9,7 @@
 //   1 = Notifications
 //   2+ = Widgets  (calendar / events / todo / notepad / calc / sysmon / timer)
 //
-// Fully compatible with all global styles: material, aurora, inir, angel.
+// Fully compatible with all global styles: material, aurora, inir, angel, zzz.
 
 import qs
 import qs.services
@@ -185,13 +185,15 @@ Item {
                         anchors.fill: parent
                         implicitHeight: calWidget.implicitHeight + 12
                         radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                            : bg.zzzEverywhere ? Appearance.zzz.controlRadius
                             : bg.inirEverywhere ? Appearance.inir.roundingNormal
                             : Appearance.rounding.normal
                         color: bg.angelEverywhere ? Appearance.angel.colGlassCard
                             : bg.inirEverywhere ? Appearance.inir.colLayer1
                             : bg.colDarkSurface
-                        border.width: 0
+                        border.width: bg.zzzEverywhere ? 1 : 0
                         border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
+                            : bg.zzzEverywhere ? Appearance.zzz.hairline
                             : bg.inirEverywhere ? Appearance.inir.colBorder
                             : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
                             : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
@@ -358,13 +360,15 @@ Item {
                 anchors.fill: parent
                 anchors.margins: root.compactContentPadding
                 radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal
                     : Appearance.rounding.normal
                 color: bg.angelEverywhere ? Appearance.angel.colGlassCard
                     : bg.inirEverywhere ? Appearance.inir.colLayer1
                     : bg.colDarkSurface
-                border.width: 0
+                border.width: bg.zzzEverywhere ? 1 : 0
                 border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
+                    : bg.zzzEverywhere ? Appearance.zzz.hairline
                     : bg.inirEverywhere ? Appearance.inir.colBorder
                     : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
                     : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
@@ -397,13 +401,15 @@ Item {
                 anchors.fill: parent
                 anchors.margins: root.compactContentPadding
                 radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal
                     : Appearance.rounding.normal
                 color: bg.angelEverywhere ? Appearance.angel.colGlassCard
                     : bg.inirEverywhere ? Appearance.inir.colLayer1
                     : bg.colDarkSurface
-                border.width: 0
+                border.width: bg.zzzEverywhere ? 1 : 0
                 border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
+                    : bg.zzzEverywhere ? Appearance.zzz.hairline
                     : bg.inirEverywhere ? Appearance.inir.colBorder
                     : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
                     : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
@@ -432,13 +438,15 @@ Item {
                 anchors.fill: parent
                 anchors.margins: root.compactContentPadding
                 radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal
                     : Appearance.rounding.normal
                 color: bg.angelEverywhere ? Appearance.angel.colGlassCard
                     : bg.inirEverywhere ? Appearance.inir.colLayer1
                     : bg.colDarkSurface
-                border.width: 0
+                border.width: bg.zzzEverywhere ? 1 : 0
                 border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
+                    : bg.zzzEverywhere ? Appearance.zzz.hairline
                     : bg.inirEverywhere ? Appearance.inir.colBorder
                     : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
                     : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
@@ -467,13 +475,15 @@ Item {
                 anchors.fill: parent
                 anchors.margins: root.compactContentPadding
                 radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal
                     : Appearance.rounding.normal
                 color: bg.angelEverywhere ? Appearance.angel.colGlassCard
                     : bg.inirEverywhere ? Appearance.inir.colLayer1
                     : bg.colDarkSurface
-                border.width: 0
+                border.width: bg.zzzEverywhere ? 1 : 0
                 border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
+                    : bg.zzzEverywhere ? Appearance.zzz.hairline
                     : bg.inirEverywhere ? Appearance.inir.colBorder
                     : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
                     : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
@@ -504,13 +514,15 @@ Item {
                 anchors.fill: parent
                 anchors.margins: root.compactContentPadding
                 radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal
                     : Appearance.rounding.normal
                 color: bg.angelEverywhere ? Appearance.angel.colGlassCard
                     : bg.inirEverywhere ? Appearance.inir.colLayer1
                     : bg.colDarkSurface
-                border.width: 0
+                border.width: bg.zzzEverywhere ? 1 : 0
                 border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
+                    : bg.zzzEverywhere ? Appearance.zzz.hairline
                     : bg.inirEverywhere ? Appearance.inir.colBorder
                     : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
                     : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
@@ -539,13 +551,15 @@ Item {
                 anchors.fill: parent
                 anchors.margins: root.compactContentPadding
                 radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal
                     : Appearance.rounding.normal
                 color: bg.angelEverywhere ? Appearance.angel.colGlassCard
                     : bg.inirEverywhere ? Appearance.inir.colLayer1
                     : bg.colDarkSurface
-                border.width: 0
+                border.width: bg.zzzEverywhere ? 1 : 0
                 border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
+                    : bg.zzzEverywhere ? Appearance.zzz.hairline
                     : bg.inirEverywhere ? Appearance.inir.colBorder
                     : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
                     : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
@@ -575,13 +589,15 @@ Item {
                 anchors.fill: parent
                 anchors.margins: root.compactContentPadding
                 radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal
                     : Appearance.rounding.normal
                 color: bg.angelEverywhere ? Appearance.angel.colGlassCard
                     : bg.inirEverywhere ? Appearance.inir.colLayer1
                     : bg.colDarkSurface
-                border.width: 0
+                border.width: bg.zzzEverywhere ? 1 : 0
                 border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
+                    : bg.zzzEverywhere ? Appearance.zzz.hairline
                     : bg.inirEverywhere ? Appearance.inir.colBorder
                     : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
                     : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
@@ -610,13 +626,15 @@ Item {
                 anchors.fill: parent
                 anchors.margins: root.compactContentPadding
                 radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal
                     : Appearance.rounding.normal
                 color: bg.angelEverywhere ? Appearance.angel.colGlassCard
                     : bg.inirEverywhere ? Appearance.inir.colLayer1
                     : bg.colDarkSurface
-                border.width: 0
+                border.width: bg.zzzEverywhere ? 1 : 0
                 border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
+                    : bg.zzzEverywhere ? Appearance.zzz.hairline
                     : bg.inirEverywhere ? Appearance.inir.colBorder
                     : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
                     : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
@@ -856,6 +874,7 @@ Item {
         }
         readonly property color colDarkSurface: angelEverywhere
             ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.76)
+            : zzzEverywhere ? Appearance.zzz.tile
             : inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colLayer1, 0.22)
             : auroraEverywhere ? ColorUtils.transparentize(
                 (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base),
@@ -864,6 +883,7 @@ Item {
             : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.22)
         readonly property color colDarkSurfaceHover: angelEverywhere
             ? Appearance.angel.colGlassCardHover
+            : zzzEverywhere ? Appearance.zzz.paperAlt
             : inirEverywhere ? Appearance.inir.colLayer2Hover
             : auroraEverywhere ? ColorUtils.transparentize(
                 (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1),
@@ -880,19 +900,26 @@ Item {
             : ColorUtils.transparentize(Appearance.colors.colLayer1Active, 0.18)
 
         color: gameModeMinimal  ? "transparent"
+             : Appearance.zzzEverywhere ? Appearance.zzz.chrome
              : inirEverywhere   ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
              : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
 
-        border.width: gameModeMinimal ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
-        border.color: angelEverywhere  ? Appearance.angel.colPanelBorder
+        border.width: gameModeMinimal ? 0 : (Appearance.zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+                    : angelEverywhere  ? Appearance.angel.colPanelBorder
                     : inirEverywhere   ? Appearance.inir.colBorder
                     : Appearance.colors.colLayer0Border
 
-        radius: angelEverywhere  ? Appearance.angel.roundingNormal
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+              : angelEverywhere  ? Appearance.angel.roundingNormal
               : inirEverywhere   ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
               : cardStyle        ? Appearance.rounding.normal
               : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         clip: true
 
         layer.enabled: !gameModeMinimal && (root.panelVisible || !auroraEverywhere)
@@ -949,6 +976,35 @@ Item {
 
         AngelPartialBorder { targetRadius: bg.radius; z: 10 }
 
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            label: "SYSTEM"
+            index: "RC"
+            ghostText: "RIGHT"
+            accentColor: Appearance.zzz.accent
+            showTicks: false
+            showBurst: false
+            showGrid: false
+            horizontalBias: 0.18
+            verticalBias: 0.04
+            ghostWidthFactor: 0.86
+            ghostStrength: 0.7
+            z: 0
+        }
+
+        // ZZZ content wash: stepped tile plate lifts content off the bare chrome
+        // so the two-column layout reads cleanly while structural hairlines stay.
+        Rectangle {
+            anchors.fill: parent
+            visible: Appearance.zzzEverywhere
+            color: ColorUtils.applyAlpha(Appearance.zzz.tile, 0.55)
+            z: 0
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+        }
+
         // ─────────────────────────────────────────────────────────
         // Two-column layout
         // ─────────────────────────────────────────────────────────
@@ -964,15 +1020,19 @@ Item {
                 id: compactSurface
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                    : bg.angelEverywhere ? Appearance.angel.roundingNormal
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                color: bg.angelEverywhere ? Appearance.angel.colGlassCard
+                color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                    : bg.angelEverywhere ? Appearance.angel.colGlassCard
                     : bg.inirEverywhere ? Appearance.inir.colLayer1
                     : bg.auroraEverywhere ? "transparent"
                     : Appearance.colors.colLayer1
-                border.width: bg.angelEverywhere ? Appearance.angel.cardBorderWidth
+                border.width: Appearance.zzzEverywhere ? 1
+                    : bg.angelEverywhere ? Appearance.angel.cardBorderWidth
                     : bg.inirEverywhere ? 1 : 0
-                border.color: bg.angelEverywhere ? Appearance.angel.colCardBorder
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+                    : bg.angelEverywhere ? Appearance.angel.colCardBorder
                     : bg.inirEverywhere ? Appearance.inir.colBorder : "transparent"
                 clip: true
 
@@ -1586,7 +1646,7 @@ Item {
                                             color: bg.angelEverywhere ? Appearance.angel.colGlassCard
                                                 : bg.inirEverywhere ? Appearance.inir.colLayer1
                                                 : "transparent"
-                                            border.width: 0
+                                            border.width: bg.zzzEverywhere ? 1 : 0
                                             border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
                                                 : bg.inirEverywhere ? Appearance.inir.colBorder
                                                 : "transparent"

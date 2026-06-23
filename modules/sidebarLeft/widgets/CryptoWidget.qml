@@ -213,7 +213,7 @@ Item {
         anchors.centerIn: parent
         width: parent.width
         implicitHeight: col.implicitHeight + 20
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
         color: "transparent"
 
         ColumnLayout {
@@ -229,19 +229,19 @@ Item {
                 MaterialSymbol {
                     text: "currency_bitcoin"
                     iconSize: 16
-                    color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
                 }
                 StyledText {
                     text: "Crypto"
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     font.weight: Font.Medium
-                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                 }
                 Item { Layout.fillWidth: true }
 
                 Rectangle {
                     width: 6; height: 6; radius: 3
-                    color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
                     scale: root.loading ? 1 : 0
                     visible: scale > 0
                     Behavior on scale {
@@ -261,7 +261,7 @@ Item {
                     implicitWidth: 24; implicitHeight: 24
                     buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                     colBackground: "transparent"
-                    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colors.colLayer1Hover
+                    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colors.colLayer1Hover
                     onClicked: root.fetchPrices()
                     contentItem: MaterialSymbol {
                         text: "refresh"; iconSize: 14
@@ -290,7 +290,7 @@ Item {
                         text: root.getSymbol(row.modelData)
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.monospace
-                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                         Layout.preferredWidth: 36
                     }
 
@@ -298,7 +298,9 @@ Item {
                         text: "$" + root.fmtPrice(row.price)
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.numbers
-                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                        font.italic: Appearance.zzzEverywhere
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
                         Layout.fillWidth: true
                     }
 
@@ -308,8 +310,8 @@ Item {
                         Layout.preferredHeight: 16
                         Layout.alignment: Qt.AlignVCenter
                         values: row.spark
-                        color: row.up ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                                      : (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                        color: row.up ? (Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                      : (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
                         fillOpacity: 0.25
                         alignment: Graph.Alignment.Right
                     }
@@ -323,15 +325,15 @@ Item {
                         MaterialSymbol {
                             text: row.up ? "arrow_drop_up" : "arrow_drop_down"
                             iconSize: 14
-                            color: row.up ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                                          : (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                            color: row.up ? (Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                          : (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
                         }
                         StyledText {
                             text: Math.abs(row.chg).toFixed(1) + "%"
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.numbers
-                            color: row.up ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                                          : (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                            color: row.up ? (Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                          : (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
                         }
                     }
                 }
@@ -341,13 +343,13 @@ Item {
                 visible: root.error && Object.keys(root.cryptoData).length === 0
                 text: Translation.tr("Failed to load")
                 font.pixelSize: Appearance.font.pixelSize.smallest
-                color: Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
+                color: Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
             }
             StyledText {
                 visible: root.coins.length === 0
                 text: Translation.tr("No coins configured")
                 font.pixelSize: Appearance.font.pixelSize.smallest
-                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
             }
         }
     }

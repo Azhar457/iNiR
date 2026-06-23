@@ -14,7 +14,9 @@ ProgressBar {
     property real valueBarHeight: 4
     property real valueBarGap: 4
     property color highlightColor: Appearance?.colors.colPrimary ?? "#685496"
-    property color trackColor: Appearance?.m3colors.m3secondaryContainer ?? "#F1D3F9"
+    // ZZZ: carbon metric track; the lime/orange signal stays on the fill only.
+    property color trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
+        : (Appearance?.m3colors.m3secondaryContainer ?? "#F1D3F9")
     property bool wavy: false // If true, the progress bar will have a wavy fill effect
     property bool animateWave: true
     property real waveAmplitudeMultiplier: wavy ? 0.5 : 0
@@ -40,12 +42,40 @@ ProgressBar {
         id: contentItem
         anchors.fill: parent
 
+        // ZZZ segmented metric rail — industrial tick fill instead of a smooth bar.
+        Row {
+            id: zzzSegments
+            anchors.fill: parent
+            visible: Appearance.zzzEverywhere
+            readonly property int count: Math.max(6, Math.floor(parent.width / 10))
+            spacing: 2
+            Repeater {
+                model: zzzSegments.visible ? zzzSegments.count : 0
+                Rectangle {
+                    required property int index
+                    readonly property real threshold: (index + 1) / zzzSegments.count
+                    width: Math.max(2, (zzzSegments.width - (zzzSegments.count - 1) * 2) / zzzSegments.count)
+                    height: parent.height
+                    radius: 1
+                    color: root.visualPosition >= threshold ? root.highlightColor : root.trackColor
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
+                    Behavior on radius {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
+                }
+            }
+        }
+
         Loader {
             anchors {
                 left: parent.left
                 verticalCenter: parent.verticalCenter
             }
-            active: root.wavy
+            active: root.wavy && !Appearance.zzzEverywhere
             sourceComponent: WavyLine {
                 id: wavyFill
                 frequency: root.waveFrequency
@@ -70,7 +100,7 @@ ProgressBar {
         }
 
         Loader {
-            active: !root.wavy
+            active: !root.wavy && !Appearance.zzzEverywhere
             sourceComponent: Rectangle {
                 anchors.left: parent.left
                 width: contentItem.width * root.visualPosition
@@ -79,16 +109,18 @@ ProgressBar {
                 color: root.highlightColor
             }
         }
-        
+
         Rectangle { // Right remaining part fill
+            visible: !Appearance.zzzEverywhere
             anchors.right: parent.right
             width: (1 - root.visualPosition) * parent.width - valueBarGap
             height: parent.height
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : height / 2
             color: root.trackColor
         }
-        
+
         Rectangle { // Stop point
+            visible: !Appearance.zzzEverywhere
             anchors.right: parent.right
             width: valueBarGap
             height: valueBarGap

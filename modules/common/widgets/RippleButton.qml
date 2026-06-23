@@ -28,16 +28,16 @@ Button {
     property var altAction // When right clicking
     property var middleClickAction // When middle clicking
 
-    property color colBackground: Appearance.angelEverywhere
-        ? Appearance.angel.colGlassCard
+    property color colBackground: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : (ColorUtils.transparentize(Appearance?.colors.colLayer1Hover, 1) || "transparent")
-    property color colBackgroundHover: Appearance.angelEverywhere
-        ? Appearance.angel.colGlassCardHover
+    property color colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : (Appearance?.colors.colLayer1Hover ?? "#E5DFED")
-    property color colBackgroundToggled: Appearance?.colors.colPrimary ?? "#65558F"
-    property color colBackgroundToggledHover: Appearance?.colors.colPrimaryHover ?? "#77699C"
-    property color colRipple: Appearance?.colors.colLayer1Active ?? "#D6CEE2"
-    property color colRippleToggled: Appearance?.colors.colPrimaryActive ?? "#D6CEE2"
+    property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.chrome : (Appearance?.colors.colPrimary ?? "#65558F")
+    property color colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt : (Appearance?.colors.colPrimaryHover ?? "#77699C")
+    property color colRipple: Appearance.zzzEverywhere ? Appearance.zzz.chrome : (Appearance?.colors.colLayer1Active ?? "#D6CEE2")
+    property color colRippleToggled: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt : (Appearance?.colors.colPrimaryActive ?? "#D6CEE2")
 
     opacity: root.enabled ? 1 : 0.4
     property color buttonColor: ColorUtils.transparentize(root.toggled ?

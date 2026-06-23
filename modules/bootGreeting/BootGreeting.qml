@@ -206,7 +206,7 @@ Scope {
                     pixelSize: 96
                     weight: Font.Light
                 }
-                color: Appearance.colors.colOnLayer0
+                color: Appearance.zzzEverywhere ? Appearance.zzz.onBg : Appearance.colors.colOnLayer0
 
                 opacity: root._cascade >= 1 ? 1.0 : 0.0
                 scale: root._cascade >= 1 ? 1.0 : 0.85
@@ -232,13 +232,14 @@ Scope {
                 id: greetingText
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 4
-                text: root.greeting
+                text: Appearance.zzzEverywhere ? root.greeting.toUpperCase() : root.greeting
                 font {
                     family: Appearance.font.family.title
                     pixelSize: Appearance.font.pixelSize.hugeass
-                    weight: Font.Normal
+                    weight: Appearance.zzzEverywhere ? Font.Bold : Font.Normal
+                    letterSpacing: Appearance.zzzEverywhere ? 2 : 0
                 }
-                color: Appearance.colors.colPrimary
+                color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colPrimary
 
                 opacity: root._cascade >= 2 ? 1.0 : 0.0
                 transform: Translate {
@@ -273,7 +274,8 @@ Scope {
                     weight: Font.Normal
                     capitalization: Font.Capitalize
                 }
-                color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.2)
+                color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                    : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.2)
 
                 opacity: root._cascade >= 3 ? 1.0 : 0.0
                 transform: Translate {
@@ -325,17 +327,18 @@ Scope {
                 MaterialSymbol {
                     text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "thermostat"
                     iconSize: 22
-                    color: Appearance.colors.colOnLayer0
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.onBg : Appearance.colors.colOnLayer0
                 }
                 StyledText {
                     text: Weather.data?.temp ?? ""
                     font.pixelSize: Appearance.font.pixelSize.large
-                    color: Appearance.colors.colOnLayer0
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.onBg : Appearance.colors.colOnLayer0
                 }
                 StyledText {
                     text: Weather.data?.description ?? ""
                     font.pixelSize: Appearance.font.pixelSize.normal
-                    color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.3)
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                        : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.3)
                 }
             }
 
@@ -343,9 +346,11 @@ Scope {
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 40
-                text: Translation.tr("Click or press any key to continue")
+                text: Appearance.zzzEverywhere ? Translation.tr("Click or press any key to continue").toUpperCase() : Translation.tr("Click or press any key to continue")
                 font.pixelSize: Appearance.font.pixelSize.small
-                color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.5)
+                font.letterSpacing: Appearance.zzzEverywhere ? 1 : 0
+                color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                    : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.5)
 
                 opacity: root._cascade >= 5 ? 0.7 : 0.0
                 Behavior on opacity {

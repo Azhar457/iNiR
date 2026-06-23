@@ -53,10 +53,12 @@ Loader {
     sourceComponent: PopupWindow {
         id: popupWindow
         visible: true
+        property bool closing: false
 
         Component.onCompleted: {
-            openAnim.start();
+            realContent.shown = true;
             Qt.callLater(() => keyHandler.forceActiveFocus());
+            openAnim.start();
         }
 
         Item {
@@ -72,7 +74,7 @@ Loader {
         }
 
         anchor {
-            adjustment: (root.popupSide !== 0) 
+            adjustment: (root.popupSide !== 0)
                 ? (PopupAdjustment.ResizeX | PopupAdjustment.SlideY)
                 : (PopupAdjustment.ResizeY | PopupAdjustment.SlideX)
             item: root.anchorItem
@@ -99,8 +101,13 @@ Loader {
         }
 
         function close(): void {
-            if (root.noSmoothClosing) root.active = false;
-            else closeAnim.start();
+            if (root.noSmoothClosing || !Appearance.animationsEnabled) {
+                root.active = false;
+            } else {
+                popupWindow.closing = true;
+                realContent.shown = false;
+                closeAnim.start();
+            }
         }
 
         function grabFocus(): void {
@@ -113,15 +120,15 @@ Loader {
         property real sourceEdgeMargin: -implicitHeight
         readonly property bool isHorizontalPopup: root.popupSide !== 0
         readonly property bool isLeftSide: root.popupSide === Edges.Left
-        
+
         PropertyAnimation {
             id: openAnim
             target: popupWindow
             property: "sourceEdgeMargin"
             to: (root.ambientShadowWidth + root.visualMargin)
-            duration: Appearance.animation.elementMoveFast.duration
-            easing.type: Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            duration: Appearance.animation.elementMoveEnter.duration
+            easing.type: Appearance.animation.elementMoveEnter.type
+            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
         }
         SequentialAnimation {
             id: closeAnim
@@ -147,13 +154,14 @@ Loader {
         GlassBackground {
             id: realContent
             z: 1
+            property bool shown: false
             anchors {
                 // Vertical popup (above/below)
                 left: !popupWindow.isHorizontalPopup ? parent.left : (popupWindow.isLeftSide ? undefined : parent.left)
                 right: !popupWindow.isHorizontalPopup ? parent.right : (popupWindow.isLeftSide ? parent.right : undefined)
                 top: !popupWindow.isHorizontalPopup ? (root.popupAbove ? undefined : parent.top) : parent.top
                 bottom: !popupWindow.isHorizontalPopup ? (root.popupAbove ? parent.bottom : undefined) : parent.bottom
-                
+
                 margins: root.ambientShadowWidth + root.visualMargin
                 bottomMargin: !popupWindow.isHorizontalPopup && root.popupAbove ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
                 topMargin: !popupWindow.isHorizontalPopup && !root.popupAbove ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
@@ -169,12 +177,50 @@ Loader {
             border.width: 1
             border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
                         : Appearance.inirEverywhere ? Appearance.inir.colBorder
-                        : Appearance.auroraEverywhere 
+                        : Appearance.auroraEverywhere
                             ? Appearance.aurora.colTooltipBorder
                             : Appearance.colors.colSurfaceContainerHighest
+            opacity: Appearance.motion.popupReveal.enableFade ? (shown ? 1 : 0) : 1
+            scale: shown ? 1
+                : (Appearance.motion.popupReveal.enableScale
+                    ? Appearance.motion.popupReveal.closedScale
+                    : 1)
+            transformOrigin: popupWindow.isHorizontalPopup
+                ? (popupWindow.isLeftSide ? Item.Left : Item.Right)
+                : (root.popupAbove ? Item.Bottom : Item.Top)
 
             implicitWidth: menuColumn.implicitWidth + (root.padding * 2)
             implicitHeight: menuColumn.implicitHeight + (root.padding * 2)
+
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                animation: NumberAnimation {
+                    duration: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.duration
+                        : Appearance.animation.elementMoveEnter.duration
+                    easing.type: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.type
+                        : Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.bezierCurve
+                        : Appearance.animation.elementMoveEnter.bezierCurve
+                }
+            }
+
+            Behavior on scale {
+                enabled: Appearance.animationsEnabled
+                animation: NumberAnimation {
+                    duration: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.duration
+                        : Appearance.animation.elementMoveEnter.duration
+                    easing.type: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.type
+                        : Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.bezierCurve
+                        : Appearance.animation.elementMoveEnter.bezierCurve
+                }
+            }
 
             ColumnLayout {
                 id: menuColumn

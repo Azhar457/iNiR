@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -76,12 +77,12 @@ RowLayout {
         iconName: "notifications_paused"
         tooltip: Translation.tr("Do Not Disturb")
         toggled: Notifications.silent
-        onPressed: Notifications.toggleSilent()
+        onClicked: Notifications.toggleSilent()
     }
     HeaderButton {
         iconName: "wallpaper"
         tooltip: Translation.tr("Wallpapers")
-        onPressed: {
+        onClicked: {
             GlobalStates.dashboardOpen = false
             GlobalStates.wallpaperSelectorOpen = true
         }
@@ -89,7 +90,7 @@ RowLayout {
     HeaderButton {
         iconName: "settings"
         tooltip: Translation.tr("Settings")
-        onPressed: {
+        onClicked: {
             GlobalStates.dashboardOpen = false
             Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
         }
@@ -98,7 +99,7 @@ RowLayout {
         visible: root.showPowerButtons
         iconName: "lock"
         tooltip: Translation.tr("Lock")
-        onPressed: {
+        onClicked: {
             GlobalStates.dashboardOpen = false
             GlobalStates.screenLocked = true
         }
@@ -107,7 +108,7 @@ RowLayout {
         visible: root.showPowerButtons
         iconName: "power_settings_new"
         tooltip: Translation.tr("Session")
-        onPressed: {
+        onClicked: {
             GlobalStates.dashboardOpen = false
             GlobalStates.sessionOpen = true
         }

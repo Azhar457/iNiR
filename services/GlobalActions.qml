@@ -43,6 +43,7 @@ Singleton {
         if (styleId === "aurora") return styles.aurora ?? 1
         if (styleId === "inir") return styles.inir ?? 1
         if (styleId === "angel") return styles.angel ?? 1
+        if (styleId === "zzz") return styles.zzz ?? 0
         return styles.material ?? 1
     }
 
@@ -65,6 +66,9 @@ Singleton {
         } else if (styleId === "angel") {
             values["bar.cornerStyle"] = cornerStyle === 0 ? 1 : cornerStyle
             values["appearance.transparency.enable"] = true
+        } else if (styleId === "zzz") {
+            values["bar.cornerStyle"] = cornerStyle
+            values["appearance.transparency.enable"] = false
         }
 
         Config.setNestedValues(values)
@@ -234,6 +238,15 @@ Singleton {
             execute: () => { GlobalStates.settingsOverlayOpen = true }
         },
         {
+            id: "toggle-dashboard",
+            name: Translation.tr("Dashboard"),
+            description: Translation.tr("Open the welcome hub: clock, notifications, media, agenda and more"),
+            icon: "space_dashboard",
+            category: "system",
+            keywords: ["dashboard", "hub", "home", "welcome", "widgets", "overview"],
+            execute: () => { GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen }
+        },
+        {
             id: "open-network-settings",
             name: Translation.tr("Network Settings"),
             description: Translation.tr("Open network connection manager"),
@@ -382,6 +395,15 @@ Singleton {
             category: "appearance",
             keywords: ["style", "angel", "theme", "glass"],
             execute: () => { root.applyGlobalStyle("angel") }
+        },
+        {
+            id: "style-zzz",
+            name: Translation.tr("Style: ZZZ"),
+            description: Translation.tr("Switch to ZZZ style"),
+            icon: "bolt",
+            category: "appearance",
+            keywords: ["style", "zzz", "zenless", "theme", "yellow", "hazard"],
+            execute: () => { root.applyGlobalStyle("zzz") }
         },
     ]
 

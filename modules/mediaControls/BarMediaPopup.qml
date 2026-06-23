@@ -77,10 +77,12 @@ Item {
                     anchors.margins: Appearance.sizes.elevationMargin
                     width: 3
                     radius: 2
-                    color: isActive 
-                        ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                    color: isActive
+                        ? (Appearance.zzzEverywhere ? Appearance.zzz.accent
+                            : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                             : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                        : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                        : (Appearance.zzzEverywhere ? Appearance.zzz.bg3
+                            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                             : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colLayer2 : Appearance.colors.colLayer2)
                     
                     Behavior on color {
@@ -124,14 +126,17 @@ Item {
             Rectangle {
                 id: placeholderBackground
                 anchors.centerIn: parent
-                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                color: Appearance.zzzEverywhere ? Appearance.zzz.bg0
+                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colLayer1
                     : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.aurora.colPopupSurface
                      : Appearance.colors.colLayer0
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                     : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.roundingNormal : root.popupRounding
-                border.width: Appearance.angelEverywhere ? 0 : ((Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0)
-                border.color: Appearance.angelEverywhere ? "transparent"
+                border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere ? 0 : ((Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0))
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                            : Appearance.angelEverywhere ? "transparent"
                             : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colBorder
                             : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.aurora.colPopupBorder
                             : "transparent"
@@ -148,13 +153,15 @@ Item {
                     StyledText {
                         text: Translation.tr("No active player")
                         font.pixelSize: Appearance.font.pixelSize.large
-                        color: Appearance.angelEverywhere ? Appearance.angel.colText
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : Appearance.angelEverywhere ? Appearance.angel.colText
                             : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colText
                             : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.colors.colOnLayer0
                             : Appearance.colors.colOnLayer0
                     }
                     StyledText {
-                        color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                            : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                             : (Appearance.inirEverywhere && Appearance.inir) ? Appearance.inir.colTextSecondary
                             : (Appearance.auroraEverywhere && Appearance.aurora) ? Appearance.aurora.colTextSecondary
                             : Appearance.colors.colSubtext

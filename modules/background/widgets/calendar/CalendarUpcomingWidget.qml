@@ -52,7 +52,7 @@ AbstractBackgroundWidget {
         return Math.max(0, Math.min(1, Number.isFinite(v) ? v / 100 : 0));
     }
 
-    readonly property real cardRadius: Appearance.rounding.normal
+    readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
 
     // ── Refresh trigger when events change ────────────────────
     property int _refreshTrigger: 0

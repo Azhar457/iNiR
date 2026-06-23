@@ -195,7 +195,7 @@ MouseArea {
 
     StyledRectangularShadow {
         target: wallpaperGridBackground
-        visible: !Appearance.inirEverywhere
+        visible: !Appearance.inirEverywhere && !Appearance.zzzEverywhere
     }
     GlassBackground {
         id: wallpaperGridBackground
@@ -206,13 +206,15 @@ MouseArea {
         focus: true
         Keys.forwardTo: [root]
         border.width: (Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 1
-        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder 
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colLayer0Border
-        fallbackColor: Appearance.colors.colLayer0
+        fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colLayer0
         inirColor: Appearance.inir.colLayer0
         auroraTransparency: Appearance.aurora.overlayTransparentize
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
             : Appearance.inirEverywhere ? Appearance.inir.roundingLarge 
             : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
 
@@ -220,6 +222,20 @@ MouseArea {
 
         implicitWidth: gridColumnLayout.implicitWidth
         implicitHeight: gridColumnLayout.implicitHeight
+
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            label: "WALLPAPER"
+            index: "BROWSE"
+            accentColor: Appearance.zzz.secondary
+            ghostText: "WALL"
+            showTicks: false
+            showBurst: false
+            showGrid: false
+            horizontalBias: 0.16
+            verticalBias: 0.01
+            ghostStrength: 0.7
+        }
 
         RowLayout {
             id: mainLayout
@@ -231,10 +247,13 @@ MouseArea {
                 Layout.margins: 4
                 implicitWidth: quickDirColumnLayout.implicitWidth
                 implicitHeight: quickDirColumnLayout.implicitHeight
-                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1
-                radius: wallpaperGridBackground.radius - Layout.margins
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : wallpaperGridBackground.radius - Layout.margins
+                border.width: Appearance.zzzEverywhere ? 1 : 0
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline : "transparent"
 
                 ColumnLayout {
                     id: quickDirColumnLayout
@@ -243,11 +262,12 @@ MouseArea {
 
                     StyledText {
                         Layout.margins: 12
-                        font {
-                            pixelSize: Appearance.font.pixelSize.normal
-                            weight: Font.Medium
-                        }
+                        font.family: Appearance.zzzEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                        font.pixelSize: Appearance.zzzEverywhere ? Appearance.font.pixelSize.large : Appearance.font.pixelSize.normal
+                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Medium
+                        font.italic: Appearance.zzzEverywhere
                         text: Translation.tr("Pick a wallpaper")
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
                     }
                     ListView {
                         // Quick dirs
@@ -275,15 +295,17 @@ MouseArea {
                             onClicked: Wallpapers.setDirectory(quickDirButton.modelData.path)
                             enabled: modelData.icon.length > 0
                             toggled: Wallpapers.directory === Qt.resolvedUrl(modelData.path)
-                            colBackgroundToggled: Appearance.colors.colSecondaryContainer
-                            colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
-                            colRippleToggled: Appearance.colors.colSecondaryContainerActive
-                            buttonRadius: height / 2
+                            colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colSecondaryContainer
+                            colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.88) : Appearance.colors.colSecondaryContainerHover
+                            colRippleToggled: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.30) : Appearance.colors.colSecondaryContainerActive
+                            buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : height / 2
                             implicitHeight: 38
 
                             contentItem: RowLayout {
                                 MaterialSymbol {
-                                    color: quickDirButton.toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
+                                    color: quickDirButton.toggled
+                                        ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer)
+                                        : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1)
                                     iconSize: Appearance.font.pixelSize.larger
                                     text: quickDirButton.modelData.icon
                                     fill: quickDirButton.toggled ? 1 : 0
@@ -292,7 +314,9 @@ MouseArea {
                                 StyledText {
                                     Layout.fillWidth: true
                                     horizontalAlignment: Text.AlignLeft
-                                    color: quickDirButton.toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
+                                    color: quickDirButton.toggled
+                                        ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer)
+                                        : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1)
                                     text: quickDirButton.modelData.name
                                 }
                             }
@@ -325,12 +349,13 @@ MouseArea {
                     Layout.margins: 4
                     Layout.topMargin: 0
                     implicitHeight: visible ? monitorIndicatorText.implicitHeight + 16 : 0
-                    color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colLayer1
-                    radius: wallpaperGridBackground.radius - Layout.margins
-                    border.width: Appearance.inirEverywhere ? 1 : 0
-                    border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : wallpaperGridBackground.radius - Layout.margins
+                    border.width: Appearance.zzzEverywhere ? 1 : Appearance.inirEverywhere ? 1 : 0
+                    border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
 
                     RowLayout {
                         anchors.fill: parent
@@ -340,7 +365,7 @@ MouseArea {
                         MaterialSymbol {
                             text: "monitor"
                             font.pixelSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colPrimary
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colPrimary
                         }
 
                         StyledText {
@@ -351,7 +376,7 @@ MouseArea {
                             text: root.selectedMonitor ?
                                 Translation.tr("Configuring monitor: %1").arg(root.selectedMonitor) :
                                 Translation.tr("Multi-monitor mode active")
-                            color: Appearance.colors.colPrimary
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colPrimary
                         }
                     }
                 }

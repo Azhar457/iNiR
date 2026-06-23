@@ -429,7 +429,7 @@ Singleton {
 
             property JsonObject appearance: JsonObject {
                 property string theme: "auto" // Theme preset ID: "auto" for wallpaper-based, or preset name like "gruvbox-dark", "catppuccin-mocha", "custom", etc.
-                property string globalStyle: "material" // "material" | "cards" | "aurora" | "inir" | "angel"
+                property string globalStyle: "material" // "material" | "cards" | "aurora" | "inir" | "angel" | "zzz"
                 property JsonObject aurora: JsonObject {
                     property JsonObject transparency: JsonObject {
                         property real overlay: 0.38       // Main panels
@@ -441,6 +441,12 @@ Singleton {
                     property string customPreset: ""
                 }
                 property string angelSubStyle: "frost" // "frost" | "neon" | "void"
+                // ZZZ personality axis: silhouette variant. "square" = sharp
+                // console plates with cut-corner chamfers (classic ZZZ). "round" =
+                // softer anime UI — pills for controls, rounded panels, no chamfer.
+                property JsonObject zzz: JsonObject {
+                    property string shape: "square" // "square" | "round"
+                }
                 property JsonObject angel: JsonObject {
                     property JsonObject blur: JsonObject {
                         property real intensity: 0.25
@@ -521,6 +527,7 @@ Singleton {
                     property int aurora: 0
                     property int inir: 1
                     property int angel: 1
+                    property int zzz: 0
                 }
                 property bool extraBackgroundTint: true
                 property bool softenColors: true
@@ -683,6 +690,7 @@ Singleton {
                 property string iconTheme: "WhiteSur-dark" // System icon theme (tray, GTK/Qt apps)
                 property string dockIconTheme: "" // Dock icon theme (overrides system for dock only)
                 property real shellScale: 1.0 // Legacy compatibility key. Launcher keeps QT_SCALE_FACTOR=1; use appearance.typography.sizeScale.
+                property string iiMotionProfile: "classic" // "classic" | "contextual"
                 property JsonObject desaturation: JsonObject {
                     property bool enable: false
                     property real saturation: -0.7  // -1 to 0 (0 = normal, -1 = full grayscale)

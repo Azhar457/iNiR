@@ -34,6 +34,7 @@ MouseArea {
     readonly property real blurRadius: Config.options?.lock?.blur?.radius ?? 64
     readonly property real blurZoom: Config.options?.lock?.blur?.extraZoom ?? 1.1
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
+    readonly property bool _zzz: Appearance.zzzEverywhere
 
     // Widget visibility
     readonly property bool showWeather: Config.options?.lock?.widgets?.weather ?? true
@@ -759,15 +760,20 @@ MouseArea {
                             width: parent.width
                             spacing: 4
 
-                            // Main card — always visible, clickable to expand
                             Rectangle {
                                 id: groupCard
                                 width: parent.width
                                 height: groupContent.implicitHeight + 16
-                                radius: Appearance.rounding.normal
-                                color: groupMouseArea.containsMouse
-                                    ? ColorUtils.transparentize(Appearance.colors.colLayer1, 0.04)
-                                    : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.08)
+                                radius: root._zzz ? Appearance.zzz.panelRadius : Appearance.rounding.normal
+                                border.width: root._zzz ? 1 : 0
+                                border.color: root._zzz ? Appearance.zzz.hairline : "transparent"
+                                color: root._zzz
+                                    ? (groupMouseArea.containsMouse
+                                        ? ColorUtils.transparentize(Appearance.zzz.bg2, 0.06)
+                                        : ColorUtils.transparentize(Appearance.zzz.bg1, 0.10))
+                                    : (groupMouseArea.containsMouse
+                                        ? ColorUtils.transparentize(Appearance.colors.colLayer1, 0.04)
+                                        : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.08))
 
                                 Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
 
@@ -912,8 +918,10 @@ MouseArea {
                                         required property var modelData
                                         width: parent.width
                                         height: expandedContent.implicitHeight + 10
-                                        radius: Appearance.rounding.small
-                                        color: ColorUtils.transparentize(Appearance.colors.colLayer1, 0.12)
+                                        radius: root._zzz ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                                        color: root._zzz
+                                            ? ColorUtils.transparentize(Appearance.zzz.bg1, 0.14)
+                                            : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.12)
 
                                         RowLayout {
                                             id: expandedContent
@@ -1188,15 +1196,14 @@ MouseArea {
                     NumberAnimation { duration: 350; easing.type: Easing.OutBack }
                 }
                 
-                // Accent ring behind avatar
                 Rectangle {
                     anchors.centerIn: parent
                     width: parent.width + 8
                     height: parent.height + 8
-                    radius: width / 2
+                    radius: root._zzz ? Appearance.zzz.panelRadius : width / 2
                     color: "transparent"
-                    border.color: Appearance.colors.colPrimary
-                    border.width: 3
+                    border.color: root._zzz ? Appearance.zzz.borderColor : Appearance.colors.colPrimary
+                    border.width: root._zzz ? 2 : 3
                     opacity: 0.8
                     
                     layer.enabled: Appearance.effectsEnabled
@@ -1209,12 +1216,11 @@ MouseArea {
                     }
                 }
                 
-                // Avatar circle
                 Rectangle {
                     id: avatarCircle
                     anchors.fill: parent
-                    radius: width / 2
-                    color: Appearance.colors.colPrimary
+                    radius: root._zzz ? Appearance.zzz.panelRadius : width / 2
+                    color: root._zzz ? Appearance.zzz.bg2 : Appearance.colors.colPrimary
                     clip: true
                     
                     Image {
@@ -1292,18 +1298,21 @@ MouseArea {
                 }
             }
 
-            // Password field - Material You style pill
             Rectangle {
                 id: passwordContainer
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 12
                 width: 300
                 height: 52
-                radius: height / 2
-                color: ColorUtils.transparentize(Appearance.colors.colLayer1, 0.2)
-                border.color: loginPasswordField.activeFocus 
-                    ? Appearance.colors.colPrimary 
-                    : ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.7)
+                radius: root._zzz ? Appearance.zzz.controlRadius : height / 2
+                color: root._zzz
+                    ? ColorUtils.transparentize(Appearance.zzz.bg1, 0.12)
+                    : ColorUtils.transparentize(Appearance.colors.colLayer1, 0.2)
+                border.color: root._zzz
+                    ? (loginPasswordField.activeFocus ? Appearance.zzz.accent : Appearance.zzz.borderColor)
+                    : (loginPasswordField.activeFocus
+                        ? Appearance.colors.colPrimary
+                        : ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.7))
                 border.width: loginPasswordField.activeFocus ? 2 : 1
                 
                 // Stagger animation (more delayed)
@@ -1410,18 +1419,21 @@ MouseArea {
                         }
                     }
                     
-                    // Submit button
                     Rectangle {
                         id: submitButton
                         Layout.preferredWidth: 36
                         Layout.preferredHeight: 36
                         Layout.alignment: Qt.AlignVCenter
-                        radius: width / 2
-                        color: submitMouseArea.pressed 
-                            ? Appearance.colors.colPrimaryActive 
-                            : submitMouseArea.containsMouse 
-                                ? Appearance.colors.colPrimaryHover 
-                                : Appearance.colors.colPrimary
+                        radius: root._zzz ? Appearance.zzz.controlRadius : width / 2
+                        color: root._zzz
+                            ? (submitMouseArea.pressed ? Appearance.zzz.accentSoft
+                                : submitMouseArea.containsMouse ? Appearance.zzz.accent
+                                : Appearance.zzz.bg3)
+                            : (submitMouseArea.pressed
+                                ? Appearance.colors.colPrimaryActive
+                                : submitMouseArea.containsMouse
+                                    ? Appearance.colors.colPrimaryHover
+                                    : Appearance.colors.colPrimary)
                         
                         Behavior on color {
                             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -1439,7 +1451,7 @@ MouseArea {
                                 }
                             }
                             iconSize: 20
-                            color: Appearance.colors.colOnPrimary
+                            color: root._zzz ? Appearance.zzz.onColor : Appearance.colors.colOnPrimary
                         }
                         
                         MouseArea {
@@ -1868,13 +1880,21 @@ MouseArea {
         required property string icon
         property string tooltip: ""
         property bool toggled: false
-        
+
         signal clicked()
-        
+
         width: 44
         height: 44
-        radius: Appearance.rounding.normal
+        radius: root._zzz ? Appearance.zzz.controlRadius : Appearance.rounding.normal
+        border.width: root._zzz ? 1 : 0
+        border.color: root._zzz ? Appearance.zzz.hairlineStrong : "transparent"
         color: {
+            if (root._zzz) {
+                if (toggled) return Appearance.zzz.accent
+                if (lockBtnMouse.pressed) return Appearance.zzz.bg4
+                if (lockBtnMouse.containsMouse) return Appearance.zzz.bg3
+                return ColorUtils.transparentize(Appearance.zzz.bg1, 0.18)
+            }
             if (toggled) return Appearance.colors.colPrimary
             if (lockBtnMouse.pressed) return ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.7)
             if (lockBtnMouse.containsMouse) return ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.85)
@@ -1898,7 +1918,9 @@ MouseArea {
             anchors.centerIn: parent
             text: lockBtn.icon
             iconSize: 22
-            color: lockBtn.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
+            color: root._zzz
+                ? (lockBtn.toggled ? Appearance.zzz.onAccent : Appearance.zzz.onColor)
+                : (lockBtn.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface)
         }
         
         MouseArea {

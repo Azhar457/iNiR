@@ -448,6 +448,7 @@ ApplicationWindow {
     height: 750
     color: root.uiReady
         ? (Appearance.inirEverywhere ? Appearance.inir.colLayer0
+          : Appearance.zzzEverywhere ? Appearance.colors.colLayer0
           : Appearance.m3colors.m3background)
         : "transparent"
 
@@ -462,11 +463,23 @@ ApplicationWindow {
         }
     }
 
+    ZzzDiagonalPattern {
+        stripeSpacing: 28
+        stripeThickness: 1
+    }
+
+    ZzzSurfaceAccent {
+        stripeCount: 34
+        edgeMargin: root.contentPadding
+        z: 1
+    }
+
     ColumnLayout {
         anchors {
             fill: parent
             margins: contentPadding
         }
+        z: 2
         visible: root.uiReady
         opacity: visible ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 150 } }

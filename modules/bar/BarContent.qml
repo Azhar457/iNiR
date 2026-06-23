@@ -95,7 +95,8 @@ Item { // Bar content region
         return raw <= 0 ? 0 : Math.min(raw, root.centerSideMaxWidth)
     }
     readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
-    readonly property color separatorColor: Appearance.colors.colOutlineVariant
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    readonly property color separatorColor: root.zzzEverywhere ? Appearance.zzz.hairlineStrong : Appearance.colors.colOutlineVariant
 
     // Per-monitor wallpaper URL for Aurora blur — uses the actual wallpaper on this screen
     readonly property string wallpaperUrl: {
@@ -183,18 +184,36 @@ Item { // Bar content region
     // centre pills get it via BarGroup.islandStyle; the edge zones draw one
     // EdgeIsland behind their whole content row.
     component EdgeIsland: Rectangle {
-        color: root.angelEverywhere ? Appearance.angel.colGlassCard
+        color: root.zzzEverywhere ? Appearance.zzz.paperAlt
+            : root.angelEverywhere ? Appearance.angel.colGlassCard
             : root.inirEverywhere ? Appearance.inir.colLayer0
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
             : Appearance.colors.colLayer0
-        border.width: 1
-        border.color: root.angelEverywhere ? Appearance.angel.colCardBorder
+        border.width: root.zzzEverywhere ? Appearance.zzz.borderThick : 1
+        border.color: root.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : root.angelEverywhere ? Appearance.angel.colCardBorder
             : root.inirEverywhere ? Appearance.inir.colBorder
             : Appearance.colors.colLayer0Border
-        radius: Math.min(width, height) / 2
+        radius: root.zzzEverywhere ? Appearance.zzz.controlRadius : Math.min(width, height) / 2
         Behavior on width {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+        }
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
     }
     // Edge-zone layout cell: hosts the module Loader. Layout hints live HERE
@@ -221,8 +240,17 @@ Item { // Bar content region
         Layout.topMargin: Appearance.sizes.baseBarHeight / 3
         Layout.bottomMargin: Appearance.sizes.baseBarHeight / 3
         Layout.fillHeight: true
-        implicitWidth: 1
-        color: root.inirEverywhere ? Appearance.inir.colBorderSubtle : root.separatorColor
+        implicitWidth: root.zzzEverywhere ? 1 : 1
+        color: root.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : root.inirEverywhere ? Appearance.inir.colBorderSubtle : root.separatorColor
+        Behavior on implicitWidth {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
     }
 
     // ═══ Modular layout engine ══════════════════════════════════════════
@@ -465,6 +493,9 @@ Item { // Bar content region
 
         // Color logic per global style and corner style
         color: {
+            if (root.zzzEverywhere) {
+                return Appearance.zzz.chrome
+            }
             // Frame is an outline only; scenic paints via the gradient above
             if (root.isFrame || root.isScenic) {
                 return ColorUtils.transparentize(Appearance.colors.colLayer0, 1)
@@ -490,10 +521,21 @@ Item { // Bar content region
             }
             return Appearance.colors.colLayer0
         }
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
 
         // Radius logic per global style and corner style
         radius: {
             if (root.isScenic) return 0
+            if (root.zzzEverywhere) {
+                return 0
+            }
             // Custom rounding override (-1 means use theme default)
             const customRounding = Config.options?.bar?.customRounding ?? -1
             if (customRounding >= 0) {
@@ -520,10 +562,36 @@ Item { // Bar content region
             }
             return 0
         }
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
+
+        // ZZZ round mode: the flush console bar softens only its INNER edge (the
+        // one facing into the screen) so it reads rounded without leaving gaps at
+        // the screen-edge corners. Square mode and other styles are untouched.
+        readonly property real zzzRoundEdge: (root.zzzEverywhere && Appearance.zzz.round) ? Appearance.zzz.panelRadius : -1
+        topLeftRadius: (zzzRoundEdge >= 0 && isBottom) ? zzzRoundEdge : radius
+        topRightRadius: (zzzRoundEdge >= 0 && isBottom) ? zzzRoundEdge : radius
+        bottomLeftRadius: (zzzRoundEdge >= 0 && !isBottom) ? zzzRoundEdge : radius
+        bottomRightRadius: (zzzRoundEdge >= 0 && !isBottom) ? zzzRoundEdge : radius
+        Behavior on topLeftRadius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on bottomLeftRadius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
 
         // Border logic per global style
         border.width: {
             if (root.isScenic) return 0
+            if (root.zzzEverywhere) return 1
             if (root.isFrame) return root.angelEverywhere ? Appearance.angel.panelBorderWidth : 1
             if (root.angelEverywhere) return Appearance.angel.panelBorderWidth
             if (root.inirEverywhere) {
@@ -534,7 +602,16 @@ Item { // Bar content region
             }
             return floatingStyle ? 1 : 0
         }
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
         border.color: {
+            if (root.zzzEverywhere) return Appearance.zzz.hairline
             // Frame is defined by its outline — use the visible outline token
             if (root.isFrame && !root.angelEverywhere && !root.inirEverywhere) {
                 return Appearance.colors.colOutlineVariant
@@ -548,10 +625,18 @@ Item { // Bar content region
             }
             return Appearance.colors.colLayer0Border
         }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
 
         clip: true
 
-        layer.enabled: auroraEverywhere && !root.inirEverywhere && !gameModeMinimal && root.barAppearance === "classic"
+        layer.enabled: auroraEverywhere && !root.inirEverywhere && !root.zzzEverywhere && !gameModeMinimal && root.barAppearance === "classic"
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: barBackground.width
@@ -566,7 +651,7 @@ Item { // Bar content region
             y: barBackground.isBottom ? -(root.screen?.height ?? 1080) + barBackground.height + barBackground.barMargin : -barBackground.barMargin
             width: root.screen?.width ?? 1920
             height: root.screen?.height ?? 1080
-            visible: barBackground.auroraEverywhere && !root.inirEverywhere && !barBackground.gameModeMinimal && !Appearance.compositorBlurActive && root.barAppearance === "classic"
+            visible: barBackground.auroraEverywhere && !root.inirEverywhere && !root.zzzEverywhere && !barBackground.gameModeMinimal && !Appearance.compositorBlurActive && root.barAppearance === "classic"
             source: Appearance.compositorBlurActive ? "" : root.wallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true
@@ -611,6 +696,15 @@ Item { // Bar content region
         // Angel partial border — elegant half-borders
         AngelPartialBorder {
             targetRadius: barBackground.radius
+        }
+
+        ZzzTechFrame {
+            margin: 6
+            showGrid: false
+            showCornerMarks: false
+            showLabels: false
+            showTicks: false
+            accentColor: Appearance.zzz.chromeStroke
         }
     }
 
@@ -733,7 +827,10 @@ Item { // Bar content region
             // Collapse to nothing when this zone has no visible modules;
             // otherwise take the symmetric target width. Modules elide/clip.
             visible: !empty
-            implicitWidth: empty ? 0 : root._pillWidth(contentWidth)
+            // Islands: each capsule hugs its own content (no symmetric mirroring,
+            // which would leave dead space in the lighter side). Classic keeps the
+            // mirrored width so the two side pills stay visually balanced.
+            implicitWidth: empty ? 0 : (root.isIslands ? Math.min(contentWidth, root.centerSideMaxWidth) : root._pillWidth(contentWidth))
             clip: true
 
             Repeater {
@@ -780,7 +877,10 @@ Item { // Bar content region
                 id: rightCenterGroupPill
                 anchors.verticalCenter: parent.verticalCenter
                 visible: !empty
-                implicitWidth: empty ? 0 : root._pillWidth(contentWidth)
+                // Islands: each capsule hugs its own content (no symmetric mirroring,
+                // which would leave dead space in the lighter side). Classic keeps the
+                // mirrored width so the two side pills stay visually balanced.
+                implicitWidth: empty ? 0 : (root.isIslands ? Math.min(contentWidth, root.centerSideMaxWidth) : root._pillWidth(contentWidth))
                 clip: true
 
                 Repeater {
@@ -965,19 +1065,27 @@ Item { // Bar content region
             implicitWidth: indicatorsRowLayout.implicitWidth + 10 * 2
             implicitHeight: indicatorsRowLayout.implicitHeight + 5 * 2
 
-            buttonRadius: Appearance.rounding.full
+            buttonRadius: root.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
 
             colBackground: buttonHovered
-                ? (Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover)
+                ? (root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.28)
+                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover)
                 : "transparent"
-            colBackgroundHover: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
-            colRipple: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
-            colBackgroundToggled: Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer
-            colBackgroundToggledHover: Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover
-            colRippleToggled: Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive
+            colBackgroundHover: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.32)
+                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
+            colRipple: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
+                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
+            colBackgroundToggled: root.zzzEverywhere ? Appearance.zzz.sticker
+                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer
+            colBackgroundToggledHover: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.88)
+                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover
+            colRippleToggled: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.36)
+                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive
 
             toggled: GlobalStates.sidebarRightOpen
-            property color colText: toggled ? Appearance.m3colors.m3onSecondaryContainer : Appearance.colors.colOnLayer0
+            property color colText: root.zzzEverywhere
+                ? (toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
+                : toggled ? Appearance.m3colors.m3onSecondaryContainer : Appearance.colors.colOnLayer0
 
             Behavior on colText {
                 animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

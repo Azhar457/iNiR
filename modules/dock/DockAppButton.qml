@@ -64,8 +64,8 @@ DockButton {
         return false
     }
     property bool hasWindows: toplevels.length > 0
-    property bool pillStyle:  Config.options?.dock?.style === "pill"
-    property bool macosStyle: Config.options?.dock?.style === "macos"
+    property bool pillStyle:  (Config.options?.dock?.style === "pill") && !Appearance.zzzEverywhere
+    property bool macosStyle: (Config.options?.dock?.style === "macos") && !Appearance.zzzEverywhere
 
     // Hover preview signals
     signal hoverPreviewRequested()
@@ -108,10 +108,23 @@ DockButton {
 
     // Subtle highlight for active app (disabled in macOS and pill modes —
     // macOS uses magnify, pill uses its own background highlight)
-    scale: (!macosStyle && !pillStyle && appIsActive) ? 1.05 : 1.0
+    scale: (!macosStyle && !pillStyle && appIsActive) ? (Appearance.zzzEverywhere ? 1.02 : 1.05) : 1.0
     Behavior on scale {
         enabled: Appearance.animationsEnabled
         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+
+    transform: Translate {
+        y: Appearance.zzzEverywhere && !root.macosStyle && !root.pillStyle && root.buttonHovered && !root.vertical ? -3 : 0
+        x: Appearance.zzzEverywhere && !root.macosStyle && !root.pillStyle && root.buttonHovered && root.vertical ? -3 : 0
+        Behavior on y {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+        }
+        Behavior on x {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
+        }
     }
 
     property bool isSeparator: appToplevel.appId === "SEPARATOR"
@@ -132,14 +145,40 @@ DockButton {
     background.visible: !isSeparator && !pillStyle && !macosStyle
 
     // Suppress ripple/hover bg in macOS mode so no colored rect appears under icon
-    colBackgroundHover: macosStyle ? "transparent" : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    colBackgroundHover: macosStyle ? "transparent" : (Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0Hover)
-    colRipple: macosStyle ? "transparent" : (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+    colRipple: macosStyle ? "transparent" : (Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer0Active)
+
+    ZzzPlate {
+        anchors.fill: parent
+        visible: Appearance.zzzEverywhere && !root.isSeparator
+        // Dock tiles are small: use the control radius in round mode (a clean
+        // rounded chip), NOT the big panelRadius which over-rounds into a broken
+        // blob. Square mode keeps the signature chamfer.
+        radius: Appearance.zzz.round ? Appearance.zzz.controlRadius : 0
+        // Hover lifts the tile with a fuller cut; active keeps a moderate
+        // chamfer so the pressed read differs from hover.
+        chamfer: root.buttonHovered ? Appearance.zzz.cutCorner * 0.85
+            : root.appIsActive ? Appearance.zzz.cutCorner * 0.6
+            : Appearance.zzz.cutCorner * 0.45
+        // Whisper-thin console lift: a very faint paper tint so the icon stays
+        // the hero, edged with a soft signal stroke instead of a heavy plate.
+        fillColor: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.paper, 0.14)
+            : root.appIsActive ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.08)
+            : "transparent"
+        strokeColor: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.55)
+            : root.appIsActive ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.65)
+            : "transparent"
+        strokeWidth: Appearance.zzz.borderThick
+        z: -1
+    }
 
     // Pill background (replaces shared panel for this item)
     DockPillItem {
@@ -176,7 +215,7 @@ DockButton {
     // Hover shadow (disabled for angel — whole dock already has escalonado)
     StyledRectangularShadow {
         target: root.pillStyle ? pillBackground : root.background
-        visible: !Appearance.angelEverywhere && !root.macosStyle
+        visible: !Appearance.angelEverywhere && !Appearance.zzzEverywhere && !root.macosStyle
         opacity: root.buttonHovered && !root.isSeparator
             ? (Appearance.m3colors.darkmode ? 0.18 : 0.35) : 0
         spread: 0
@@ -193,6 +232,7 @@ DockButton {
             width: root.vertical ? root.separatorSize : 1
             height: root.vertical ? 1 : root.separatorSize
             color: Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+                 : Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
                  : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.7)
                  : Appearance.colors.colOutlineVariant
         }
@@ -458,7 +498,9 @@ DockButton {
                     ColorOverlay {
                         anchors.fill: desaturatedIcon
                         source: desaturatedIcon
-                        color: ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary, 0.9)
+                        color: ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                            : Appearance.zzzEverywhere ? Appearance.zzz.accent
+                            : Appearance.colors.colPrimary, 0.9)
                     }
                 }
             }
@@ -505,18 +547,34 @@ DockButton {
                                 return index === root.focusedWindowIndex;
                             }
 
-                            radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
-                            implicitWidth: Appearance.angelEverywhere
+                            // ZZZ indicators are thin signal pills: accent for the
+                            // focused window, whispered ink for siblings.
+                            radius: Appearance.zzzEverywhere ? Math.min(width, height) / 2
+                                : Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
+                            implicitWidth: Appearance.zzzEverywhere
+                                ? (isFocusedWindow ? 16 : 5)
+                                : Appearance.angelEverywhere
                                 ? (isFocusedWindow ? 14 : 6)
                                 : (isFocusedWindow ? root.countDotWidth : root.countDotHeight)
-                            implicitHeight: Appearance.angelEverywhere ? 2 : root.countDotHeight
+                            implicitHeight: Appearance.zzzEverywhere ? 3
+                                : Appearance.angelEverywhere ? 2 : root.countDotHeight
                             color: isFocusedWindow
-                                   ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                   ? (Appearance.zzzEverywhere ? Appearance.zzz.accent
+                                   : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                    : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
-                                   : ColorUtils.transparentize(Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                                   : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.5)
+                                   : ColorUtils.transparentize(Appearance.zzzEverywhere ? Appearance.zzz.ink
+                                   : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                                   : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.65)
 
                             Behavior on implicitWidth {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
+                            Behavior on implicitHeight {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
+                            Behavior on radius {
                                 enabled: Appearance.animationsEnabled
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                             }
@@ -531,11 +589,14 @@ DockButton {
                     Rectangle {
                         opacity: (!root.appIsActive && root.hasWindows && Config.options?.dock?.showAllWindowDots === false) ? 1 : 0
                         visible: opacity > 0
-                        width: Appearance.angelEverywhere ? 6 : 5
-                        height: Appearance.angelEverywhere ? 2 : 5
-                        radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
-                        color: ColorUtils.transparentize(Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.5)
+                        width: Appearance.zzzEverywhere ? 5 : (Appearance.angelEverywhere ? 6 : 5)
+                        height: Appearance.zzzEverywhere ? 3 : (Appearance.angelEverywhere ? 2 : 5)
+                        radius: Appearance.zzzEverywhere ? Math.min(width, height) / 2
+                            : Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
+                        color: ColorUtils.transparentize(Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0,
+                            Appearance.zzzEverywhere ? 0.65 : 0.5)
 
                         Behavior on opacity {
                             enabled: Appearance.animationsEnabled

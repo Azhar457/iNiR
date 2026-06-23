@@ -182,12 +182,12 @@ ContentPage {
                 }
                 function presetSnapshot(v) {
                     return JSON.stringify({
-                        style: v["bar.appearanceStyle"],
-                        left: v["bar.layout.left"],
-                        centerLeft: v["bar.layout.centerLeft"],
-                        center: v["bar.layout.center"],
-                        centerRight: v["bar.layout.centerRight"],
-                        right: v["bar.layout.right"]
+                        style: v["bar.appearanceStyle"] ?? "classic",
+                        left: v["bar.layout.left"] ?? [],
+                        centerLeft: v["bar.layout.centerLeft"] ?? [],
+                        center: v["bar.layout.center"] ?? [],
+                        centerRight: v["bar.layout.centerRight"] ?? [],
+                        right: v["bar.layout.right"] ?? []
                     })
                 }
 
@@ -199,15 +199,15 @@ ContentPage {
                     wrapMode: Text.WordWrap
                 }
 
-                // Each preset is an atomic bundle: surface style + the five
-                // layout zones. `preview` drives the mini bar mockup:
-                // segments of {a: alignment 0=left 1=center 2=right, w: width
-                // fraction of the mini bar} — or full:true for one slab.
+                // Each preset is an atomic bundle: a surface style plus the
+                // five layout zones. The mini-bar preview is derived directly
+                // from these values (see PresetPreviewBar) so it always mirrors
+                // exactly what applying the preset does — there is no separate
+                // hand-authored mockup to drift out of sync.
                 readonly property var layoutPresets: [
                     {
                         name: Translation.tr("Classic"),
                         desc: Translation.tr("Full-width bar, modules at the edges"),
-                        preview: { full: true },
                         values: {
                             "bar.appearanceStyle": "classic",
                             "bar.layout.migrated": true,
@@ -221,7 +221,6 @@ ContentPage {
                     {
                         name: Translation.tr("Islands"),
                         desc: Translation.tr("Each section floats as its own capsule"),
-                        preview: { segments: [{ a: 0, w: 0.22 }, { a: 1, w: 0.34 }, { a: 2, w: 0.22 }] },
                         values: {
                             "bar.appearanceStyle": "islands",
                             "bar.layout.migrated": true,
@@ -235,7 +234,6 @@ ContentPage {
                     {
                         name: Translation.tr("Command cluster"),
                         desc: Translation.tr("Everything gathered around the centre"),
-                        preview: { segments: [{ a: 1, w: 0.62 }] },
                         values: {
                             "bar.appearanceStyle": "islands",
                             "bar.layout.migrated": true,
@@ -249,7 +247,6 @@ ContentPage {
                     {
                         name: Translation.tr("Twin pills"),
                         desc: Translation.tr("Two corner capsules, open middle"),
-                        preview: { segments: [{ a: 0, w: 0.36 }, { a: 2, w: 0.36 }] },
                         values: {
                             "bar.appearanceStyle": "islands",
                             "bar.layout.migrated": true,
@@ -263,7 +260,6 @@ ContentPage {
                     {
                         name: Translation.tr("Scenic minimal"),
                         desc: Translation.tr("Bare essentials over a wallpaper fade"),
-                        preview: { segments: [{ a: 0, w: 0.16 }, { a: 1, w: 0.2 }, { a: 2, w: 0.16 }], scrim: true },
                         values: {
                             "bar.appearanceStyle": "scenic",
                             "bar.layout.migrated": true,
@@ -273,12 +269,31 @@ ContentPage {
                             "bar.layout.centerRight": [],
                             "bar.layout.right": ["rightSidebarButton", "clock"]
                         }
+                    },
+                    {
+                        name: Translation.tr("Framed"),
+                        desc: Translation.tr("Outlined floating frame around the bar"),
+                        values: {
+                            "bar.appearanceStyle": "frame",
+                            "bar.layout.migrated": true,
+                            "bar.layout.left": ["leftSidebarButton", "activeWindow"],
+                            "bar.layout.centerLeft": ["resources", "media"],
+                            "bar.layout.center": ["workspaces"],
+                            "bar.layout.centerRight": ["clock", "utilButtons", "battery"],
+                            "bar.layout.right": ["rightSidebarButton", "tray", "timer", "shellUpdate", "spacer", "weather"]
+                        }
                     }
                 ]
 
-                Flow {
+                // Responsive equal-width grid: cards never leave a ragged
+                // right edge. Columns fit to the available width, clamped to
+                // 2–3 so a card is always wide enough for its mini-bar + label.
+                GridLayout {
+                    id: presetGrid
                     Layout.fillWidth: true
-                    spacing: 8
+                    columnSpacing: 8
+                    rowSpacing: 8
+                    columns: Math.max(2, Math.min(3, Math.floor(width / 200)))
 
                     Repeater {
                         model: layoutPresetsSubsection.layoutPresets
@@ -289,14 +304,35 @@ ContentPage {
                             // five zones match the current config.
                             readonly property bool isActive: layoutPresetsSubsection.liveSnapshot
                                 === layoutPresetsSubsection.presetSnapshot(presetCard.modelData.values)
-                            implicitWidth: 150
-                            implicitHeight: presetCardColumn.implicitHeight + 20
+
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1   // equal share of the row
+                            Layout.preferredHeight: presetCardColumn.implicitHeight + 24
                             buttonRadius: Appearance.rounding.small
                             colBackground: presetCard.isActive ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer1
                             colBackgroundHover: presetCard.isActive ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer1Hover
                             colRipple: Appearance.colors.colLayer1Active
-                            StyledToolTip { text: presetCard.modelData.desc }
-                            onClicked: Config.setNestedValues(presetCard.modelData.values)
+
+                            // Defer the (heavy, full-bar-relayout) config write to
+                            // the next tick so the click frame stays light and the
+                            // ripple/press feedback animates without stutter.
+                            onClicked: Qt.callLater(() => Config.setNestedValues(presetCard.modelData.values))
+
+                            // Active accent ring — reads stronger than colour alone.
+                            // Drawn as an overlay since RippleButton's own border
+                            // belongs to its internal background rectangle.
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: presetCard.buttonRadius
+                                color: "transparent"
+                                z: 1
+                                border.color: Appearance.colors.colPrimary
+                                border.width: presetCard.isActive ? 2 : 0
+                                Behavior on border.width {
+                                    enabled: Appearance.animationsEnabled
+                                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
+                            }
 
                             // Active check badge, morphs in from the corner
                             Rectangle {
@@ -307,6 +343,7 @@ ContentPage {
                                 height: 18
                                 radius: Math.min(width, height) / 2
                                 color: Appearance.colors.colPrimary
+                                z: 2
                                 scale: presetCard.isActive ? 1 : 0
                                 opacity: presetCard.isActive ? 1 : 0
                                 Behavior on scale {
@@ -327,62 +364,39 @@ ContentPage {
 
                             contentItem: ColumnLayout {
                                 id: presetCardColumn
-                                spacing: 8
+                                spacing: 6
 
-                                // Mini bar mockup
-                                Rectangle {
-                                    id: presetPreview
+                                // Truthful mini-bar: rendered straight from the
+                                // preset's own five layout zones + surface style,
+                                // so it always matches what applying it produces.
+                                PresetPreviewBar {
                                     Layout.fillWidth: true
-                                    Layout.preferredHeight: 26
-                                    radius: Appearance.rounding.verysmall
-                                    color: Appearance.colors.colLayer0
-                                    border.width: 1
-                                    border.color: Appearance.colors.colLayer0Border
-
-                                    // Full-width slab (classic)
-                                    Rectangle {
-                                        visible: presetCard.modelData.preview.full ?? false
-                                        anchors.fill: parent
-                                        anchors.margins: 4
-                                        radius: Math.min(width, height) / 2
-                                        color: Appearance.colors.colSecondaryContainer
-                                    }
-                                    // Scenic scrim hint
-                                    Rectangle {
-                                        visible: presetCard.modelData.preview.scrim ?? false
-                                        anchors.fill: parent
-                                        anchors.margins: 1
-                                        radius: presetPreview.radius - 1
-                                        gradient: Gradient {
-                                            orientation: Gradient.Vertical
-                                            GradientStop { position: 0; color: ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.55) }
-                                            GradientStop { position: 1; color: "transparent" }
-                                        }
-                                    }
-                                    // Floating segment pills
-                                    Repeater {
-                                        model: presetCard.modelData.preview.segments ?? []
-                                        delegate: Rectangle {
-                                            required property var modelData
-                                            readonly property real segWidth: presetPreview.width * modelData.w
-                                            width: segWidth
-                                            height: presetPreview.height - 10
-                                            y: 5
-                                            x: modelData.a === 0 ? 5
-                                                : modelData.a === 1 ? (presetPreview.width - segWidth) / 2
-                                                : presetPreview.width - segWidth - 5
-                                            radius: Math.min(width, height) / 2
-                                            color: Appearance.colors.colSecondaryContainer
-                                        }
-                                    }
+                                    Layout.topMargin: 2
+                                    values: presetCard.modelData.values
+                                    accent: presetCard.isActive
+                                        ? Appearance.colors.colOnSecondaryContainer
+                                        : Appearance.colors.colSecondaryContainer
                                 }
 
                                 StyledText {
                                     Layout.fillWidth: true
+                                    Layout.topMargin: 2
                                     text: presetCard.modelData.name
                                     horizontalAlignment: Text.AlignHCenter
                                     font.pixelSize: Appearance.font.pixelSize.small
-                                    color: Appearance.colors.colOnLayer1
+                                    color: presetCard.isActive ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
+                                    elide: Text.ElideRight
+                                }
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: presetCard.modelData.desc
+                                    horizontalAlignment: Text.AlignHCenter
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: presetCard.isActive
+                                        ? ColorUtils.transparentize(Appearance.colors.colOnSecondaryContainer, 0.25)
+                                        : Appearance.colors.colSubtext
+                                    wrapMode: Text.WordWrap
+                                    maximumLineCount: 2
                                     elide: Text.ElideRight
                                 }
                             }

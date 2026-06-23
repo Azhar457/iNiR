@@ -36,10 +36,12 @@ Scope {
     component DescriptionLabel: Rectangle {
         id: descriptionLabel
         property string text
-        property color textColor: Appearance.colors.colOnTooltip
-        color: Appearance.colors.colTooltip
+        property color textColor: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnTooltip
+        color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt : Appearance.colors.colTooltip
         clip: true
-        radius: Appearance.rounding.normal
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
+        border.width: Appearance.zzzEverywhere ? 1 : 0
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
         implicitHeight: descriptionLabelText.implicitHeight + 10 * 2
         implicitWidth: descriptionLabelText.implicitWidth + 15 * 2
 
@@ -174,7 +176,35 @@ Scope {
             // Dim overlay for better readability
             Rectangle {
                 anchors.fill: parent
-                color: Qt.rgba(0, 0, 0, 0.4)
+                color: Appearance.zzzEverywhere
+                    ? ColorUtils.applyAlpha(Appearance.zzz.bg0, 0.62)
+                    : Qt.rgba(0, 0, 0, 0.4)
+            }
+
+            ZzzGhostMark {
+                anchors.centerIn: parent
+                visible: Appearance.zzzEverywhere
+                width: Math.min(parent.width * 0.72, 980)
+                height: width * 0.42
+            }
+
+            ZzzBurst {
+                visible: Appearance.zzzEverywhere
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: 96
+                width: 220
+                height: 220
+            }
+
+            ZzzTechFrame {
+                anchors.fill: parent
+                visible: Appearance.zzzEverywhere
+                label: "SESSION"
+                index: "SYS"
+                accentColor: Appearance.zzz.secondary
+                margin: 42
+                showTicks: true
             }
 
             implicitWidth: root.focusedScreen?.width ?? 0
@@ -221,13 +251,17 @@ Scope {
                             pixelSize: Appearance.font.pixelSize.title
                             variableAxes: Appearance.font.variableAxes.title
                         }
+                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                        font.italic: Appearance.zzzEverywhere
                         text: Translation.tr("Session")
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer0
                     }
 
                     StyledText { // Small instruction
                         Layout.alignment: Qt.AlignHCenter
                         horizontalAlignment: Text.AlignHCenter
                         font.pixelSize: Appearance.font.pixelSize.normal
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colOnLayer0
                         text: Translation.tr("Arrow keys to navigate, Enter to select\nEsc or click anywhere to cancel")
                     }
                 }
@@ -340,8 +374,8 @@ Scope {
                     visible: active
                     sourceComponent: DescriptionLabel {
                         text: Translation.tr("Your package manager is running")
-                        textColor: Appearance.m3colors.m3onErrorContainer
-                        color: Appearance.m3colors.m3errorContainer
+                        textColor: Appearance.zzzEverywhere ? Appearance.zzz.onSecondary : Appearance.m3colors.m3onErrorContainer
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.secondary : Appearance.m3colors.m3errorContainer
                     }
                 }
                 Loader {
@@ -349,8 +383,8 @@ Scope {
                     visible: active
                     sourceComponent: DescriptionLabel {
                         text: Translation.tr("There might be a download in progress")
-                        textColor: Appearance.m3colors.m3onErrorContainer
-                        color: Appearance.m3colors.m3errorContainer
+                        textColor: Appearance.zzzEverywhere ? Appearance.zzz.onSecondary : Appearance.m3colors.m3onErrorContainer
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.secondary : Appearance.m3colors.m3errorContainer
                     }
                 }
             }

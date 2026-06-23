@@ -23,7 +23,8 @@ Scope {
     readonly property real widgetHeight: Appearance.sizes.mediaControlsHeight
     readonly property real dockHeight: Config.options?.dock?.height ?? 60
     readonly property real dockMargin: Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut
-    property real popupRounding: Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
+    property real popupRounding: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+        : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
     readonly property bool visualizerActive: mediaControlsLoader.active && MprisController.isPlaying
     property var focusedScreen: CompositorService.isNiri
         ? Quickshell.screens.find(s => s.name === NiriService.currentOutput) ?? GlobalStates.primaryScreen
@@ -120,108 +121,138 @@ Scope {
 
                 Item {
                     id: cardArea
-                    width: root.widgetWidth
-                height: playerColumnLayout.implicitHeight
-                anchors.horizontalCenter: parent.horizontalCenter
+                    readonly property real zzzFrameInset: Appearance.zzzEverywhere
+                        ? Math.max(12, Appearance.zzz.markerLength * 0.8)
+                        : 0
+                    width: root.widgetWidth + zzzFrameInset * 2
+                    height: playerColumnLayout.implicitHeight + zzzFrameInset * 2
+                    anchors.horizontalCenter: parent.horizontalCenter
 
-                // Use screen height for reliable off-screen position
-                readonly property real screenH: mediaControlsRoot.screen?.height ?? 1080
-                readonly property real targetY: screenH - height - root.dockHeight - root.dockMargin - 5
+                    // Use screen height for reliable off-screen position
+                    readonly property real screenH: mediaControlsRoot.screen?.height ?? 1080
+                    readonly property real targetY: screenH - height - root.dockHeight - root.dockMargin - 5
 
-                y: screenH + 50
-                opacity: 0
-                scale: 0.9
-                transformOrigin: Item.Bottom
+                    y: screenH + 50
+                    opacity: 0
+                    scale: 0.9
+                    transformOrigin: Item.Bottom
 
-                states: State {
-                    name: "visible"
-                    when: GlobalStates.mediaControlsOpen
-                    PropertyChanges {
-                        target: cardArea
-                        y: cardArea.targetY
-                        opacity: 1
-                        scale: 1
-                    }
-                }
-
-                transitions: [
-                    Transition {
-                        to: "visible"
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                        NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
-                        NumberAnimation { properties: "scale"; duration: Appearance.animation.elementResize.duration; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
-                    },
-                    Transition {
-                        from: "visible"
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
-                        NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                        NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Easing.InBack; easing.overshoot: 1.0 }
-                    }
-                ]
-
-                ColumnLayout {
-                    id: playerColumnLayout
-                    anchors.fill: parent
-                    spacing: 8
-
-                    Repeater {
-                        model: root.allPlayers
-                        delegate: PlayerControl {
-                            id: playerDelegate
-                            required property MprisPlayer modelData
-                            required property int index
-
-                            player: modelData
-                            visualizerPoints: root.visualizerPoints
-                            implicitWidth: root.widgetWidth
-                            implicitHeight: root.widgetHeight
-                            radius: root.popupRounding
-                            screenX: cardArea.x + (mediaControlsRoot.width - cardArea.width) / 2
-                            screenY: cardArea.y + index * (root.widgetHeight - Appearance.sizes.elevationMargin)
+                    states: State {
+                        name: "visible"
+                        when: GlobalStates.mediaControlsOpen
+                        PropertyChanges {
+                            target: cardArea
+                            y: cardArea.targetY
+                            opacity: 1
+                            scale: 1
                         }
                     }
 
-                    Item { // No player placeholder
-                        Layout.fillWidth: true
-                        visible: root.allPlayers.length === 0
-                        implicitWidth: placeholderBackground.implicitWidth + Appearance.sizes.elevationMargin
-                        implicitHeight: placeholderBackground.implicitHeight + Appearance.sizes.elevationMargin
+                    transitions: [
+                        Transition {
+                            to: "visible"
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
+                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
+                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementResize.duration; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+                        },
+                        Transition {
+                            from: "visible"
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
+                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Easing.InBack; easing.overshoot: 1.0 }
+                        }
+                    ]
 
-                        StyledRectangularShadow {
-                            target: placeholderBackground
-                            visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+                    ZzzPanelBackdrop {
+                        anchors.fill: parent
+                        label: "MEDIA"
+                        index: root.allPlayers.length > 1 ? "STACK" : (MprisController.isPlaying ? "LIVE" : "IDLE")
+                        accentColor: root.allPlayers.length > 0 ? Appearance.zzz.secondary : Appearance.zzz.tertiary
+                        ghostText: "MEDIA"
+                        showTicks: false
+                        showBurst: false
+                        showGrid: false
+                        horizontalBias: 0.08
+                        verticalBias: 0.03
+                        ghostStrength: 0.7
+                    }
+
+                    ColumnLayout {
+                        id: playerColumnLayout
+                        anchors.fill: parent
+                        anchors.margins: cardArea.zzzFrameInset
+                        spacing: 8
+
+                        Repeater {
+                            model: root.allPlayers
+                            delegate: PlayerControl {
+                                id: playerDelegate
+                                required property MprisPlayer modelData
+                                required property int index
+
+                                player: modelData
+                                visualizerPoints: root.visualizerPoints
+                                implicitWidth: root.widgetWidth
+                                implicitHeight: root.widgetHeight
+                                radius: root.popupRounding
+                                screenX: cardArea.x + (mediaControlsRoot.width - cardArea.width) / 2 + cardArea.zzzFrameInset
+                                screenY: cardArea.y + cardArea.zzzFrameInset + index * (root.widgetHeight - Appearance.sizes.elevationMargin)
+                            }
                         }
 
-                        Rectangle {
-                            id: placeholderBackground
-                            anchors.centerIn: parent
-                            color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                                 : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
-                                 : Appearance.colors.colLayer0
-                            radius: Appearance.inirEverywhere ? Appearance.inir.roundingLarge : root.popupRounding
-                            border.width: Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
-                            border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
-                                        : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
-                                        : "transparent"
-                            property real padding: 20
-                            implicitWidth: placeholderLayout.implicitWidth + padding * 2
-                            implicitHeight: placeholderLayout.implicitHeight + padding * 2
+                        Item { // No player placeholder
+                            Layout.fillWidth: true
+                            visible: root.allPlayers.length === 0
+                            implicitWidth: placeholderBackground.implicitWidth + Appearance.sizes.elevationMargin
+                            implicitHeight: placeholderBackground.implicitHeight + Appearance.sizes.elevationMargin
 
-                            ColumnLayout {
-                                id: placeholderLayout
+                            StyledRectangularShadow {
+                                target: placeholderBackground
+                                visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+                            }
+
+                            Rectangle {
+                                id: placeholderBackground
                                 anchors.centerIn: parent
+                                color: Appearance.zzzEverywhere ? Appearance.zzz.paper
+                                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                                     : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
+                                     : Appearance.colors.colLayer0
+                                radius: root.popupRounding
+                                border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
+                                    : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
+                                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+                                            : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                                            : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
+                                            : "transparent"
+                                property real padding: 20
+                                implicitWidth: placeholderLayout.implicitWidth + padding * 2
+                                implicitHeight: placeholderLayout.implicitHeight + padding * 2
 
-                                StyledText {
-                                    text: Translation.tr("No active player")
-                                    font.pixelSize: Appearance.font.pixelSize.large
-                                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
+                                ZzzGraphicPlate {
+                                    anchors.fill: parent
+                                    accentColor: Appearance.zzz.tertiary
                                 }
-                                StyledText {
-                                    color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-                                    text: Translation.tr("Make sure your player has MPRIS support\\nor try turning off duplicate player filtering")
-                                    font.pixelSize: Appearance.font.pixelSize.small
+
+                                ColumnLayout {
+                                    id: placeholderLayout
+                                    anchors.centerIn: parent
+
+                                    StyledText {
+                                        text: Translation.tr("No active player")
+                                        font.pixelSize: Appearance.font.pixelSize.large
+                                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
+                                    }
+                                    StyledText {
+                                        color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                                            : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                                        text: Translation.tr("Make sure your player has MPRIS support\nor try turning off duplicate player filtering")
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                    }
                                 }
                             }
                         }
@@ -229,7 +260,6 @@ Scope {
                 }
             }
         }
-    }
     }
 
     IpcHandler {

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.dashboard
 
 ContentPage {
     id: root
@@ -10,57 +11,6 @@ ContentPage {
     settingsPageName: Translation.tr("Dashboard")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
-
-    // Widget catalog: id → display metadata. Columns hold ids; "hidden" means
-    // the id is in no column.
-    readonly property var widgetCatalog: [
-        { id: "welcome", name: Translation.tr("Welcome"), icon: "waving_hand" },
-        { id: "clock", name: Translation.tr("Clock"), icon: "schedule" },
-        { id: "system", name: Translation.tr("System usage"), icon: "monitoring" },
-        { id: "github", name: Translation.tr("GitHub activity"), icon: "deployed_code" },
-        { id: "notifications", name: Translation.tr("Notifications"), icon: "notifications" },
-        { id: "todo", name: Translation.tr("To Do"), icon: "checklist" },
-        { id: "media", name: Translation.tr("Media player"), icon: "music_note" },
-        { id: "weather", name: Translation.tr("Weather"), icon: "partly_cloudy_day" },
-        { id: "calendar", name: Translation.tr("Calendar"), icon: "calendar_month" },
-        { id: "agenda", name: Translation.tr("Agenda"), icon: "event_upcoming" },
-        { id: "notes", name: Translation.tr("Notes"), icon: "edit_note" }
-    ]
-    readonly property var columnIds: ["left", "center", "right"]
-
-    function _col(name) {
-        const a = Config.options?.dashboard?.layout?.[name]
-        return (a && a.length >= 0) ? a.slice() : []
-    }
-    function columnOf(id) {
-        for (let i = 0; i < root.columnIds.length; i++)
-            if (root._col(root.columnIds[i]).indexOf(id) !== -1)
-                return root.columnIds[i]
-        return "hidden"
-    }
-    function setColumn(id, col) {
-        if (root.columnOf(id) === col) return
-        let u = {}
-        for (let i = 0; i < root.columnIds.length; i++) {
-            const zone = root.columnIds[i]
-            const arr = root._col(zone)
-            const idx = arr.indexOf(id)
-            if (idx !== -1) { arr.splice(idx, 1); u["dashboard.layout." + zone] = arr }
-            if (zone === col) { arr.push(id); u["dashboard.layout." + zone] = arr }
-        }
-        Config.setNestedValues(u)
-    }
-    function moveWithin(id, dir) {
-        const zone = root.columnOf(id)
-        if (zone === "hidden") return
-        const arr = root._col(zone)
-        const idx = arr.indexOf(id)
-        const next = idx + dir
-        if (idx === -1 || next < 0 || next >= arr.length) return
-        arr.splice(idx, 1)
-        arr.splice(next, 0, id)
-        Config.setNestedValue("dashboard.layout." + zone, arr)
-    }
 
     SettingsCardSection {
         visible: !root.isIiActive
@@ -139,13 +89,20 @@ ContentPage {
             title: Translation.tr("GitHub username")
             MaterialTextField {
                 Layout.fillWidth: true
-                placeholderText: Translation.tr("Username for the contributions widget (optional)")
+                placeholderText: Translation.tr("e.g. octocat")
                 text: Config.options?.dashboard?.github?.username ?? ""
                 onTextChanged: {
                     Qt.callLater(() => {
                         Config.setNestedValue("dashboard.github.username", text)
                     });
                 }
+            }
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Powers the “GitHub activity” widget above. Leave empty to disable the contribution graph.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
             }
         }
 
@@ -208,77 +165,11 @@ ContentPage {
         visible: root.isIiActive
         expanded: true
         icon: "widgets"
-        title: Translation.tr("Widgets")
+        title: Translation.tr("Widgets & layout")
 
         SettingsGroup {
-            StyledText {
+            DashLayoutEditor {
                 Layout.fillWidth: true
-                text: Translation.tr("Place each widget in a column, or hide it. Use the arrows to reorder within a column.")
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.small
-                wrapMode: Text.WordWrap
-            }
-
-            Repeater {
-                model: root.widgetCatalog
-                delegate: RowLayout {
-                    id: widgetRow
-                    required property var modelData
-                    readonly property string widgetColumn: root.columnOf(modelData.id)
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    MaterialSymbol {
-                        text: widgetRow.modelData.icon
-                        iconSize: Appearance.font.pixelSize.large
-                        color: Appearance.colors.colOnSecondaryContainer
-                    }
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: widgetRow.modelData.name
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSecondaryContainer
-                    }
-                    ConfigSelectionArray {
-                        Layout.fillWidth: false
-                        currentValue: widgetRow.widgetColumn
-                        onSelected: newValue => root.setColumn(widgetRow.modelData.id, newValue)
-                        options: [
-                            { displayName: Translation.tr("Hidden"), value: "hidden" },
-                            { displayName: Translation.tr("Left"), value: "left" },
-                            { displayName: Translation.tr("Center"), value: "center" },
-                            { displayName: Translation.tr("Right"), value: "right" }
-                        ]
-                    }
-                    RippleButton {
-                        implicitWidth: 30
-                        implicitHeight: 30
-                        buttonRadius: Appearance.rounding.full
-                        enabled: widgetRow.widgetColumn !== "hidden"
-                        onClicked: root.moveWithin(widgetRow.modelData.id, -1)
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "arrow_upward"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnSecondaryContainer
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-                    }
-                    RippleButton {
-                        implicitWidth: 30
-                        implicitHeight: 30
-                        buttonRadius: Appearance.rounding.full
-                        enabled: widgetRow.widgetColumn !== "hidden"
-                        onClicked: root.moveWithin(widgetRow.modelData.id, 1)
-                        contentItem: MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "arrow_downward"
-                            iconSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnSecondaryContainer
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-                    }
-                }
             }
         }
     }

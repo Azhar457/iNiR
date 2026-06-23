@@ -147,7 +147,7 @@ Some panels work under both families. They keep their `ii` prefix but load in wa
 
 ## For contributors
 
-1. Check the AGENTS.md in the module directory you're editing (if one exists)
+1. Check the AGENTS.md (read by Claude Code via its sibling `CLAUDE.md` symlink) in the module directory you're editing (if one exists)
 2. Identify which family owns the module before making visual changes
 3. Use the correct token system: `Appearance.*` for ii, `Looks.*` for waffle
 4. Register new panels in the appropriate panels file

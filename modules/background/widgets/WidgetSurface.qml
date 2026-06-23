@@ -22,7 +22,7 @@ Rectangle {
     property real surfaceBorderWidth: 1
     property real surfaceBorderOpacity: 0.08
     property color surfaceColor: Appearance.colors.colOnLayer0
-    property real surfaceRadius: Appearance.rounding.small
+    property real surfaceRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
     // Allows per-widget blur override. When false, blur is disabled even if the
     // active style (aurora/angel) supports it. Lets users get a flat,
     // non-blurred resources widget while keeping a frosted-glass clock, etc.
@@ -35,27 +35,59 @@ Rectangle {
     readonly property bool _angel: Appearance.angelEverywhere
     readonly property bool _aurora: Appearance.auroraEverywhere && !Appearance.inirEverywhere
     readonly property bool _inir: Appearance.inirEverywhere
+    readonly property bool _zzz: Appearance.zzzEverywhere
     readonly property bool _glass: (_aurora || _angel) && Appearance.effectsEnabled && root.surfaceUseBlur
     readonly property string _wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
     radius: surfaceRadius
     color: _glass ? "transparent"
+        : _zzz ? Appearance.zzz.paper
         : _inir ? "transparent"
         : surfaceOpacity > 0 ? ColorUtils.applyAlpha(surfaceColor, surfaceOpacity) : "transparent"
-    border.width: 0
-    border.color: "transparent"
+    border.width: _zzz ? Appearance.zzz.borderThick : 0
+    border.color: _zzz ? Appearance.zzz.hairline : "transparent"
     clip: true
+
+    Behavior on radius {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+    Behavior on color {
+        enabled: Appearance.animationsEnabled
+        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+    Behavior on border.width {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+    Behavior on border.color {
+        enabled: Appearance.animationsEnabled
+        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
 
     // Separate border overlay — avoids Qt's interior bleed when border.width > 0 on a transparent Rectangle
     Rectangle {
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
-        visible: !root._glass && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0
+        visible: !root._glass && !root._zzz && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0
         border.width: root.surfaceBorderWidth
         border.color: root._inir
             ? ColorUtils.applyAlpha(Appearance.inir.colBorder, root.surfaceBorderOpacity * 3)
             : ColorUtils.applyAlpha(root.surfaceColor, root.surfaceBorderOpacity)
+    }
+
+    // ZZZ accent registration tick on the top-left corner of the widget plate.
+    Rectangle {
+        anchors { left: parent.left; top: parent.top }
+        width: Appearance.zzz.borderThick + 1
+        height: Math.min(parent.height * 0.28, 18)
+        visible: root._zzz
+        color: Appearance.zzz.accent
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
     }
 
     // Blur layer for aurora/angel

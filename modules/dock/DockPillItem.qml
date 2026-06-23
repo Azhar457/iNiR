@@ -25,14 +25,15 @@ Item {
     property int  maxDots: Config.options?.dock?.maxIndicatorDots ?? 5
 
     // Standard rounding - not a full circle
-    readonly property real pillRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    readonly property real pillRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                                      : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                                       : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
                                       : Appearance.rounding.small
 
     // Background only visible when app is active/focused - translucent and aesthetic
     readonly property color _pillBg: {
         if (!appIsActive) return "transparent"
-        // Active app: subtle translucent background
+        if (Appearance.zzzEverywhere) return Appearance.zzz.bg2
         if (Appearance.angelEverywhere) return ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.35)
         if (Appearance.inirEverywhere) return ColorUtils.transparentize(Appearance.inir.colLayer2, 0.45)
         if (Appearance.auroraEverywhere) return ColorUtils.transparentize(Appearance.aurora.colSubSurface, 0.4)
@@ -42,6 +43,7 @@ Item {
     // Border only on active apps - very subtle
     readonly property color _pillBorder: {
         if (!appIsActive) return "transparent"
+        if (Appearance.zzzEverywhere) return Appearance.zzz.hairlineStrong
         if (Appearance.angelEverywhere) return ColorUtils.transparentize(Appearance.angel.colBorder, 0.5)
         if (Appearance.inirEverywhere) return ColorUtils.transparentize(Appearance.inir.colBorderAccent, 0.55)
         if (Appearance.auroraEverywhere) return ColorUtils.transparentize(Appearance.colors.colPrimary, 0.7)
@@ -91,18 +93,20 @@ Item {
 
                 // Unfocused: circle (dotHeight+2 × dotHeight+2), focused: pill (dotWidth × dotHeight)
                 // Both dimensions animate simultaneously → SecondHand-style squish morph
-                radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
-                implicitWidth: Appearance.angelEverywhere
+                radius: (Appearance.angelEverywhere || Appearance.zzzEverywhere) ? 0 : Math.min(width, height) / 2
+                implicitWidth: (Appearance.angelEverywhere || Appearance.zzzEverywhere)
                     ? (isFocused ? 14 : 6)
                     : (isFocused ? root.countDotWidth : root.countDotHeight + 2)
-                implicitHeight: Appearance.angelEverywhere ? 2 : (isFocused ? root.countDotHeight : root.countDotHeight + 2)
+                implicitHeight: (Appearance.angelEverywhere || Appearance.zzzEverywhere) ? 2 : (isFocused ? root.countDotHeight : root.countDotHeight + 2)
                 color: isFocused
-                    ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.accent
+                     : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                      : Appearance.inirEverywhere  ? Appearance.inir.colPrimary
                      : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                      : Appearance.colors.colPrimary)
                     : ColorUtils.transparentize(
-                        Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                        Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                      : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                       : Appearance.inirEverywhere  ? Appearance.inir.colText
                       : Appearance.colors.colOnLayer0, 0.5)
 
@@ -125,11 +129,12 @@ Item {
         Rectangle {
             opacity: (!root.appIsActive && root.hasWindows && !root.showAllDots) ? 1 : 0
             visible: opacity > 0
-            width:  Appearance.angelEverywhere ? 6 : 5
-            height: Appearance.angelEverywhere ? 2 : 5
-            radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
+            width:  (Appearance.angelEverywhere || Appearance.zzzEverywhere) ? 6 : 5
+            height: (Appearance.angelEverywhere || Appearance.zzzEverywhere) ? 2 : 5
+            radius: (Appearance.angelEverywhere || Appearance.zzzEverywhere) ? 0 : Math.min(width, height) / 2
             color: ColorUtils.transparentize(
-                Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+              : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
               : Appearance.inirEverywhere  ? Appearance.inir.colText
               : Appearance.colors.colOnLayer0, 0.5)
 

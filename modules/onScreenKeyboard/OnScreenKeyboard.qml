@@ -152,8 +152,10 @@ Scope { // Scope
                 x: parent ? (parent.width - width) / 2 : 0
                 y: parent ? parent.height - height - Appearance.sizes.elevationMargin : 0
 
-                color: Appearance.colors.colLayer0
+                color: Appearance.zzzEverywhere ? Appearance.zzz.bg0 : Appearance.colors.colLayer0
                 radius: Appearance.rounding.windowRounding
+                border.width: Appearance.zzzEverywhere ? 1 : 0
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor : "transparent"
                 transformOrigin: Item.Center
                 property real initScale: 0.98
                 scale: initScale

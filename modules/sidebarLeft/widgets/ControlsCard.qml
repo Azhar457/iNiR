@@ -64,7 +64,8 @@ Item {
             width: 1
             height: 24
             radius: 0.5
-            color: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
+            color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+                : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
                 : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
                 : Appearance.colors.colOutlineVariant
             opacity: 0.5
@@ -113,11 +114,13 @@ Item {
                 fill: active ? 1 : 0
                 animateFill: true
                 color: active
-                    ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.accent
+                        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
                         : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
                         : Appearance.colors.colPrimary)
-                    : (Appearance.angelEverywhere ? Appearance.angel.colText
+                    : (Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                        : Appearance.angelEverywhere ? Appearance.angel.colText
                         : Appearance.inirEverywhere ? Appearance.inir.colText
                         : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSurface
                         : Appearance.colors.colOnLayer0)
@@ -150,7 +153,7 @@ Item {
                 anchors.centerIn: parent
                 text: btnIcon
                 iconSize: 20
-                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
             }
         }
 

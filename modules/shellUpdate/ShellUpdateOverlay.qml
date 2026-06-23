@@ -21,36 +21,47 @@ Scope {
     property bool modsExpanded: false
     property bool suppressOutsideClose: false
 
+    readonly property bool _zzz: Appearance.zzzEverywhere
+
     // Style-aware tokens (no hardcoded hex fallbacks)
-    readonly property color accentColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    readonly property color accentColor: root._zzz ? Appearance.zzz.accent
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.m3colors.m3primary)
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colAccent ?? Appearance.m3colors.m3primary)
         : Appearance.m3colors.m3primary
 
-    readonly property color layerColor: Appearance.angelEverywhere ? Appearance.colors.colLayer0Base
+    readonly property color layerColor: root._zzz ? Appearance.zzz.bg0
+        : Appearance.angelEverywhere ? Appearance.colors.colLayer0Base
         : Appearance.inirEverywhere ? Appearance.inir.colLayer0
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSurface ?? Appearance.colors.colLayer0)
         : Appearance.colors.colLayer0
 
-    readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color surfaceColor: root._zzz ? Appearance.zzz.bg1
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? Appearance.m3colors.m3surfaceContainerLow)
         : Appearance.m3colors.m3surfaceContainerLow
 
-    readonly property color textColor: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnSurface
-    readonly property color subtextColor: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color borderColor: Appearance.angelEverywhere ? Appearance.angel.colBorder
+    readonly property color textColor: root._zzz ? Appearance.zzz.onBg
+        : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnSurface
+    readonly property color subtextColor: root._zzz ? Appearance.zzz.ghostInk
+        : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : Appearance.colors.colSubtext
+    readonly property color borderColor: root._zzz ? Appearance.zzz.borderColor
+        : Appearance.angelEverywhere ? Appearance.angel.colBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.colors.colLayer0Border
 
     // Adaptive rounding
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    readonly property real cardRadius: root._zzz ? Appearance.zzz.panelRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.windowRounding
-    readonly property real sectionRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    readonly property real sectionRadius: root._zzz ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
         : Appearance.rounding.small
-    readonly property real pillRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    readonly property real pillRadius: root._zzz ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : 999
 
     // Parse commit log lines: "hash|subject|relative_date|author"

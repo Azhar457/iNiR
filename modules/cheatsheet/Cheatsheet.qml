@@ -146,21 +146,26 @@ Scope {
         StyledRectangularShadow {
             target: cheatsheetBackground
             radius: cheatsheetBackground.radius
+            visible: !Appearance.zzzEverywhere
         }
 
         Rectangle {
             id: cheatsheetBackground
             anchors.centerIn: parent
-            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+            color: Appearance.zzzEverywhere ? Appearance.zzz.bg0
+                 : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                  : Appearance.inirEverywhere ? Appearance.inir.colLayer0
                  : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                  : Appearance.colors.colLayer0
-            border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+            border.width: Appearance.zzzEverywhere ? 1
+                        : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                         : Appearance.inirEverywhere ? 1 : 1
-            border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+            border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                        : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                         : Appearance.inirEverywhere ? Appearance.inir.colBorder
                         : Appearance.colors.colLayer0Border
-            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                  : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                   : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                   : Appearance.rounding.windowRounding
 
@@ -289,8 +294,8 @@ Scope {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    color: Appearance.m3colors.m3surfaceContainerLow
-                    radius: Appearance.rounding.small
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.m3colors.m3surfaceContainerLow
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
 
                     Item {
                         anchors.fill: parent

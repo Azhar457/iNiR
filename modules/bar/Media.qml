@@ -268,7 +268,8 @@ Item {
             lineWidth: Appearance.rounding.unsharpen
             value: (activePlayer && activePlayer.length > 0) ? (activePlayer.position / activePlayer.length) : 0
             implicitSize: 22
-            colPrimary: Appearance.inirEverywhere ? Appearance.inir.colPrimary
+            colPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
+                : Appearance.inirEverywhere ? Appearance.inir.colPrimary
                 : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                 : Appearance.colors.colOnSecondaryContainer
             enableAnimation: activePlayer?.playbackState === MprisPlaybackState.Playing
@@ -283,7 +284,8 @@ Item {
                     fill: 1
                     text: activePlayer?.isPlaying ? "pause" : "music_note"
                     iconSize: Appearance.font.pixelSize.normal
-                    color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
                         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
                         : Appearance.m3colors.m3onSecondaryContainer
                 }
@@ -321,7 +323,8 @@ Item {
                     horizontalAlignment: titleScroller.overflowing ? Text.AlignLeft : Text.AlignHCenter
                     width: titleScroller.overflowing ? implicitWidth : titleScroller.width
                     elide: Text.ElideNone
-                    color: Appearance.inirEverywhere ? Appearance.inir.colText
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        : Appearance.inirEverywhere ? Appearance.inir.colText
                         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
                         : Appearance.colors.colOnLayer1
                     text: titleScroller.fullText
@@ -374,7 +377,8 @@ Item {
                 to: -titleScroller.loopDistance
                 duration: Math.max(3500, titleScroller.loopDistance * 42)
                 easing.type: Easing.Linear
-                paused: titleScroller._marqueeHovered
+                // Gate on running — binding setPaused() on a stopped animation warns.
+                paused: titleScroller._marqueeHovered && scrollAnim.running
                 onFinished: {
                     marqueeRow.x = 0
                     titleScroller._marqueeHolding = true
@@ -391,7 +395,7 @@ Item {
                 } else if (!_marqueeHovered) {
                     scrollAnim.stop()
                     titleScroller._marqueeHolding = true
-                    _startHoldTimer()
+                    titleScroller._startHoldTimer()
                 }
             }
 
@@ -404,7 +408,7 @@ Item {
                     } else {
                         if (titleScroller.overflowing && Appearance.animationsEnabled) {
                             if (titleScroller._marqueeHolding) {
-                                _startHoldTimer()
+                                titleScroller._startHoldTimer()
                             }
                             // NumberAnimation.paused is already false, so it resumes
                         }

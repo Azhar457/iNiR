@@ -19,7 +19,7 @@ Built on [Quickshell](https://quickshell.outfoxxed.me/) (QML shell framework) fo
   [Installation](INSTALL.md)
 
 - **Panel Families**
-  Material ii (5 styles) and Waffle (Windows 11). How they work, how to switch.
+  Material ii (6 styles) and Waffle (Windows 11). How they work, how to switch.
   [Panel families](PANEL_FAMILIES.md)
 
 - **Theming**
@@ -54,7 +54,7 @@ Two panel families, switchable at runtime with `Super+Shift+W`:
 | Bar position  | Top (or vertical)                    | Bottom taskbar                |
 | Launcher      | Overview (`Super+Space`)             | Start Menu                    |
 | Right panel   | Sidebar (toggles, calendar, tools)   | Action Center + Notification Center |
-| Styles        | material, cards, aurora, inir, angel | Fluent                        |
+| Styles        | material, cards, aurora, inir, angel, zzz | Fluent                    |
 
 ## Common commands
 

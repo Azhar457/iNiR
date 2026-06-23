@@ -285,11 +285,14 @@ Item {
                 z: 1
                 implicitWidth: workspaceButtonWidth
                 implicitHeight: workspaceButtonWidth
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (width / 2)
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (width / 2)
                 property bool previousOccupied: (workspaceOccupied[index-1] ?? false) && !(!activeWindow?.activated && currentWorkspaceNumber === index)
                 property bool rightOccupied: (workspaceOccupied[index+1] ?? false) && !(!activeWindow?.activated && currentWorkspaceNumber === index+2)
-                property real radiusPrev: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (previousOccupied ? 0 : (width / 2))
-                property real radiusNext: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (rightOccupied ? 0 : (width / 2))
+                property real radiusPrev: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (previousOccupied ? 0 : (width / 2))
+                property real radiusNext: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (rightOccupied ? 0 : (width / 2))
 
                 topLeftRadius: radiusPrev
                 bottomLeftRadius: root.vertical ? radiusNext : radiusPrev
@@ -325,8 +328,18 @@ Item {
         z: 2
         visible: !root.columnMode
         // Make active ws indicator, which has a brighter color, smaller to look like it is of the same size as ws occupied highlight
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Math.min(width, height) / 2
-        color: Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Math.min(width, height) / 2
+        // ZZZ shows a chamfered signal plate (geometry) instead of the rounded fill.
+        color: Appearance.zzzEverywhere ? "transparent"
+            : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
+
+        ZzzPlate {
+            anchors.fill: parent
+            visible: Appearance.zzzEverywhere
+            chamfer: Appearance.zzz.cutCorner * 0.4
+            fillColor: Appearance.zzz.accentSoft
+        }
 
         anchors {
             verticalCenter: vertical ? undefined : parent.verticalCenter
@@ -534,11 +547,11 @@ Item {
                 z: 1
                 implicitWidth: workspaceButtonWidth
                 implicitHeight: workspaceButtonWidth
-                radius: (width / 2)
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : (width / 2)
                 property bool previousExists: index > 0
                 property bool nextExists: index < root.currentWorkspaceWindows.length - 1
-                property real radiusPrev: previousExists ? 0 : (width / 2)
-                property real radiusNext: nextExists ? 0 : (width / 2)
+                property real radiusPrev: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : (previousExists ? 0 : (width / 2))
+                property real radiusNext: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : (nextExists ? 0 : (width / 2))
 
                 topLeftRadius: radiusPrev
                 bottomLeftRadius: root.vertical ? radiusNext : radiusPrev
@@ -563,7 +576,8 @@ Item {
     Rectangle {
         z: 2
         visible: root.columnMode && root.currentWindowIndex >= 0
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Math.min(width, height) / 2
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Math.min(width, height) / 2
         color: Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
 
         anchors {

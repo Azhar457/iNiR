@@ -33,7 +33,8 @@ AbstractBackgroundWidget {
     needsColText: true
 
     // ── Style-dispatched accent colors ──
-    readonly property color accentPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    readonly property color accentPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
         : Appearance.colors.colPrimary

@@ -14,22 +14,34 @@ RippleButton {
 
     implicitWidth: vertical ? (implicitHeight - topInset - bottomInset) : (implicitHeight - topInset - bottomInset)
     implicitHeight: 50
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
 
-    // Background: fully transparent for angel (no boxes visible), only glass on hover
-    colBackground: Appearance.angelEverywhere ? "transparent" : "transparent"
+    colBackground: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? "transparent" : "transparent"
 
-    // Hover colors for dock (Layer0 context)
-    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    colBackgroundHover: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0Hover
-    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+    colRipple: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer0Active
 
     background.implicitHeight: 50
     background.implicitWidth: 50
+
+    ZzzPlate {
+        anchors.fill: parent
+        visible: Appearance.zzzEverywhere
+        chamfer: root.buttonHovered ? Appearance.zzz.cutCorner * 0.85 : Appearance.zzz.cutCorner * 0.45
+        fillColor: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.paper, 0.14) : "transparent"
+        strokeColor: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.55) : "transparent"
+        strokeWidth: Appearance.zzz.borderThick
+        z: -1
+    }
 }

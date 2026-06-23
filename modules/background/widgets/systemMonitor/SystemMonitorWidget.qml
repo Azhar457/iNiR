@@ -137,25 +137,31 @@ AbstractBackgroundWidget {
     }
 
     // ── Style tokens ──
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
     readonly property int _innerMargin: Appearance.angelEverywhere || Appearance.inirEverywhere ? 6 : 2
 
-    readonly property color cpuColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    readonly property color cpuColor: Appearance.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
         : Appearance.colors.colPrimary
-    readonly property color memColor: Appearance.angelEverywhere ? Appearance.angel.colSecondary
+    readonly property color memColor: Appearance.zzzEverywhere ? Appearance.zzz.secondary
+        : Appearance.angelEverywhere ? Appearance.angel.colSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colSecondary
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3secondary
         : Appearance.colors.colSecondary
-    readonly property color gpuColor: Appearance.angelEverywhere ? Appearance.angel.colTertiary
+    readonly property color gpuColor: Appearance.zzzEverywhere ? Appearance.zzz.tertiary
+        : Appearance.angelEverywhere ? Appearance.angel.colTertiary
         : Appearance.inirEverywhere ? Appearance.inir.colTertiary
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3tertiary
         : Appearance.colors.colTertiary
-    readonly property color tempColor: Appearance.inirEverywhere ? Appearance.inir.colError
+    readonly property color tempColor: Appearance.zzzEverywhere ? Appearance.zzz.signal
+        : Appearance.inirEverywhere ? Appearance.inir.colError
         : Appearance.colors.colError
-    readonly property color diskColor: Appearance.colors.colTertiaryContainer
+    readonly property color diskColor: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+        : Appearance.colors.colTertiaryContainer
 
     // Animation duration for smooth value transitions
     readonly property int _animDuration: 1200
@@ -168,7 +174,8 @@ AbstractBackgroundWidget {
     }
 
     // ── Card background ──
-    readonly property color colCard: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color colCard: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer1

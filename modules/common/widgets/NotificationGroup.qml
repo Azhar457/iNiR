@@ -148,17 +148,21 @@ MouseArea { // Notification group area
 
         // For popup: glass blur for aurora/angel, solid for others
         // For sidebar: transparent to show parent's blur
-        color: Appearance.angelEverywhere ? (popup ? "transparent" : Appearance.angel.colGlassCard)
+        color: Appearance.zzzEverywhere ? (popup ? Appearance.zzz.paper : Appearance.zzz.paperAlt)
+            : Appearance.angelEverywhere ? (popup ? "transparent" : Appearance.angel.colGlassCard)
             : Appearance.inirEverywhere ? (popup ? Appearance.inir.colLayer2 : Appearance.inir.colLayer1)
             : Appearance.auroraEverywhere ? "transparent"
             : (popup ? ColorUtils.applyAlpha(Appearance.colors.colLayer2, 1 - Appearance.backgroundTransparency)
                      : Appearance.colors.colLayer2)
 
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-        border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
+            : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
             : (Appearance.inirEverywhere || (Appearance.auroraEverywhere && popup)) ? 1 : 0
-        border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+            : Appearance.angelEverywhere ? Appearance.angel.colBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
         anchors.leftMargin: root.xOffset
@@ -294,9 +298,9 @@ MouseArea { // Notification group area
                             font.pixelSize: topRow.showAppName ?
                                 topRow.fontSize :
                                 Appearance.font.pixelSize.small
-                            color: topRow.showAppName ?
-                                Appearance.colors.colSubtext :
-                                Appearance.colors.colOnLayer2
+                            color: Appearance.zzzEverywhere
+                                ? (topRow.showAppName ? Appearance.zzz.inkMuted : Appearance.zzz.ink)
+                                : topRow.showAppName ? Appearance.colors.colSubtext : Appearance.colors.colOnLayer2
                         }
                         StyledText {
                             id: timeText
@@ -304,7 +308,7 @@ MouseArea { // Notification group area
                             horizontalAlignment: Text.AlignLeft
                             text: NotificationUtils.getFriendlyNotifTimeString(notificationGroup?.time)
                             font.pixelSize: topRow.fontSize
-                            color: Appearance.colors.colSubtext
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
                         }
                     }
                     NotificationGroupExpandButton {

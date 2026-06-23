@@ -335,7 +335,8 @@ Scope {
         StyledRectangularShadow {
             target: panelBackground
             radius: panelBackground.radius
-            visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+            visible: !Appearance.zzzEverywhere
+                && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
         }
 
         // Click outside the panel to close
@@ -359,7 +360,7 @@ Scope {
             anchors.centerIn: parent
             width: panelWidth
             height: Math.min(contentColumn.implicitHeight, panelMaxHeight)
-            fallbackColor: Appearance.colors.colLayer1
+            fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colLayer1
             inirColor: Appearance.inir.colLayer1
             auroraTransparency: Appearance.angelEverywhere
                 ? Appearance.angel.panelTransparentize
@@ -368,13 +369,16 @@ Scope {
             screenY: (window.screen?.height ?? 1080) / 2 - height / 2
             screenWidth: window.screen?.width ?? 1920
             screenHeight: window.screen?.height ?? 1080
-            border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
+            border.width: Appearance.zzzEverywhere ? 1
+                : Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
                 : Appearance.auroraEverywhere ? 1 : 1
-            border.color: Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
+            border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+                : Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
                 : Appearance.inirEverywhere ? Appearance.inir.colBorder 
                 : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder 
                 : Appearance.colors.colOutlineVariant
-            radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                 : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.screenRounding
             
             // Entry animation
@@ -403,10 +407,24 @@ Scope {
                 }
             }
 
+            ZzzPanelBackdrop {
+                anchors.fill: parent
+                label: "CLIPBOARD"
+                index: "HIST"
+                accentColor: Appearance.zzz.tertiary
+                ghostText: "CLIP"
+                showTicks: false
+                showBurst: false
+                showGrid: false
+                horizontalBias: 0.1
+                verticalBias: 0.02
+                ghostStrength: 0.7
+            }
+
             ColumnLayout {
                 id: contentColumn
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: Appearance.zzzEverywhere ? 12 : 10
                 spacing: 10
 
                 // Shell desaturation effect
@@ -422,14 +440,19 @@ Scope {
                     MaterialSymbol {
                         text: "content_paste"
                         iconSize: Appearance.font.pixelSize.huge
-                        color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.accent
+                            : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignVCenter
                         text: Translation.tr("Clipboard history") + ` (${root.totalCount})`
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+                        font.family: Appearance.zzzEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                        font.pixelSize: Appearance.zzzEverywhere ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.small
+                        font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                        font.italic: Appearance.zzzEverywhere
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
                         elide: Text.ElideRight
                     }
 
@@ -485,7 +508,8 @@ Scope {
                         visible: root.navigateMode && root.searchText.length > 0
                         text: root.matchCount + " " + Translation.tr("matches")
                         font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                            : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
                     }
 
                     IconToolbarButton {

@@ -31,11 +31,13 @@ Item {
     Rectangle {
         anchors.fill: rowContent
         color: hovered
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+            ? (Appearance.zzzEverywhere ? Appearance.zzz.bg2
+             : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
              : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
              : Appearance.colors.colLayer2Hover)
             : "transparent"
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+              : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
               : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
               : Appearance.rounding.verysmall
         Behavior on color {
@@ -64,7 +66,8 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             text: root.category
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+            color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                 : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
                  : Appearance.colors.colSubtext
             elide: Text.ElideRight
             leftPadding: 16
@@ -88,7 +91,8 @@ Item {
             StyledText {
                 visible: root.showMainKey && root.hasModifiers
                 text: "+"
-                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+                color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
+                     : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
                      : Appearance.colors.colSubtext
                 anchors.verticalCenter: parent.verticalCenter
                 font.pixelSize: Appearance.font.pixelSize.small
@@ -105,7 +109,8 @@ Item {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
             font.pixelSize: Appearance.font.pixelSize.normal
-            color: Appearance.inirEverywhere ? Appearance.inir.colText
+            color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                 : Appearance.inirEverywhere ? Appearance.inir.colText
                  : Appearance.colors.colOnLayer1
             text: root.description
             elide: Text.ElideRight
@@ -123,10 +128,11 @@ Item {
             rightMargin: 12
         }
         height: 1
-        color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+        color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+             : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
              : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
              : Appearance.colors.colOutlineVariant
-        opacity: 0.3
+        opacity: Appearance.zzzEverywhere ? 1.0 : 0.3
         visible: root.showDivider
     }
 }

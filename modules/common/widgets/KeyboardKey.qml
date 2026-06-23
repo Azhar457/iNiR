@@ -13,7 +13,8 @@ Rectangle {
     property real verticalPadding: 2
     property real borderWidth: 1
     property real extraBottomBorderWidth: 2
-    property real borderRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
+    property real borderRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
 
     // Special key icon mapping
     readonly property var specialKeyIcons: ({
@@ -35,7 +36,8 @@ Rectangle {
     radius: borderRadius
 
     // M3 layer colors - subtle border using surfaceContainerHigh
-    color: Appearance.inirEverywhere ? Appearance.inir.colBorderMuted : Appearance.colors.colSurfaceContainerHigh
+    color: Appearance.zzzEverywhere ? Appearance.zzz.bg3
+        : Appearance.inirEverywhere ? Appearance.inir.colBorderMuted : Appearance.colors.colSurfaceContainerHigh
 
     Behavior on color {
         enabled: Appearance.animationsEnabled

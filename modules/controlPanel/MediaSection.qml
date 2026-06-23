@@ -89,9 +89,20 @@ Item {
              : root.inirEverywhere ? Appearance.inir.colLayer1 
              : root.auroraEverywhere ? ColorUtils.transparentize(root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
              : (root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-        border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : 0)
+        border.width: Appearance.angelEverywhere ? 0
+                    : Appearance.zzzEverywhere ? 1
+                    : (root.inirEverywhere ? 1 : 0)
         border.color: Appearance.angelEverywhere ? "transparent"
+                    : Appearance.zzzEverywhere ? Appearance.zzz.hairline
                     : root.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         clip: true
 
         AngelPartialBorder { targetRadius: card.radius; coverage: 0.5 }

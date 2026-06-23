@@ -406,15 +406,18 @@ RippleButton {
 
                             // Unfocused: 3×3 circle. Focused: pill in bar direction.
                             // Both dims animate → squish morph same as dock dots.
-                            radius: Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
+                            radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
+                                : Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
                             implicitWidth: root.vertical ? (isFocused ? 2 : 3) : (isFocused ? 8 : 3)
                             implicitHeight: root.vertical ? (isFocused ? 8 : 3) : (isFocused ? 2 : 3)
                             color: isFocused
-                                ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                ? (Appearance.zzzEverywhere ? Appearance.zzz.accent
+                                : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                 : Appearance.inirEverywhere ? Appearance.inir.colPrimary
                                 : Appearance.colors.colPrimary)
                                 : ColorUtils.transparentize(
-                                    Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                                    Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                                    : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                                     : Appearance.inirEverywhere ? Appearance.inir.colText
                                     : Appearance.colors.colOnLayer0, 0.5)
 
@@ -423,6 +426,14 @@ RippleButton {
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                             }
                             Behavior on implicitHeight {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
+                            Behavior on radius {
                                 enabled: Appearance.animationsEnabled
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                             }
@@ -435,9 +446,10 @@ RippleButton {
                         visible: opacity > 0
                         width: root.vertical ? 2 : 3
                         height: root.vertical ? 3 : 2
-                        radius: Math.min(width, height) / 2
+                        radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : Math.min(width, height) / 2
                         color: ColorUtils.transparentize(
-                            Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                            Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                            : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                             : Appearance.inirEverywhere ? Appearance.inir.colText
                             : Appearance.colors.colOnLayer0, 0.5)
 

@@ -157,16 +157,18 @@ PopupWindow {
                 rightMargin: root.isRight ? sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
             }
 
-            fallbackColor: Appearance.colors.colSurfaceContainer
+            fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colSurfaceContainer
             inirColor: Appearance.inir?.colLayer2 ?? Appearance.colors.colSurfaceContainer
             auroraTransparency: Appearance.aurora?.popupTransparentize ?? 0.1
-            radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                 : Appearance.inirEverywhere ? (Appearance.inir?.roundingNormal ?? 12) : Appearance.rounding.normal
             border.width: 1
-            border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
-                : Appearance.inirEverywhere 
+            border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                : Appearance.angelEverywhere ? Appearance.angel.colBorder
+                : Appearance.inirEverywhere
                 ? (Appearance.inir?.colBorder ?? "transparent")
-                : Appearance.auroraEverywhere 
+                : Appearance.auroraEverywhere
                     ? (Appearance.aurora?.colTooltipBorder ?? "transparent")
                     : Appearance.colors.colSurfaceContainerHighest
 

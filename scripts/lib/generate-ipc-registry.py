@@ -29,6 +29,10 @@ OUTPUT = REPO_ROOT / "scripts" / "lib" / "ipc-registry.sh"
 # Targets under this IPC.md heading are waffle-only.
 WAFFLE_SECTION_HEADING = "## Waffle-Specific Targets"
 
+# Headings under this section are top-level `inir` CLI commands, NOT IPC targets,
+# so they must not be parsed as IpcHandler targets (avoids spurious warnings).
+STANDALONE_SECTION_HEADING = "## Standalone Commands"
+
 # Known waffle-only QML paths (for family detection from QML when IPC.md has no entry).
 WAFFLE_PATH_MARKERS = ("modules/waffle/",)
 
@@ -190,6 +194,7 @@ def parse_ipc_md() -> dict[str, IpcMdEntry]:
 
     current: IpcMdEntry | None = None
     in_waffle_section = False
+    in_standalone_section = False
     in_table = False
     in_code_fence = False
     code_fence_lang = ""
@@ -203,6 +208,15 @@ def parse_ipc_md() -> dict[str, IpcMdEntry]:
         # Track waffle section
         if stripped == WAFFLE_SECTION_HEADING:
             in_waffle_section = True
+            continue
+
+        # Track standalone-commands section (not IPC targets)
+        if stripped == STANDALONE_SECTION_HEADING:
+            if current and collecting_desc:
+                current.description = " ".join(desc_lines).strip()
+            current = None
+            collecting_desc = False
+            in_standalone_section = True
             continue
 
         # Track code fences
@@ -233,6 +247,12 @@ def parse_ipc_md() -> dict[str, IpcMdEntry]:
             # Save previous description
             if current and collecting_desc:
                 current.description = " ".join(desc_lines).strip()
+
+            # Headings under "Standalone Commands" are CLI commands, not IPC targets.
+            if in_standalone_section:
+                current = None
+                collecting_desc = False
+                continue
 
             target_name = m.group(1)
             current = IpcMdEntry(name=target_name, is_waffle=in_waffle_section)

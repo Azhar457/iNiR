@@ -104,8 +104,8 @@ Item {
             topMargin: SettingsMaterialPreset.cardRadius
             bottomMargin: SettingsMaterialPreset.cardRadius
         }
-        width: 2
-        radius: 1
+        width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick * 2 : 2
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : 1
         color: SettingsMaterialPreset.accentColor
         // Hint the accent on hover so collapsed cards read as interactive
         opacity: root.expanded ? 0.6 : (headerMouseArea.containsMouse ? 0.3 : 0)
@@ -113,6 +113,14 @@ Item {
 
         Behavior on opacity {
             animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+        }
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
     }
 
@@ -124,14 +132,33 @@ Item {
         radius: SettingsMaterialPreset.cardRadius
         color: SettingsMaterialPreset.cardColor
         border.width: Appearance.angelEverywhere ? 0
+                     : (Appearance.zzzEverywhere ? Appearance.zzz.borderThick
                      : (Appearance.inirEverywhere ? 1
-                     : (Appearance.auroraEverywhere ? 1 : 1))
+                     : (Appearance.auroraEverywhere ? 1 : 1)))
         border.color: Appearance.angelEverywhere ? "transparent" : SettingsMaterialPreset.cardBorderColor
+
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
 
         // Angel partial border
         AngelPartialBorder {
             targetRadius: card.radius
             hovered: root.expanded
+        }
+
+        ZzzDiagonalPattern {
+            stripeSpacing: 36
+            stripeThickness: 1
         }
 
         ColumnLayout {
@@ -174,21 +201,40 @@ Item {
                             ? SettingsMaterialPreset.iconExpandedColor
                             : SettingsMaterialPreset.iconCollapsedColor
 
-                        sourceComponent: MaterialSymbol {
-                            text: root.icon
-                            iconSize: Appearance.font.pixelSize.larger
-                            color: parent._iconColor
+                        sourceComponent: Item {
+                            id: iconHost
+                            implicitWidth: Appearance.zzzEverywhere ? 26 : Appearance.font.pixelSize.larger
+                            implicitHeight: implicitWidth
+                            readonly property color iconColor: root.expanded
+                                ? SettingsMaterialPreset.iconExpandedColor
+                                : SettingsMaterialPreset.iconCollapsedColor
 
-                            Behavior on color {
-                                animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            MaterialSymbol {
+                                visible: !Appearance.zzzEverywhere
+                                anchors.centerIn: parent
+                                text: root.icon
+                                iconSize: Appearance.font.pixelSize.larger
+                                color: iconHost.iconColor
+
+                                Behavior on color {
+                                    animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
+                            }
+                            ZzzGlyphBadge {
+                                visible: Appearance.zzzEverywhere
+                                anchors.centerIn: parent
+                                symbol: root.icon
+                                accentColor: root.expanded ? Appearance.zzz.sticker : Appearance.zzz.secondary
+                                inkColor: root.expanded ? Appearance.zzz.onSticker : Appearance.zzz.onSecondary
+                                badgeSize: 26
                             }
                         }
                     }
 
                     StyledText {
-                        text: root.title
+                        text: Appearance.zzzEverywhere ? root.title.toUpperCase() : root.title
                         font.pixelSize: Appearance.font.pixelSize.normal
-                        font.weight: Font.DemiBold
+                        font.weight: Appearance.zzzEverywhere ? Font.ExtraBold : Font.DemiBold
                         color: root.expanded
                             ? SettingsMaterialPreset.titleExpandedColor
                             : SettingsMaterialPreset.titleCollapsedColor

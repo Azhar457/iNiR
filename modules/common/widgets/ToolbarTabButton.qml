@@ -13,18 +13,21 @@ RippleButton {
     property bool showLabel: true
     horizontalPadding: 10
 
-    implicitHeight: (Appearance.inirEverywhere || Appearance.angelEverywhere) ? 32 : 40
+    implicitHeight: Appearance.zzzEverywhere ? 32 : (Appearance.inirEverywhere || Appearance.angelEverywhere) ? 32 : 40
     readonly property real _iconOnlyImplicitWidth: icon.implicitWidth + horizontalPadding * 2
     implicitWidth: root.showLabel ? (implicitContentWidth + horizontalPadding * 2) : root._iconOnlyImplicitWidth
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
 
     colBackground: "transparent"
     colBackgroundHover: current ? "transparent" 
+        : Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.contrastPlate, 0.14)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colText, 0.92)
         : ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.95)
     colRipple: current ? "transparent" 
+        : Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.16)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colText, 0.85)
         : ColorUtils.transparentize(Appearance.colors.colOnSurface, 0.95)
@@ -44,7 +47,9 @@ RippleButton {
             anchors.verticalCenter: parent.verticalCenter
             iconSize: 22
             text: root.materialSymbol
-            color: Appearance.angelEverywhere
+            color: Appearance.zzzEverywhere
+                ? (root.current ? Appearance.zzz.accent : Appearance.zzz.inkMuted)
+                : Appearance.angelEverywhere
                 ? (root.current ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
                 : Appearance.inirEverywhere
                 ? (root.current ? Appearance.inir.colOnPrimary : Appearance.inir.colText)
@@ -73,8 +78,12 @@ RippleButton {
                 id: labelText
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.text
-                color: Appearance.angelEverywhere
+                text: Appearance.zzzEverywhere ? root.text.toUpperCase() : root.text
+                font.family: Appearance.zzzEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+                font.weight: Appearance.zzzEverywhere ? (root.current ? Font.Black : Font.Bold) : Font.Normal
+                color: Appearance.zzzEverywhere
+                    ? (root.current ? Appearance.zzz.accent : Appearance.zzz.inkMuted)
+                    : Appearance.angelEverywhere
                     ? (root.current ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
                     : Appearance.inirEverywhere
                     ? (root.current ? Appearance.inir.colOnPrimary : Appearance.inir.colText)

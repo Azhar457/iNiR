@@ -154,7 +154,7 @@ Scope {
                             right: undefined
                         }
                         width: Appearance.rounding.screenRounding
-                        active: showBarBackground && (Config.options?.bar?.cornerStyle ?? 0) === 0 // Hug
+                        active: showBarBackground && (Config.options?.bar?.cornerStyle ?? 0) === 0 && !Appearance.zzzEverywhere
 
                         states: State {
                             name: "right"
@@ -327,21 +327,10 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "bar"
+    // IPC target "bar" is registered once in shell.qml (always loaded, family-
+    // agnostic). See the note in Bar.qml — both bars coexist under the ii
+    // family, so a handler here would collide with the horizontal bar's.
 
-        function toggle(): void {
-            GlobalStates.barOpen = !GlobalStates.barOpen
-        }
-
-        function close(): void {
-            GlobalStates.barOpen = false
-        }
-
-        function open(): void {
-            GlobalStates.barOpen = true
-        }
-    }
     Loader {
         active: CompositorService.isHyprland
         sourceComponent: Item {

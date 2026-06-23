@@ -17,10 +17,12 @@ Item {
     required property bool isPlaying
     
     // Optional properties
-    property color highlightColor: Appearance.inirEverywhere 
+    property color highlightColor: Appearance.zzzEverywhere ? Appearance.zzz.metricFill
+        : Appearance.inirEverywhere
         ? Appearance.inir.colPrimary 
         : Appearance.colors.colPrimary
-    property color trackColor: Appearance.inirEverywhere 
+    property color trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
+        : Appearance.inirEverywhere
         ? Appearance.inir.colLayer2 
         : Appearance.colors.colSecondaryContainer
     property bool enableWavy: true

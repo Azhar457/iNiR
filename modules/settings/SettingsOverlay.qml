@@ -472,21 +472,41 @@ Scope {
                 anchors.centerIn: parent
                 width: maxCardWidth
                 height: maxCardHeight
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+                      : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                       : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
                       : Appearance.rounding.windowRounding
                 // backgroundOpacity only applies to glass styles (aurora/angel) — solid styles stay opaque
                 color: Appearance.auroraEverywhere ? "transparent"
                      : Appearance.inirEverywhere ? Appearance.inir.colLayer0
+                     : Appearance.zzzEverywhere ? Appearance.zzz.chrome
                      : Appearance.m3colors.m3background
                 clip: true
 
                 border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
+                            : Appearance.zzzEverywhere ? Appearance.zzz.borderThick
                             : Appearance.inirEverywhere ? 1 : 0
                 border.color: Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
+                            : Appearance.zzzEverywhere ? Appearance.zzz.hairline
                             : Appearance.inirEverywhere
                                 ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer0Border)
                                 : "transparent"
+                Behavior on border.width {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                Behavior on border.color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                Behavior on radius {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot }
+                }
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
 
                 // Scale + fade animation
                 opacity: (GlobalStates.settingsOverlayOpen ?? false) ? 1 : 0
@@ -519,6 +539,21 @@ Scope {
                     radius: parent.radius
                 }
 
+                ZzzPanelBackdrop {
+                    anchors.fill: parent
+                    label: Translation.tr("User manual")
+                    index: "UI"
+                    ghostText: "CONFIG"
+                    accentColor: Appearance.zzz.accent
+                    showTicks: false
+                    showBurst: false
+                    horizontalBias: 0.12
+                    verticalBias: 0.03
+                    ghostWidthFactor: 0.88
+                    ghostStrength: 0.94
+                    z: 1
+                }
+
                 // Prevent clicks from closing
                 MouseArea {
                     anchors.fill: parent
@@ -532,6 +567,7 @@ Scope {
                         fill: parent
                         margins: 16
                     }
+                    z: 2
                     spacing: 0
 
                     // ── Title bar ──

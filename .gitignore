@@ -4,6 +4,7 @@
 .vscode/
 *.swp
 *~
+.backups/
 
 # ── AI tooling (local-only, never distribute) ─────────────────
 # Agent config files

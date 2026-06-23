@@ -69,9 +69,10 @@ Item { // Bar content region
         ]
     }
     readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
-    readonly property color separatorColor: Appearance.colors.colOutlineVariant
+    readonly property color separatorColor: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : Appearance.colors.colOutlineVariant
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
     readonly property bool gameModeMinimal: Appearance.gameModeMinimal
 
     readonly property string wallpaperUrl: Wallpapers.effectiveWallpaperUrl
@@ -121,6 +122,7 @@ Item { // Bar content region
         }
         visible: (Config.options?.bar?.showBackground ?? true) && !root.gameModeMinimal
         color: {
+            if (root.zzzEverywhere) return Appearance.zzz.bg0
             if (root.angelEverywhere) {
                 const base = root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
                 if (Appearance.compositorBlurActive)
@@ -136,11 +138,13 @@ Item { // Bar content region
             }
             return root.cardStyleEverywhere ? Appearance.colors.colLayer1 : ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
         }
-        radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        radius: root.zzzEverywhere ? Appearance.zzz.panelRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : root.inirEverywhere ? Appearance.inir.roundingNormal
             : floatingStyle ? ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
-        border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : (floatingStyle ? 1 : 0))
-        border.color: Appearance.angelEverywhere ? "transparent"
+        border.width: root.zzzEverywhere ? 1 : (Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : (floatingStyle ? 1 : 0)))
+        border.color: root.zzzEverywhere ? Appearance.zzz.borderColor
+            : Appearance.angelEverywhere ? "transparent"
             : root.inirEverywhere ? Appearance.inir.colBorder
             : Appearance.colors.colLayer0Border
 

@@ -37,13 +37,17 @@ Item {
     // Style tokens (5-style support)
     readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color colTextSecondary: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+    readonly property color colTextSecondary: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+        : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color colPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    readonly property color colPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-    readonly property color colOnPrimary: Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
+    readonly property color colOnPrimary: Appearance.zzzEverywhere ? Appearance.zzz.onSticker
+        : Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
-    readonly property color colCard: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    readonly property color colCard: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1

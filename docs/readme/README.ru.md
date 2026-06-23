@@ -111,7 +111,7 @@ Wayland → GPU
 ## Возможности
 
 **Два семейства панелей**, переключаемые на лету через `Super+Shift+W`:
-- **Material ii** — плавающая панель, сайдбары, док, 5 визуальных стилей (material, cards, aurora, inir, angel)
+- **Material ii** — плавающая панель, сайдбары, док, 6 визуальных стилей (material, cards, aurora, inir, angel, zzz)
 - **Waffle** — панель задач в стиле Windows 11, стартовое меню, центр действий, центр уведомлений
 
 **Автоматическая тематизация** — выбираете обои и всё подстраивается:
@@ -128,7 +128,7 @@ Wayland → GPU
 
 Выбираете обои — и вся система подстраивается: шелл, GTK/Qt приложения, терминалы, Firefox, Discord, экран входа SDDM. Автоматически.
 
-- **5 визуальных стилей** — Material (сплошной), Cards, Aurora (стеклянное размытие), iNiR (в духе TUI), Angel (нео-брутализм)
+- **6 визуальных стилей** — Material (сплошной), Cards, Aurora (стеклянное размытие), iNiR (в духе TUI), Angel (нео-брутализм), ZZZ
 - **Динамические цвета обоев** через Material You — распространяются на всю систему
 - **10 терминальных инструментов с авто-темой** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
 - **Тематизация приложений** — GTK3/4, Qt (через plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)

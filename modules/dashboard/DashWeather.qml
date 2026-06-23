@@ -69,7 +69,8 @@ DashCard {
                 text: Weather.data?.temp ?? "--°"
                 font.pixelSize: Appearance.font.pixelSize.huge
                 font.family: Appearance.font.family.numbers
-                font.weight: Font.Medium
+                font.weight: root.zzzEverywhere ? Font.Black : Font.Medium
+                font.italic: root.zzzEverywhere
                 color: root.colText
             }
             StyledText {

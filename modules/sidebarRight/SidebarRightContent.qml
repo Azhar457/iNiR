@@ -168,16 +168,36 @@ Item {
         }
 
         color: gameModeMinimal ? "transparent"
+            : Appearance.zzzEverywhere ? Appearance.zzz.chrome
             : inirEverywhere ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
             : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
             : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-        border.width: gameModeMinimal ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
-        border.color: angelEverywhere ? Appearance.angel.colPanelBorder
+        border.width: gameModeMinimal ? 0 : (Appearance.zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+            : angelEverywhere ? Appearance.angel.colPanelBorder
             : inirEverywhere ? Appearance.inir.colBorder
             : Appearance.colors.colLayer0Border
-        radius: angelEverywhere ? Appearance.angel.roundingNormal
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : angelEverywhere ? Appearance.angel.roundingNormal
             : inirEverywhere ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
             : cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
+
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
 
         clip: true
 
@@ -242,6 +262,36 @@ Item {
         AngelPartialBorder {
             targetRadius: sidebarRightBackground.radius
             z: 10
+        }
+
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            label: "SYSTEM"
+            index: "R"
+            ghostText: "RIGHT"
+            accentColor: Appearance.zzz.accent
+            showTicks: false
+            showBurst: false
+            showGrid: true
+            horizontalBias: 0.18
+            verticalBias: 0.04
+            ghostWidthFactor: 0.86
+            ghostStrength: 0.7
+            z: 0
+        }
+
+        // ZZZ content wash: stepped tile plate lifts content off the bare chrome
+        // so cards/text read cleanly while structural hairlines stay. Low-alpha
+        // so chrome + ghost marks still breathe.
+        Rectangle {
+            anchors.fill: parent
+            visible: Appearance.zzzEverywhere
+            color: ColorUtils.applyAlpha(Appearance.zzz.tile, 0.55)
+            z: 0
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
         }
 
         ColumnLayout {
@@ -313,6 +363,7 @@ Item {
                 }
             }
         }
+
     }
 
     ToggleDialog {
@@ -456,13 +507,21 @@ Item {
                 bottom: parent.bottom
                 left: parent.left
             }
-            color: sidebarRightBackground.angelEverywhere ? Appearance.angel.colGlassCard
+            color: Appearance.zzzEverywhere ? "transparent"
+                : sidebarRightBackground.angelEverywhere ? Appearance.angel.colGlassCard
                 : sidebarRightBackground.auroraEverywhere
                 ? Appearance.aurora.colSubSurface
                 : Appearance.colors.colLayer1
-            radius: sidebarRightBackground.angelEverywhere ? Appearance.angel.roundingSmall : height / 2
-            border.width: sidebarRightBackground.angelEverywhere ? Appearance.angel.cardBorderWidth : 0
-            border.color: sidebarRightBackground.angelEverywhere ? Appearance.angel.colCardBorder : "transparent"
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
+                : sidebarRightBackground.angelEverywhere ? Appearance.angel.roundingSmall : height / 2
+            Behavior on radius {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+            border.width: Appearance.zzzEverywhere ? 0
+                : sidebarRightBackground.angelEverywhere ? Appearance.angel.cardBorderWidth : 0
+            border.color: Appearance.zzzEverywhere ? "transparent"
+                : sidebarRightBackground.angelEverywhere ? Appearance.angel.colCardBorder : "transparent"
             implicitWidth: uptimeRow.implicitWidth + 24
             implicitHeight: uptimeRow.implicitHeight + 8
             
@@ -477,12 +536,17 @@ Item {
                     height: 25
                     source: SystemInfo.distroIcon
                     colorize: true
-                    color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer0
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer0
                 }
                 StyledText {
                     anchors.verticalCenter: parent.verticalCenter
                     font.pixelSize: Appearance.font.pixelSize.normal
-                    color: Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer0
+                    font.family: Appearance.zzzEverywhere ? Appearance.font.family.numbers : Appearance.font.family.main
+                    font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
+                    font.italic: Appearance.zzzEverywhere
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer0
                     text: Translation.tr("Up %1").arg(DateTime.uptime)
                     textFormat: Text.MarkdownText
                 }
@@ -496,12 +560,13 @@ Item {
                 bottom: parent.bottom
                 right: parent.right
             }
-            color: sidebarRightBackground.angelEverywhere ? Appearance.angel.colGlassCard
+            color: Appearance.zzzEverywhere ? "transparent"
+                : sidebarRightBackground.angelEverywhere ? Appearance.angel.colGlassCard
                 : sidebarRightBackground.auroraEverywhere
                 ? Appearance.aurora.colSubSurface
                 : Appearance.colors.colLayer1
             padding: 4
-            spacing: 8  // Increased from default 5 to reduce accidental clicks
+            spacing: 8
 
             QuickToggleButton {
                 toggled: root.editMode

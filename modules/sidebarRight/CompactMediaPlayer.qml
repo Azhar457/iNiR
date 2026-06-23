@@ -43,27 +43,37 @@ Item {
     readonly property bool inirStyle: Appearance.inirEverywhere
     readonly property bool auroraStyle: Appearance.auroraEverywhere
 
-    readonly property color colText: angelStyle ? Appearance.angel.colText
+    readonly property bool zzzStyle: Appearance.zzzEverywhere
+    readonly property color colText: zzzStyle ? Appearance.zzz.ink
+        : angelStyle ? Appearance.angel.colText
         : inirStyle ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color colTextSecondary: angelStyle ? Appearance.angel.colTextSecondary
+    readonly property color colTextSecondary: zzzStyle ? Appearance.zzz.inkMuted
+        : angelStyle ? Appearance.angel.colTextSecondary
         : inirStyle ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color colCard: angelStyle ? Appearance.angel.colGlassCard
+    readonly property color colCard: zzzStyle ? "transparent"
+        : angelStyle ? Appearance.angel.colGlassCard
         : inirStyle ? Appearance.inir.colLayer1
         : auroraStyle ? ColorUtils.transparentize(
             blendedColors?.colLayer0 ?? Appearance.aurora.colSubSurface, 0.7)
         : Appearance.colors.colLayer1
-    readonly property color colBorder: angelStyle ? Appearance.angel.colCardBorder
+    readonly property color colBorder: zzzStyle ? Appearance.zzz.hairline
+        : angelStyle ? Appearance.angel.colCardBorder
         : inirStyle ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
-    readonly property real cardRadius: angelStyle ? Appearance.angel.roundingNormal
+    readonly property real cardRadius: zzzStyle ? 0
+        : angelStyle ? Appearance.angel.roundingNormal
         : inirStyle ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    readonly property color colPrimary: angelStyle ? Appearance.angel.colPrimary
+    readonly property color colPrimary: zzzStyle ? Appearance.zzz.accent
+        : angelStyle ? Appearance.angel.colPrimary
         : inirStyle ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-    readonly property color colOnPrimary: angelStyle ? Appearance.angel.colOnPrimary
+    readonly property color colOnPrimary: zzzStyle ? Appearance.zzz.onSticker
+        : angelStyle ? Appearance.angel.colOnPrimary
         : inirStyle ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
-    readonly property color colAuxHover: angelStyle ? Appearance.angel.colGlassCardHover
+    readonly property color colAuxHover: zzzStyle ? Appearance.zzz.chrome
+        : angelStyle ? Appearance.angel.colGlassCardHover
         : inirStyle ? Appearance.inir.colLayer2Hover
         : ColorUtils.transparentize(root.colText, 0.82)
-    readonly property color colAuxActive: angelStyle ? Appearance.angel.colGlassCardActive
+    readonly property color colAuxActive: zzzStyle ? Appearance.zzz.sticker
+        : angelStyle ? Appearance.angel.colGlassCardActive
         : inirStyle ? Appearance.inir.colLayer2Active
         : ColorUtils.transparentize(root.colText, 0.72)
 

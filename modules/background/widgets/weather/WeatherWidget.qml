@@ -51,21 +51,25 @@ AbstractBackgroundWidget {
     readonly property var pillShapeEnum: _shapeMap[weatherShape] ?? MaterialShape.Shape.Pill
 
     // ── Style-dispatched accent colors ──
-    readonly property color accentPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    readonly property color accentPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
         : Appearance.colors.colPrimary
-    readonly property color accentPrimaryContainer: Appearance.angelEverywhere ? Appearance.m3colors.m3primaryContainer
+    readonly property color accentPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+        : Appearance.angelEverywhere ? Appearance.m3colors.m3primaryContainer
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3primaryContainer
         : Appearance.colors.colPrimaryContainer
-    readonly property color accentOnPrimaryContainer: Appearance.angelEverywhere ? Appearance.m3colors.m3onPrimaryContainer
+    readonly property color accentOnPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.ink
+        : Appearance.angelEverywhere ? Appearance.m3colors.m3onPrimaryContainer
         : Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
         : Appearance.auroraEverywhere ? Appearance.m3colors.m3onPrimaryContainer
         : Appearance.colors.colOnPrimaryContainer
 
     // ── Style tokens ──
-    readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
 
     // Shape options for popover

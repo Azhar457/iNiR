@@ -143,7 +143,7 @@ ColumnLayout {
         if (toLightMode) {
             // Light mode: lighten backgrounds
             ct.m3surfaceDim = ColorUtils.lighten(ct.m3surfaceDim, 0.7)
-            ct.m3surfaceBright = "#ffffff"
+            ct.m3surfaceBright = Appearance.colors.colLayer3
             ct.m3surfaceContainer = ColorUtils.lighten(ct.m3surfaceContainer, 0.6)
         } else {
             // Dark mode: darken backgrounds  
@@ -479,7 +479,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 24
                         radius: Appearance.rounding.unsharpen
-                        color: Appearance.m3colors[modelData.color] ?? "#888"
+                        color: Appearance.m3colors[modelData.color] ?? Appearance.colors.colOutline
 
                         StyledText {
                             anchors.centerIn: parent
@@ -1903,7 +1903,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         implicitHeight: 32
                         radius: index === 0 ? Appearance.rounding.small : (index === 4 ? Appearance.rounding.small : 0)
-                        color: Config.options.appearance.customTheme?.[modelData.key] ?? "#888"
+                        color: Config.options.appearance.customTheme?.[modelData.key] ?? Appearance.colors.colOutline
 
                         StyledText {
                             anchors.centerIn: parent
@@ -2003,7 +2003,7 @@ ColumnLayout {
                     width: 28
                     height: 28
                     radius: Appearance.rounding.small
-                    color: Config.options.appearance.customTheme?.[paletteCard.accentKey] ?? "#888"
+                    color: Config.options.appearance.customTheme?.[paletteCard.accentKey] ?? Appearance.colors.colOutline
 
                     MaterialSymbol {
                         anchors.centerIn: parent
@@ -2050,8 +2050,8 @@ ColumnLayout {
 
                         // Contrast calculation
                         readonly property string contrastKey: modelData.contrastAgainst ?? ""
-                        readonly property color fgColor: Config.options.appearance.customTheme?.[modelData.key] ?? "#888"
-                        readonly property color bgColor: contrastKey ? (Config.options.appearance.customTheme?.[contrastKey] ?? "#000") : "#000"
+                        readonly property color fgColor: Config.options.appearance.customTheme?.[modelData.key] ?? Appearance.colors.colOutline
+                        readonly property color bgColor: contrastKey ? (Config.options.appearance.customTheme?.[contrastKey] ?? Appearance.colors.colLayer0) : Appearance.colors.colLayer0
                         readonly property real ratio: contrastKey ? ColorUtils.contrastRatio(fgColor, bgColor) : 0
                         readonly property bool showContrast: contrastKey !== ""
 
@@ -2076,7 +2076,7 @@ ColumnLayout {
                                     implicitWidth: contrastBadge.implicitWidth + 6
                                     implicitHeight: 14
                                     radius: 7
-                                    color: swatchItem.ratio >= 4.5 ? "#1a3a1a" : swatchItem.ratio >= 3 ? "#3a3a1a" : "#3a1a1a"
+                                    color: swatchItem.ratio >= 4.5 ? Appearance.colors.colSuccessContainer : swatchItem.ratio >= 3 ? Appearance.colors.colWarningContainer : Appearance.colors.colErrorContainer
 
                                     RowLayout {
                                         id: contrastBadge
@@ -2086,14 +2086,14 @@ ColumnLayout {
                                         MaterialSymbol {
                                             text: swatchItem.ratio >= 4.5 ? "check" : "warning"
                                             iconSize: 8
-                                            color: swatchItem.ratio >= 4.5 ? "#a8d8a8" : swatchItem.ratio >= 3 ? "#d8d8a8" : "#d8a8a8"
+                                            color: swatchItem.ratio >= 4.5 ? Appearance.colors.colOnSuccessContainer : swatchItem.ratio >= 3 ? Appearance.colors.colOnWarningContainer : Appearance.colors.colOnErrorContainer
                                         }
 
                                         StyledText {
                                             text: swatchItem.ratio.toFixed(1)
                                             font.pixelSize: 8
                                             font.family: Appearance.font.family.monospace
-                                            color: swatchItem.ratio >= 4.5 ? "#a8d8a8" : swatchItem.ratio >= 3 ? "#d8d8a8" : "#d8a8a8"
+                                            color: swatchItem.ratio >= 4.5 ? Appearance.colors.colOnSuccessContainer : swatchItem.ratio >= 3 ? Appearance.colors.colOnWarningContainer : Appearance.colors.colOnErrorContainer
                                         }
                                     }
 
@@ -2125,7 +2125,7 @@ ColumnLayout {
                                         width: 20
                                         height: 20
                                         radius: 10
-                                        color: Config.options.appearance.customTheme?.[modelData.key] ?? "#888"
+                                        color: Config.options.appearance.customTheme?.[modelData.key] ?? Appearance.colors.colOutline
                                         border.width: 1
                                         border.color: Appearance.colors.colOutline
                                     }
@@ -2133,7 +2133,7 @@ ColumnLayout {
                                     // Hex value
                                     StyledText {
                                         Layout.fillWidth: true
-                                        text: (Config.options.appearance.customTheme?.[modelData.key] ?? "#888").toString().toUpperCase().substring(0, 7)
+                                        text: (Config.options.appearance.customTheme?.[modelData.key] ?? Appearance.colors.colOutline).toString().toUpperCase().substring(0, 7)
                                         font.pixelSize: Appearance.font.pixelSize.smallest
                                         font.family: Appearance.font.family.monospace
                                         elide: Text.ElideRight
@@ -2149,7 +2149,7 @@ ColumnLayout {
 
                                 onClicked: {
                                     paletteCard.dialogKey = modelData.key
-                                    paletteCard.dialogColor = Config.options.appearance.customTheme?.[modelData.key] ?? "#888"
+                                    paletteCard.dialogColor = Config.options.appearance.customTheme?.[modelData.key] ?? Appearance.colors.colOutline
                                     colorPicker.open()
                                 }
 
@@ -2167,7 +2167,7 @@ ColumnLayout {
 
         // Color dialog
         property string dialogKey: ""
-        property color dialogColor: "#888"
+        property color dialogColor: Appearance.colors.colOutline
 
         ColorDialog {
             id: colorPicker

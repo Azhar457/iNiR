@@ -27,7 +27,9 @@ MaterialShape { // App icon
     ]
     shape: isUrgent ? urgentShapes[Math.floor(Math.random() * urgentShapes.length)] : MaterialShape.Shape.Circle
 
-    color: isUrgent ? Appearance.colors.colPrimaryContainer : "transparent"
+    color: Appearance.zzzEverywhere
+        ? (isUrgent ? Appearance.zzz.secondary : Appearance.zzz.paperAlt)
+        : isUrgent ? Appearance.colors.colPrimaryContainer : "transparent"
     Loader {
         id: materialSymbolLoader
         // Only show MaterialSymbol when there's no appIcon AND no image
@@ -41,7 +43,9 @@ MaterialShape { // App icon
                     "priority_high" : guessedIcon
             }
             anchors.fill: parent
-            color: isUrgent ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSecondaryContainer
+            color: Appearance.zzzEverywhere
+                ? (isUrgent ? Appearance.zzz.onSecondary : Appearance.zzz.ink)
+                : isUrgent ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSecondaryContainer
             iconSize: root.materialIconSize
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
@@ -94,7 +98,7 @@ MaterialShape { // App icon
                     maskSource: Rectangle {
                         width: notifImage.size
                         height: notifImage.size
-                        radius: Appearance.rounding.full
+                        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                     }
                 }
             }

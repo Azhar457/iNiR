@@ -18,6 +18,7 @@ Item { // Wrapper
     property bool showResults: searchingText != ""
     property bool panelVisible: true
     property real availableHeight: root.QsWindow?.window?.height ?? (root.QsWindow?.window?.screen?.height ?? 1080)
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
     readonly property bool actionMode: searchingText.startsWith(root.prefixAction)
     readonly property string actionQuery: actionMode ? StringUtils.cleanPrefix(searchingText, root.prefixAction) : ""
     implicitWidth: searchWidgetContent.implicitWidth + Appearance.sizes.elevationMargin * 2
@@ -416,14 +417,45 @@ Item { // Wrapper
         clip: true
         implicitWidth: columnLayout.implicitWidth
         implicitHeight: columnLayout.implicitHeight
-        radius: searchBar.height / 2 + searchBar.verticalPadding
-        fallbackColor: Appearance.colors.colBackgroundSurfaceContainer
+        radius: root.zzzEverywhere ? Appearance.zzz.panelRadius : searchBar.height / 2 + searchBar.verticalPadding
+        fallbackColor: root.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colBackgroundSurfaceContainer
         inirColor: Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
-        wallpaperBackdropEnabled: root.panelVisible
-        border.width: auroraEverywhere || inirEverywhere ? 1 : 0
-        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+        wallpaperBackdropEnabled: root.panelVisible && !root.zzzEverywhere
+        // Collapsed ZZZ search keeps its integrated plate border, while the
+        // expanded results surface uses the shared panel backdrop + real border.
+        border.width: root.zzzEverywhere
+            ? (root.showResults ? Appearance.zzz.borderThick : 0)
+            : auroraEverywhere || inirEverywhere ? 1 : 0
+        border.color: root.zzzEverywhere ? Appearance.zzz.hairline
+            : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
             : inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+
+        // Collapsed search: a CLEAN plate (just the left category accent bar). The
+        // search field is a small control — no ghost text, tape or frame labels.
+        ZzzGraphicPlate {
+            anchors.fill: parent
+            visible: root.zzzEverywhere && !root.showResults
+            accentColor: Appearance.zzz.accent
+        }
+
+        // Expanded results: a large surface, so a restrained backdrop is welcome —
+        // a faint ghost mark only, no ticks/burst noise.
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            visible: root.zzzEverywhere && root.showResults
+            label: "RESULTS"
+            index: "RX"
+            ghostText: "RESULT"
+            accentColor: Appearance.zzz.accent
+            showTicks: false
+            showBurst: false
+            showGrid: false
+            horizontalBias: 0.1
+            verticalBias: 0.04
+            ghostWidthFactor: 0.8
+            ghostStrength: 0.7
+        }
 
         Behavior on implicitHeight {
             id: searchHeightBehavior
@@ -457,10 +489,10 @@ Item { // Wrapper
                 id: searchBar
                 property real verticalPadding: 4
                 Layout.fillWidth: true
-                Layout.leftMargin: 10
-                Layout.rightMargin: 4
-                Layout.topMargin: verticalPadding
-                Layout.bottomMargin: verticalPadding
+                Layout.leftMargin: root.zzzEverywhere ? 18 : 10
+                Layout.rightMargin: root.zzzEverywhere ? 14 : 4
+                Layout.topMargin: root.zzzEverywhere ? 10 : verticalPadding
+                Layout.bottomMargin: root.zzzEverywhere ? 10 : verticalPadding
                 searchingText: root.searchingText
                 onSearchingTextChanged: if (searchingText !== root.searchingText) root.searchingText = searchingText
             }
@@ -470,7 +502,7 @@ Item { // Wrapper
                 visible: root.showResults && !root.actionMode
                 Layout.fillWidth: true
                 height: 1
-                color: Appearance.colors.colOutlineVariant
+                color: root.zzzEverywhere ? Appearance.zzz.hairline : Appearance.colors.colOutlineVariant
             }
 
             // ── Action Mode View (replaces normal results when in / mode) ──
@@ -490,9 +522,9 @@ Item { // Wrapper
                 Layout.fillWidth: true
                 implicitHeight: Math.min(root.resultsAvailableHeight, appResults.contentHeight + topMargin + bottomMargin)
                 clip: true
-                topMargin: 10
-                bottomMargin: 10
-                spacing: 2
+                topMargin: root.zzzEverywhere ? 12 : 10
+                bottomMargin: root.zzzEverywhere ? 14 : 10
+                spacing: root.zzzEverywhere ? 6 : 2
                 KeyNavigation.up: searchBar
                 highlightMoveDuration: 100
 

@@ -799,6 +799,28 @@ ContentPage {
     }
 
     SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "animation"
+        title: Translation.tr("Motion")
+
+        SettingsGroup {
+            ConfigSelectionArray {
+                currentValue: Config.options?.appearance?.iiMotionProfile ?? "classic"
+                onSelected: newValue => Config.setNestedValue("appearance.iiMotionProfile", newValue)
+                options: [
+                    { displayName: Translation.tr("Classic"), icon: "motion_photos_paused", value: "classic" },
+                    { displayName: Translation.tr("Contextual"), icon: "gesture", value: "contextual" }
+                ]
+            }
+
+            NoticeBox {
+                text: Translation.tr("Applies to the ii/material shell family globally. Waffle is unchanged. Reduce animations still suppresses motion.")
+            }
+        }
+    }
+
+    SettingsCardSection {
         visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "side_navigation"

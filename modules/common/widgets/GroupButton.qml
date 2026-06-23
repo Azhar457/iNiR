@@ -39,8 +39,8 @@ Button {
     property color colBackground: ColorUtils.transparentize(colBackgroundHover, 1) || "transparent"
     property color colBackgroundHover: Appearance?.colors.colLayer1Hover ?? "#E5DFED"
     property color colBackgroundActive: Appearance?.colors.colLayer1Active ?? "#D6CEE2"
-    property color colBackgroundToggled: Appearance?.colors.colPrimary ?? "#65558F"
-    property color colBackgroundToggledHover: Appearance?.colors.colPrimaryHover ?? "#77699C"
+    property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : (Appearance?.colors.colPrimary ?? "#65558F")
+    property color colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : (Appearance?.colors.colPrimaryHover ?? "#77699C")
     property color colBackgroundToggledActive: Appearance?.colors.colPrimaryActive ?? "#D6CEE2"
 
     property real radius: root.down ? root.buttonRadiusPressed : root.buttonRadius
@@ -147,5 +147,14 @@ Button {
 
     contentItem: StyledText {
         text: root.buttonText
+        // ZZZ selected = sticker plate → onSticker ink; idle = panel ink. Keeps
+        // tab/segment labels readable instead of washed default ink on a pop plate.
+        color: Appearance.zzzEverywhere
+            ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
+            : (Appearance?.m3colors.m3onBackground ?? "black")
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
     }
 }

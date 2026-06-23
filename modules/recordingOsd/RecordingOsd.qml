@@ -205,13 +205,14 @@ Scope {
                     screenX: screenPos.x
                     screenY: screenPos.y
 
-                    fallbackColor: Appearance.colors.colLayer2
+                    fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colLayer2
                     inirColor: Appearance.inir.colLayer1
                     auroraTransparency: Appearance.aurora.popupTransparentize
 
-                    radius: Appearance.rounding.large
-                    border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
-                    border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.rounding.large
+                    border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1)
+                    border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+                                : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                                 : Appearance.inirEverywhere ? Appearance.inir.colBorder
                                 : Appearance.colors.colOutlineVariant
                 }
@@ -380,12 +381,14 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            radius: Appearance.rounding.full
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
             color: dragHandler.active
-                ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+                ? (Appearance.zzzEverywhere ? Appearance.zzz.bg4
+                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                     : Appearance.colors.colLayer2Active ?? Appearance.colors.colLayer1Active)
                 : dragHover.hovered
-                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.bg3
+                        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.colors.colLayer2Hover ?? Appearance.colors.colLayer1Hover)
                     : "transparent"
 
@@ -430,8 +433,8 @@ Scope {
         Layout.preferredWidth: isVertical ? 22 : 1
         Layout.preferredHeight: isVertical ? 1 : 22
         Layout.alignment: Qt.AlignCenter
-        color: Appearance.colors.colOutlineVariant
-        opacity: 0.3
+        color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : Appearance.colors.colOutlineVariant
+        opacity: Appearance.zzzEverywhere ? 1.0 : 0.3
     }
 
     // Recording dot + timer
@@ -534,11 +537,13 @@ Scope {
         Layout.preferredWidth: 30
         Layout.preferredHeight: 30
         Layout.alignment: Qt.AlignCenter
-        buttonRadius: Appearance.rounding.full
+        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
         colBackground: "transparent"
-        colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.bg3
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
             : Appearance.colors.colLayer2Hover ?? Appearance.colors.colLayer1Hover
-        colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        colRipple: Appearance.zzzEverywhere ? Appearance.zzz.bg4
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.colors.colLayer2Active ?? Appearance.colors.colLayer1Active
 
         contentItem: MaterialSymbol {

@@ -13,12 +13,14 @@ QtObject {
 
     // ── Card (SettingsCardSection) ──
     readonly property int cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius + 1
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
     readonly property int cardPadding: Math.round(14 * Appearance.fontSizeScale)
 
     // ── Card header ──
     readonly property int headerRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
         : Appearance.rounding.small
     readonly property int headerPaddingX: Math.round(12 * Appearance.fontSizeScale)
@@ -26,6 +28,7 @@ QtObject {
 
     // ── Group (SettingsGroup) ──
     readonly property int groupRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+        : Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
         : Appearance.rounding.small
     readonly property int groupPadding: Math.round(12 * Appearance.fontSizeScale)
@@ -36,22 +39,26 @@ QtObject {
     // GlassBackground blur show through (like Overlay widgets do).
     readonly property color cardColor: Appearance.angelEverywhere
         ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, Appearance.angel.cardTransparentize * 0.7)
+        : Appearance.zzzEverywhere ? Appearance.zzz.tile
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, 0.85)
         : Appearance.colors.colLayer1
     readonly property color cardBorderColor: Appearance.angelEverywhere
         ? Appearance.angel.colCardBorder
+        : Appearance.zzzEverywhere ? Appearance.zzz.hairline
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
         : Appearance.colors.colLayer0Border
 
     readonly property color groupColor: Appearance.angelEverywhere
         ? ColorUtils.transparentize(Appearance.colors.colLayer2Base, Appearance.angel.popupTransparentize * 0.6)
+        : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colLayer2, 0.45)
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer2Base, 0.88)
         : ColorUtils.transparentize(Appearance.colors.colLayer2, 0.4)
     readonly property color groupBorderColor: Appearance.angelEverywhere
         ? Appearance.angel.colBorderSubtle
+        : Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
         : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
         : Appearance.colors.colLayer0Border
@@ -59,6 +66,7 @@ QtObject {
     // ── Header hover ──
     readonly property color headerHoverColor: Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardHover
+        : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
         : Appearance.colors.colLayer1Hover
@@ -66,16 +74,19 @@ QtObject {
     // ── Accent bar (left edge on expanded section) ──
     readonly property color accentColor: Appearance.angelEverywhere
         ? Appearance.angel.colPrimary
+        : Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.inirEverywhere ? Appearance.inir.colAccent
         : Appearance.m3colors.m3primary
 
     // ── Section title colors ──
     readonly property color titleExpandedColor: Appearance.angelEverywhere
         ? Appearance.angel.colText
+        : Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnSecondaryContainer
     readonly property color titleCollapsedColor: Appearance.angelEverywhere
         ? Appearance.angel.colTextSecondary
+        : Appearance.zzzEverywhere ? Appearance.colors.colOnLayer1
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colOnSurfaceVariant
 

@@ -25,6 +25,7 @@ Scope {
     readonly property bool isLeft: root.position === "left"
     readonly property bool isPillStyle:   Config.options?.dock?.style === "pill"
     readonly property bool isMacosStyle:  Config.options?.dock?.style === "macos"
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
 
     // Track bar position to force dock recreation when bar changes
     readonly property bool barIsVertical: Config.options?.bar?.bottom !== undefined
@@ -157,7 +158,7 @@ Scope {
 
                             StyledRectangularShadow {
                                 target: dockVisualBackground
-                                visible: (Config.options?.dock?.showBackground ?? true) && !Appearance.gameModeMinimal && !root.isPillStyle && !root.isMacosStyle
+                                visible: (Config.options?.dock?.showBackground ?? true) && !Appearance.gameModeMinimal && !root.zzzEverywhere && !root.isPillStyle && !root.isMacosStyle
                             }
 
                                 Rectangle {
@@ -193,20 +194,37 @@ Scope {
 
                                 // Hide shared background in pill mode — each pill is its own background
                                 // Hide in macOS mode — DockMacBackground is the unified shelf
-                                visible: (Config.options?.dock?.showBackground ?? true) && !gameModeMinimal && !root.isPillStyle && !root.isMacosStyle
-                                color: auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
+                                visible: (Config.options?.dock?.showBackground ?? true) && !gameModeMinimal && (root.zzzEverywhere || (!root.isPillStyle && !root.isMacosStyle))
+                                // ZZZ: the visible shelf is the chamfered ZzzPlate below.
+                                color: root.zzzEverywhere ? "transparent"
+                                    : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
                                     : inirEverywhere ? Appearance.inir.colLayer1
                                     : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-                                border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth : 1
-                                border.color: Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
+                                border.width: root.zzzEverywhere ? 0
+                                    : Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth : 1
+                                border.color: root.zzzEverywhere ? "transparent"
+                                    : Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
                                     : inirEverywhere ? Appearance.inir.colBorder
                                     : Appearance.colors.colLayer0Border
-                                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                                radius: root.zzzEverywhere ? Appearance.zzz.panelRadius
+                                    : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                                     : inirEverywhere ? Appearance.inir.roundingNormal
                                     : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
 
+                                ZzzPlate {
+                                    anchors.fill: parent
+                                    z: -1
+                                    visible: root.zzzEverywhere
+                                    chamfer: Appearance.zzz.cutCorner
+                                    chamferBottomRight: false
+                                    chamferTopRight: true
+                                    fillColor: Appearance.zzz.chromeAlt
+                                    strokeColor: Appearance.zzz.hairlineStrong
+                                    strokeWidth: 1
+                                }
+
                                 clip: true
-                                layer.enabled: auroraEverywhere && !inirEverywhere && !gameModeMinimal
+                                layer.enabled: auroraEverywhere && !inirEverywhere && !root.zzzEverywhere && !gameModeMinimal
                                 layer.effect: GE.OpacityMask {
                                     maskSource: Rectangle {
                                         width: dockVisualBackground.width
@@ -225,7 +243,7 @@ Scope {
                                         : (root.isTop ? 0 : (-(dockRoot.screen?.height ?? 1080) + dockVisualBackground.height + Appearance.sizes.hyprlandGapsOut))
                                     width: dockRoot.screen?.width ?? 1920
                                     height: dockRoot.screen?.height ?? 1080
-                                    visible: dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere && !dockVisualBackground.gameModeMinimal
+                                    visible: dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere && !root.zzzEverywhere && !dockVisualBackground.gameModeMinimal
                                     source: dockVisualBackground.wallpaperUrl
                                     fillMode: Image.PreserveAspectCrop
                                     cache: true
@@ -259,13 +277,14 @@ Scope {
                                 AngelPartialBorder {
                                     targetRadius: dockVisualBackground.radius
                                 }
+
                             }
 
                              // macOS unified shelf background — visible only in macOS style
                                DockMacBackground {
                                    id: macBackground
                                    visible: (Config.options?.dock?.showBackground ?? true)
-                                            && root.isMacosStyle && !Appearance.gameModeMinimal
+                                            && root.isMacosStyle && !root.zzzEverywhere && !Appearance.gameModeMinimal
                                    anchors.fill: parent
                                    anchors.topMargin:    root.isTop     ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? 0 : Appearance.sizes.elevationMargin)
                                    anchors.bottomMargin: root.position === "bottom" ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? 0 : Appearance.sizes.elevationMargin)
@@ -281,9 +300,9 @@ Scope {
                             RowLayout {
                                 id: dockRow
                                 visible: !root.isVertical
-                                anchors.centerIn: root.isMacosStyle ? macBackground : dockVisualBackground
-                                spacing: 2
-                                property real padding: 5
+                                anchors.centerIn: (root.isMacosStyle && !root.zzzEverywhere) ? macBackground : dockVisualBackground
+                                spacing: root.zzzEverywhere ? 5 : 2
+                                property real padding: root.zzzEverywhere ? 7 : 5
 
                                 DockApps {
                                     id: dockApps
@@ -300,7 +319,7 @@ Scope {
                                         anchors.centerIn: parent
                                         font.pixelSize: parent.width * 0.5
                                         text: "apps"
-                                        color: Appearance.colors.colOnLayer0
+                                        color: root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer0
                                     }
                                 }
                             }
@@ -308,9 +327,9 @@ Scope {
                               ColumnLayout {
                                   id: dockColumn
                                   visible: root.isVertical
-                                  anchors.centerIn: root.isMacosStyle ? macBackground : dockVisualBackground
-                                spacing: 2
-                                property real padding: 5
+                                  anchors.centerIn: (root.isMacosStyle && !root.zzzEverywhere) ? macBackground : dockVisualBackground
+                                spacing: root.zzzEverywhere ? 5 : 2
+                                property real padding: root.zzzEverywhere ? 7 : 5
 
                                 DockApps {
                                     id: dockAppsVertical
@@ -327,7 +346,7 @@ Scope {
                                         anchors.centerIn: parent
                                         font.pixelSize: parent.width * 0.5
                                         text: "apps"
-                                        color: Appearance.colors.colOnLayer0
+                                        color: root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer0
                                     }
                                 }
                             }

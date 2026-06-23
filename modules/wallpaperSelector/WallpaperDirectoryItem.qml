@@ -31,7 +31,9 @@ MouseArea {
     Rectangle {
         id: background
         anchors.fill: parent
-        radius: Appearance.rounding.normal
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
+        border.width: Appearance.zzzEverywhere ? 1 : 0
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -54,7 +56,7 @@ MouseArea {
                     maskSource: Rectangle {
                         width: wallpaperItemImageContainer.width
                         height: wallpaperItemImageContainer.height
-                        radius: Appearance.rounding.small
+                        radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : Appearance.rounding.small
                     }
                 }
 
@@ -65,7 +67,7 @@ MouseArea {
                     sourceComponent: StyledRectangularShadow {
                         target: thumbnailImageLoader
                         anchors.fill: undefined
-                        radius: Appearance.rounding.small
+                        radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : Appearance.rounding.small
                     }
                 }
 

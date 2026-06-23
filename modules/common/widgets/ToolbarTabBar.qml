@@ -74,30 +74,36 @@ Item {
                 Rectangle {
                     id: groupBackground
                     anchors.fill: parent
-                    radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
-                    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt
+                        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                         : Appearance.inirEverywhere ? "transparent" 
                          : Appearance.auroraEverywhere ? "transparent"
                          : Appearance.colors.colSurfaceContainer
-                    border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
-                    border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
+                    border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
+                    border.color: Appearance.zzzEverywhere ? Appearance.zzz.quietStroke
+                        : Appearance.angelEverywhere ? Appearance.angel.colBorder
                         : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
                 }
 
                 Rectangle {
                     id: activeIndicator
                     z: 1
-                    color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                        : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colPrimary, 0.85) 
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+                        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                        : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colPrimary, 0.85)
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colSecondaryContainer
-                    border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
-                    border.color: Appearance.angelEverywhere ? Appearance.angel.colBorderHover
+                    border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
+                    border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+                        : Appearance.angelEverywhere ? Appearance.angel.colBorderHover
                         : Appearance.inirEverywhere ? Appearance.inir.colBorderAccent : "transparent"
                     implicitWidth: targetItem ? targetItem.implicitWidth : 0
-                    implicitHeight: targetItem ? (Appearance.angelEverywhere ? 28 : Appearance.inirEverywhere ? 28 : (Appearance.auroraEverywhere ? 32 : targetItem.implicitHeight)) : 0
-                    radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                    implicitHeight: targetItem ? (Appearance.zzzEverywhere ? 30 : Appearance.angelEverywhere ? 28 : Appearance.inirEverywhere ? 28 : (Appearance.auroraEverywhere ? 32 : targetItem.implicitHeight)) : 0
+                    radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
                     anchors.verticalCenter: parent.verticalCenter
                     // Animation

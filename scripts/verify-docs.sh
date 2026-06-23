@@ -53,5 +53,14 @@ if find modules services -name AGENTS.md -print -quit 2>/dev/null | grep -q .; t
       done
 fi
 
+# 5. Generated IPC CLI registry must be in sync with docs/IPC.md + QML targets.
+#    A stale scripts/lib/ipc-registry.sh breaks the `inir <target> <fn>` shorthand
+#    even though the IPC itself works — the bug that hid the dashboard target.
+if command -v python3 >/dev/null 2>&1 && [ -f scripts/lib/generate-ipc-registry.py ]; then
+  echo "[IPC] generated CLI registry freshness"
+  python3 scripts/lib/generate-ipc-registry.py --check >/dev/null 2>&1 \
+    || note "scripts/lib/ipc-registry.sh is stale — run: python3 scripts/lib/generate-ipc-registry.py"
+fi
+
 [ "$fail" -eq 0 ] && echo "OK — docs match code." || echo "DRIFT FOUND (see above)."
 exit "$fail"

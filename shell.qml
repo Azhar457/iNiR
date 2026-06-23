@@ -285,6 +285,24 @@ ShellRoot {
             Config.setNestedValue("enabledPanels", panels)
     }
 
+    // IPC target "bar" — registered once here (always loaded) instead of inside
+    // Bar.qml / VerticalBar.qml. Both ii bars are instantiated together, so a
+    // per-bar handler collided and Quickshell dropped one with a warning. All
+    // three bars only toggle GlobalStates.barOpen, so a single shared handler is
+    // family-agnostic and serves the horizontal bar, vertical bar and waffle.
+    IpcHandler {
+        target: "bar"
+        function toggle(): void {
+            GlobalStates.barOpen = !GlobalStates.barOpen
+        }
+        function close(): void {
+            GlobalStates.barOpen = false
+        }
+        function open(): void {
+            GlobalStates.barOpen = true
+        }
+    }
+
     // IPC for settings - overlay mode or separate window based on config
     // Note: waffle family ALWAYS uses its own window (waffleSettings.qml), never the Material overlay
     IpcHandler {

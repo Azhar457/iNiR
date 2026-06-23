@@ -134,19 +134,41 @@ Item {
         }
 
         color: gameModeMinimal ? "transparent"
+             : Appearance.zzzEverywhere ? Appearance.zzz.chrome
              : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-        border.width: gameModeMinimal ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
-        border.color: angelEverywhere ? Appearance.angel.colPanelBorder
+        border.width: gameModeMinimal ? 0 : Appearance.zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+            : angelEverywhere ? Appearance.angel.colPanelBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder
             : Appearance.colors.colLayer0Border
-        radius: angelEverywhere ? Appearance.angel.roundingNormal
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
             : cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
 
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
         clip: true
 
-        layer.enabled: useWallpaperBackdrop
+        // Mask to the rounded panel shape in ZZZ so NO child (backdrop grid,
+        // corner ticks, cards) can re-square the corners — surfaces must never break.
+        layer.enabled: useWallpaperBackdrop || (Appearance.zzzEverywhere && !gameModeMinimal)
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: sidebarLeftBackground.width
@@ -209,6 +231,36 @@ Item {
             z: 10
         }
 
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            label: "INTELLIGENCE"
+            index: "L"
+            ghostText: "LEFT"
+            accentColor: Appearance.zzz.chromeStroke
+            showTicks: false
+            showBurst: false
+            showGrid: true
+            horizontalBias: 0.18
+            verticalBias: 0.04
+            ghostWidthFactor: 0.86
+            ghostStrength: 0.7
+            z: 0
+        }
+
+        // ZZZ content wash: a subtle stepped tile plate lifts the content area
+        // off the bare chrome so cards/text read cleanly while the structural
+        // hairlines stay. Kept low-alpha so chrome + ghost marks still breathe.
+        Rectangle {
+            anchors.fill: parent
+            visible: Appearance.zzzEverywhere
+            color: ColorUtils.applyAlpha(Appearance.zzz.tile, 0.55)
+            z: 0
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+        }
+
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: sidebarPadding
@@ -222,7 +274,7 @@ Item {
                 id: toolbarContainer
                 Layout.alignment: Qt.AlignHCenter
                 enableShadow: false
-                transparent: Appearance.auroraEverywhere || Appearance.inirEverywhere
+                transparent: Appearance.zzzEverywhere || Appearance.auroraEverywhere || Appearance.inirEverywhere
                 visible: !root.pluginViewActive
                 ToolbarTabBar {
                     id: tabBar
@@ -237,15 +289,19 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                     : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                color: Appearance.zzzEverywhere ? "transparent"
+                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                      : Appearance.auroraEverywhere ? "transparent"
                      : Appearance.colors.colLayer1
-                border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                border.width: Appearance.zzzEverywhere ? 0
+                    : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                     : Appearance.inirEverywhere ? 1 : 0
-                border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                border.color: Appearance.zzzEverywhere ? "transparent"
+                    : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                     : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
 
                 // SwipeView with normal tab content

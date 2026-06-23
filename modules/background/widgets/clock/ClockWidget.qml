@@ -177,6 +177,7 @@ AbstractBackgroundWidget {
 
     // ── Style tokens ──
     readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
 
     // Per-clock dim factor (0..1), independent from wallpaper dim

@@ -3,6 +3,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 
 RippleButton {
     id: root
@@ -12,27 +13,33 @@ RippleButton {
     property real buttonPadding: 5
     implicitWidth: distroIcon.width + buttonPadding * 2
     implicitHeight: distroIcon.height + buttonPadding * 2
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-    colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
+    colBackgroundHover: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1Hover
-    colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
+    colRipple: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer1Active
-    colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface 
+    colBackgroundToggled: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
+        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
         : Appearance.colors.colSecondaryContainer
-    colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colSelectionHover 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover 
+    colBackgroundToggledHover: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+        : Appearance.inirEverywhere ? Appearance.inir.colSelectionHover
+        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
         : Appearance.colors.colSecondaryContainerHover
-    colRippleToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
+    colRippleToggled: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.34)
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colSecondaryContainerActive
     toggled: GlobalStates.sidebarLeftOpen
 
@@ -71,6 +78,18 @@ RippleButton {
         }
     }
 
+    ZzzPlate {
+        anchors.fill: parent
+        visible: Appearance.zzzEverywhere
+        chamfer: (root.buttonHovered || root.toggled) ? Appearance.zzz.cutCorner * 0.7 : Appearance.zzz.cutCorner * 0.35
+        fillColor: root.toggled ? Appearance.zzz.accentSoft
+            : root.buttonHovered ? Appearance.zzz.sticker : "transparent"
+        strokeColor: root.toggled ? "transparent"
+            : root.buttonHovered ? Appearance.zzz.accentSoft : "transparent"
+        strokeWidth: 1
+        z: -1
+    }
+
     CustomIcon {
         id: distroIcon
         anchors.centerIn: parent
@@ -78,7 +97,9 @@ RippleButton {
         height: 19.5
         source: (Config.options?.bar?.topLeftIcon ?? 'distro') == 'distro' ? SystemInfo.distroIcon : `${Config.options?.bar?.topLeftIcon ?? 'distro'}-symbolic`
         colorize: true
-        color: Appearance.colors.colOnLayer0
+        color: Appearance.zzzEverywhere
+            ? (root.toggled ? Appearance.zzz.onAccentSoft : Appearance.zzz.ink)
+            : Appearance.colors.colOnLayer0
 
         Rectangle {
             opacity: root.showPing ? 1 : 0
@@ -92,7 +113,7 @@ RippleButton {
             implicitWidth: 8
             implicitHeight: 8
             radius: Appearance.rounding.full
-            color: Appearance.colors.colTertiary
+            color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colTertiary
 
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled

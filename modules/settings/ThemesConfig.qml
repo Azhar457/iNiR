@@ -38,7 +38,7 @@ ContentPage {
             function isDarkTheme(preset) {
                 if (preset.id === "auto" || preset.id === "custom") return true
                 if (!preset.colors) return true
-                const bg = preset.colors.m3background ?? "#000"
+                const bg = preset.colors.m3background ?? Appearance.colors.colLayer0
                 const r = parseInt(bg.slice(1, 3), 16) / 255
                 const g = parseInt(bg.slice(3, 5), 16) / 255
                 const b = parseInt(bg.slice(5, 7), 16) / 255
@@ -1311,6 +1311,7 @@ ContentPage {
                     case "aurora": return styles.aurora ?? 1
                     case "inir": return styles.inir ?? 1
                     case "angel": return styles.angel ?? 1
+                    case "zzz": return styles.zzz ?? 0
                     default: return 1
                 }
             }
@@ -1360,6 +1361,15 @@ ContentPage {
                     }
                 }
 
+                if (styleId === "zzz") {
+                    return {
+                        "dock.cardStyle": false,
+                        "sidebar.cardStyle": false,
+                        "bar.cornerStyle": cornerStyle,
+                        "appearance.transparency.enable": false,
+                    }
+                }
+
                 // material
                 return {
                     "dock.cardStyle": false,
@@ -1390,14 +1400,15 @@ ContentPage {
                         { displayName: Translation.tr("Cards"), icon: "branding_watermark", value: "cards" },
                         { displayName: Translation.tr("Aurora"), icon: "blur_on", value: "aurora" },
                         { displayName: Translation.tr("Inir"), icon: "terminal", value: "inir" },
-                        { displayName: Translation.tr("Angel"), icon: "raven", value: "angel" }
+                        { displayName: Translation.tr("Angel"), icon: "raven", value: "angel" },
+                        { displayName: Translation.tr("ZZZ"), icon: "bolt", value: "zzz" }
                     ]
                 }
             }
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Material keeps the original surfaces. Cards enables rounded card containers everywhere. Aurora enables a wallpaper-tinted glass surface style across panels. Inir uses a TUI-inspired dark theme with accent-colored borders. Angel is the flagship glass style with refined blur, escalonado shadows, and partial accent borders.")
+                text: Translation.tr("Material keeps the original surfaces. Cards enables rounded card containers everywhere. Aurora enables a wallpaper-tinted glass surface style across panels. Inir uses a TUI-inspired dark theme with accent-colored borders. Angel is the flagship glass style with refined blur, escalonado shadows, and partial accent borders. ZZZ is a Zenless Zone Zero-inspired poster system: wallpaper-generated signal colors, squared console plates, technical grid frames, cut-corner cards, sticker badges, segmented metrics, halftone texture, and bold Oxanium type.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.WordWrap
@@ -1423,7 +1434,6 @@ ContentPage {
     }
 
     SettingsCardSection {
-        id: angelStyleEditorSection
         visible: Appearance.angelEverywhere
         expanded: false
         icon: "raven"
@@ -1434,6 +1444,22 @@ ContentPage {
                 Layout.fillWidth: true
                 active: angelStyleEditorSection.expanded && Appearance.angelEverywhere
                 source: "AngelStyleEditor.qml"
+            }
+        }
+    }
+
+    SettingsCardSection {
+        id: zzzStyleEditorSection
+        visible: Appearance.zzzEverywhere
+        expanded: false
+        icon: "bolt"
+        title: Translation.tr("ZZZ Style Editor")
+
+        SettingsGroup {
+            Loader {
+                Layout.fillWidth: true
+                active: zzzStyleEditorSection.expanded && Appearance.zzzEverywhere
+                source: "ZzzStyleEditor.qml"
             }
         }
     }

@@ -11,15 +11,18 @@ import QtQuick.Layouts
 
 Rectangle {
     id: root
-    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
-    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+    color: Appearance.zzzEverywhere ? "transparent"
+         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
          : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-         : Appearance.auroraEverywhere ? "transparent" 
+         : Appearance.auroraEverywhere ? "transparent"
          : Appearance.colors.colLayer1
-    border.width: Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0)
-    border.color: Appearance.angelEverywhere ? "transparent"
+    border.width: Appearance.zzzEverywhere ? 0 : (Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0))
+    border.color: Appearance.zzzEverywhere ? "transparent"
+        : Appearance.angelEverywhere ? "transparent"
         : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
 
     AngelPartialBorder { targetRadius: root.radius; coverage: 0.5 }

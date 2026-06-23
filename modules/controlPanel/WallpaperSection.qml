@@ -25,9 +25,19 @@ Rectangle {
          : auroraEverywhere ? Appearance.aurora.colSubSurface
          : Appearance.colors.colLayer1
     border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+               : Appearance.zzzEverywhere ? 1
                : inirEverywhere ? 1 : 0
     border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+               : Appearance.zzzEverywhere ? Appearance.zzz.hairline
                : inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    Behavior on border.width {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+    Behavior on border.color {
+        enabled: Appearance.animationsEnabled
+        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
 
     ColumnLayout {
         id: wallpaperLayout

@@ -27,6 +27,7 @@ RippleButton {
     property bool blurImage: entry?.blurImage ?? false
     property string blurImageText: entry?.blurImageText ?? "Image hidden"
     property bool compactClipboardPreview: entry?.compactClipboardPreview ?? false
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
     
     visible: root.entryShown
     property int horizontalMargin: Appearance.sizes.elevationMargin
@@ -35,26 +36,33 @@ RippleButton {
     property bool keyboardDown: false
     readonly property bool isCurrentItem: ListView.isCurrentItem
     readonly property bool isHighlighted: root.isCurrentItem
-    readonly property color normalTextColor: Appearance.angelEverywhere ? Appearance.angel.colText
+    readonly property color normalTextColor: root.zzzEverywhere ? Appearance.zzz.ink
+        : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color selectedTextColor: Appearance.angelEverywhere ? Appearance.angel.colText
+    readonly property color selectedTextColor: root.zzzEverywhere ? Appearance.zzz.onSignal
+        : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnLayer1
     readonly property color descriptionTextColor: root.isHighlighted
         ? root.selectedTextColor
+        : root.zzzEverywhere ? Appearance.zzz.inkMuted
         : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colSubtext
-    readonly property color selectedBackgroundColor: Appearance.angelEverywhere
+    readonly property color selectedBackgroundColor: root.zzzEverywhere ? Appearance.zzz.signal
+        : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardHover
         : Appearance.colors.colLayer1
-    readonly property color hoverBackgroundColor: Appearance.angelEverywhere
+    readonly property color hoverBackgroundColor: root.zzzEverywhere ? Appearance.zzz.paperAlt
+        : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardHover
         : Appearance.colors.colLayer1
-    readonly property color pressedBackgroundColor: Appearance.angelEverywhere
+    readonly property color pressedBackgroundColor: root.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.signal, Appearance.zzz.ink, 0.78)
+        : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardActive
         : Appearance.colors.colLayer1Hover
-    readonly property color activeRippleColor: Appearance.angelEverywhere
+    readonly property color activeRippleColor: root.zzzEverywhere ? ColorUtils.transparentize(Appearance.zzz.ink, 0.72)
+        : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardActive
         : Appearance.colors.colLayer1Hover
 
@@ -63,7 +71,8 @@ RippleButton {
 
     implicitHeight: rowLayout.implicitHeight + root.buttonVerticalPadding * 2
     implicitWidth: rowLayout.implicitWidth + root.buttonHorizontalPadding * 2
-    buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    buttonRadius: root.zzzEverywhere ? Appearance.zzz.pillRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
     colBackground: (root.down || root.keyboardDown)
         ? root.pressedBackgroundColor
@@ -73,7 +82,10 @@ RippleButton {
     colBackgroundHover: root.hoverBackgroundColor
     colRipple: root.activeRippleColor
 
-    property string highlightPrefix: `<u><font color="${Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary}">`
+    // Matched-char colour must contrast with the CURRENT row background: when the
+    // row is selected the bg is the accent plate, so the accent-coloured match
+    // would vanish into it — switch to onSignal (the readable on-accent ink).
+    property string highlightPrefix: `<u><font color="${root.zzzEverywhere ? (root.isHighlighted ? Appearance.zzz.onSignal : Appearance.zzz.accent) : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary}">`
     property string highlightSuffix: `</font></u>`
     function highlightContent(content, query) {
         if (!query || query.length === 0 || content == query || fontType === "monospace")
@@ -145,6 +157,26 @@ RippleButton {
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             root.keyboardDown = false
             event.accepted = true;
+        }
+    }
+
+    Rectangle {
+        anchors.fill: root
+        anchors.leftMargin: root.horizontalMargin
+        anchors.rightMargin: root.horizontalMargin
+        visible: root.zzzEverywhere
+        radius: root.buttonRadius
+        color: "transparent"
+        border.width: root.isHighlighted || root.hovered ? Appearance.zzz.borderThick : 1
+        border.color: root.isHighlighted ? Appearance.zzz.accent : Appearance.zzz.hairline
+
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            }
         }
     }
 

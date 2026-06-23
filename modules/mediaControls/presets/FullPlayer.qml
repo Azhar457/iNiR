@@ -20,10 +20,11 @@ Item {
     id: root
     property MprisPlayer player: null
     property list<real> visualizerPoints: []
-    property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.large
+    property real radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.large
     property real screenX: 0
     property real screenY: 0
-    
+
     readonly property string vizType: Config.getNestedValue("background.widgets.mediaControls.visualizerType", "wave")
     readonly property string vizPosition: Config.getNestedValue("background.widgets.mediaControls.visualizerPosition", "bottom")
 
@@ -32,35 +33,44 @@ Item {
         id: playerBase
         player: root.player
     }
-    
+
     // Adaptive colors from artwork
     property QtObject blendedColors: AdaptedMaterialScheme { color: playerBase.artDominantColor }
-    
-    StyledRectangularShadow { 
+
+    StyledRectangularShadow {
         target: card
-        visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere)
+        visible: !Appearance.zzzEverywhere
+            && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
     }
-    
+
     Rectangle {
         id: card
         anchors.centerIn: parent
         width: parent.width - Appearance.sizes.elevationMargin
         height: parent.height - Appearance.sizes.elevationMargin
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
-        color: Appearance.inirEverywhere ? playerBase.inirLayer1
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
+        color: Appearance.zzzEverywhere ? Appearance.zzz.paper
+             : Appearance.inirEverywhere ? playerBase.inirLayer1
              : Appearance.auroraEverywhere ? "transparent"
              : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-        border.width: Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
-        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
+        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
+        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
+                    : Appearance.inirEverywhere ? Appearance.inir.colBorder
                     : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
                     : "transparent"
         clip: true
-        
+
         layer.enabled: true
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle { width: card.width; height: card.height; radius: card.radius }
         }
-        
+
+        ZzzGraphicPlate {
+            anchors.fill: parent
+            accentColor: Appearance.zzz.tertiary
+        }
+
         // Aurora glass wallpaper blur
         Image {
             id: auroraWallpaper
@@ -68,7 +78,7 @@ Item {
             y: -root.screenY - (card.y + (root.height - card.height) / 2)
             width: Quickshell.screens[0]?.width ?? 1920
             height: Quickshell.screens[0]?.height ?? 1080
-            visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere
+            visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere && !Appearance.zzzEverywhere
             source: Wallpapers.effectiveWallpaperUrl
             fillMode: Image.PreserveAspectCrop
             cache: true
@@ -77,7 +87,7 @@ Item {
             smooth: true
             mipmap: true
             asynchronous: true
-            
+
             layer.enabled: Appearance.effectsEnabled && Appearance.auroraEverywhere && !Appearance.inirEverywhere
             layer.effect: MultiEffect {
                 source: auroraWallpaper
@@ -90,16 +100,16 @@ Item {
                 blur: Appearance.effectsEnabled ? 1 : 0
             }
         }
-        
+
         // Aurora tint overlay
         Rectangle {
             anchors.fill: parent
-            visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere
+            visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere && !Appearance.zzzEverywhere
             color: Appearance.angelEverywhere
                 ? ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
                 : ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base, Appearance.aurora.popupTransparentize)
         }
-        
+
         // Cover art background
         Image {
             anchors.fill: parent
@@ -109,9 +119,9 @@ Item {
             cache: false
             smooth: true
             mipmap: true
-            opacity: Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.2 : 0.5)
+            opacity: Appearance.zzzEverywhere ? 0.24 : Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.2 : 0.5)
             visible: playerBase.displayedArtFilePath !== ""
-            
+
             layer.enabled: Appearance.effectsEnabled
             layer.effect: MultiEffect {
                 blurEnabled: true
@@ -120,21 +130,21 @@ Item {
                 saturation: Appearance.inirEverywhere ? 0.1 : 0.3
             }
         }
-        
+
         // Gradient overlay for Material
         Rectangle {
             anchors.fill: parent
-            visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere
+            visible: !Appearance.zzzEverywhere && !Appearance.inirEverywhere && !Appearance.auroraEverywhere
             gradient: Gradient {
                 orientation: Gradient.Horizontal
                 GradientStop { position: 0.0; color: "transparent" }
-                GradientStop { 
+                GradientStop {
                     position: 0.35
                     color: ColorUtils.transparentize(
                         blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.3
                     )
                 }
-                GradientStop { 
+                GradientStop {
                     position: 1.0
                     color: ColorUtils.transparentize(
                         blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.15
@@ -142,7 +152,7 @@ Item {
                 }
             }
         }
-        
+
         // Visualizer overlay
         WaveVisualizer {
             visible: root.vizType === "wave" && root.vizPosition !== "none"
@@ -167,63 +177,69 @@ Item {
             colorMed: ColorUtils.transparentize(playerBase.artDominantColor, 0.1)
             colorHigh: playerBase.artDominantColor
         }
-        
+
         RowLayout {
             anchors.fill: parent
             anchors.margins: 12
             spacing: 12
-            
+
             // Cover art
             PlayerArtwork {
                 Layout.preferredWidth: card.height - 24
                 Layout.preferredHeight: card.height - 24
                 artSource: playerBase.displayedArtFilePath
                 downloaded: playerBase.downloaded
-                artRadius: Appearance.inirEverywhere 
-                    ? Appearance.inir.roundingSmall 
+                artRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                    : Appearance.inirEverywhere
+                    ? Appearance.inir.roundingSmall
                     : Appearance.rounding.small
-                placeholderColor: Appearance.inirEverywhere 
-                    ? playerBase.inirLayer2 
+                placeholderColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                    : Appearance.inirEverywhere
+                    ? playerBase.inirLayer2
                     : (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
-                iconColor: Appearance.inirEverywhere 
-                    ? playerBase.inirTextSecondary 
+                iconColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                    : Appearance.inirEverywhere
+                    ? playerBase.inirTextSecondary
                     : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
             }
-            
+
             // Info & controls
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 4
-                
+
                 // Title
                 StyledText {
                     Layout.fillWidth: true
                     text: StringUtils.cleanMusicTitle(playerBase.effectiveTitle) || "—"
                     font.pixelSize: Appearance.font.pixelSize.large
-                    font.weight: Font.Medium
-                    color: Appearance.inirEverywhere 
-                        ? playerBase.inirText 
+                    font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Medium
+                    font.italic: Appearance.zzzEverywhere
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        : Appearance.inirEverywhere
+                        ? playerBase.inirText
                         : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                     elide: Text.ElideRight
                     animateChange: true
                     animationDistanceX: 6
                 }
-                
+
                 // Artist
                 StyledText {
                     Layout.fillWidth: true
                     text: playerBase.effectiveArtist || ""
                     font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.inirEverywhere 
-                        ? playerBase.inirTextSecondary 
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
+                        : Appearance.inirEverywhere
+                        ? playerBase.inirTextSecondary
                         : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
                     elide: Text.ElideRight
                     visible: text !== ""
                 }
-                
+
                 Item { Layout.fillHeight: true }
-                
+
                 // Progress bar
                 PlayerProgress {
                     Layout.fillWidth: true
@@ -232,77 +248,86 @@ Item {
                     length: playerBase.effectiveLength
                     canSeek: playerBase.effectiveCanSeek
                     isPlaying: playerBase.effectiveIsPlaying
-                    highlightColor: Appearance.inirEverywhere 
+                    highlightColor: Appearance.zzzEverywhere ? Appearance.zzz.tertiary
+                        : Appearance.inirEverywhere
                         ? playerBase.inirPrimary
-                        : Appearance.auroraEverywhere 
+                        : Appearance.auroraEverywhere
                             ? Appearance.colors.colPrimary
                             : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-                    trackColor: Appearance.inirEverywhere 
+                    trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
+                        : Appearance.inirEverywhere
                         ? playerBase.inirLayer2
-                        : Appearance.auroraEverywhere 
+                        : Appearance.auroraEverywhere
                             ? Appearance.aurora.colElevatedSurface
                             : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                     onSeekRequested: seconds => playerBase.seek(seconds)
                 }
-                
+
                 // Time + controls
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 4
-                    
+
                     StyledText {
                         text: StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
-                        color: Appearance.inirEverywhere 
-                            ? playerBase.inirText 
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : Appearance.inirEverywhere
+                            ? playerBase.inirText
                             : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                     }
-                    
+
                     Item { Layout.fillWidth: true }
-                    
+
                     PlayerControls {
                         canGoPrevious: playerBase.effectiveCanGoPrevious
                         canGoNext: playerBase.effectiveCanGoNext
                         isPlaying: playerBase.effectiveIsPlaying
-                        buttonRadius: Appearance.inirEverywhere 
-                            ? Appearance.inir.roundingSmall 
+                        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                            : Appearance.inirEverywhere
+                            ? Appearance.inir.roundingSmall
                             : Appearance.rounding.full
-                        buttonHoverColor: Appearance.inirEverywhere 
+                        buttonHoverColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                            : Appearance.inirEverywhere
                             ? Appearance.inir.colLayer2Hover
-                            : Appearance.auroraEverywhere 
+                            : Appearance.auroraEverywhere
                                 ? Appearance.aurora.colSubSurface
                                 : ColorUtils.transparentize(
                                     blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5
                                 )
-                        buttonRippleColor: Appearance.inirEverywhere 
+                        buttonRippleColor: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
+                            : Appearance.inirEverywhere
                             ? Appearance.inir.colLayer2Active
-                            : Appearance.auroraEverywhere 
+                            : Appearance.auroraEverywhere
                                 ? Appearance.aurora.colSubSurfaceActive
                                 : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
-                        iconColor: Appearance.inirEverywhere 
+                        iconColor: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : Appearance.inirEverywhere
                             ? playerBase.inirText
-                            : Appearance.auroraEverywhere 
+                            : Appearance.auroraEverywhere
                                 ? Appearance.colors.colOnLayer0
                                 : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-                        playIconColor: Appearance.inirEverywhere 
+                        playIconColor: Appearance.zzzEverywhere ? Appearance.zzz.tertiary
+                            : Appearance.inirEverywhere
                             ? playerBase.inirPrimary
-                            : Appearance.auroraEverywhere 
+                            : Appearance.auroraEverywhere
                                 ? Appearance.colors.colOnLayer0
                                 : Appearance.colors.colOnLayer1
                         onPreviousClicked: playerBase.previous()
                         onPlayPauseClicked: playerBase.togglePlaying()
                         onNextClicked: playerBase.next()
                     }
-                    
+
                     Item { Layout.fillWidth: true }
-                    
+
                     StyledText {
                         text: StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
-                        color: Appearance.inirEverywhere 
-                            ? playerBase.inirText 
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : Appearance.inirEverywhere
+                            ? playerBase.inirText
                             : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                     }
                 }

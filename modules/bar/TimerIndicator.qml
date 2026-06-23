@@ -73,6 +73,13 @@ MouseArea {
     }
 
     readonly property color accentColor: {
+        if (Appearance.zzzEverywhere) {
+            if (pomodoroActive)
+                return (TimerService?.pomodoroBreak ?? false) ? Appearance.zzz.secondary : Appearance.zzz.accent
+            if (countdownActive)
+                return Appearance.zzz.secondary
+            return Appearance.zzz.ink
+        }
         if (pomodoroActive) {
             return (TimerService?.pomodoroBreak ?? false)
                 ? (Appearance.colors.colTertiary ?? Appearance.m3colors.m3tertiary)

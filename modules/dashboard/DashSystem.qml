@@ -32,7 +32,19 @@ DashCard {
         Layout.fillWidth: true
         spacing: 4
 
+        ZzzStatBar {
+            visible: root.zzzEverywhere
+            label: usageRow.label
+            value: usageRow.value
+            fillColor: usageRow.label === Translation.tr("Memory") ? Appearance.zzz.secondary
+                : usageRow.label === Translation.tr("GPU") ? Appearance.zzz.tertiary
+                : Appearance.zzz.accent
+            textColor: root.colText
+            labelColor: root.colSubtext
+        }
+
         RowLayout {
+            visible: !root.zzzEverywhere
             Layout.fillWidth: true
             StyledText {
                 Layout.fillWidth: true
@@ -41,6 +53,8 @@ DashCard {
                 color: root.colSubtext
             }
             StyledText {
+                // This row only renders when ZZZ is inactive (ZzzStatBar owns the
+                // zzz readout), so no zzz branch is needed here.
                 text: `${Math.round(usageRow.value * 100)}%`
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 font.family: Appearance.font.family.numbers
@@ -48,6 +62,7 @@ DashCard {
             }
         }
         StyledProgressBar {
+            visible: !root.zzzEverywhere
             Layout.fillWidth: true
             value: usageRow.value
         }

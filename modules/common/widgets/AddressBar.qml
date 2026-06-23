@@ -18,7 +18,10 @@ Rectangle {
     property real padding: 6
     implicitWidth: mainLayout.implicitWidth + padding * 2
     implicitHeight: mainLayout.implicitHeight + padding * 2
-    color: Appearance.colors.colLayer2
+    color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt : Appearance.colors.colLayer2
+    radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : 0
+    border.width: Appearance.zzzEverywhere ? 1 : 0
+    border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
 
     function focusBreadcrumb() {
         root.showBreadcrumb = false;
@@ -50,8 +53,10 @@ Rectangle {
                 id: directoryEntry
                 visible: !root.showBreadcrumb
                 anchors.fill: parent
-                color: Appearance.colors.colLayer1
-                radius: Appearance.rounding.full
+                color: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colLayer1
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+                border.width: Appearance.zzzEverywhere ? 1 : 0
+                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline : "transparent"
                 implicitWidth: addressInput.implicitWidth
                 implicitHeight: addressInput.implicitHeight
 
@@ -105,11 +110,16 @@ Rectangle {
         RippleButton {
             id: dirEditButton
             toggled: !root.showBreadcrumb
+            // ZZZ toggled = accent sticker plate so onSticker icon stays readable
+            colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : (Appearance?.colors.colPrimary ?? "#65558F")
+            colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : (Appearance?.colors.colPrimaryHover ?? "#77699C")
             downAction: () => root.showBreadcrumb = !root.showBreadcrumb
             contentItem: MaterialSymbol {
                 text: "edit"
                 iconSize: Appearance.font.pixelSize.larger
-                color: dirEditButton.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
+                color: dirEditButton.toggled
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary)
+                    : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer2)
             }
 
             StyledToolTip {

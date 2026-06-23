@@ -23,14 +23,18 @@ Rectangle {
 
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
-    readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    readonly property color colText: zzzEverywhere ? Appearance.zzz.ink
+        : Appearance.angelEverywhere ? Appearance.angel.colText
         : inirEverywhere ? Appearance.inir.colText
         : auroraEverywhere ? Appearance.m3colors.m3onSurface
         : Appearance.colors.colOnLayer1
-    readonly property color colSubtext: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+    readonly property color colSubtext: zzzEverywhere ? Appearance.zzz.inkMuted
+        : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colSubtext
-    readonly property color colAccent: Appearance.angelEverywhere ? Appearance.angel.colPrimary
+    readonly property color colAccent: zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
         : inirEverywhere ? Appearance.inir.colPrimary
         : auroraEverywhere ? Appearance.m3colors.m3primary
         : Appearance.colors.colPrimary
@@ -38,24 +42,65 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: contentColumn.implicitHeight + root.pad * 2
 
-    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+    radius: zzzEverywhere ? Appearance.zzz.panelRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
     color: {
-        const base = Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        const base = zzzEverywhere ? Appearance.zzz.paper
+            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
             : inirEverywhere ? Appearance.inir.colLayer1
             : auroraEverywhere ? Appearance.aurora.colSubSurface
             : Appearance.colors.colLayer1
-        return root.cardOpacity >= 1 ? base : ColorUtils.applyAlpha(base, root.cardOpacity * base.a)
+        return zzzEverywhere || root.cardOpacity >= 1 ? base : ColorUtils.applyAlpha(base, root.cardOpacity * base.a)
+    }
+    Behavior on radius {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
     }
     Behavior on color {
         enabled: Appearance.animationsEnabled
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
-    border.width: Appearance.angelEverywhere ? 0 : (inirEverywhere ? 1 : 0)
+    border.width: Appearance.angelEverywhere ? 0
+        : zzzEverywhere ? Appearance.zzz.borderThick : 1
     border.color: Appearance.angelEverywhere ? "transparent"
-        : inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        : zzzEverywhere ? Appearance.zzz.hairline
+        : inirEverywhere ? Appearance.inir.colBorder
+        : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.06)
+    Behavior on border.color {
+        enabled: Appearance.animationsEnabled
+        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
+    Behavior on border.width {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
 
     AngelPartialBorder { targetRadius: root.radius; coverage: 0.45 }
+
+    // Glassy top-edge highlight: a faint light sheen down the upper third reads
+    // as a translucent pane catching light. Pure overlay, no blur FBO — zero
+    // GPU cost beyond one clipped gradient. Skipped for angel (own glass system).
+    Rectangle {
+        anchors.fill: parent
+        radius: root.radius
+        visible: !Appearance.angelEverywhere && !root.zzzEverywhere
+        z: 0
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.05) }
+            GradientStop { position: 0.35; color: "transparent" }
+            GradientStop { position: 1.0; color: "transparent" }
+        }
+    }
+
+    // Clean ZZZ plate: surface + a single left category accent bar. No per-card
+    // ghost/tape/hatch — the bold ZZZ statement lives at panel level.
+    ZzzGraphicPlate {
+        anchors.fill: parent
+        accentColor: root.colAccent
+        frameLabel: ""
+        frameIndex: ""
+    }
 
     ColumnLayout {
         id: contentColumn
@@ -69,16 +114,23 @@ Rectangle {
             spacing: 8
 
             MaterialSymbol {
-                visible: root.icon.length > 0
+                visible: root.icon.length > 0 && !root.zzzEverywhere
                 text: root.icon
                 iconSize: Appearance.font.pixelSize.larger
                 color: root.colAccent
             }
+            ZzzGlyphBadge {
+                visible: root.icon.length > 0 && root.zzzEverywhere
+                symbol: root.icon
+                accentColor: root.colAccent
+                inkColor: Appearance.zzz.onAccent
+                badgeSize: 26
+            }
             StyledText {
                 Layout.fillWidth: true
-                text: root.title
+                text: root.zzzEverywhere ? root.title.toUpperCase() : root.title
                 font.pixelSize: Appearance.font.pixelSize.normal
-                font.weight: Font.Medium
+                font.weight: root.zzzEverywhere ? Font.Black : Font.Medium
                 color: root.colText
                 elide: Text.ElideRight
             }

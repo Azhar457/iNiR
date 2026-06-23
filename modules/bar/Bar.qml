@@ -166,7 +166,7 @@ Scope {
                             bottom: undefined
                         }
                         height: Appearance.rounding.screenRounding
-                        active: showBarBackground && (Config.options?.bar?.cornerStyle ?? 0) === 0 // Hug
+                        active: showBarBackground && (Config.options?.bar?.cornerStyle ?? 0) === 0 && !Appearance.zzzEverywhere
 
                         states: State {
                             name: "bottom"
@@ -338,21 +338,10 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "bar"
-
-        function toggle(): void {
-            GlobalStates.barOpen = !GlobalStates.barOpen
-        }
-
-        function close(): void {
-            GlobalStates.barOpen = false
-        }
-
-        function open(): void {
-            GlobalStates.barOpen = true
-        }
-    }
+    // IPC target "bar" is registered once in shell.qml (always loaded, family-
+    // agnostic). Both Bar and VerticalBar are instantiated under the ii family,
+    // so a handler here would collide with VerticalBar's and Quickshell would
+    // drop one with a "registered but will not be used" warning.
 
     Loader {
         active: CompositorService.isHyprland

@@ -65,8 +65,8 @@ TabButton {
 
             Rectangle {
                 id: bubbleBackground
-                color: Appearance.colors.colPrimary
-                radius: Appearance.rounding.full
+                color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                 implicitWidth: bubbleText.implicitWidth + 24
                 implicitHeight: root.baseHighlightHeight
 
@@ -76,7 +76,7 @@ TabButton {
                     text: root.buttonText
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.weight: Font.Medium
-                    color: Appearance.colors.colOnPrimary
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -104,9 +104,14 @@ TabButton {
             anchors.bottom: itemIconBackground.bottom
             // When collapsed, only show icon area; when expanded, show full width with text
             implicitWidth: root.expanded ? root.visualWidth : root.baseSize
-            radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                 : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-            color: Appearance.angelEverywhere
+            color: Appearance.zzzEverywhere
+                ? (toggled
+                    ? (root.down ? Appearance.zzz.chromeAlt : root.hovered ? Appearance.zzz.chromeAlt : Appearance.zzz.sticker)
+                    : (root.down ? Appearance.zzz.chromeAlt : root.hovered ? Appearance.zzz.paperAlt : "transparent"))
+                : Appearance.angelEverywhere
                 ? (toggled
                     ? (root.showToggledHighlight
                         ? (root.down ? Appearance.angel.colGlassCardActive : root.hovered ? Appearance.angel.colGlassCardHover : Appearance.angel.colGlassCard)
@@ -178,7 +183,9 @@ TabButton {
                 animateFill: true
                 font.weight: (toggled || root.hovered) ? Font.DemiBold : Font.Normal
                 text: buttonIcon
-                color: toggled
+                color: Appearance.zzzEverywhere
+                    ? (toggled ? Appearance.zzz.onSticker : Appearance.zzz.inkMuted)
+                    : toggled
                     ? (root.showToggledHighlight ? Appearance.m3colors.m3onSecondaryContainer : Appearance.m3colors.m3primary)
                     : Appearance.colors.colOnLayer1
 
@@ -201,7 +208,7 @@ TabButton {
             }
             text: buttonText
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.colors.colOnLayer1
+            color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
 
             Behavior on opacity {
                 NumberAnimation {

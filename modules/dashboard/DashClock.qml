@@ -19,18 +19,20 @@ DashCard {
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: DateTime.time
-            font.pixelSize: Appearance.font.pixelSize.title * 2
+            font.pixelSize: Appearance.font.pixelSize.title * (root.zzzEverywhere ? 2.3 : 2)
             font.family: Appearance.font.family.numbers
-            font.weight: Font.DemiBold
+            font.weight: root.zzzEverywhere ? Font.Black : Font.DemiBold
+            font.italic: root.zzzEverywhere
             color: root.colAccent
         }
 
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             Layout.fillWidth: true
-            text: DateTime.date
+            text: root.zzzEverywhere ? DateTime.date.toUpperCase() : DateTime.date
             horizontalAlignment: Text.AlignHCenter
             font.pixelSize: Appearance.font.pixelSize.normal
+            font.weight: root.zzzEverywhere ? Font.Bold : Font.Normal
             color: root.colSubtext
             elide: Text.ElideRight
         }

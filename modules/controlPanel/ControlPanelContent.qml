@@ -52,6 +52,7 @@ Item {
         }
     }
     
+    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     readonly property bool angelEverywhere: Appearance.angelEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
@@ -74,7 +75,7 @@ Item {
     // Shadow
     StyledRectangularShadow {
         target: background
-        visible: (Appearance.angelEverywhere || (!root.inirEverywhere && !root.auroraEverywhere)) && !Appearance.gameModeMinimal
+        visible: !root.zzzEverywhere && (Appearance.angelEverywhere || (!root.inirEverywhere && !root.auroraEverywhere)) && !Appearance.gameModeMinimal
     }
 
     Rectangle {
@@ -83,24 +84,45 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         implicitHeight: flickable.contentHeight + 24
-        
-        color: root.inirEverywhere ? Appearance.inir.colLayer0
+
+        color: root.zzzEverywhere ? Appearance.zzz.bg0
+             : root.inirEverywhere ? Appearance.inir.colLayer0
              : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : Appearance.colors.colLayer0
-        
-        radius: root.angelEverywhere ? Appearance.angel.roundingLarge
+
+        radius: root.zzzEverywhere ? Appearance.zzz.panelRadius
+            : root.angelEverywhere ? Appearance.angel.roundingLarge
             : root.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
-        
-        border.width: root.inirEverywhere ? 1 : (root.auroraEverywhere ? 1 : 1)
-        border.color: root.angelEverywhere ? Appearance.angel.colBorder
-                    : root.inirEverywhere ? Appearance.inir.colBorder 
-                    : root.auroraEverywhere ? Appearance.aurora.colTooltipBorder 
+
+        border.width: root.zzzEverywhere ? 1 : (root.inirEverywhere ? 1 : (root.auroraEverywhere ? 1 : 1))
+        border.color: root.zzzEverywhere ? Appearance.zzz.borderColor
+                    : root.angelEverywhere ? Appearance.angel.colBorder
+                    : root.inirEverywhere ? Appearance.inir.colBorder
+                    : root.auroraEverywhere ? Appearance.aurora.colTooltipBorder
                     : Appearance.colors.colLayer0Border
+
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         
         clip: true
 
-        layer.enabled: root.useWallpaperBackdrop
+        // ZZZ: mask to rounded shape so children never re-square the corners.
+        layer.enabled: root.useWallpaperBackdrop || (root.zzzEverywhere && !Appearance.gameModeMinimal)
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: background.width
@@ -152,6 +174,20 @@ Item {
             visible: root.angelEverywhere
             color: Appearance.angel.colInsetGlow
             z: 10
+        }
+
+        ZzzPanelBackdrop {
+            anchors.fill: parent
+            label: "CONTROL"
+            index: "CP"
+            ghostText: "CTRL"
+            accentColor: Appearance.zzz.accent
+            burstTriad: true
+            showTicks: false
+            horizontalBias: 0.05
+            verticalBias: 0.02
+            ghostWidthFactor: 0.82
+            z: 0
         }
 
         // Content

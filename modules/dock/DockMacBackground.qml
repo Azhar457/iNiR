@@ -20,18 +20,22 @@ Rectangle {
     // Pre-computed blended color from Dock.qml's dockVisualBackground.blendedColors
     property color  blendedLayer0: Appearance.colors.colLayer0
 
+    readonly property bool zzzEverywhere:    Appearance.zzzEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     readonly property bool inirEverywhere:   Appearance.inirEverywhere
     readonly property bool angelEverywhere:  Appearance.angelEverywhere
     readonly property bool gameModeMinimal:  Appearance.gameModeMinimal
 
     // ─── Shape ───────────────────────────────────────────────────────
-    radius: angelEverywhere ? Appearance.angel.roundingNormal
+    radius: zzzEverywhere   ? Appearance.zzz.panelRadius
+          : angelEverywhere ? Appearance.angel.roundingNormal
           : inirEverywhere  ? Appearance.inir.roundingNormal
           :                   Appearance.rounding.large
 
     // ─── Fill: genuinely translucent for macOS look ──────────────────
-    color: auroraEverywhere
+    color: zzzEverywhere
+        ? Appearance.zzz.bg0
+        : auroraEverywhere
         ? ColorUtils.transparentize(blendedLayer0, 0.18)
         : inirEverywhere
             ? ColorUtils.transparentize(Appearance.inir.colLayer1, 0.28)
@@ -43,8 +47,10 @@ Rectangle {
     }
 
     // ─── Border ──────────────────────────────────────────────────────
-    border.width: angelEverywhere ? Appearance.angel.panelBorderWidth : 1
-    border.color: angelEverywhere
+    border.width: zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
+    border.color: zzzEverywhere
+        ? Appearance.zzz.borderColor
+        : angelEverywhere
         ? Appearance.angel.colPanelBorder
         : inirEverywhere
             ? ColorUtils.transparentize(Appearance.inir.colBorder, 0.4)
@@ -58,7 +64,7 @@ Rectangle {
     // ─── Drop shadow ─────────────────────────────────────────────────
     StyledRectangularShadow {
         target: root
-        visible: !gameModeMinimal
+        visible: !gameModeMinimal && !zzzEverywhere
     }
 
     // ─── Clip + rounded mask so blur respects corners ─────────────────
