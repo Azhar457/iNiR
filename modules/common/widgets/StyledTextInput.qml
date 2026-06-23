@@ -8,7 +8,7 @@ import QtQuick.Controls
 TextInput {
     color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
     renderType: Text.NativeRendering
-    selectedTextColor: Appearance.zzzEverywhere ? Appearance.zzz.onSignal : Appearance.m3colors.m3onSecondaryContainer
+    selectedTextColor: Appearance.colors.colOnSecondaryContainer
     selectionColor: Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.colors.colSecondaryContainer
     font {
         family: Appearance.font.family.main
