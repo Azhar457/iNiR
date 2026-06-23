@@ -211,7 +211,8 @@ Item {
                             : (Appearance.angelEverywhere ? Appearance.angel.colText
                              : Appearance.inirEverywhere ? Appearance.inir.colOnLayer2
                              : Appearance.zzzEverywhere ? Appearance.zzz.accent
-                             : Appearance.colors.colOnSurface)
+                             : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface
+                             : Appearance.colors.colOnLayer2)
                     }
 
                     Rectangle {
