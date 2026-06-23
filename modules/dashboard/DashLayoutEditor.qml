@@ -120,7 +120,6 @@ ColumnLayout {
     readonly property bool dragging: dragInfo !== null
     function _indexFromY(y, count) { return Math.max(0, Math.min(Math.round(y / root.pitch), count)) }
     function _commitDrop(dstZone) {
-        console.warn("[DashLayout] _commitDrop", dstZone, "dragInfo=", JSON.stringify(root.dragInfo), "dropIndex=", root.dropIndex)
         if (root.dragInfo && root.dropIndex >= 0)
             root._dropMove(root.dragInfo.zone, root.dragInfo.index, root.dragInfo.id, dstZone, root.dropIndex)
         root._endDrag()
@@ -207,11 +206,9 @@ ColumnLayout {
             drag.target: rowRoot
             drag.axis: Drag.XAndYAxis
             onPressed: {
-                console.warn("[DashLayout] row press", rowRoot.zone, rowRoot.rowIndex, rowRoot.widgetId)
                 root.dragInfo = { zone: rowRoot.zone, index: rowRoot.rowIndex, id: rowRoot.widgetId }
             }
             onReleased: {
-                console.warn("[DashLayout] row release; Drag.target=", !!rowRoot.Drag.target, "dropZone=", root.dropZone, "dropIndex=", root.dropIndex)
                 if (rowRoot.Drag.target) rowRoot.Drag.drop()
                 else root._endDrag()
             }
@@ -310,10 +307,10 @@ ColumnLayout {
                         root.dropZone = zoneName
                         root.dropIndex = root._indexFromY(y, zoneDrop.liveCount)
                     }
-                    onEntered: drag => { console.warn("[DashLayout] zoneDrop onEntered", zoneName, drag.y); zoneDrop._update(drag.y) }
+                    onEntered: drag => zoneDrop._update(drag.y)
                     onPositionChanged: drag => zoneDrop._update(drag.y)
                     onExited: if (root.dropZone === zoneName) { root.dropZone = ""; root.dropIndex = -1 }
-                    onDropped: { console.warn("[DashLayout] zoneDrop onDropped", zoneName); root._commitDrop(zoneName) }
+                    onDropped: root._commitDrop(zoneName)
 
                     Rectangle {
                         visible: zoneDrop.liveCount === 0
