@@ -870,7 +870,7 @@ Item {
         readonly property color wallpaperDominantColor: bgQuant?.colors?.[0] ?? Appearance.colors.colPrimary
         readonly property QtObject blendedColors: AdaptedMaterialScheme {
             color: ColorUtils.mix(bg.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8)
-                   || Appearance.m3colors.m3secondaryContainer
+                   || Appearance.colors.colSecondaryContainer
         }
         readonly property color colDarkSurface: angelEverywhere
             ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.76)
@@ -1206,7 +1206,7 @@ Item {
                                     color: navItem.isActive
                                         ? (bg.inirEverywhere  ? Appearance.inir.colOnSecondaryContainer
                                          : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-                                         : Appearance.m3colors.m3onSecondaryContainer)
+                                         : Appearance.colors.colOnSecondaryContainer)
                                         : (bg.inirEverywhere  ? Appearance.inir.colTextSecondary
                                          : bg.angelEverywhere ? Appearance.angel.colTextSecondary
                                          : Appearance.colors.colOnLayer1)
@@ -1981,7 +1981,7 @@ Item {
                         font.family: Appearance.font.family.numbers
                         color: bg.inirEverywhere  ? Appearance.inir.colOnSecondaryContainer
                              : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-                             : Appearance.m3colors.m3onSecondaryContainer
+                             : Appearance.colors.colOnSecondaryContainer
                     }
                 }
             }
@@ -2039,7 +2039,7 @@ Item {
                     color: sectionHeader.actionToggled
                         ? (bg.inirEverywhere  ? Appearance.inir.colOnSecondaryContainer
                          : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-                         : Appearance.m3colors.m3onSecondaryContainer)
+                         : Appearance.colors.colOnSecondaryContainer)
                         : (bg.inirEverywhere  ? Appearance.inir.colTextSecondary
                          : bg.angelEverywhere ? Appearance.angel.colTextSecondary
                          : Appearance.colors.colSubtext)
@@ -2113,7 +2113,7 @@ Item {
                         color: Notifications.silent
                             ? (bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
                                 : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-                                : Appearance.m3colors.m3onSecondaryContainer)
+                                : Appearance.colors.colOnSecondaryContainer)
                             : (bg.inirEverywhere ? Appearance.inir.colTextSecondary
                                 : bg.angelEverywhere ? Appearance.angel.colTextSecondary
                                 : Appearance.colors.colSubtext)
@@ -2127,7 +2127,7 @@ Item {
                         color: Notifications.silent
                             ? (bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
                                 : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-                                : Appearance.m3colors.m3onSecondaryContainer)
+                                : Appearance.colors.colOnSecondaryContainer)
                             : (bg.inirEverywhere ? Appearance.inir.colText
                                 : bg.angelEverywhere ? Appearance.angel.colText
                                 : Appearance.colors.colOnLayer1)
@@ -2287,7 +2287,7 @@ Item {
             : Appearance.colors.colOnLayer1
         readonly property color _colOnToggle: bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
             : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-            : Appearance.m3colors.m3onSecondaryContainer
+            : Appearance.colors.colOnSecondaryContainer
         readonly property color _colToggleBg: bg.inirEverywhere ? Appearance.inir.colSecondaryContainer
             : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.6)
             : Appearance.colors.colSecondaryContainer

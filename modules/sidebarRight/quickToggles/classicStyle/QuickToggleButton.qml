@@ -59,7 +59,7 @@ GroupButton {
                 ? (button.toggled ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
                 : Appearance.inirEverywhere
                 ? (button.toggled ? Appearance.inir.colOnPrimaryContainer : Appearance.inir.colText)
-                : (button.toggled ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer1)
+                : (button.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1)
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             text: button.buttonIcon

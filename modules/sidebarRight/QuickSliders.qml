@@ -104,11 +104,11 @@ Rectangle {
             color: nearFull
                 ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
                  : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
-                 : Appearance.auroraEverywhere ? Appearance.m3colors.m3onPrimary
+                 : Appearance.auroraEverywhere ? Appearance.colors.colOnPrimary
                  : Appearance.colors.colOnPrimary)
                 : (Appearance.angelEverywhere ? Appearance.angel.colText
                  : Appearance.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
-                 : Appearance.auroraEverywhere ? Appearance.m3colors.m3onSecondaryContainer
+                 : Appearance.auroraEverywhere ? Appearance.colors.colOnSecondaryContainer
                  : Appearance.colors.colOnSecondaryContainer)
             text: quickSlider.materialSymbol
 

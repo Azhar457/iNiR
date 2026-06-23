@@ -54,7 +54,7 @@ Rectangle {
                 text: "wallpaper"
                 iconSize: 16
                 color: root.inirEverywhere ? Appearance.inir.colPrimary
-                     : root.auroraEverywhere ? Appearance.m3colors.m3primary
+                     : root.auroraEverywhere ? Appearance.colors.colPrimary
                      : Appearance.colors.colPrimary
             }
 
@@ -63,7 +63,7 @@ Rectangle {
                 font.pixelSize: Appearance.font.pixelSize.small
                 font.weight: Font.Medium
                 color: root.inirEverywhere ? Appearance.inir.colText
-                     : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
+                     : root.auroraEverywhere ? Appearance.colors.colOnSurface
                      : Appearance.colors.colOnLayer1
             }
 
@@ -83,7 +83,7 @@ Rectangle {
                     text: "shuffle"
                     iconSize: 14
                     color: root.inirEverywhere ? Appearance.inir.colTextSecondary
-                         : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                         : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                          : Appearance.colors.colSubtext
                 }
                 StyledToolTip { text: Translation.tr("Random") }
@@ -103,7 +103,7 @@ Rectangle {
                     text: "folder_open"
                     iconSize: 14
                     color: root.inirEverywhere ? Appearance.inir.colTextSecondary
-                         : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                         : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                          : Appearance.colors.colSubtext
                 }
                 StyledToolTip { text: Translation.tr("Browse") }

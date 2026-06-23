@@ -96,7 +96,7 @@ Item {
                             font.family: Appearance.font.family.main
                             color: Appearance.angelEverywhere ? Appearance.angel.colText
                                 : Appearance.inirEverywhere ? Appearance.inir.colText
-                                : Appearance.m3colors.m3onSurface
+                                : Appearance.colors.colOnSurface
                             horizontalAlignment: Text.AlignHCenter
                             validator: IntValidator { bottom: 0; top: 99 }
                             selectByMouse: true
@@ -128,7 +128,7 @@ Item {
                         font.pixelSize: Math.round(38 * Appearance.fontSizeScale)
                         color: Appearance.angelEverywhere ? Appearance.angel.colText
                             : Appearance.inirEverywhere ? Appearance.inir.colText
-                            : Appearance.m3colors.m3onSurface
+                            : Appearance.colors.colOnSurface
                     }
 
                     // Seconds input
@@ -158,7 +158,7 @@ Item {
                             font.family: Appearance.font.family.main
                             color: Appearance.angelEverywhere ? Appearance.angel.colText
                                 : Appearance.inirEverywhere ? Appearance.inir.colText
-                                : Appearance.m3colors.m3onSurface
+                                : Appearance.colors.colOnSurface
                             horizontalAlignment: Text.AlignHCenter
                             validator: IntValidator { bottom: 0; top: 59 }
                             selectByMouse: true
@@ -204,7 +204,7 @@ Item {
                     font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
                     color: Appearance.angelEverywhere ? Appearance.angel.colText
                         : Appearance.inirEverywhere ? Appearance.inir.colText
-                        : Appearance.m3colors.m3onSurface
+                        : Appearance.colors.colOnSurface
                 }
 
                 StyledText {

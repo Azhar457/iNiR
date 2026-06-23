@@ -33,7 +33,7 @@ QuickToggleButton {
             width: 16
             height: 16
             colorize: true
-            color: root.toggled ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer1
+            color: root.toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1
 
             Behavior on color {
                 enabled: Appearance.animationsEnabled

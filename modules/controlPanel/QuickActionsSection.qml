@@ -126,9 +126,9 @@ Rectangle {
 
         ActionTile {
             icon: "power_settings_new"
-            iconColor: Appearance.angelEverywhere ? Appearance.m3colors.m3error
+            iconColor: Appearance.angelEverywhere ? Appearance.colors.colError
                      : root.inirEverywhere ? Appearance.inir.colError
-                     : root.auroraEverywhere ? Appearance.m3colors.m3error
+                     : root.auroraEverywhere ? Appearance.colors.colError
                      : Appearance.colors.colError
             onClicked: {
                 GlobalStates.controlPanelOpen = false
@@ -144,11 +144,11 @@ Rectangle {
         property color iconColor: active 
             ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
              : root.inirEverywhere ? Appearance.inir.colOnPrimary 
-             : root.auroraEverywhere ? Appearance.m3colors.m3onPrimary
+             : root.auroraEverywhere ? Appearance.colors.colOnPrimary
              : Appearance.colors.colOnPrimary)
             : (Appearance.angelEverywhere ? Appearance.angel.colText
              : root.inirEverywhere ? Appearance.inir.colText 
-             : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
+             : root.auroraEverywhere ? Appearance.colors.colOnSurface
              : Appearance.colors.colOnLayer1)
         signal clicked()
 
@@ -170,7 +170,7 @@ Rectangle {
             : (active 
                 ? (Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.45)
                  : root.inirEverywhere ? Appearance.inir.colPrimary 
-                 : root.auroraEverywhere ? Appearance.m3colors.m3primary
+                 : root.auroraEverywhere ? Appearance.colors.colPrimary
                  : Appearance.colors.colPrimary)
                 : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                  : root.inirEverywhere ? Appearance.inir.colLayer2 

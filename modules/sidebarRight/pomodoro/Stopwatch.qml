@@ -59,7 +59,7 @@ Item {
                 font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                     : Appearance.inirEverywhere ? Appearance.inir.colText
-                    : Appearance.m3colors.m3onSurface
+                    : Appearance.colors.colOnSurface
                 text: {
                     let totalSeconds = Math.floor(TimerService.stopwatchTime) / 100
                     let minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0')

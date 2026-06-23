@@ -196,7 +196,7 @@ Item {
                         font.pixelSize: Math.round(40 * Appearance.fontSizeScale)
                         color: Appearance.angelEverywhere ? Appearance.angel.colText
                             : Appearance.inirEverywhere ? Appearance.inir.colText
-                            : Appearance.m3colors.m3onSurface
+                            : Appearance.colors.colOnSurface
                     }
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter

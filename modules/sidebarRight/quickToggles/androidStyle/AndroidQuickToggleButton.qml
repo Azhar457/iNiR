@@ -124,7 +124,7 @@ GroupButton {
         : Appearance.inirEverywhere
         ? (toggled ? Appearance.inir.colOnPrimaryContainer : Appearance.inir.colText)
         : Appearance.auroraEverywhere
-        ? (toggled ? Appearance.m3colors.m3onPrimary : Appearance.m3colors.m3onSurface)
+        ? (toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface)
         : toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
     property color colIcon: Appearance.zzzEverywhere
         ? (toggled ? Appearance.zzz.onAccentSoft : Appearance.zzz.ink)
@@ -133,7 +133,7 @@ GroupButton {
         : Appearance.inirEverywhere
         ? (toggled ? Appearance.inir.colOnPrimaryContainer : Appearance.inir.colText)
         : Appearance.auroraEverywhere
-        ? (toggled ? Appearance.m3colors.m3onPrimary : Appearance.m3colors.m3onSurface)
+        ? (toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface)
         : toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
 
     onClicked: {

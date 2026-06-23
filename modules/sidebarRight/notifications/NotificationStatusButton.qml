@@ -34,7 +34,7 @@ GroupButton {
         ? (toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
         : Appearance.inirEverywhere
         ? (toggled ? Appearance.inir.colOnPrimaryContainer : Appearance.inir.colText)
-        : (toggled ? Appearance.m3colors.m3onPrimary : Appearance.colors.colOnLayer1)
+        : (toggled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer1)
 
     contentItem: Item {
         id: content

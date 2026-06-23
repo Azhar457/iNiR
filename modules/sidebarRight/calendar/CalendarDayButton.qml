@@ -28,8 +28,8 @@ RippleButton {
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
     // ZZZ today = confident accent "sticker" chip so onSticker text stays readable
     // (RippleButton's default zzz toggled bg is near-black chrome → dark-on-dark).
-    colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : (Appearance?.colors.colPrimary ?? "#65558F")
-    colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : (Appearance?.colors.colPrimaryHover ?? "#77699C")
+    colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimary
+    colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : Appearance.colors.colPrimaryHover
 
     contentItem: Item {
         anchors.fill: parent

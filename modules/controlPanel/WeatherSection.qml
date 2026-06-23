@@ -63,7 +63,7 @@ Rectangle {
                 iconSize: root.compactMode ? 26 : 32
                 color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                      : root.inirEverywhere ? Appearance.inir.colPrimary
-                     : root.auroraEverywhere ? Appearance.m3colors.m3primary
+                     : root.auroraEverywhere ? Appearance.colors.colPrimary
                      : Appearance.colors.colPrimary
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -75,7 +75,7 @@ Rectangle {
                 font.family: Appearance.font.family.numbers
                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                      : root.inirEverywhere ? Appearance.inir.colText
-                     : root.auroraEverywhere ? Appearance.m3colors.m3onSurface
+                     : root.auroraEverywhere ? Appearance.colors.colOnSurface
                      : Appearance.colors.colOnLayer1
                 Layout.alignment: Qt.AlignVCenter
             }
@@ -101,7 +101,7 @@ Rectangle {
                     iconSize: root.compactMode ? 14 : 16
                     color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                          : root.inirEverywhere ? Appearance.inir.colTextSecondary
-                         : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                         : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                          : Appearance.colors.colSubtext
                     opacity: root.hideLocation ? 1 : 0.7
                 }
@@ -125,7 +125,7 @@ Rectangle {
                     iconSize: root.compactMode ? 14 : 16
                     color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                          : root.inirEverywhere ? Appearance.inir.colTextSecondary
-                         : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                         : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                          : Appearance.colors.colSubtext
                 }
                 StyledToolTip { text: Translation.tr("Refresh") }
@@ -139,7 +139,7 @@ Rectangle {
             font.pixelSize: root.hideLocation ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smallest
             color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                  : root.inirEverywhere ? Appearance.inir.colTextSecondary
-                 : root.auroraEverywhere ? Appearance.m3colors.m3onSurfaceVariant
+                 : root.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                  : Appearance.colors.colSubtext
             elide: Text.ElideRight
         }
