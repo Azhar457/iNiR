@@ -72,7 +72,7 @@ Item {
                 pixelSize: Appearance.font.pixelSize.larger
                 variableAxes: Appearance.font.variableAxes.title
             }
-            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.m3colors.m3outline
+            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOutline
             horizontalAlignment: Text.AlignHCenter
         }
         StyledText {
@@ -80,7 +80,7 @@ Item {
             Layout.fillWidth: true
             text: root.description
             font.pixelSize: Appearance.font.pixelSize.small
-            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.m3colors.m3outline
+            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOutline
             horizontalAlignment: root.descriptionHorizontalAlignment
             wrapMode: Text.Wrap
         }

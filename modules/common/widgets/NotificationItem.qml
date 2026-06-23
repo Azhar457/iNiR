@@ -303,7 +303,7 @@ Item { // Notification item area
                                     iconSize: Appearance.font.pixelSize.larger
                                     horizontalAlignment: Text.AlignHCenter
                                     color: (notificationObject?.urgency == NotificationUrgency.Critical) ?
-                                        Appearance.m3colors.m3onSurfaceVariant : Appearance.m3colors.m3onSurface
+                                        Appearance.colors.colOnSurfaceVariant : Appearance.colors.colOnSurface
                                     text: "close"
                                 }
                             }
@@ -348,7 +348,7 @@ Item { // Notification item area
                                     iconSize: Appearance.font.pixelSize.larger
                                     horizontalAlignment: Text.AlignHCenter
                                     color: (notificationObject?.urgency == NotificationUrgency.Critical) ?
-                                        Appearance.m3colors.m3onSurfaceVariant : Appearance.m3colors.m3onSurface
+                                        Appearance.colors.colOnSurfaceVariant : Appearance.colors.colOnSurface
                                     text: "content_copy"
                                 }
                             }

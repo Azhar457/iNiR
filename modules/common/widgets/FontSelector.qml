@@ -98,7 +98,7 @@ Item {
                     color: Appearance.colors.colLayer1
                     radius: Appearance.rounding.small
                 }
-                color: Appearance.m3colors.m3onSurface
+                color: Appearance.colors.colOnSurface
                 placeholderTextColor: Appearance.colors.colSubtext
             }
 
@@ -136,9 +136,9 @@ Item {
                         font.family: modelData
                         font.pixelSize: Appearance.font.pixelSize.small
                         elide: Text.ElideRight
-                        color: modelData === root.selectedFont 
-                            ? Appearance.m3colors.m3onPrimaryContainer 
-                            : Appearance.m3colors.m3onSurface
+                        color: modelData === root.selectedFont
+                            ? Appearance.colors.colOnPrimaryContainer
+                            : Appearance.colors.colOnSurface
                     }
 
                     onClicked: {

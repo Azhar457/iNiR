@@ -296,7 +296,7 @@ Loader {
                                                 text: menuBtn.modelData.iconName ?? ""
                                                 iconSize: Appearance.font.pixelSize.normal
                                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+                                                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
                                             }
                                         }
 
@@ -312,7 +312,7 @@ Loader {
                                     StyledText {
                                         text: menuBtn.modelData.text ?? ""
                                         color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+                                            : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
                                         font.pixelSize: Appearance.font.pixelSize.small
                                         Layout.fillWidth: true
                                         Layout.alignment: Qt.AlignVCenter

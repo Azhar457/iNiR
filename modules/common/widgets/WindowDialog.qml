@@ -55,7 +55,7 @@ Rectangle {
             : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
             : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
-        fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.m3colors.m3surfaceContainerHigh
+        fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colSurfaceContainerHigh
         inirColor: Appearance.inir.colLayer2
         auroraTransparency: Appearance.aurora.popupTransparentize * 0.85
         border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick

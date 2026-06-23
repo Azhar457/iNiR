@@ -53,7 +53,7 @@ RippleButton {
                 ? (root.current ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
                 : Appearance.inirEverywhere
                 ? (root.current ? Appearance.inir.colOnPrimary : Appearance.inir.colText)
-                : Appearance.m3colors.m3onSurface
+                : Appearance.colors.colOnSurface
         }
         Item {
             id: labelReveal
@@ -87,7 +87,7 @@ RippleButton {
                     ? (root.current ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
                     : Appearance.inirEverywhere
                     ? (root.current ? Appearance.inir.colOnPrimary : Appearance.inir.colText)
-                    : Appearance.m3colors.m3onSurface
+                    : Appearance.colors.colOnSurface
             }
         }
     }

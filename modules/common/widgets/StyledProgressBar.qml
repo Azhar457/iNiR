@@ -16,7 +16,7 @@ ProgressBar {
     property color highlightColor: Appearance?.colors.colPrimary ?? "#685496"
     // ZZZ: carbon metric track; the lime/orange signal stays on the fill only.
     property color trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
-        : (Appearance?.m3colors.m3secondaryContainer ?? "#F1D3F9")
+        : Appearance.colors.colSecondaryContainer
     property bool wavy: false // If true, the progress bar will have a wavy fill effect
     property bool animateWave: true
     property real waveAmplitudeMultiplier: wavy ? 0.5 : 0

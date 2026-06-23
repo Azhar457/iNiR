@@ -6,7 +6,7 @@ Item {
     property real iconSize: Appearance?.font.pixelSize.small ?? 16
     property real fill: 0
     property string text: ""
-    property color color: Appearance.m3colors.m3onSurface
+    property color color: Appearance.colors.colOnSurface
     property int horizontalAlignment: Text.AlignHCenter
     property int verticalAlignment: Text.AlignVCenter
     property alias font: iconText.font

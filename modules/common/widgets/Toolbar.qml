@@ -39,7 +39,7 @@ Item {
         id: background
         anchors.fill: parent
         visible: !root.transparent
-        fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt : Appearance.m3colors.m3surfaceContainer
+        fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt : Appearance.colors.colSurfaceContainer
         inirColor: Appearance.inir.colLayer2
         auroraTransparency: Appearance.aurora.overlayTransparentize
         screenX: root.screenX

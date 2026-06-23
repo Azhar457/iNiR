@@ -57,7 +57,7 @@ Item {
             MaterialSymbol {
                 text: root.icon
                 iconSize: 20
-                color: root.isError ? (Appearance.angelEverywhere ? Appearance.m3colors.m3error : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError) : (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colOnLayer1)
+                color: root.isError ? (Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError) : (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colOnLayer1)
             }
 
             // Content

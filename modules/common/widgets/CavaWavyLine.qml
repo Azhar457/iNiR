@@ -6,7 +6,7 @@ import QtQuick
 Canvas {
     id: root
     property list<var> points // Input from Cava
-    property color color: Appearance.m3colors.m3primary
+    property color color: Appearance.colors.colPrimary
     property real lineWidth: 3
     property real amplitudeScale: 1.0
 

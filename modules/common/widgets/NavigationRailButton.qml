@@ -132,7 +132,7 @@ TabButton {
                     : (toggled ?
                         root.showToggledHighlight ?
                             (root.down ? Appearance.colors.colSecondaryContainerActive : root.hovered ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
-                            : (root.down ? Appearance.colors.colLayer1Active : root.hovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.m3colors.m3primary, 0.92)) :
+                            : (root.down ? Appearance.colors.colLayer1Active : root.hovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.colors.colPrimary, 0.92)) :
                         (root.down ? Appearance.colors.colLayer1Active : root.hovered ? Appearance.colors.colLayer1Hover : "transparent"))
 
             states: State {
@@ -186,7 +186,7 @@ TabButton {
                 color: Appearance.zzzEverywhere
                     ? (toggled ? Appearance.zzz.onSticker : Appearance.zzz.inkMuted)
                     : toggled
-                    ? (root.showToggledHighlight ? Appearance.m3colors.m3onSecondaryContainer : Appearance.m3colors.m3primary)
+                    ? (root.showToggledHighlight ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colPrimary)
                     : Appearance.colors.colOnLayer1
 
                 Behavior on color {

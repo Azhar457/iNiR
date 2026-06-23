@@ -76,7 +76,7 @@ QtObject {
         ? Appearance.angel.colPrimary
         : Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.inirEverywhere ? Appearance.inir.colAccent
-        : Appearance.m3colors.m3primary
+        : Appearance.colors.colPrimary
 
     // ── Section title colors ──
     readonly property color titleExpandedColor: Appearance.angelEverywhere
@@ -94,7 +94,7 @@ QtObject {
     readonly property color iconExpandedColor: Appearance.angelEverywhere
         ? Appearance.angel.colPrimary
         : Appearance.inirEverywhere ? Appearance.inir.colAccent
-        : Appearance.m3colors.m3primary
+        : Appearance.colors.colPrimary
     readonly property color iconCollapsedColor: Appearance.angelEverywhere
         ? Appearance.angel.colTextMuted
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary

@@ -13,7 +13,6 @@ Canvas {
     property bool live: true
     property color color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                        : Appearance.auroraEverywhere ? Appearance.m3colors.m3primary
                         : Appearance.colors.colPrimary
     // Fill alpha — reads global config, consumers can override
     property real fillOpacity: (Config.options?.appearance?.cava?.waveOpacity ?? 30) / 100

@@ -99,7 +99,7 @@ Item {
             wrapMode: Text.Wrap
             font.pixelSize: root.compact ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.large
             font.weight: Font.DemiBold
-            color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.m3colors.m3onSurface
+            color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
         }
 
         StyledText {
