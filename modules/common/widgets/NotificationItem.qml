@@ -110,6 +110,11 @@ Item { // Notification item area
             : Appearance.rounding.small
         anchors.leftMargin: root.xOffset
 
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+        }
+
         Behavior on anchors.leftMargin {
             enabled: !dragManager.dragging && Appearance.animationsEnabled
             NumberAnimation {
