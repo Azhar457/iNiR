@@ -84,6 +84,10 @@ Item {
                     text: root.appTitle || root.appId || Translation.tr("Unknown")
                     font.pixelSize: Appearance.font.pixelSize.small
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnSurface
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                     elide: Text.ElideMiddle
                     maximumLineCount: 1
                 }
@@ -94,6 +98,10 @@ Item {
                     text: root.appId
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk : Appearance.colors.colSubtext
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                     visible: root.appId !== "" && root.appId !== root.appTitle
                     elide: Text.ElideMiddle
                 }

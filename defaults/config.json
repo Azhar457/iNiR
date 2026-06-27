@@ -76,7 +76,8 @@
         },
         "angelSubStyle": "frost",
         "zzz": {
-            "shape": "square"
+            "shape": "square",
+            "glass": true
         },
         "extraBackgroundTint": true,
         "softenColors": true,

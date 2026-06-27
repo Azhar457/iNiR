@@ -160,6 +160,10 @@ Scope {
             border.width: Appearance.zzzEverywhere ? 1
                         : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                         : Appearance.inirEverywhere ? 1 : 1
+            Behavior on border.width {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
                         : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                         : Appearance.inirEverywhere ? Appearance.inir.colBorder
@@ -168,6 +172,7 @@ Scope {
                   : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                   : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                   : Appearance.rounding.windowRounding
+            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
 
             Behavior on color {
                 enabled: Appearance.animationsEnabled
@@ -296,6 +301,8 @@ Scope {
                     Layout.fillHeight: true
                     color: Appearance.zzzEverywhere ? Appearance.zzz.bg1 : Appearance.colors.colSurfaceContainerLow
                     radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
                     Item {
                         anchors.fill: parent

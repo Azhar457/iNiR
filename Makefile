@@ -39,6 +39,8 @@ install-shell:
 		mkdir -p "$(SHELL_INSTALL_DIR)/$$dir"; \
 		cp -a "$$dir"/. "$(SHELL_INSTALL_DIR)/$$dir/"; \
 	done < sdata/runtime-payload-dirs.txt
+	@# Strip local AI/agent directives — never distributed (cp -a above copies them in)
+	@find $(SHELL_INSTALL_DIR) \( -name AGENTS.md -o -name CLAUDE.md -o -name codemap.md \) -delete
 	@find $(SHELL_INSTALL_DIR)/scripts -type f \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} +
 	@printf '{\n  "version": "%s",\n  "commit": "manual",\n  "installed_at": "%s",\n  "installedAt": "%s",\n  "source": "make-install",\n  "repo_path": "",\n  "repoPath": "",\n  "install_mode": "package-managed",\n  "installMode": "package-managed",\n  "update_strategy": "package-manager",\n  "updateStrategy": "package-manager",\n  "package_manager": "manual",\n  "packageManager": "manual",\n  "package_name": "source-install",\n  "packageName": "source-install",\n  "package_update_hint": "sudo make install",\n  "packageUpdateHint": "sudo make install"\n}\n' "$$(cat VERSION)" "$$(date -Iseconds)" "$$(date -Iseconds)" > $(SHELL_INSTALL_DIR)/version.json
 

@@ -40,6 +40,7 @@ Item {
               : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
               : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
               : Appearance.rounding.verysmall
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -69,6 +70,10 @@ Item {
             color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
                  : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
                  : Appearance.colors.colSubtext
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             elide: Text.ElideRight
             leftPadding: 16
         }
@@ -94,6 +99,10 @@ Item {
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
                      : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
                      : Appearance.colors.colSubtext
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
                 anchors.verticalCenter: parent.verticalCenter
                 font.pixelSize: Appearance.font.pixelSize.small
             }
@@ -112,6 +121,10 @@ Item {
             color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                  : Appearance.inirEverywhere ? Appearance.inir.colText
                  : Appearance.colors.colOnLayer1
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             text: root.description
             elide: Text.ElideRight
             rightPadding: 16
@@ -132,6 +145,10 @@ Item {
              : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
              : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
              : Appearance.colors.colOutlineVariant
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         opacity: Appearance.zzzEverywhere ? 1.0 : 0.3
         visible: root.showDivider
     }

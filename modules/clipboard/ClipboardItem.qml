@@ -177,6 +177,10 @@ RippleButton {
                 iconSize: 30
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                     : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
             }
         }
 
@@ -187,6 +191,10 @@ RippleButton {
                 font.pixelSize: Appearance.font.pixelSize.larger
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                     : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
             }
         }
 
@@ -213,8 +221,10 @@ RippleButton {
                         implicitHeight: activeText.implicitHeight
                         radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                             : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                         color: Appearance.zzzEverywhere ? Appearance.zzz.sticker
                             : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                         MaterialSymbol {
                             id: activeText
                             anchors.centerIn: parent
@@ -222,6 +232,10 @@ RippleButton {
                             font.pixelSize: Appearance.font.pixelSize.normal
                             color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker
                                 : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
                         }
                     }
                 }
@@ -273,6 +287,10 @@ RippleButton {
             font.pixelSize: Appearance.font.pixelSize.normal
             color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
                 : Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnPrimaryContainer
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             horizontalAlignment: Text.AlignRight
             text: root.itemClickActionName
         }
@@ -316,6 +334,10 @@ RippleButton {
                                 font.pixelSize: Appearance.font.pixelSize.large
                                 color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                                     : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                                Behavior on color {
+                                    enabled: Appearance.animationsEnabled
+                                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
                             }
                         }
                         Loader {

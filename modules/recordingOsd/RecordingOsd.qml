@@ -215,6 +215,10 @@ Scope {
                                 : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                                 : Appearance.inirEverywhere ? Appearance.inir.colBorder
                                 : Appearance.colors.colOutlineVariant
+                    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 Behavior on scale {
@@ -382,6 +386,7 @@ Scope {
         Rectangle {
             anchors.fill: parent
             radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
             color: dragHandler.active
                 ? (Appearance.zzzEverywhere ? Appearance.zzz.bg4
                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
@@ -434,6 +439,10 @@ Scope {
         Layout.preferredHeight: isVertical ? 1 : 22
         Layout.alignment: Qt.AlignCenter
         color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : Appearance.colors.colOutlineVariant
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         opacity: Appearance.zzzEverywhere ? 1.0 : 0.3
     }
 

@@ -207,6 +207,10 @@ Scope {
                     weight: Font.Light
                 }
                 color: Appearance.zzzEverywhere ? Appearance.zzz.onBg : Appearance.colors.colOnLayer0
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
 
                 opacity: root._cascade >= 1 ? 1.0 : 0.0
                 scale: root._cascade >= 1 ? 1.0 : 0.85
@@ -240,6 +244,10 @@ Scope {
                     letterSpacing: Appearance.zzzEverywhere ? 2 : 0
                 }
                 color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
 
                 opacity: root._cascade >= 2 ? 1.0 : 0.0
                 transform: Translate {
@@ -276,6 +284,10 @@ Scope {
                 }
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
                     : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.2)
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
 
                 opacity: root._cascade >= 3 ? 1.0 : 0.0
                 transform: Translate {
@@ -328,17 +340,29 @@ Scope {
                     text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "thermostat"
                     iconSize: 22
                     color: Appearance.zzzEverywhere ? Appearance.zzz.onBg : Appearance.colors.colOnLayer0
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                 }
                 StyledText {
                     text: Weather.data?.temp ?? ""
                     font.pixelSize: Appearance.font.pixelSize.large
                     color: Appearance.zzzEverywhere ? Appearance.zzz.onBg : Appearance.colors.colOnLayer0
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                 }
                 StyledText {
                     text: Weather.data?.description ?? ""
                     font.pixelSize: Appearance.font.pixelSize.normal
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
                         : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.3)
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                 }
             }
 
@@ -351,6 +375,10 @@ Scope {
                 font.letterSpacing: Appearance.zzzEverywhere ? 1 : 0
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
                     : ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.5)
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
 
                 opacity: root._cascade >= 5 ? 0.7 : 0.0
                 Behavior on opacity {

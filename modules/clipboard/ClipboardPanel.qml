@@ -372,34 +372,47 @@ Scope {
             border.width: Appearance.zzzEverywhere ? 1
                 : Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
                 : Appearance.auroraEverywhere ? 1 : 1
+            Behavior on border.width {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
                 : Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
                 : Appearance.inirEverywhere ? Appearance.inir.colBorder 
                 : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder 
                 : Appearance.colors.colOutlineVariant
+            Behavior on border.color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
                 : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                 : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.screenRounding
+            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             
             // Entry animation
             opacity: GlobalStates.clipboardOpen ? 1 : 0
             scale: GlobalStates.clipboardOpen ? 1 : 0.95
             
             Behavior on opacity {
+                enabled: Appearance.animationsEnabled
                 NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                    duration: Appearance.animation.elementMoveEnter.duration
+                    easing.type: Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
                 }
             }
             Behavior on scale {
+                enabled: Appearance.animationsEnabled
                 NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                    duration: Appearance.animation.elementMoveEnter.duration
+                    easing.type: Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
                 }
             }
             Behavior on height {
+                enabled: Appearance.animationsEnabled
                 NumberAnimation {
                     duration: Appearance.animation.elementMoveEnter.duration
                     easing.type: Appearance.animation.elementMoveEnter.type
@@ -442,6 +455,10 @@ Scope {
                         iconSize: Appearance.font.pixelSize.huge
                         color: Appearance.zzzEverywhere ? Appearance.zzz.accent
                             : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
 
                     StyledText {
@@ -453,6 +470,10 @@ Scope {
                         font.italic: Appearance.zzzEverywhere
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                             : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                         elide: Text.ElideRight
                     }
 
@@ -510,6 +531,10 @@ Scope {
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
                             : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
 
                     IconToolbarButton {

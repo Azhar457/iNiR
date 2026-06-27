@@ -42,6 +42,10 @@ Scope {
         radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
         border.width: Appearance.zzzEverywhere ? 1 : 0
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         implicitHeight: descriptionLabelText.implicitHeight + 10 * 2
         implicitWidth: descriptionLabelText.implicitWidth + 15 * 2
 
@@ -255,6 +259,10 @@ Scope {
                         font.italic: Appearance.zzzEverywhere
                         text: Translation.tr("Session")
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer0
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
 
                     StyledText { // Small instruction
@@ -262,6 +270,10 @@ Scope {
                         horizontalAlignment: Text.AlignHCenter
                         font.pixelSize: Appearance.font.pixelSize.normal
                         color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colOnLayer0
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                         text: Translation.tr("Arrow keys to navigate, Enter to select\nEsc or click anywhere to cancel")
                     }
                 }
@@ -376,6 +388,10 @@ Scope {
                         text: Translation.tr("Your package manager is running")
                         textColor: Appearance.zzzEverywhere ? Appearance.zzz.onSecondary : Appearance.colors.colOnErrorContainer
                         color: Appearance.zzzEverywhere ? Appearance.zzz.secondary : Appearance.colors.colErrorContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
                 }
                 Loader {
@@ -385,6 +401,10 @@ Scope {
                         text: Translation.tr("There might be a download in progress")
                         textColor: Appearance.zzzEverywhere ? Appearance.zzz.onSecondary : Appearance.colors.colOnErrorContainer
                         color: Appearance.zzzEverywhere ? Appearance.zzz.secondary : Appearance.colors.colErrorContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
                 }
             }

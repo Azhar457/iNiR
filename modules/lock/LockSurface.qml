@@ -361,15 +361,19 @@ MouseArea {
         scale: root.showLoginView ? 0.92 : 1
         
         Behavior on opacity {
+            enabled: Appearance.animationsEnabled
             NumberAnimation {
-                duration: 400
-                easing.type: Easing.OutCubic
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
             }
         }
         Behavior on scale {
+            enabled: Appearance.animationsEnabled
             NumberAnimation {
-                duration: 450
-                easing.type: Easing.OutBack
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
             }
         }
         
@@ -1193,7 +1197,12 @@ MouseArea {
                 transformOrigin: Item.Center
                 
                 Behavior on scale {
-                    NumberAnimation { duration: 350; easing.type: Easing.OutBack }
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: Appearance.animation.elementMoveEnter.duration
+                        easing.type: Appearance.animation.elementMoveEnter.type
+                        easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                    }
                 }
                 
                 Rectangle {
