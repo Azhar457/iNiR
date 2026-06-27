@@ -746,9 +746,17 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     Layout.rightMargin: 5
                     implicitWidth: 40
                     implicitHeight: 40
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     enabled: messageInputField.text.length > 0
                     toggled: enabled
+                    // Active send = accent, not the default dark chrome plate.
+                    colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.accent
+                        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                        : Appearance.colors.colPrimary
+                    colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+                        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryHover
+                        : Appearance.colors.colPrimaryHover
 
                     MouseArea {
                         anchors.fill: parent
@@ -764,7 +772,9 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
                         iconSize: 22
-                        color: sendButton.enabled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2Disabled
+                        color: sendButton.enabled
+                            ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary)
+                            : Appearance.colors.colOnLayer2Disabled
                         text: "arrow_upward"
                     }
                 }

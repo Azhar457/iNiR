@@ -41,7 +41,10 @@ QtObject {
         ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, Appearance.angel.cardTransparentize * 0.7)
         // bg3 (not tile): the content field sits at bg2 now, so cards must lift a
         // clear step above it instead of matching it — depth by layer, not stroke.
-        : Appearance.zzzEverywhere ? Appearance.zzz.bg3
+        // ZZZ: transparent so the card complements the window/console ground
+        // (dark or light) instead of stacking another dark plate. Definition comes
+        // from the diagonal pattern + accent bar, not a filled surface + line.
+        : Appearance.zzzEverywhere ? "transparent"
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, 0.85)
         : Appearance.colors.colLayer1

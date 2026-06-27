@@ -116,31 +116,9 @@ TabButton {
                 : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
             // Organic morph on style/shape switch (organic-transitions)
             Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
-            color: Appearance.zzzEverywhere
-                ? "transparent"
-                : Appearance.angelEverywhere
-                ? (toggled
-                    ? (root.showToggledHighlight
-                        ? (root.down ? Appearance.angel.colGlassCardActive : root.hovered ? Appearance.angel.colGlassCardHover : Appearance.angel.colGlassCard)
-                        : "transparent")
-                    : (root.down ? Appearance.angel.colGlassCardActive : root.hovered ? Appearance.angel.colGlassCardHover : "transparent"))
-                : Appearance.inirEverywhere
-                ? (toggled
-                    ? (root.showToggledHighlight
-                        ? (root.down ? Appearance.inir.colLayer2Active : root.hovered ? Appearance.inir.colLayer2Hover : Appearance.inir.colLayer2)
-                        : "transparent")
-                    : (root.down ? Appearance.inir.colLayer2Active : root.hovered ? Appearance.inir.colLayer2Hover : "transparent"))
-                : Appearance.auroraEverywhere
-                    ? (toggled ?
-                        root.showToggledHighlight ?
-                            (root.down ? Appearance.aurora.colSubSurfaceActive : root.hovered ? Appearance.aurora.colSubSurfaceHover : Appearance.aurora.colElevatedSurface)
-                            : "transparent" :
-                        (root.down ? Appearance.aurora.colSubSurfaceActive : root.hovered ? Appearance.aurora.colSubSurfaceHover : "transparent"))
-                    : (toggled ?
-                        root.showToggledHighlight ?
-                            (root.down ? Appearance.colors.colSecondaryContainerActive : root.hovered ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
-                            : (root.down ? Appearance.colors.colLayer1Active : root.hovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.colors.colPrimary, 0.92)) :
-                        (root.down ? Appearance.colors.colLayer1Active : root.hovered ? Appearance.colors.colLayer1Hover : "transparent"))
+            // Bgless doctrine (shell-wide nav rails): no plate at rest, hover, press
+            // or selection. State is carried entirely by the icon colour + weight.
+            color: "transparent"
 
             states: State {
                 name: "expanded"
@@ -191,11 +169,14 @@ TabButton {
                 animateFill: true
                 font.weight: (toggled || root.hovered) ? Font.DemiBold : Font.Normal
                 text: buttonIcon
+                // Bgless: active icon carries the accent itself (no plate behind).
                 color: Appearance.zzzEverywhere
                     ? (toggled ? Appearance.zzz.accent : (root.hovered ? Appearance.zzz.ink : Appearance.zzz.inkMuted))
-                    : toggled
-                    ? (root.showToggledHighlight ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colPrimary)
-                    : Appearance.colors.colOnLayer1
+                    : Appearance.angelEverywhere
+                    ? (toggled ? Appearance.angel.colPrimary : (root.hovered ? Appearance.angel.colText : Appearance.angel.colTextSecondary))
+                    : Appearance.inirEverywhere
+                    ? (toggled ? Appearance.inir.colPrimary : (root.hovered ? Appearance.inir.colText : Appearance.inir.colTextSecondary))
+                    : (toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1)
 
                 Behavior on color {
                     enabled: Appearance.animationsEnabled

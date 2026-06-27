@@ -137,7 +137,7 @@ Item {
         radius: SettingsMaterialPreset.cardRadius
         color: SettingsMaterialPreset.cardColor
         border.width: Appearance.angelEverywhere ? 0
-                     : (Appearance.zzzEverywhere ? Appearance.zzz.borderThick
+                     : (Appearance.zzzEverywhere ? 0
                      : (Appearance.inirEverywhere ? 1
                      : (Appearance.auroraEverywhere ? 1 : 1)))
         border.color: Appearance.angelEverywhere ? "transparent" : SettingsMaterialPreset.cardBorderColor
