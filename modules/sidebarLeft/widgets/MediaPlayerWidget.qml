@@ -33,6 +33,8 @@ Item {
     property string artDownloadLocation: Directories.coverArt
     readonly property bool downloaded: MediaArtwork.ready
     property string displayedArtFilePath: MediaArtwork.displaySource
+    // Track-change slide direction (+1 next, -1 previous) drives the cross-slide
+    property int slideDirection: 1
 
     // Cava visualizer - using shared CavaProcess component
     CavaProcess {
@@ -95,6 +97,10 @@ Item {
             : Appearance.angelEverywhere ? "transparent"
             : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
         clip: true
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
         AngelPartialBorder { targetRadius: card.radius; coverage: 0.5 }
 
@@ -157,104 +163,24 @@ Item {
             anchors.margins: 10
             spacing: 10
 
-            // Cover art thumbnail
-            Rectangle {
+            // Cover art thumbnail — direction-aware cross-slide
+            MediaCrossSlideImage {
                 id: coverArtContainer
                 Layout.preferredWidth: 110
                 Layout.preferredHeight: 110
-                radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                artRadius: Appearance.zzzEverywhere ? Appearance.zzz.roundNormal
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                     : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-                color: "transparent"
-                clip: true
-
-                layer.enabled: true
-                layer.effect: GE.OpacityMask {
-                    maskSource: Rectangle { 
-                        width: 110
-                        height: 110
-                        radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                            : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small 
-                    }
-                }
-
-                // Cover art with blur transition
-                Image {
-                    id: coverArt
-                    anchors.fill: parent
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    cache: false
-                    
-                    layer.enabled: Appearance.effectsEnabled
-                    layer.effect: MultiEffect {
-                        blurEnabled: true
-                        blur: coverArtContainer.transitioning ? 1 : 0
-                        blurMax: 32
-                        Behavior on blur {
-                            enabled: Appearance.animationsEnabled
-                            NumberAnimation { duration: 150; easing.type: Easing.InOutQuad }
-                        }
-                    }
-                }
-
-                property bool transitioning: false
-                property string pendingSource: ""
-                
-                Timer {
-                    id: blurInTimer
-                    interval: 150
-                    onTriggered: {
-                        coverArt.source = coverArtContainer.pendingSource
-                        blurOutTimer.start()
-                    }
-                }
-                
-                Timer {
-                    id: blurOutTimer
-                    interval: 50
-                    onTriggered: coverArtContainer.transitioning = false
-                }
-                
-                Connections {
-                    target: root
-                    function onDisplayedArtFilePathChanged() {
-                        if (!root.displayedArtFilePath) {
-                            blurInTimer.stop()
-                            blurOutTimer.stop()
-                            coverArtContainer.pendingSource = ""
-                            coverArtContainer.transitioning = false
-                            coverArt.source = ""
-                            return
-                        }
-                        if (!coverArt.source.toString()) {
-                            coverArt.source = root.displayedArtFilePath
-                            return
-                        }
-                        coverArtContainer.pendingSource = root.displayedArtFilePath
-                        coverArtContainer.transitioning = true
-                        blurInTimer.start()
-                    }
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                        : Appearance.inirEverywhere ? root.jiraColLayer2 : (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
-                    opacity: root.downloaded ? 0 : 1
-                    visible: opacity > 0
-                    Behavior on opacity {
-                        enabled: Appearance.animationsEnabled
-                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic }
-                    }
-                    
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "music_note"
-                        iconSize: 32
-                        color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                            : Appearance.inirEverywhere ? root.jiraColTextSecondary : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
-                    }
-                }
+                source: root.displayedArtFilePath
+                downloaded: root.downloaded
+                slideDirection: root.slideDirection
+                placeholderColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.inirEverywhere ? root.jiraColLayer2
+                    : (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
+                iconColor: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
+                    : Appearance.inirEverywhere ? root.jiraColTextSecondary
+                    : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
+                iconSize: 32
             }
 
             // Info & controls column
@@ -273,7 +199,8 @@ Item {
                         : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                     elide: Text.ElideRight
                     animateChange: true
-                    animationDistanceX: 6
+                    animationDistanceX: root.slideDirection * 8
+                    animationDistanceY: 0
                 }
 
                 // Artist
@@ -285,6 +212,9 @@ Item {
                         : Appearance.inirEverywhere ? root.jiraColTextSecondary : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
                     elide: Text.ElideRight
                     visible: text !== ""
+                    animateChange: true
+                    animationDistanceX: root.slideDirection * 8
+                    animationDistanceY: 0
                 }
 
                 Item { Layout.fillHeight: true }
@@ -361,7 +291,10 @@ Item {
                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
                         colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
-                        onClicked: MprisController.previous()
+                        onClicked: {
+                            root.slideDirection = -1
+                            MprisController.previous()
+                        }
 
                         contentItem: Item {
                             MaterialSymbol {
@@ -456,7 +389,10 @@ Item {
                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
                         colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
-                        onClicked: MprisController.next()
+                        onClicked: {
+                            root.slideDirection = 1
+                            MprisController.next()
+                        }
 
                         contentItem: Item {
                             MaterialSymbol {

@@ -138,6 +138,7 @@ Item {
                     height: (Appearance.zzzEverywhere || Appearance.inirEverywhere) ? 2 : 6
                     radius: (Appearance.zzzEverywhere || Appearance.inirEverywhere) ? 1 : 3
                     color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     scale: launchBtn.isRunning ? 1 : 0
                     opacity: launchBtn.isRunning ? 1 : 0
 

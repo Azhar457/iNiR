@@ -469,9 +469,11 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     id: commandButton
                     colBackground: Appearance.angelEverywhere
                         ? (suggestions.selectedIndex === index ? Appearance.angel.colGlassCardHover : Appearance.angel.colGlassCard)
-                        : Appearance.auroraEverywhere 
+                        : Appearance.auroraEverywhere
                             ? (suggestions.selectedIndex === index ? Appearance.aurora.colSubSurface : "transparent")
-                            : (suggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
+                            : Appearance.zzzEverywhere
+                                ? (suggestions.selectedIndex === index ? Appearance.colors.colLayer1Active : "transparent")
+                                : (suggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
                     bounce: false
                     contentItem: StyledText {
                         font.pixelSize: Appearance.font.pixelSize.smaller

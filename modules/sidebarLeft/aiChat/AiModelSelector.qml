@@ -151,7 +151,9 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 32
-                radius: Appearance.rounding.small
+                // Concentric with the popup (radius normal, inset 8) so the field
+                // echoes the surface it sits on instead of a stray small radius.
+                radius: Appearance.concentricRadius(Appearance.rounding.normal, 8)
                 color: Appearance.colors.colLayer2
 
                 MaterialSymbol {
@@ -211,7 +213,10 @@ Item {
                     required property int index
                     width: listView.width
                     implicitHeight: rowLayout.implicitHeight + 12
-                    buttonRadius: Appearance.rounding.small
+                    // Concentric with the popup surface (radius normal, inset 8)
+                    // so a selected row reads as carved from the popup, not a
+                    // differently-shaped chip floating inside it.
+                    buttonRadius: Appearance.concentricRadius(Appearance.rounding.normal, 8)
                     readonly property bool isCurrent: modelData.id === Ai.currentModelId
                     colBackground: isCurrent ? Appearance.colors.colSecondaryContainer : "transparent"
                     colBackgroundHover: Appearance.colors.colLayer2Hover

@@ -293,8 +293,10 @@ Item {
                     id: tagButton
                     colBackground: Appearance.angelEverywhere
                         ? (tagSuggestions.selectedIndex === index ? Appearance.angel.colGlassCardHover : Appearance.angel.colGlassCard)
-                        : Appearance.auroraEverywhere 
+                        : Appearance.auroraEverywhere
                         ? (tagSuggestions.selectedIndex === index ? Appearance.aurora.colSubSurface : "transparent")
+                        : Appearance.zzzEverywhere
+                        ? (tagSuggestions.selectedIndex === index ? Appearance.colors.colLayer1Active : "transparent")
                         : (tagSuggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
                     bounce: false
                     contentItem: RowLayout {

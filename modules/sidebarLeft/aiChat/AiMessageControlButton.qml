@@ -10,11 +10,13 @@ GroupButton {
     toggled: activated
     baseWidth: height
     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colSecondaryContainerHover
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
+        : Appearance.zzzEverywhere ? Appearance.colors.colLayer1Hover : Appearance.colors.colSecondaryContainerHover
     colBackgroundActive: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
+        : Appearance.zzzEverywhere ? Appearance.colors.colLayer1Active : Appearance.colors.colSecondaryContainerActive
 
     contentItem: MaterialSymbol {
         horizontalAlignment: Text.AlignHCenter

@@ -215,6 +215,7 @@ Item {
         implicitHeight: col.implicitHeight + 20
         radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
         color: "transparent"
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
 
         ColumnLayout {
             id: col
@@ -242,6 +243,7 @@ Item {
                 Rectangle {
                     width: 6; height: 6; radius: 3
                     color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     scale: root.loading ? 1 : 0
                     visible: scale > 0
                     Behavior on scale {
@@ -291,6 +293,10 @@ Item {
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.monospace
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                         Layout.preferredWidth: 36
                     }
 
@@ -301,6 +307,10 @@ Item {
                         font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
                         font.italic: Appearance.zzzEverywhere
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                         Layout.fillWidth: true
                     }
 
@@ -312,6 +322,10 @@ Item {
                         values: row.spark
                         color: row.up ? (Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
                                       : (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                         fillOpacity: 0.25
                         alignment: Graph.Alignment.Right
                     }
@@ -327,6 +341,10 @@ Item {
                             iconSize: 14
                             color: row.up ? (Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
                                           : (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
                         }
                         StyledText {
                             text: Math.abs(row.chg).toFixed(1) + "%"
@@ -334,6 +352,10 @@ Item {
                             font.family: Appearance.font.family.numbers
                             color: row.up ? (Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
                                           : (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError)
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
                         }
                     }
                 }
@@ -344,12 +366,20 @@ Item {
                 text: Translation.tr("Failed to load")
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 color: Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
             }
             StyledText {
                 visible: root.coins.length === 0
                 text: Translation.tr("No coins configured")
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
             }
         }
     }

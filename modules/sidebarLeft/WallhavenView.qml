@@ -457,8 +457,10 @@ Item {
                     id: cmdButton
                     colBackground: Appearance.angelEverywhere
                         ? (commandSuggestions.selectedIndex === index ? Appearance.angel.colGlassCardHover : Appearance.angel.colGlassCard)
-                        : Appearance.auroraEverywhere 
+                        : Appearance.auroraEverywhere
                         ? (commandSuggestions.selectedIndex === index ? Appearance.aurora.colSubSurface : "transparent")
+                        : Appearance.zzzEverywhere
+                        ? (commandSuggestions.selectedIndex === index ? Appearance.colors.colLayer1Active : "transparent")
                         : (commandSuggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
                     bounce: false
                     contentItem: StyledText {
@@ -515,8 +517,10 @@ Item {
                     id: tagButton
                     colBackground: Appearance.angelEverywhere
                         ? (tagSuggestions.selectedIndex === index ? Appearance.angel.colGlassCardHover : Appearance.angel.colGlassCard)
-                        : Appearance.auroraEverywhere 
+                        : Appearance.auroraEverywhere
                         ? (tagSuggestions.selectedIndex === index ? Appearance.aurora.colSubSurface : "transparent")
+                        : Appearance.zzzEverywhere
+                        ? (tagSuggestions.selectedIndex === index ? Appearance.colors.colLayer1Active : "transparent")
                         : (tagSuggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
                     bounce: false
                     contentItem: RowLayout {

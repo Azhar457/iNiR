@@ -148,6 +148,10 @@ Item {
                     text: icon
                     iconSize: 14
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                 }
 
                 StyledText {
@@ -158,6 +162,10 @@ Item {
                     font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Medium
                     font.italic: Appearance.zzzEverywhere
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer1
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                 }
             }
 
