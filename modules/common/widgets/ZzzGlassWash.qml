@@ -12,12 +12,15 @@ import qs.services
 Item {
     id: root
 
-    property real maskRadius: 0
+    // Default the mask to the ACTIVE zzz silhouette so the blurred wallpaper never
+    // escapes past a rounded/chamfered plate. Mirrors ZzzPlate's own defaults:
+    // round mode → panelRadius rounded; square mode → bottom-right cut corner.
+    property real maskRadius: Appearance.zzz.round ? Appearance.zzz.panelRadius : 0
     property real chamfer: Appearance.zzz.cutCorner
     property bool chamferTopLeft: false
     property bool chamferTopRight: false
     property bool chamferBottomLeft: false
-    property bool chamferBottomRight: false
+    property bool chamferBottomRight: !Appearance.zzz.round
     property bool glassEnabled: Appearance.zzzEverywhere
         && Appearance.effectsEnabled
         && (Config.options?.appearance?.zzz?.glass ?? true)

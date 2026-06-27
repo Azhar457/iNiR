@@ -418,7 +418,10 @@ Item { // Wrapper
         implicitWidth: columnLayout.implicitWidth
         implicitHeight: columnLayout.implicitHeight
         radius: root.zzzEverywhere ? Appearance.zzz.panelRadius : searchBar.height / 2 + searchBar.verticalPadding
-        fallbackColor: root.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colBackgroundSurfaceContainer
+        // Collapsed zzz search: let ZzzGraphicPlate own the (chamfered/rounded) fill so
+        // the GlassBackground's rounded rect doesn't escape behind it. Results surface
+        // still needs the paper fill (its backdrop is decoration only).
+        fallbackColor: root.zzzEverywhere ? (root.showResults ? Appearance.zzz.paper : "transparent") : Appearance.colors.colBackgroundSurfaceContainer
         inirColor: Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
         wallpaperBackdropEnabled: root.panelVisible && !root.zzzEverywhere
