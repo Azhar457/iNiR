@@ -320,7 +320,11 @@ Rectangle {
 
                 contentHeight: tabColumn.implicitHeight
                 clip: true
-                interactive: true
+                // Only steal drags when there's actually something to scroll —
+                // otherwise the Flickable eats quick taps on the nav icons and the
+                // section doesn't open. (No visible plate now, so misses are obvious.)
+                interactive: contentHeight > height
+                pressDelay: 0
 
                 ColumnLayout {
                     id: tabColumn

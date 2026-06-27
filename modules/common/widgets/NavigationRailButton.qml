@@ -178,6 +178,14 @@ TabButton {
                     ? (toggled ? Appearance.inir.colPrimary : (root.hovered ? Appearance.inir.colText : Appearance.inir.colTextSecondary))
                     : (toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1)
 
+                // Bgless press feedback: the glyph dips on press so a click reads
+                // as registered without any plate behind it.
+                scale: root.down ? 0.82 : 1
+                Behavior on scale {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.clickBounce.duration; easing.type: Appearance.animation.clickBounce.type; easing.bezierCurve: Appearance.animation.clickBounce.bezierCurve }
+                }
+
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
