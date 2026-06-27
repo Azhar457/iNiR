@@ -476,6 +476,10 @@ Scope {
                       : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                       : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
                       : Appearance.rounding.windowRounding
+                Behavior on radius {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot }
+                }
                 // backgroundOpacity only applies to glass styles (aurora/angel) — solid styles stay opaque
                 color: Appearance.auroraEverywhere ? "transparent"
                      : Appearance.inirEverywhere ? Appearance.inir.colLayer0
@@ -498,10 +502,6 @@ Scope {
                 Behavior on border.color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                }
-                Behavior on radius {
-                    enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot }
                 }
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
@@ -547,10 +547,16 @@ Scope {
                     accentColor: Appearance.zzz.accent
                     showTicks: false
                     showBurst: false
+                    // Drop the grid cuadriculado behind the cards: it muddied the
+                    // panel and hurt card/text legibility. The lit-console gradient
+                    // + ghost + frame carry the ZZZ identity, cleaner. Also fewer
+                    // delegates → lighter. Ghost pulled back so it reads as a
+                    // watermark, not noise.
+                    showGrid: false
                     horizontalBias: 0.12
                     verticalBias: 0.03
                     ghostWidthFactor: 0.88
-                    ghostStrength: 0.94
+                    ghostStrength: 0.5
                     z: 1
                 }
 
@@ -1209,6 +1215,17 @@ Scope {
                             }
                         }
 
+                        // ZZZ no longer needs a separate nav/content rule: the content
+                        // plate and active pill provide enough separation without a hard line.
+                        Rectangle {
+                            visible: false
+                            Layout.fillHeight: true
+                            Layout.topMargin: 6
+                            Layout.bottomMargin: 6
+                            Layout.preferredWidth: Math.max(1, Appearance.zzz.borderThick)
+                            color: Appearance.zzz.hairlineStrong
+                        }
+
                         // Content area
                         Rectangle {
                             id: overlayContentContainer
@@ -1217,12 +1234,18 @@ Scope {
                             radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                                  : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                                  : Appearance.rounding.normal
+                            // ZZZ: lift the content field clearly off the chrome panel +
+                            // nav rail so the reading area reads as its own plate (bg2),
+                            // not the same black. Hairline seals the edge.
                             color: Appearance.auroraEverywhere ? "transparent"
+                                 : Appearance.zzzEverywhere ? Appearance.zzz.bg2
                                  : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                                  : Appearance.colors.colSurfaceContainerLow
                             border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                                        : Appearance.zzzEverywhere ? Appearance.zzz.borderThick
                                         : Appearance.inirEverywhere ? 1 : 0
                             border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                                        : Appearance.zzzEverywhere ? Appearance.zzz.hairline
                                         : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle : "transparent"
                             clip: true
 
@@ -1298,7 +1321,7 @@ Scope {
                                     anchors { bottom: parent.bottom; left: parent.left; right: parent.right; leftMargin: 16; rightMargin: 16 }
                                     height: 1
                                     color: Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle : Appearance.colors.colOutlineVariant
-                                    opacity: 0.5
+                                    opacity: 0
                                 }
                             }
 

@@ -36,4 +36,19 @@ ColumnLayout {
         font.pixelSize: Appearance.font.pixelSize.smaller
         wrapMode: Text.WordWrap
     }
+
+    ConfigSwitch {
+        Layout.fillWidth: true
+        text: Translation.tr("Wallpaper glass")
+        checked: Config.options?.appearance?.zzz?.glass ?? true
+        onCheckedChanged: Config.setNestedValue("appearance.zzz.glass", checked)
+    }
+
+    StyledText {
+        Layout.fillWidth: true
+        text: Translation.tr("Adds a subtle blurred-wallpaper wash behind the technical grid on ZZZ panels, so the carbon console picks up a faint hue of your desktop. The grid lines stay crisp on top. Disabled automatically when effects are off (game mode / reduced effects).")
+        color: Appearance.colors.colSubtext
+        font.pixelSize: Appearance.font.pixelSize.smaller
+        wrapMode: Text.WordWrap
+    }
 }

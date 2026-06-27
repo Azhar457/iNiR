@@ -469,6 +469,9 @@ ApplicationWindow {
     }
 
     ZzzSurfaceAccent {
+        // No top registration tape on this large utility window — it reads as an
+        // ugly hard border along the top edge. Keep only the diagonal backdrop.
+        showTape: false
         stripeCount: 34
         edgeMargin: root.contentPadding
         z: 1
