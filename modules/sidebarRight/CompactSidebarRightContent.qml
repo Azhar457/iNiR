@@ -159,6 +159,29 @@ Item {
         { id: "notifications", icon: "notifications", label: Translation.tr("Notifications") },
     ]
 
+    component CompactContentSurface: Rectangle {
+        id: surface
+
+        default property alias content: contentHolder.data
+
+        anchors.margins: root.compactContentPadding
+        radius: 0
+        color: "transparent"
+        border.width: 0
+        border.color: "transparent"
+        clip: false
+
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+
+        Item {
+            id: contentHolder
+            anchors.fill: parent
+        }
+    }
+
     Component {
         id: calendarComponent
         Item {
@@ -184,20 +207,15 @@ Item {
                         id: calendarSurface
                         anchors.fill: parent
                         implicitHeight: calWidget.implicitHeight + 12
-                        radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                            : bg.zzzEverywhere ? Appearance.zzz.controlRadius
-                            : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                            : Appearance.rounding.normal
-                        color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                            : bg.inirEverywhere ? Appearance.inir.colLayer1
-                            : bg.colDarkSurface
-                        border.width: bg.zzzEverywhere ? 1 : 0
-                        border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                            : bg.zzzEverywhere ? Appearance.zzz.hairline
-                            : bg.inirEverywhere ? Appearance.inir.colBorder
-                            : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                            : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                        clip: true
+                        radius: 0
+                        color: "transparent"
+                        border.width: 0
+                        Behavior on border.width {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                        border.color: "transparent"
+                        clip: false
 
                         CalendarWidget {
                             id: calWidget
@@ -355,24 +373,9 @@ Item {
                 blur: 0.35 * Appearance.sizes.elevationMargin
             }
 
-            Rectangle {
+            CompactContentSurface {
                 id: eventsSurface
                 anchors.fill: parent
-                anchors.margins: root.compactContentPadding
-                radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
-                    : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.colDarkSurface
-                border.width: bg.zzzEverywhere ? 1 : 0
-                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                    : bg.zzzEverywhere ? Appearance.zzz.hairline
-                    : bg.inirEverywhere ? Appearance.inir.colBorder
-                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                clip: true
 
                 EventsWidget { 
                     anchors.fill: parent
@@ -396,24 +399,9 @@ Item {
                 blur: 0.35 * Appearance.sizes.elevationMargin
             }
 
-            Rectangle {
+            CompactContentSurface {
                 id: todoSurface
                 anchors.fill: parent
-                anchors.margins: root.compactContentPadding
-                radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
-                    : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.colDarkSurface
-                border.width: bg.zzzEverywhere ? 1 : 0
-                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                    : bg.zzzEverywhere ? Appearance.zzz.hairline
-                    : bg.inirEverywhere ? Appearance.inir.colBorder
-                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                clip: true
 
                 TodoWidget {
                     anchors.fill: parent
@@ -433,24 +421,9 @@ Item {
                 blur: 0.35 * Appearance.sizes.elevationMargin
             }
 
-            Rectangle {
+            CompactContentSurface {
                 id: notepadSurface
                 anchors.fill: parent
-                anchors.margins: root.compactContentPadding
-                radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
-                    : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.colDarkSurface
-                border.width: bg.zzzEverywhere ? 1 : 0
-                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                    : bg.zzzEverywhere ? Appearance.zzz.hairline
-                    : bg.inirEverywhere ? Appearance.inir.colBorder
-                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                clip: true
 
                 NotepadWidget {
                     anchors.fill: parent
@@ -470,24 +443,9 @@ Item {
                 blur: 0.35 * Appearance.sizes.elevationMargin
             }
 
-            Rectangle {
+            CompactContentSurface {
                 id: calculatorSurface
                 anchors.fill: parent
-                anchors.margins: root.compactContentPadding
-                radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
-                    : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.colDarkSurface
-                border.width: bg.zzzEverywhere ? 1 : 0
-                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                    : bg.zzzEverywhere ? Appearance.zzz.hairline
-                    : bg.inirEverywhere ? Appearance.inir.colBorder
-                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                clip: true
 
                 CalculatorWidget {
                     compactMode: true
@@ -509,24 +467,9 @@ Item {
                 blur: 0.35 * Appearance.sizes.elevationMargin
             }
 
-            Rectangle {
+            CompactContentSurface {
                 id: sysmonSurface
                 anchors.fill: parent
-                anchors.margins: root.compactContentPadding
-                radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
-                    : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.colDarkSurface
-                border.width: bg.zzzEverywhere ? 1 : 0
-                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                    : bg.zzzEverywhere ? Appearance.zzz.hairline
-                    : bg.inirEverywhere ? Appearance.inir.colBorder
-                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                clip: true
 
                 SysMonWidget {
                     anchors.fill: parent
@@ -546,24 +489,9 @@ Item {
                 blur: 0.35 * Appearance.sizes.elevationMargin
             }
 
-            Rectangle {
+            CompactContentSurface {
                 id: timerSurface
                 anchors.fill: parent
-                anchors.margins: root.compactContentPadding
-                radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
-                    : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.colDarkSurface
-                border.width: bg.zzzEverywhere ? 1 : 0
-                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                    : bg.zzzEverywhere ? Appearance.zzz.hairline
-                    : bg.inirEverywhere ? Appearance.inir.colBorder
-                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                clip: true
 
                 PomodoroWidget {
                     anchors.fill: parent
@@ -584,24 +512,9 @@ Item {
                 blur: 0.35 * Appearance.sizes.elevationMargin
             }
 
-            Rectangle {
+            CompactContentSurface {
                 id: screenTimeSurface
                 anchors.fill: parent
-                anchors.margins: root.compactContentPadding
-                radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
-                    : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.colDarkSurface
-                border.width: bg.zzzEverywhere ? 1 : 0
-                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                    : bg.zzzEverywhere ? Appearance.zzz.hairline
-                    : bg.inirEverywhere ? Appearance.inir.colBorder
-                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                clip: true
 
                 ScreenTimeWidget {
                     anchors.fill: parent
@@ -621,24 +534,9 @@ Item {
                 blur: 0.35 * Appearance.sizes.elevationMargin
             }
 
-            Rectangle {
+            CompactContentSurface {
                 id: weatherSurface
                 anchors.fill: parent
-                anchors.margins: root.compactContentPadding
-                radius: bg.angelEverywhere ? Appearance.angel.roundingNormal
-                    : bg.zzzEverywhere ? Appearance.zzz.controlRadius
-                    : bg.inirEverywhere ? Appearance.inir.roundingNormal
-                    : Appearance.rounding.normal
-                color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.colDarkSurface
-                border.width: bg.zzzEverywhere ? 1 : 0
-                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                    : bg.zzzEverywhere ? Appearance.zzz.hairline
-                    : bg.inirEverywhere ? Appearance.inir.colBorder
-                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.78)
-                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                clip: true
 
                 StyledFlickable {
                     anchors.fill: parent
@@ -844,6 +742,7 @@ Item {
         anchors.fill: parent
 
         property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
+        readonly property bool zzzEverywhere:    Appearance.zzzEverywhere
         readonly property bool angelEverywhere:  Appearance.angelEverywhere
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
         readonly property bool inirEverywhere:   Appearance.inirEverywhere
@@ -892,6 +791,7 @@ Item {
             : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.20)
         readonly property color colDarkSurfaceActive: angelEverywhere
             ? Appearance.angel.colGlassCardActive
+            : zzzEverywhere ? Appearance.zzz.bg3
             : inirEverywhere ? Appearance.inir.colLayer2Active
             : auroraEverywhere ? ColorUtils.transparentize(
                 (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1),
@@ -906,10 +806,18 @@ Item {
              : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
 
         border.width: gameModeMinimal ? 0 : (Appearance.zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
                     : angelEverywhere  ? Appearance.angel.colPanelBorder
                     : inirEverywhere   ? Appearance.inir.colBorder
                     : Appearance.colors.colLayer0Border
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
 
         radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
               : angelEverywhere  ? Appearance.angel.roundingNormal
@@ -984,11 +892,11 @@ Item {
             accentColor: Appearance.zzz.accent
             showTicks: false
             showBurst: false
-            showGrid: false
-            horizontalBias: 0.18
-            verticalBias: 0.04
-            ghostWidthFactor: 0.86
-            ghostStrength: 0.7
+            showGrid: true
+            horizontalBias: 0.10
+            verticalBias: 0.16
+            ghostWidthFactor: 0.6
+            ghostStrength: 0.55
             z: 0
         }
 
@@ -1023,17 +931,27 @@ Item {
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                     : bg.angelEverywhere ? Appearance.angel.roundingNormal
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
-                    : bg.angelEverywhere ? Appearance.angel.colGlassCard
-                    : bg.inirEverywhere ? Appearance.inir.colLayer1
-                    : bg.auroraEverywhere ? "transparent"
-                    : Appearance.colors.colLayer1
-                border.width: Appearance.zzzEverywhere ? 1
-                    : bg.angelEverywhere ? Appearance.angel.cardBorderWidth
-                    : bg.inirEverywhere ? 1 : 0
-                border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
-                    : bg.angelEverywhere ? Appearance.angel.colCardBorder
-                    : bg.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                Behavior on radius {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                // Compact mode sits directly on the panel background (no wrapper card),
+                // matching the normal SidebarRightContent layout.
+                color: "transparent"
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                border.width: 0
+                Behavior on border.width {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+                border.color: "transparent"
+                Behavior on border.color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
                 clip: true
 
                 layer.enabled: !bg.gameModeMinimal
@@ -1090,15 +1008,10 @@ Item {
                     radius: bg.angelEverywhere ? Appearance.angel.roundingSmall
                           : bg.inirEverywhere  ? Appearance.inir.roundingSmall
                           : Appearance.rounding.small
-                    color: bg.inirEverywhere  ? Appearance.inir.colSecondaryContainer
-                         : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.60)
-                         : bg.auroraEverywhere ? bg.colDarkSurfaceHover
-                         : ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.20)
+                    // Bgless doctrine: the selected category is signalled by the colored
+                    // material symbol + left accent pill (navPill), not a tenuous plate.
+                    color: "transparent"
                     border.width: 0
-                    border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.38)
-                        : bg.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colBorder, 0.36)
-                        : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
-                        : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.66)
                     visible: root.activeSection >= 0 && root.activeSection < root.sections.length
 
                     Behavior on y {
@@ -1118,11 +1031,14 @@ Item {
                     y: navIndicator.colTop + navIndicator.clampedIdx * (navIndicator.navItemH + navIndicator.navSpacing) + (navIndicator.navItemH - height) / 2
                     width: 3
                     height: 26
-                    radius: 2
-                    color: bg.inirEverywhere  ? Appearance.inir.colPrimary
+                    color: bg.zzzEverywhere   ? Appearance.zzz.accent
+                         : bg.inirEverywhere  ? Appearance.inir.colPrimary
                          : bg.angelEverywhere ? Appearance.angel.colPrimary
                          : Appearance.colors.colPrimary
-                    visible: false
+                    radius: bg.zzzEverywhere ? 0 : 2
+                    visible: root.activeSection >= 0 && root.activeSection < root.sections.length
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+                    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
 
                     Behavior on y {
                         enabled: Appearance.animationsEnabled
@@ -1178,23 +1094,10 @@ Item {
                                       : bg.inirEverywhere  ? Appearance.inir.roundingSmall
                                       : Appearance.rounding.small
 
-                                color: {
-                                    if (navMA.containsPress)
-                                        return bg.inirEverywhere  ? Appearance.inir.colLayer2Active
-                                             : bg.angelEverywhere ? Appearance.angel.colGlassCardActive
-                                             : Appearance.colors.colLayer1Active
-                                    if (navMA.containsMouse)
-                                        return bg.inirEverywhere  ? Appearance.inir.colLayer2Hover
-                                             : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                             : Appearance.colors.colLayer1Hover
-                                    return "transparent"
-                                }
+                                // Bgless doctrine: no plate at rest, hover or press.
+                                // Feedback lives in the icon colour/weight + accent pill.
+                                color: "transparent"
                                 border.width: 0
-                                border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.42)
-                                    : bg.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colBorder, 0.34)
-                                    : bg.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.74)
-                                    : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.68)
-                                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
 
                                 MaterialSymbol {
                                     anchors.centerIn: parent
@@ -1203,13 +1106,21 @@ Item {
                                     animateFill: true
                                     font.weight: (navItem.isActive || navMA.containsMouse) ? Font.DemiBold : Font.Normal
                                     text: navItem.modelData.icon
+                                    // Bgless: active icon carries the accent itself (no plate behind)
                                     color: navItem.isActive
-                                        ? (bg.inirEverywhere  ? Appearance.inir.colOnSecondaryContainer
-                                         : bg.angelEverywhere ? Appearance.angel.colOnPrimary
-                                         : Appearance.colors.colOnSecondaryContainer)
-                                        : (bg.inirEverywhere  ? Appearance.inir.colTextSecondary
-                                         : bg.angelEverywhere ? Appearance.angel.colTextSecondary
-                                         : Appearance.colors.colOnLayer1)
+                                        ? (bg.zzzEverywhere   ? Appearance.zzz.accent
+                                         : bg.inirEverywhere  ? Appearance.inir.colPrimary
+                                         : bg.angelEverywhere ? Appearance.angel.colPrimary
+                                         : Appearance.colors.colPrimary)
+                                        : (navMA.containsMouse
+                                         ? (bg.zzzEverywhere  ? Appearance.zzz.ink
+                                          : bg.inirEverywhere ? Appearance.inir.colText
+                                          : bg.angelEverywhere ? Appearance.angel.colText
+                                          : Appearance.colors.colOnLayer1)
+                                         : (bg.zzzEverywhere  ? Appearance.zzz.inkMuted
+                                          : bg.inirEverywhere ? Appearance.inir.colTextSecondary
+                                          : bg.angelEverywhere ? Appearance.angel.colTextSecondary
+                                          : Appearance.colors.colOnLayer1))
                                     Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
                                 }
 
@@ -1321,13 +1232,9 @@ Item {
                                       : Appearance.rounding.small
                                 color: {
                                     if (sysMA.containsPress)
-                                        return bg.inirEverywhere  ? Appearance.inir.colLayer2Active
-                                             : bg.angelEverywhere ? Appearance.angel.colGlassCardActive
-                                             : Appearance.colors.colLayer1Active
+                                        return bg.colDarkSurfaceActive
                                     if (sysMA.containsMouse)
-                                        return bg.inirEverywhere  ? Appearance.inir.colLayer2Hover
-                                             : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                             : Appearance.colors.colLayer1Hover
+                                        return bg.colDarkSurfaceHover
                                     return "transparent"
                                 }
                                 border.width: 0
@@ -1376,13 +1283,9 @@ Item {
                                   : Appearance.rounding.small
                             color: {
                                 if (layoutMA.containsPress)
-                                    return bg.inirEverywhere  ? Appearance.inir.colLayer2Active
-                                         : bg.angelEverywhere ? Appearance.angel.colGlassCardActive
-                                         : Appearance.colors.colLayer1Active
+                                    return bg.colDarkSurfaceActive
                                 if (layoutMA.containsMouse)
-                                    return bg.inirEverywhere  ? Appearance.inir.colLayer2Hover
-                                         : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                         : Appearance.colors.colLayer1Hover
+                                    return bg.colDarkSurfaceHover
                                 return "transparent"
                             }
                             border.width: 0
@@ -1642,14 +1545,14 @@ Item {
                                             id: ccSurface
                                             anchors.fill: parent
                                             implicitHeight: ccCard.implicitHeight + controlsRoot.controlsAreaPadding
-                                            radius: bg.angelEverywhere ? Appearance.angel.roundingNormal : bg.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-                                            color: bg.angelEverywhere ? Appearance.angel.colGlassCard
-                                                : bg.inirEverywhere ? Appearance.inir.colLayer1
-                                                : "transparent"
-                                            border.width: bg.zzzEverywhere ? 1 : 0
-                                            border.color: bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colCardBorder, 0.22)
-                                                : bg.inirEverywhere ? Appearance.inir.colBorder
-                                                : "transparent"
+                                            radius: 0
+                                            color: "transparent"
+                                            border.width: 0
+                                            Behavior on border.width {
+                                                enabled: Appearance.animationsEnabled
+                                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                            }
+                                            border.color: "transparent"
                                             ControlsCard { id: ccCard; anchors.fill: parent; anchors.margins: controlsRoot.controlsInnerPadding }
                                             AngelPartialBorder { targetRadius: ccSurface.radius; visible: false }
                                         }

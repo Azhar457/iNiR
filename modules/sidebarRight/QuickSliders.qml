@@ -24,15 +24,31 @@ Rectangle {
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
+    Behavior on radius {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
     color: Appearance.zzzEverywhere ? "transparent"
          : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
          : Appearance.inirEverywhere ? Appearance.inir.colLayer1
          : Appearance.auroraEverywhere ? "transparent"
          : Appearance.colors.colLayer1
+    Behavior on color {
+        enabled: Appearance.animationsEnabled
+        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
     border.width: Appearance.zzzEverywhere ? 0 : (root.compactSurface ? 0 : (Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0)))
+    Behavior on border.width {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
     border.color: Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? "transparent"
         : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    Behavior on border.color {
+        enabled: Appearance.animationsEnabled
+        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
     property real verticalPadding: 4
     property real horizontalPadding: 12
 
@@ -182,9 +198,11 @@ Rectangle {
 
         background: Rectangle {
             radius: Appearance.zzz.controlRadius
-            color: Appearance.zzz.bg0
-            border.width: Appearance.zzz.borderThick
-            border.color: Appearance.zzz.hairlineStrong
+            // zzz: transparente (bgless como los quick toggles) — el placa carbon
+            // del panel atrás se ve; el icono + segmentos bastan como visual.
+            color: "transparent"
+            border.width: 0
+            border.color: "transparent"
 
             MaterialSymbol {
                 anchors {
@@ -232,10 +250,13 @@ Rectangle {
         handle: Rectangle {
             x: quickSlider.leftPadding + (quickSlider.visualPosition * quickSlider.effectiveDraggingWidth) - width / 2
             y: (quickSlider.height - height) / 2
-            width: quickSlider.pressed ? 6 : 5
+            // Thumb invisible: se conserva el área de arrastre (ancho ~6), pero
+            // el "componente chiquito blanco" ya no se ve — la posición la
+            // marca el segmento encendido del track. Doctrina zzz: sin thumb.
+            width: 14
             height: 22
             radius: 3
-            color: Appearance.zzz.onColor
+            color: "transparent"
 
             Behavior on width {
                 enabled: Appearance.animationsEnabled

@@ -187,17 +187,16 @@ Item {
                         spacing: 12
                         width: parent.width - 32
 
-                        Rectangle {
+                        Item {
                             Layout.alignment: Qt.AlignHCenter
                             Layout.preferredWidth: 48
                             Layout.preferredHeight: 48
-                            radius: 24
-                            color: root.colEmptyBg
 
                             MaterialSymbol {
+                                // Bgless empty state: just the colored, breathing glyph — no grey blob.
                                 anchors.centerIn: parent
                                 text: "event_available"
-                                iconSize: 24
+                                iconSize: 32
                                 fill: 0
                                 color: root.colPrimary
 

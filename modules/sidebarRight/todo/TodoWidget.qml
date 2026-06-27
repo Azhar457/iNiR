@@ -109,12 +109,12 @@ Item {
             }
         }
 
-        Rectangle { // Tabbar bottom border
+        Rectangle { // Tabbar bottom border — removed: only the colored active
+            // indicator should read (matches pomodoro). No full-width grey track.
             id: tabBarBottomBorder
             Layout.fillWidth: true
             height: 1
-            color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colOutlineVariant
+            color: "transparent"
         }
 
         SwipeView {

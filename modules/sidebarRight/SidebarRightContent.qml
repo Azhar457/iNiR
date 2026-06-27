@@ -512,6 +512,10 @@ Item {
                 : sidebarRightBackground.auroraEverywhere
                 ? Appearance.aurora.colSubSurface
                 : Appearance.colors.colLayer1
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
                 : sidebarRightBackground.angelEverywhere ? Appearance.angel.roundingSmall : height / 2
             Behavior on radius {
@@ -520,8 +524,16 @@ Item {
             }
             border.width: Appearance.zzzEverywhere ? 0
                 : sidebarRightBackground.angelEverywhere ? Appearance.angel.cardBorderWidth : 0
+            Behavior on border.width {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             border.color: Appearance.zzzEverywhere ? "transparent"
                 : sidebarRightBackground.angelEverywhere ? Appearance.angel.colCardBorder : "transparent"
+            Behavior on border.color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             implicitWidth: uptimeRow.implicitWidth + 24
             implicitHeight: uptimeRow.implicitHeight + 8
             
@@ -538,6 +550,10 @@ Item {
                     colorize: true
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                         : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer0
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                 }
                 StyledText {
                     anchors.verticalCenter: parent.verticalCenter
@@ -547,6 +563,10 @@ Item {
                     font.italic: Appearance.zzzEverywhere
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                         : Appearance.angelEverywhere ? Appearance.angel.colText : Appearance.colors.colOnLayer0
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                     text: Translation.tr("Up %1").arg(DateTime.uptime)
                     textFormat: Text.MarkdownText
                 }
@@ -565,6 +585,10 @@ Item {
                 : sidebarRightBackground.auroraEverywhere
                 ? Appearance.aurora.colSubSurface
                 : Appearance.colors.colLayer1
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             padding: 4
             spacing: 8
 
