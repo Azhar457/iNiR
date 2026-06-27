@@ -39,14 +39,15 @@ Rectangle {
     readonly property bool _glass: (_aurora || _angel) && Appearance.effectsEnabled && root.surfaceUseBlur
     readonly property string _wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
-    // Wallpaper-derived hue so the desktop widgets actually carry the generated
-    // colour per style instead of a near-neutral text tint. Same derivation as
-    // Appearance.wallpaperDominantColor blended toward the primary container.
+    // Wallpaper-derived hue so the desktop widgets carry the generated colour.
     readonly property color _wallpaperTint: ColorUtils.mix(Appearance.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.6)
-    // Tinted plate fill for the flat (material/cards) branch: blend the neutral
-    // surfaceColor toward the wallpaper hue and lift the alpha a little so the
-    // colour reads on the desktop. zzz (carbon) and inir (restraint) opt out.
-    readonly property color _flatFill: ColorUtils.applyAlpha(ColorUtils.mix(surfaceColor, _wallpaperTint, 0.62), Math.min(0.85, surfaceOpacity * 2.2))
+    // LEGIBILITY: surfaceColor is the (contrast-aware) text colour, so the plate
+    // must be the OPPOSITE luminance to make content pop on ANY wallpaper — a
+    // contrasting scrim, lightly tinted with the wallpaper hue for character.
+    // The previous build tinted toward surfaceColor itself, so text and plate sat
+    // at the same luminance and nothing read clearly. zzz/inir keep their own look.
+    readonly property color _scrimBase: ColorUtils.contrastColor(surfaceColor)
+    readonly property color _flatFill: ColorUtils.applyAlpha(ColorUtils.mix(_scrimBase, _wallpaperTint, 0.28), Math.min(0.92, Math.max(0.18, surfaceOpacity * 2.4)))
 
     radius: surfaceRadius
     color: _glass ? "transparent"
