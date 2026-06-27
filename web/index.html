@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>iNiR — Quickshell for Linux</title>
+<meta name="description" content="iNiR is a complete Quickshell desktop for Niri and Hyprland: panels, dock, settings, theming, notifications and documentation in one warm desktop portal.">
+<meta property="og:title" content="iNiR — a shell interface shaped for Linux workflows">
+<meta property="og:description" content="A complete desktop shell for Linux, built with Quickshell. Modular panels, keyboard-first workflows, and live theming.">
+<meta name="theme-color" content="#f5efe4">
+<link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/style.css">
+<script src="assets/js/theme.js"></script>
+</head>
+<body class="site-home">
+<a class="skip-link" href="#content">Skip to content</a>
+
+<aside class="rail" aria-label="iNiR section navigation">
+  <a class="rail__brand" href="#top" aria-label="iNiR home">
+    <span class="rail__logo">iNiR</span>
+    <span>Quickshell<br>for Linux</span>
+  </a>
+  <div class="rail__badge">
+    <span class="arch-mark" aria-hidden="true">▲</span>
+    <span><strong>Arch Linux</strong><small>Focused</small></span>
+  </div>
+  <nav class="rail__nav">
+    <a href="#overview" class="active"><span>⌂</span><strong>Overview</strong><small>first look</small></a>
+    <a href="#install"><span>↘</span><strong>Install</strong><small>quick start</small></a>
+    <a href="#config"><span>⚙</span><strong>Config</strong><small>options</small></a>
+    <a href="#modules"><span>▧</span><strong>Modules</strong><small>surfaces</small></a>
+    <a href="#recipes"><span>✦</span><strong>Recipes</strong><small>guides</small></a>
+    <a href="https://github.com/snowarch/inir" target="_blank" rel="noopener"><span>◉</span><strong>GitHub</strong><small>source</small></a>
+  </nav>
+  <div class="rail__mood" aria-hidden="true">
+    <span>quiet tools</span>
+    <span>beautiful work</span>
+  </div>
+</aside>
+
+<div class="site-shell" id="top">
+  <header class="topbar" id="nav">
+    <button class="nav__burger" id="burger" aria-label="Menu" aria-controls="navlinks" aria-expanded="false"><span></span><span></span><span></span></button>
+    <nav class="topbar__links" id="navlinks" aria-label="Primary navigation">
+      <a href="#overview">Overview</a>
+      <a href="#install">Install</a>
+      <a href="#config">Config</a>
+      <a href="#modules">Modules</a>
+      <a href="#recipes">Recipes</a>
+      <a href="docs.html">Docs</a>
+      <a href="https://github.com/snowarch/inir" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+    <form class="topbar__search" action="docs.html" aria-label="Search documentation">
+      <span aria-hidden="true">⌕</span>
+      <input name="q" type="search" placeholder="Search docs…" autocomplete="off">
+      <kbd>/</kbd>
+    </form>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle color theme"><span data-theme-icon>☾</span></button>
+    <a class="github-pill" href="https://github.com/snowarch/inir" target="_blank" rel="noopener">◉ GitHub</a>
+  </header>
+
+  <main id="content">
+    <section class="hero" id="overview">
+      <div class="hero__copy" data-reveal>
+        <p class="seal">iR</p>
+        <h1>A shell interface shaped for Linux workflows</h1>
+        <p class="hero__lede">iNiR is a Quickshell-based shell environment for Linux, focused on Niri and Arch. Built with modularity and composability in mind, it helps you craft a calm, keyboard-first desktop that stays out of your way.</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="docs.html"><span>▣</span> Read Docs</a>
+          <a class="btn btn--quiet" href="https://github.com/snowarch/inir" target="_blank" rel="noopener"><span>◉</span> Open on GitHub</a>
+        </div>
+      </div>
+      <div class="hero__scene" data-reveal style="--d:120ms" aria-label="Warm anime-inspired desktop scene">
+        <div class="room-grid" aria-hidden="true"></div>
+        <div class="hanging-note" aria-hidden="true"><span>steady</span><strong>focus</strong></div>
+        <div class="monitor" aria-hidden="true">
+          <img src="assets/img/desktop.png" alt="">
+          <div class="monitor__hud"><strong>12:46</strong><small>Apr 21 · Niri</small></div>
+        </div>
+        <div class="desk" aria-hidden="true"></div>
+        <img class="hero__pet" src="recursos/anime-pet.png" alt="iNiR anime mascot with terminal hairpin">
+      </div>
+    </section>
+
+    <section class="feature-strip" aria-label="iNiR strengths" data-reveal>
+      <article><span>✣</span><strong>Modular</strong><small>Build what you need</small></article>
+      <article><span>⌨</span><strong>Keyboard-first</strong><small>Stay in flow</small></article>
+      <article><span>♙</span><strong>Linux-native</strong><small>Wayland · Tools · CLI</small></article>
+      <article><span>▧</span><strong>Composable</strong><small>Everything is a module</small></article>
+    </section>
+
+    <section class="dashboard" id="install">
+      <article class="guide-card guide-card--wide quickstart" data-reveal>
+        <header><h2><span>›_</span> Quick Start</h2><em>begin here</em></header>
+        <p>Install iNiR and launch a minimal shell in minutes.</p>
+        <div class="code-panel">
+          <div class="code-panel__top"><span># Arch Linux</span><button id="copybtn" data-copy="sudo pacman -S --needed git base-devel quickshell
+git clone https://github.com/snowarch/inir ~/.config/quickshell/inir
+cd ~/.config/quickshell/inir
+./setup install
+inir run">Copy</button></div>
+          <pre id="termbody" data-lines='[
+            {"p":"$ ","cmd":"sudo pacman -S --needed git base-devel quickshell"},
+            {"p":"$ ","cmd":"git clone https://github.com/snowarch/inir ~/.config/quickshell/inir"},
+            {"p":"$ ","cmd":"cd ~/.config/quickshell/inir"},
+            {"p":"$ ","cmd":"./setup install"},
+            {"p":"$ ","cmd":"inir run"}
+          ]'></pre>
+        </div>
+        <p>You should see the shell load on your Wayland session.</p>
+        <a href="docs.html?p=INSTALL">View installation guide <span>→</span></a>
+      </article>
+
+      <article class="guide-card guide-card--tall" data-reveal style="--d:40ms">
+        <header><h2>Installation</h2><em>setup</em></header>
+        <p>Detailed steps to install dependencies, sync assets, and launch iNiR.</p>
+        <a href="docs.html?p=INSTALL">Go to guide <span>→</span></a>
+        <span class="round-icon">↓</span>
+      </article>
+      <article class="guide-card guide-card--tall" id="config" data-reveal style="--d:80ms">
+        <header><h2>Configuration</h2><em>settings</em></header>
+        <p>Learn how config is layered, persisted, hot-reloaded, and surfaced in the GUI.</p>
+        <a href="docs.html?p=CONFIG_SYSTEM">Go to guide <span>→</span></a>
+        <span class="round-icon">☷</span>
+      </article>
+      <article class="guide-card compact" id="modules" data-reveal style="--d:120ms">
+        <header><h2>Components</h2><em>modules</em></header>
+        <p>Bar, dock, overview, sidebars, OSD, media and more.</p>
+        <a href="docs.html?p=MODULES">Go to guide <span>→</span></a>
+        <span class="round-icon">▧</span>
+      </article>
+      <article class="guide-card compact" data-reveal style="--d:160ms">
+        <header><h2>Theming</h2><em>palette</em></header>
+        <p>Wallpaper-driven color, global styles, presets, and app theming.</p>
+        <a href="docs.html?p=THEMING_ARCHITECTURE">Go to guide <span>→</span></a>
+        <span class="round-icon">◒</span>
+      </article>
+      <article class="guide-card compact" id="recipes" data-reveal style="--d:200ms">
+        <header><h2>FAQ</h2><em>answers</em></header>
+        <p>Common questions, limitations, and recovery tips.</p>
+        <a href="docs.html?p=LIMITATIONS">Go to guide <span>→</span></a>
+        <span class="round-icon">☏</span>
+      </article>
+
+      <article class="guide-card code-example" data-reveal>
+        <header><h2>Example: Bar Module (QML)</h2><em>&lt;/&gt;</em></header>
+        <pre><code>PanelWindow {
+  id: bar
+  anchors { top: true; left: true; right: true }
+  height: 28
+  color: "#e2e3d7cc"
+
+  Row {
+    anchors.fill: parent; spacing: 12
+    Text { text: "iNiR"; font.pixelSize: 16 }
+    Clock { format: "HH:mm" }
+    Workspaces { spacing: 6 }
+  }
+}</code></pre>
+        <p>iNiR uses Quickshell and QML for a composable, declarative shell.</p>
+        <a href="docs.html?p=MODULES">Learn more about modules <span>→</span></a>
+      </article>
+
+      <article class="guide-card architecture" data-reveal style="--d:80ms">
+        <header><h2>Architecture</h2><em>layers</em></header>
+        <div class="arch-layers">
+          <span>Shell Layer</span><strong>iNiR Shell (Panels, Overlays, Menus)</strong>
+          <span>Module Layer</span><strong>Modules (Bar, Launcher, Media, Workspaces, …)</strong>
+          <span>Framework Layer</span><strong>Quickshell (QML + JS API)</strong>
+          <span>Platform Layer</span><strong>Wayland · Linux · System Tools</strong>
+        </div>
+        <p>Built around clear service boundaries and compositor-aware integration.</p>
+        <a href="docs.html?p=ARCHITECTURE_OVERVIEW">Dive deeper <span>→</span></a>
+      </article>
+
+      <article class="guide-card activity" data-reveal>
+        <header><h2><span>⌁</span> Repository Activity</h2><em>recent</em></header>
+        <ul>
+          <li><img src="recursos/anime-pet.png" alt=""><span>feat(bar): add workspace indicators</span><small>akio · 2h ago</small></li>
+          <li><img src="recursos/anime-pet.png" alt=""><span>fix(media): handle player disappear</span><small>yuki · 7h ago</small></li>
+          <li><img src="recursos/anime-pet.png" alt=""><span>docs: update quick start instructions</span><small>sora · Yesterday</small></li>
+          <li><img src="recursos/anime-pet.png" alt=""><span>refactor: split modules into packages</span><small>haru · 2 days ago</small></li>
+        </ul>
+        <a href="https://github.com/snowarch/inir" target="_blank" rel="noopener">View all on GitHub <span>→</span></a>
+      </article>
+
+      <article class="guide-card changelog" data-reveal style="--d:80ms">
+        <header><h2><span>▤</span> Changelog</h2><em>release</em></header>
+        <h3>v2.27.0 <small>Latest</small></h3>
+        <ul>
+          <li>Two complete panel families: ii and waffle.</li>
+          <li>Wallpaper-driven theming pipeline.</li>
+          <li>Settings GUI, IPC, and runtime doctor.</li>
+          <li>ZZZ poster-console global style.</li>
+        </ul>
+        <a href="docs.html?p=SETUP">See full changelog <span>→</span></a>
+        <div class="branch-art" aria-hidden="true">✿</div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__brand">
+      <strong>iNiR</strong>
+      <p>Quickshell for Linux. Craft your environment.</p>
+      <span class="enso" aria-hidden="true"></span>
+    </div>
+    <nav><h3>Project</h3><a href="docs.html?p=index">About iNiR</a><a href="docs.html?p=PROJECT_MAP">Roadmap</a><a href="docs.html?p=SETUP">Contributing</a></nav>
+    <nav><h3>Documentation</h3><a href="docs.html">Overview</a><a href="docs.html?p=INSTALL">Install</a><a href="docs.html?p=CONFIG_SYSTEM">Configuration</a><a href="docs.html?p=MODULES">Modules</a></nav>
+    <nav><h3>Community</h3><a href="https://github.com/snowarch/inir" target="_blank" rel="noopener">GitHub</a><a href="https://github.com/snowarch/inir/discussions" target="_blank" rel="noopener">Discussions</a><a href="https://github.com/YaLTeR/niri" target="_blank" rel="noopener">Niri</a></nav>
+    <div class="footer__note">warm interface<br>serious tools</div>
+  </footer>
+</div>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

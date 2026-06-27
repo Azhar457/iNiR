@@ -1,0 +1,81 @@
+<!-- @dsCard group="Foundations" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>zzz · Tokens</title>
+<style>
+:root{
+  --bg0:#0a0a0c;--bg1:#101014;--bg2:#17171c;--bg3:#1f1f25;--bg4:#28282f;
+  --ink:#ededf0;--inkMuted:#8d8d93;
+  --accent:#e9743a;--onAccent:#160a04;
+  --secondary:#c3d63f;--onSecondary:#13150a;
+  --tertiary:#5bc8c2;
+  --sticker:#c25a2c;--onSticker:#fff;
+  --contrastPlate:#dcd9d5;--onContrastPlate:#141414;
+  --border:#5a5a5e;--hairline:rgba(237,237,240,.18);--hairlineStrong:rgba(237,237,240,.30);
+  --font:'Oxanium','Rajdhani','Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg0);color:var(--ink);font-family:var(--font);padding:28px;}
+h1{font-size:13px;letter-spacing:.32em;text-transform:uppercase;font-weight:900;margin:0 0 4px}
+.sub{color:var(--inkMuted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 22px}
+.note{border-left:2px solid var(--accent);padding:8px 12px;background:var(--bg1);color:var(--inkMuted);
+  font-size:11px;line-height:1.5;letter-spacing:.04em;margin:0 0 24px}
+.sec{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--inkMuted);
+  font-weight:900;margin:26px 0 10px;display:flex;align-items:center;gap:8px}
+.sec::after{content:"";flex:1;height:1px;background:var(--hairline)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.sw{border:1px solid var(--hairline);background:var(--bg1)}
+.chip{height:46px;clip-path:polygon(0 0,100% 0,100% 100%,10px 100%,0 calc(100% - 10px))}
+.meta{padding:7px 9px}
+.role{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.val{font-size:10px;color:var(--inkMuted);font-family:'JetBrains Mono',monospace;letter-spacing:.02em}
+.type-row{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--hairline);padding:9px 0}
+.type-row span:last-child{color:var(--inkMuted);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.shape-row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.shape{width:84px;text-align:center}
+.shape .box{height:60px;background:var(--bg3);border:1px solid var(--border)}
+.shape small{display:block;color:var(--inkMuted);font-size:10px;margin-top:6px;letter-spacing:.1em;text-transform:uppercase}
+</style></head><body>
+<h1>zzz · Design Tokens</h1>
+<p class="sub">iNiR bespoke poster style — wallpaper-generated console palette</p>
+<div class="note">Color values are <b>roles, not constants</b>. The real palette is generated per-wallpaper
+in <code>Appearance.qml</code> (zzz QtObject): surface hue + saturation drive bg0–bg4, and accent/secondary/tertiary
+come straight from the wallpaper triad. The hexes below are a representative instance (classic warm/lime), shown so
+the roles are legible — they shift with the wallpaper.</div>
+
+<div class="sec">Surfaces · carbon console ramp</div>
+<div class="grid">
+  <div class="sw"><div class="chip" style="background:#0a0a0c"></div><div class="meta"><div class="role">bg0</div><div class="val">ground / panel</div></div></div>
+  <div class="sw"><div class="chip" style="background:#101014"></div><div class="meta"><div class="role">bg1</div><div class="val">paper</div></div></div>
+  <div class="sw"><div class="chip" style="background:#17171c"></div><div class="meta"><div class="role">bg2</div><div class="val">paperAlt</div></div></div>
+  <div class="sw"><div class="chip" style="background:#1f1f25"></div><div class="meta"><div class="role">bg3</div><div class="val">tile</div></div></div>
+  <div class="sw"><div class="chip" style="background:#28282f"></div><div class="meta"><div class="role">bg4</div><div class="val">elevated</div></div></div>
+  <div class="sw"><div class="chip" style="background:#dcd9d5"></div><div class="meta"><div class="role">contrastPlate</div><div class="val">inverse chip</div></div></div>
+</div>
+
+<div class="sec">Signal triad · wallpaper chroma</div>
+<div class="grid">
+  <div class="sw"><div class="chip" style="background:#e9743a"></div><div class="meta"><div class="role">accent</div><div class="val">pureOrange / signal</div></div></div>
+  <div class="sw"><div class="chip" style="background:#c25a2c"></div><div class="meta"><div class="role">sticker</div><div class="val">active fill</div></div></div>
+  <div class="sw"><div class="chip" style="background:#c3d63f"></div><div class="meta"><div class="role">secondary</div><div class="val">lemonLime</div></div></div>
+  <div class="sw"><div class="chip" style="background:#5bc8c2"></div><div class="meta"><div class="role">tertiary</div><div class="val">posterCool</div></div></div>
+</div>
+
+<div class="sec">Ink</div>
+<div class="grid">
+  <div class="sw"><div class="chip" style="background:#ededf0"></div><div class="meta"><div class="role">ink</div><div class="val">onColor</div></div></div>
+  <div class="sw"><div class="chip" style="background:#8d8d93"></div><div class="meta"><div class="role">inkMuted</div><div class="val">onMuted</div></div></div>
+  <div class="sw"><div class="chip" style="background:#5a5a5e"></div><div class="meta"><div class="role">borderColor</div><div class="val">comic stroke</div></div></div>
+</div>
+
+<div class="sec">Type · Oxanium, uppercase, weight black</div>
+<div class="type-row"><span style="font-size:26px;font-weight:900;letter-spacing:.04em;text-transform:uppercase">Console Heading</span><span>title · Oxanium 900</span></div>
+<div class="type-row"><span style="font-size:14px;font-weight:800;letter-spacing:.22em;text-transform:uppercase">Section Label</span><span>label · 800 · tracked</span></div>
+<div class="type-row"><span style="font-family:'Rubik',sans-serif;font-size:22px;font-weight:700">128.4%</span><span>numbers · Rubik</span></div>
+
+<div class="sec">Shape · sharp plates, tiny radii, cut corner</div>
+<div class="shape-row">
+  <div class="shape"><div class="box" style="border-radius:2px"></div><small>corner 2</small></div>
+  <div class="shape"><div class="box" style="border-radius:3px"></div><small>card 3</small></div>
+  <div class="shape"><div class="box" style="clip-path:polygon(0 0,100% 0,100% 100%,14px 100%,0 calc(100% - 14px))"></div><small>chamfer</small></div>
+</div>
+</body></html>

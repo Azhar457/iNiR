@@ -1,0 +1,26 @@
+<!-- @dsCard group="Foundations" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>zzz · PanelSurface</title>
+<style>
+:root{--bg0:#0a0a0c;--bg1:#101014;--bg2:#17171c;--ink:#ededf0;--inkMuted:#8d8d93;
+--accent:#e9743a;--hairline:rgba(237,237,240,.18);--font:'Oxanium','Rajdhani','Segoe UI',system-ui,sans-serif;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg0);color:var(--ink);font-family:var(--font);padding:30px}
+h1{font-size:13px;letter-spacing:.32em;text-transform:uppercase;font-weight:900;margin:0 0 4px}
+.sub{color:var(--inkMuted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 22px}
+.note{border-left:2px solid var(--accent);padding:8px 12px;background:var(--bg1);color:var(--inkMuted);font-size:11px;line-height:1.5;margin:0 0 22px}
+.row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.cap{margin-top:9px;color:var(--inkMuted);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.surf{width:170px;height:104px;display:flex;align-items:center;justify-content:center;font-weight:900;letter-spacing:.14em;text-transform:uppercase;font-size:11px;color:var(--inkMuted)}
+.zzz{background:var(--bg2);outline:1px solid var(--hairline);outline-offset:-1px;clip-path:polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%)}
+.rounded{background:var(--bg2);border:1px solid var(--hairline);border-radius:14px}
+.pill{background:var(--bg1);border:1px solid var(--hairline);border-radius:999px}
+</style></head><body>
+<h1>PanelSurface · molde compartido</h1><p class="sub">La "piel" única de los paneles — un molde, todos los estilos</p>
+<div class="note">Pieza compartida (<code>modules/common/widgets/PanelSurface.qml</code>). En vez de que cada panel
+dibuje su fondo a mano, lo envuelven acá y la pinta sale consistente. Editar este molde = cambiar todos los paneles a la vez.
+Elige la cara según el estilo activo del shell.</div>
+<div class="row">
+  <div><div class="surf zzz">zzz</div><div class="cap">placa · esquina cortada</div></div>
+  <div><div class="surf rounded">material / inir / angel</div><div class="cap">redondeado + hairline</div></div>
+  <div><div class="surf pill">island</div><div class="cap">pastilla (pill)</div></div>
+</div>
+</body></html>

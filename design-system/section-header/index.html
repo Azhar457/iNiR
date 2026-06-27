@@ -1,0 +1,22 @@
+<!-- @dsCard group="Foundations" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>zzz · SectionHeader</title>
+<style>
+:root{--bg0:#0a0a0c;--bg1:#101014;--ink:#ededf0;--inkMuted:#8d8d93;
+--accent:#e9743a;--onAccent:#160a04;--secondary:#c3d63f;
+--font:'Oxanium','Rajdhani','Segoe UI',system-ui,sans-serif;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg0);color:var(--ink);font-family:var(--font);padding:30px}
+h1{font-size:13px;letter-spacing:.32em;text-transform:uppercase;font-weight:900;margin:0 0 4px}
+.sub{color:var(--inkMuted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 24px}
+.hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.badge{width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:13px;
+  background:var(--accent);color:var(--onAccent);border-radius:2px;
+  clip-path:polygon(0 0,100% 0,100% 100%,5px 100%,0 calc(100% - 5px))}
+.title{font-size:21px;font-weight:900;font-style:italic;letter-spacing:.05em;text-transform:uppercase}
+.rail{flex:1;height:1px;background:var(--hairline,rgba(237,237,240,.18))}
+.tick{width:14px;height:1px;background:var(--inkMuted)}
+.idx{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--inkMuted);letter-spacing:.12em}
+</style></head><body>
+<h1>ZzzSectionHeader</h1><p class="sub">Game-menu header — glyph badge + Oxanium-black italic title + index code</p>
+<div class="hdr"><div class="badge">⚙</div><div class="title">System</div><div class="rail"></div><div class="tick"></div><div class="idx">SYS / 04</div></div>
+<div class="hdr"><div class="badge" style="background:var(--secondary);color:#13150a">◉</div><div class="title">Network</div><div class="rail"></div><div class="tick"></div><div class="idx">NET / 12</div></div>
+</body></html>

@@ -1,0 +1,24 @@
+<!-- @dsCard group="Surfaces" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>zzz · ListRow</title>
+<style>
+:root{--bg0:#0a0a0c;--bg1:#101014;--bg2:#17171c;--ink:#ededf0;--inkMuted:#8d8d93;
+--accent:#e9743a;--sticker:#c25a2c;--onSticker:#fff;--hairline:rgba(237,237,240,.18);
+--font:'Oxanium','Rajdhani','Segoe UI',system-ui,sans-serif;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg0);color:var(--ink);font-family:var(--font);padding:30px}
+h1{font-size:13px;letter-spacing:.32em;text-transform:uppercase;font-weight:900;margin:0 0 4px}
+.sub{color:var(--inkMuted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 20px}
+.list{width:320px;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:2px;background:var(--bg1);border:1px solid transparent}
+.row .tick{width:3px;height:18px;background:transparent}
+.row .t{font-weight:800;letter-spacing:.06em;font-size:13px}
+.row .meta{margin-left:auto;font-size:10px;color:var(--inkMuted);font-family:'JetBrains Mono',monospace}
+.hover{background:var(--bg2);border-color:var(--hairline)}
+.selected{background:var(--bg2);border-color:var(--accent)}.selected .tick{background:var(--accent)}
+</style></head><body>
+<h1>ListRow · fila de lista</h1><p class="sub">Reposo / hover / seleccionada — tick de acento al seleccionar</p>
+<div class="list">
+  <div class="row"><div class="tick"></div><div class="t">Elemento</div><div class="meta">01</div></div>
+  <div class="row hover"><div class="tick"></div><div class="t">Con hover</div><div class="meta">02</div></div>
+  <div class="row selected"><div class="tick"></div><div class="t">Seleccionada</div><div class="meta">03</div></div>
+</div>
+</body></html>

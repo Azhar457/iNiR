@@ -1,0 +1,21 @@
+<!-- @dsCard group="Graphics" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>zzz · Burst</title>
+<style>
+:root{--bg0:#0a0a0c;--ink:#ededf0;--inkMuted:#8d8d93;--accent:#e9743a;--secondary:#c3d63f;--onAccent:#160a04;
+--font:'Oxanium','Rajdhani','Segoe UI',system-ui,sans-serif;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg0);color:var(--ink);font-family:var(--font);padding:30px;display:flex;flex-direction:column}
+h1{font-size:13px;letter-spacing:.32em;text-transform:uppercase;font-weight:900;margin:0 0 4px}
+.sub{color:var(--inkMuted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 24px}
+.stage{display:flex;gap:30px;align-items:center}
+.burst{position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center}
+.star{position:absolute;inset:0;background:var(--accent);
+  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.star.lime{background:var(--secondary);transform:scale(.74) rotate(18deg);opacity:.9}
+.txt{position:relative;font-weight:900;letter-spacing:.1em;text-transform:uppercase;font-size:13px;color:var(--onAccent)}
+</style></head><body>
+<h1>ZzzBurst</h1><p class="sub">Poster starburst registration mark / emphasis stamp</p>
+<div class="stage">
+  <div class="burst"><div class="star lime"></div><div class="star"></div><div class="txt">NEW</div></div>
+  <div class="burst"><div class="star" style="background:var(--secondary)"></div><div class="txt" style="color:#13150a">!!</div></div>
+</div>
+</body></html>

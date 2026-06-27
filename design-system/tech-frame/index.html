@@ -1,0 +1,27 @@
+<!-- @dsCard group="Surfaces" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>zzz · TechFrame</title>
+<style>
+:root{--bg0:#0a0a0c;--bg1:#101014;--bg2:#17171c;--ink:#ededf0;--inkMuted:#8d8d93;
+--accent:#e9743a;--grid:rgba(237,237,240,.06);--gridStrong:rgba(237,237,240,.12);
+--font:'Oxanium','Rajdhani','Segoe UI',system-ui,sans-serif;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg0);color:var(--ink);font-family:var(--font);padding:30px}
+h1{font-size:13px;letter-spacing:.32em;text-transform:uppercase;font-weight:900;margin:0 0 4px}
+.sub{color:var(--inkMuted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 24px}
+.frame{position:relative;width:340px;height:190px;background:var(--bg1);overflow:hidden;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:38px 38px}
+.mk{position:absolute;width:16px;height:16px;border:2px solid var(--accent)}
+.mk.tl{top:8px;left:8px;border-right:0;border-bottom:0}.mk.tr{top:8px;right:8px;border-left:0;border-bottom:0}
+.mk.bl{bottom:8px;left:8px;border-right:0;border-top:0}.mk.br{bottom:8px;right:8px;border-left:0;border-top:0}
+.lbl{position:absolute;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--inkMuted);text-transform:uppercase}
+.lbl.id{top:12px;left:34px;color:var(--accent);font-weight:700}.lbl.tag{bottom:12px;right:34px}
+.tick{position:absolute;top:0;width:1px;height:8px;background:var(--gridStrong)}
+</style></head><body>
+<h1>ZzzTechFrame</h1><p class="sub">Technical overlay — registration marks, engineering grid, manual labels</p>
+<div class="frame">
+  <div class="mk tl"></div><div class="mk tr"></div><div class="mk bl"></div><div class="mk br"></div>
+  <div class="lbl id">UNIT-07</div><div class="lbl tag">scan // ok</div>
+  <div class="tick" style="left:76px"></div><div class="tick" style="left:152px"></div><div class="tick" style="left:228px"></div>
+</div>
+<p class="sub" style="margin-top:24px">Draws nothing when zzz is inactive — pure ornament layer over any surface.</p>
+</body></html>

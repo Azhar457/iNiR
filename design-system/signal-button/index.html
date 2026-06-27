@@ -1,0 +1,26 @@
+<!-- @dsCard group="Signals" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>zzz · SignalButton</title>
+<style>
+:root{--bg0:#0a0a0c;--bg1:#101014;--bg2:#17171c;--ink:#ededf0;--inkMuted:#8d8d93;
+--accent:#e9743a;--accentSoft:#d8682f;--sticker:#c25a2c;--onAccent:#160a04;--onSticker:#fff;
+--hairlineStrong:rgba(237,237,240,.30);--font:'Oxanium','Rajdhani','Segoe UI',system-ui,sans-serif;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg0);color:var(--ink);font-family:var(--font);padding:30px}
+h1{font-size:13px;letter-spacing:.32em;text-transform:uppercase;font-weight:900;margin:0 0 4px}
+.sub{color:var(--inkMuted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 24px}
+.row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.cap{margin-top:9px;color:var(--inkMuted);font-size:10px;letter-spacing:.14em;text-transform:uppercase;text-align:center}
+.btn{width:120px;height:50px;display:flex;align-items:center;justify-content:center;gap:8px;
+  font-weight:900;letter-spacing:.16em;text-transform:uppercase;font-size:12px;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
+.idle{background:var(--bg2);color:var(--ink);outline:1px solid var(--hairlineStrong);outline-offset:-1px}
+.hover{background:var(--sticker);color:var(--onSticker)}
+.engaged{background:var(--accentSoft);color:var(--onAccent)}
+.dot{font-size:18px}
+</style></head><body>
+<h1>ZzzSignalButton</h1><p class="sub">Actionable poster control on the chamfered plate</p>
+<div class="row">
+  <div><div class="btn idle"><span class="dot">◇</span>idle</div><div class="cap">paperAlt + hairline</div></div>
+  <div><div class="btn hover"><span class="dot">◆</span>hover</div><div class="cap">sticker fill</div></div>
+  <div><div class="btn engaged"><span class="dot">◆</span>active</div><div class="cap">accentSoft · selected/down</div></div>
+</div>
+</body></html>

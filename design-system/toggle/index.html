@@ -1,0 +1,23 @@
+<!-- @dsCard group="Controls" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>zzz · Toggle</title>
+<style>
+:root{--bg0:#0a0a0c;--bg2:#17171c;--ink:#ededf0;--inkMuted:#8d8d93;
+--accent:#e9743a;--onAccent:#160a04;--track:rgba(237,237,240,.14);--hairlineStrong:rgba(237,237,240,.30);
+--font:'Oxanium','Rajdhani','Segoe UI',system-ui,sans-serif;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg0);color:var(--ink);font-family:var(--font);padding:30px}
+h1{font-size:13px;letter-spacing:.32em;text-transform:uppercase;font-weight:900;margin:0 0 4px}
+.sub{color:var(--inkMuted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 22px}
+.row{display:flex;gap:30px;align-items:center}
+.cell{display:flex;flex-direction:column;gap:8px;align-items:center}
+.cap{color:var(--inkMuted);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.sw{width:54px;height:26px;border:1px solid var(--hairlineStrong);position:relative;border-radius:2px}
+.sw .knob{position:absolute;top:3px;width:18px;height:18px;border-radius:2px;transition:all .15s}
+.off{background:var(--track)}.off .knob{left:3px;background:var(--inkMuted)}
+.on{background:var(--accent);border-color:var(--accent)}.on .knob{left:30px;background:var(--onAccent)}
+</style></head><body>
+<h1>Toggle · interruptor</h1><p class="sub">Encendido / apagado — manufactura cuadrada, sin pastilla</p>
+<div class="row">
+  <div class="cell"><div class="sw off"><div class="knob"></div></div><div class="cap">apagado</div></div>
+  <div class="cell"><div class="sw on"><div class="knob"></div></div><div class="cap">encendido</div></div>
+</div>
+</body></html>
