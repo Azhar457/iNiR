@@ -408,6 +408,10 @@ RippleButton {
                             // Both dims animate → squish morph same as dock dots.
                             radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
                                 : Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
+                            Behavior on radius {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
                             implicitWidth: root.vertical ? (isFocused ? 2 : 3) : (isFocused ? 8 : 3)
                             implicitHeight: root.vertical ? (isFocused ? 8 : 3) : (isFocused ? 2 : 3)
                             color: isFocused
@@ -433,10 +437,7 @@ RippleButton {
                                 enabled: Appearance.animationsEnabled
                                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                             }
-                            Behavior on radius {
-                                enabled: Appearance.animationsEnabled
-                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                            }
+                            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
                         }
                     }
 
@@ -447,6 +448,7 @@ RippleButton {
                         width: root.vertical ? 2 : 3
                         height: root.vertical ? 3 : 2
                         radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : Math.min(width, height) / 2
+                        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
                         color: ColorUtils.transparentize(
                             Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
                             : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary

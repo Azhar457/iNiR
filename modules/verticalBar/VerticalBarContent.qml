@@ -138,15 +138,46 @@ Item { // Bar content region
             }
             return root.cardStyleEverywhere ? Appearance.colors.colLayer1 : ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
         }
-        radius: root.zzzEverywhere ? Appearance.zzz.panelRadius
+        radius: root.zzzEverywhere ? 0
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : root.inirEverywhere ? Appearance.inir.roundingNormal
             : floatingStyle ? ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
+        // ZZZ round mode: a FLUSH vertical bar softens only its INNER edge (facing
+        // into the screen); a FLOATING bar rounds all four. bar.bottom doubles as the
+        // side toggle here — false = left edge (inner = right), true = right edge.
+        readonly property bool isRightBar: Config.options?.bar?.bottom ?? false
+        readonly property real zzzRoundEdge: (root.zzzEverywhere && Appearance.zzz.round) ? Appearance.zzz.panelRadius : -1
+        readonly property bool zzzAllCorners: zzzRoundEdge >= 0 && floatingStyle
+        topLeftRadius: (zzzRoundEdge >= 0 && (zzzAllCorners || isRightBar)) ? zzzRoundEdge : radius
+        bottomLeftRadius: (zzzRoundEdge >= 0 && (zzzAllCorners || isRightBar)) ? zzzRoundEdge : radius
+        topRightRadius: (zzzRoundEdge >= 0 && (zzzAllCorners || !isRightBar)) ? zzzRoundEdge : radius
+        bottomRightRadius: (zzzRoundEdge >= 0 && (zzzAllCorners || !isRightBar)) ? zzzRoundEdge : radius
+        Behavior on topRightRadius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on topLeftRadius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         border.width: root.zzzEverywhere ? 1 : (Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : (floatingStyle ? 1 : 0)))
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         border.color: root.zzzEverywhere ? Appearance.zzz.borderColor
             : Appearance.angelEverywhere ? "transparent"
             : root.inirEverywhere ? Appearance.inir.colBorder
             : Appearance.colors.colLayer0Border
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
 
         clip: true
 
@@ -458,11 +489,11 @@ Item { // Bar content region
                 colBackground: buttonHovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
                 colBackgroundHover: Appearance.colors.colLayer1Hover
                 colRipple: Appearance.colors.colLayer1Active
-                colBackgroundToggled: Appearance.colors.colSecondaryContainer
-                colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
-                colRippleToggled: Appearance.colors.colSecondaryContainerActive
+                colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainer : Appearance.colors.colSecondaryContainer
+                colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colSecondaryContainerHover
+                colRippleToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colSecondaryContainerActive
                 toggled: GlobalStates.sidebarRightOpen
-                property color colText: toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
+                property color colText: toggled ? (Appearance.zzzEverywhere ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSecondaryContainer) : Appearance.colors.colOnLayer0
 
                 Behavior on colText {
                     animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

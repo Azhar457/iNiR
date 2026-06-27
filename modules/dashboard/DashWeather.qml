@@ -94,6 +94,10 @@ DashCard {
             delegate: ColumnLayout {
                 required property var modelData
                 Layout.fillWidth: true
+                // Equal preferredWidth forces a true even split across the card
+                // width (each day gets exactly 1/N) so the row never bunches left
+                // when the card is wide — robust across column position + resize.
+                Layout.preferredWidth: 1
                 spacing: 2
 
                 StyledText {

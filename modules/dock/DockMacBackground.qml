@@ -31,6 +31,7 @@ Rectangle {
           : angelEverywhere ? Appearance.angel.roundingNormal
           : inirEverywhere  ? Appearance.inir.roundingNormal
           :                   Appearance.rounding.large
+    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
 
     // ─── Fill: genuinely translucent for macOS look ──────────────────
     color: zzzEverywhere
@@ -48,6 +49,10 @@ Rectangle {
 
     // ─── Border ──────────────────────────────────────────────────────
     border.width: zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
+    Behavior on border.width {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
     border.color: zzzEverywhere
         ? Appearance.zzz.borderColor
         : angelEverywhere

@@ -42,7 +42,10 @@ Button {
             : (root.hovered 
                 ? ColorUtils.transparentize(Appearance.inirEverywhere ? Appearance.inir?.colLayer2Hover ?? Appearance.colors.colSurfaceContainerHigh : Appearance.colors.colSurfaceContainerHigh, 0.5)
                 : "transparent")
-        
+        // ZZZ console-plate identity: a hairline edge on interaction.
+        border.width: Appearance.zzzEverywhere && (root.hovered || root.down) ? Appearance.zzz.borderThick : 0
+        border.color: Appearance.zzz.hairlineStrong
+
         Behavior on color {
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }

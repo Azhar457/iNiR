@@ -82,6 +82,10 @@ Item {
                 color: root.warning ? (Appearance.zzzEverywhere ? Appearance.zzz.signal : Appearance.colors.colError)
                     : Appearance.zzzEverywhere ? (root.caution ? Appearance.zzz.tertiary : Appearance.zzz.ink)
                     : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
                 font.pixelSize: Appearance.font.pixelSize.small
                 font.family: Appearance.zzzEverywhere ? Appearance.font.family.numbers : Appearance.font.family.main
                 font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal

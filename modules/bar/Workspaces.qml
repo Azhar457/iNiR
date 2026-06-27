@@ -287,6 +287,8 @@ Item {
                 implicitHeight: workspaceButtonWidth
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (width / 2)
+                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 property bool previousOccupied: (workspaceOccupied[index-1] ?? false) && !(!activeWindow?.activated && currentWorkspaceNumber === index)
                 property bool rightOccupied: (workspaceOccupied[index+1] ?? false) && !(!activeWindow?.activated && currentWorkspaceNumber === index+2)
                 property real radiusPrev: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
@@ -299,7 +301,12 @@ Item {
                 topRightRadius: root.vertical ? radiusPrev : radiusNext
                 bottomRightRadius: radiusNext
                 
-                color: Appearance.angelEverywhere
+                // ZZZ: drop this occupied-cell fill entirely — the active plate
+                // (ZzzPlate, generated accent) is the only workspace background,
+                // so the active cell no longer stacks two fills.
+                color: Appearance.zzzEverywhere
+                    ? "transparent"
+                    : Appearance.angelEverywhere
                     ? Appearance.angel.colGlassCard
                     : Appearance.auroraEverywhere
                     ? Appearance.aurora.colSubSurface
@@ -333,6 +340,8 @@ Item {
         // ZZZ shows a chamfered signal plate (geometry) instead of the rounded fill.
         color: Appearance.zzzEverywhere ? "transparent"
             : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
         ZzzPlate {
             anchors.fill: parent
@@ -440,8 +449,12 @@ Item {
                         elide: Text.ElideRight
                         color: (currentWorkspaceNumber == button.workspaceValue) ?
                             Appearance.colors.colOnPrimary :
-                            (workspaceOccupied[index] ? Appearance.colors.colOnSecondaryContainer :
-                                Appearance.colors.colOnLayer1Inactive)
+                            // ZZZ: occupied cells have no plate (transparent), so the dark
+                            // onSecondary ink read black-on-black — use light zzz inks instead.
+                            Appearance.zzzEverywhere
+                                ? (workspaceOccupied[index] ? Appearance.zzz.onColor : Appearance.zzz.onMuted)
+                                : (workspaceOccupied[index] ? Appearance.colors.colOnSecondaryContainer :
+                                    Appearance.colors.colOnLayer1Inactive)
 
                         Behavior on opacity {
                             animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -460,8 +473,12 @@ Item {
                         radius: width / 2
                         color: (currentWorkspaceNumber == button.workspaceValue) ?
                             Appearance.colors.colOnPrimary :
-                            (workspaceOccupied[index] ? Appearance.colors.colOnSecondaryContainer :
-                                Appearance.colors.colOnLayer1Inactive)
+                            // ZZZ: occupied cells have no plate (transparent), so the dark
+                            // onSecondary ink read black-on-black — use light zzz inks instead.
+                            Appearance.zzzEverywhere
+                                ? (workspaceOccupied[index] ? Appearance.zzz.onColor : Appearance.zzz.onMuted)
+                                : (workspaceOccupied[index] ? Appearance.colors.colOnSecondaryContainer :
+                                    Appearance.colors.colOnLayer1Inactive)
 
                         Behavior on opacity {
                             animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -548,6 +565,7 @@ Item {
                 implicitWidth: workspaceButtonWidth
                 implicitHeight: workspaceButtonWidth
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : (width / 2)
+                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
                 property bool previousExists: index > 0
                 property bool nextExists: index < root.currentWorkspaceWindows.length - 1
                 property real radiusPrev: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : (previousExists ? 0 : (width / 2))
@@ -579,6 +597,8 @@ Item {
         radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Math.min(width, height) / 2
         color: Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colPrimary
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
         anchors {
             verticalCenter: vertical ? undefined : parent.verticalCenter

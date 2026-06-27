@@ -551,6 +551,7 @@ DockButton {
                             // focused window, whispered ink for siblings.
                             radius: Appearance.zzzEverywhere ? Math.min(width, height) / 2
                                 : Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
+                            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                             implicitWidth: Appearance.zzzEverywhere
                                 ? (isFocusedWindow ? 16 : 5)
                                 : Appearance.angelEverywhere
@@ -574,10 +575,6 @@ DockButton {
                                 enabled: Appearance.animationsEnabled
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                             }
-                            Behavior on radius {
-                                enabled: Appearance.animationsEnabled
-                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                            }
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
                                 animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -597,6 +594,8 @@ DockButton {
                             : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                             : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0,
                             Appearance.zzzEverywhere ? 0.65 : 0.5)
+                        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
+                        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
                         Behavior on opacity {
                             enabled: Appearance.animationsEnabled

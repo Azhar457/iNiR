@@ -1,4 +1,5 @@
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
@@ -22,7 +23,10 @@ Item {
     readonly property bool empty: gridLayout.implicitWidth < 1
     default property alias items: gridLayout.children
 
-    Rectangle {
+    // El fondo de cada grupo de la barra ahora sale del molde compartido
+    // (PanelSurface) en vez de dibujarse a mano. Misma pinta que antes, pero
+    // controlada desde un solo lugar → cambiar PanelSurface cambia toda la barra.
+    PanelSurface {
         id: background
         anchors {
             fill: parent
@@ -31,90 +35,12 @@ Item {
             leftMargin: root.vertical ? 4 : 0
             rightMargin: root.vertical ? 4 : 0
         }
-        color: Appearance.zzzEverywhere
-            ? "transparent"
-            : root.islandStyle
-            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-              : Appearance.inirEverywhere ? Appearance.inir.colLayer0
-              : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-              : Appearance.colors.colLayer0)
-            : (Config.options?.bar?.borderless ?? false) ? "transparent"
-            : (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-              : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-              : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-              : Appearance.colors.colLayer1)
-        border.width: Appearance.zzzEverywhere ? 0
-                    : root.islandStyle ? 1
-                    : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
-                    : Appearance.inirEverywhere ? 1 : (root.cardStyleEverywhere ? 1 : 0)
-        border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                    : Appearance.zzzEverywhere ? "transparent"
-                    : Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
-        clip: false
-
-        // ZZZ keeps the bar chrome unified; groups do not draw local borders.
-        Rectangle {
-            anchors {
-                left: parent.left
-                top: parent.top
-                bottom: parent.bottom
-                topMargin: Appearance.zzz.roundSmall
-                bottomMargin: Appearance.zzz.roundSmall
-            }
-            visible: root.zzzPlate
-            width: root.zzzPlate ? Appearance.zzz.borderThick : 0
-            color: Appearance.zzz.accent
-            Behavior on width {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
-            Behavior on color {
-                enabled: Appearance.animationsEnabled
-                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
-        }
-        Item {
-            visible: root.zzzPlate
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: Appearance.zzz.borderThick
-            clip: true
-
-            Rectangle {
-                anchors.fill: parent
-                color: Appearance.zzz.quietStroke
-            }
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.top: parent.top
-                width: Math.min(30, parent.width * 0.22)
-                height: parent.height
-                color: Appearance.zzz.accent
-            }
-        }
-        radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
-              : root.islandStyle ? Math.min(width, height) / 2
-              : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-              : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
-              : (root.cardStyleEverywhere ? Appearance.rounding.normal : Appearance.rounding.small)
-        Behavior on radius {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on border.width {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on border.color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
+        island: root.islandStyle
+        cardStyle: root.cardStyleEverywhere
+        borderless: !root.islandStyle && (Config.options?.bar?.borderless ?? false)
+        elevation: root.islandStyle ? 0 : 1
+        // En zzz la barra mantiene su contorno unificado; los grupos quedan transparentes.
+        zzzChamfer: false
     }
 
     GridLayout {

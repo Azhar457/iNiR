@@ -41,6 +41,25 @@ Scope {
                 id: barRoot
                 screen: barLoader.modelData
                 visible: !GameMode.shouldHidePanels
+                readonly property bool zzzDetachedRounded: Appearance.zzzEverywhere
+                    && Appearance.zzz.round
+                    && ((Config.options?.bar?.appearanceStyle ?? "classic") === "classic")
+                    && bar.showBarBackground
+                    && (((Config.options?.bar?.cornerStyle ?? 0) === 1) || ((Config.options?.bar?.cornerStyle ?? 0) === 3))
+                readonly property real panelSurfaceHeight: zzzDetachedRounded
+                    ? (Appearance.sizes.baseBarHeight + Appearance.sizes.elevationMargin * 2)
+                    : Appearance.sizes.barHeight
+                readonly property real roundDecoratorAllowance: (!zzzDetachedRounded
+                    && bar.showBarBackground
+                    && (Config.options?.bar?.cornerStyle ?? 0) === 0
+                    && !Appearance.zzzEverywhere)
+                    ? Appearance.rounding.screenRounding : 0
+                readonly property bool rightDeadPixelWorkaround: (Config.options?.interactions?.deadPixelWorkaround?.enable ?? false)
+                    && barRoot.anchors.right
+                    && !barRoot.zzzDetachedRounded
+                readonly property bool bottomDeadPixelWorkaround: (Config.options?.interactions?.deadPixelWorkaround?.enable ?? false)
+                    && barRoot.anchors.bottom
+                    && !barRoot.zzzDetachedRounded
 
                 property var brightnessMonitor: Brightness.getMonitorForScreen(barLoader.modelData)
                 property real useShortenedForm: (Appearance.sizes.barHellaShortenScreenWidthThreshold >= screen.width) ? 2 : (Appearance.sizes.barShortenScreenWidthThreshold >= screen.width) ? 1 : 0
@@ -70,9 +89,9 @@ Scope {
                 exclusionMode: ExclusionMode.Ignore
                 exclusiveZone: GameMode.shouldHidePanels ? 0 :
                     (GlobalStates.coverflowSelectorOpen || (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows))) ? 0 :
-                    Appearance.sizes.baseBarHeight + ((((Config.options?.bar?.cornerStyle ?? 0) === 1) || ((Config.options?.bar?.cornerStyle ?? 0) === 3)) ? (Appearance.sizes.hyprlandGapsOut * 2) : 0)
+                    barRoot.panelSurfaceHeight
                 WlrLayershell.namespace: "quickshell:bar"
-                implicitHeight: Appearance.sizes.barHeight + Appearance.rounding.screenRounding
+                implicitHeight: barRoot.panelSurfaceHeight + barRoot.roundDecoratorAllowance
                 // Explicit zero-size item prevents ambiguous null input region during
                 // surface map/unmap transitions. Region { item: null } can be interpreted
                 // as "full surface accepts input" by the compositor, causing an invisible
@@ -91,8 +110,8 @@ Scope {
                 }
 
                 margins {
-                    right: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && barRoot.anchors.right) * -1
-                    bottom: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && barRoot.anchors.bottom) * -1
+                    right: barRoot.rightDeadPixelWorkaround ? -1 : 0
+                    bottom: barRoot.bottomDeadPixelWorkaround ? -1 : 0
                 }
 
                 MouseArea  {
@@ -101,8 +120,8 @@ Scope {
                     property alias barContent: barContent
                     anchors {
                         fill: parent
-                        rightMargin: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && barRoot.anchors.right) * 1
-                        bottomMargin: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && barRoot.anchors.bottom) * 1
+                        rightMargin: barRoot.rightDeadPixelWorkaround ? 1 : 0
+                        bottomMargin: barRoot.bottomDeadPixelWorkaround ? 1 : 0
                     }
 
                     Item {
@@ -117,15 +136,15 @@ Scope {
                     BarContent {
                         id: barContent
                         
-                        implicitHeight: Appearance.sizes.barHeight
+                        implicitHeight: barRoot.panelSurfaceHeight
                         anchors {
                             right: parent.right
                             left: parent.left
                             top: parent.top
                             bottom: undefined
-                            topMargin: ((Config?.options.bar.autoHide.enable && !mustShow) || GlobalStates.coverflowSelectorOpen || !GlobalStates.shellEntryReady) ? -Appearance.sizes.barHeight : 0
-                            bottomMargin: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && barRoot.anchors.bottom) * -1
-                            rightMargin: ((Config.options?.interactions?.deadPixelWorkaround?.enable ?? false) && barRoot.anchors.right) * -1
+                            topMargin: ((Config?.options.bar.autoHide.enable && !mustShow) || GlobalStates.coverflowSelectorOpen || !GlobalStates.shellEntryReady) ? -barRoot.panelSurfaceHeight : 0
+                            bottomMargin: barRoot.bottomDeadPixelWorkaround ? -1 : 0
+                            rightMargin: barRoot.rightDeadPixelWorkaround ? -1 : 0
                         }
                         Behavior on anchors.topMargin {
                             enabled: Appearance.animationsEnabled
@@ -151,7 +170,7 @@ Scope {
                             PropertyChanges {
                                 target: barContent
                                 anchors.topMargin: 0
-                                anchors.bottomMargin: ((Config?.options.bar.autoHide.enable && !mustShow) || GlobalStates.coverflowSelectorOpen || !GlobalStates.shellEntryReady) ? -Appearance.sizes.barHeight : 0
+                                anchors.bottomMargin: ((Config?.options.bar.autoHide.enable && !mustShow) || GlobalStates.coverflowSelectorOpen || !GlobalStates.shellEntryReady) ? -barRoot.panelSurfaceHeight : 0
                             }
                         }
                     }

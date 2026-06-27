@@ -62,7 +62,7 @@ Rectangle {
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
     border.width: Appearance.angelEverywhere ? 0
-        : zzzEverywhere ? Appearance.zzz.borderThick : 1
+        : zzzEverywhere ? 0 : 1
     border.color: Appearance.angelEverywhere ? "transparent"
         : zzzEverywhere ? Appearance.zzz.hairline
         : inirEverywhere ? Appearance.inir.colBorder

@@ -765,6 +765,10 @@ Item {
                 color: Appearance.zzzEverywhere ? Appearance.zzz.tertiary
                      : Appearance.inirEverywhere ? Appearance.inir.colPrimary
                      : Appearance.colors.colPrimary
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
 
                 opacity: dockDelegate.isDropTarget ? 0.9 : 0
 

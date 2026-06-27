@@ -18,14 +18,24 @@ Item {
     property bool borderless: Config.options?.bar?.borderless ?? false
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
     readonly property string cleanedTitle: StringUtils.cleanMusicTitle(activePlayer?.trackTitle) || Translation.tr("No media")
+    readonly property string fullTrackText: `${cleanedTitle}${activePlayer?.trackArtist ? ' • ' + activePlayer.trackArtist : ''}`
     readonly property string popupMode: Config.options?.media?.popupMode ?? "dock"
+    readonly property bool showVerboseLabel: Config.options?.bar?.verbose ?? true
+    readonly property bool hasTrackMetadata: (activePlayer?.trackTitle?.length ?? 0) > 0
+        || (activePlayer?.trackArtist?.length ?? 0) > 0
+    readonly property bool lockMediaWidth: showVerboseLabel && hasTrackMetadata
+    property int pendingTrackDirection: 0
+    readonly property int effectiveTrackAnimationDirection: pendingTrackDirection !== 0 ? pendingTrackDirection : 1
 
     Layout.fillHeight: true
     // Clamp width to prevent long song titles from overflowing into Workspaces.
     // The bar's centerSideModuleWidth binding already accounts for this, but
-    // an explicit maxWidth keeps the text properly elided inside the group.
-    readonly property real maxMediaWidth: 220
-    implicitWidth: Math.min(rowLayout.implicitWidth + rowLayout.spacing * 2, maxMediaWidth)
+    // a stable natural width prevents track-length changes from resizing the
+    // center pill every time metadata changes.
+    readonly property real maxMediaWidth: 220 * Appearance.fontSizeScale
+    implicitWidth: lockMediaWidth
+        ? maxMediaWidth
+        : Math.min(rowLayout.implicitWidth + rowLayout.spacing * 2, maxMediaWidth)
     implicitHeight: Appearance.sizes.barHeight
     clip: true
 
@@ -237,8 +247,10 @@ Item {
             if (event.button === Qt.MiddleButton) {
                 MprisController.togglePlaying();
             } else if (event.button === Qt.BackButton) {
+                root.pendingTrackDirection = -1
                 MprisController.previous();
             } else if (event.button === Qt.ForwardButton || event.button === Qt.RightButton) {
+                root.pendingTrackDirection = 1
                 MprisController.next();
             } else if (event.button === Qt.LeftButton) {
                 if (root.popupMode === "bar") {
@@ -272,39 +284,59 @@ Item {
         spacing: 4
         anchors.fill: parent
 
-        ClippedFilledCircularProgress {
-            id: mediaCircProg
+        Item {
+            id: compactMediaGlyph
             Layout.alignment: Qt.AlignVCenter
-            lineWidth: Appearance.rounding.unsharpen
-            value: (activePlayer && activePlayer.length > 0) ? (activePlayer.position / activePlayer.length) : 0
-            implicitSize: 22
-            colPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
-                : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                : Appearance.colors.colOnSecondaryContainer
-            enableAnimation: activePlayer?.playbackState === MprisPlaybackState.Playing
+            implicitWidth: Appearance.zzzEverywhere && !root.showVerboseLabel ? 30 : 22
+            implicitHeight: implicitWidth
 
-            Item {
+            ZzzPlate {
+                anchors.fill: parent
+                visible: Appearance.zzzEverywhere && !root.showVerboseLabel
+                fillColor: Appearance.zzz.paperAlt
+                strokeColor: Appearance.zzz.hairline
+                strokeWidth: 1
+                chamfer: Math.min(Appearance.zzz.cutCorner, 8)
+            }
+
+            ClippedFilledCircularProgress {
+                id: mediaCircProg
                 anchors.centerIn: parent
-                width: mediaCircProg.implicitSize
-                height: mediaCircProg.implicitSize
+                lineWidth: Appearance.zzzEverywhere ? 2 : Appearance.rounding.unsharpen
+                value: (activePlayer && activePlayer.length > 0) ? (activePlayer.position / activePlayer.length) : 0
+                implicitSize: Appearance.zzzEverywhere && !root.showVerboseLabel ? 22 : 22
+                colPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
+                    : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                    : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
+                    : Appearance.colors.colOnSecondaryContainer
+                enableAnimation: activePlayer?.playbackState === MprisPlaybackState.Playing
 
-                MaterialSymbol {
+                Item {
                     anchors.centerIn: parent
-                    fill: 1
-                    text: activePlayer?.isPlaying ? "pause" : "music_note"
-                    iconSize: Appearance.font.pixelSize.normal
-                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
-                        : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
-                        : Appearance.colors.colOnSecondaryContainer
+                    width: mediaCircProg.implicitSize
+                    height: mediaCircProg.implicitSize
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        fill: 1
+                        text: activePlayer?.isPlaying ? "pause" : "music_note"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                            : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
+                            : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
+                            : Appearance.colors.colOnSecondaryContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
+                    }
                 }
             }
         }
 
         Item {
             id: titleScroller
-            visible: Config.options?.bar?.verbose ?? true
+            visible: root.showVerboseLabel
             Layout.alignment: Qt.AlignVCenter
             Layout.fillWidth: true
             Layout.rightMargin: rowLayout.spacing
@@ -312,7 +344,7 @@ Item {
             implicitHeight: titleText.implicitHeight
             clip: true
 
-            readonly property string fullText: `${cleanedTitle}${activePlayer?.trackArtist ? ' • ' + activePlayer.trackArtist : ''}`
+            readonly property string fullText: root.fullTrackText
             readonly property bool overflowing: titleText.implicitWidth > width + 1
             // Continuous wraparound: scroll one text width + gap, then loop. The
             // trailing copy enters from the right exactly as the first exits left,
@@ -333,12 +365,20 @@ Item {
                     horizontalAlignment: titleScroller.overflowing ? Text.AlignLeft : Text.AlignHCenter
                     width: titleScroller.overflowing ? implicitWidth : titleScroller.width
                     elide: Text.ElideNone
+                    animateChange: true
+                    animationDistanceX: root.effectiveTrackAnimationDirection * 10
+                    animationDistanceY: 0
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                         : Appearance.inirEverywhere ? Appearance.inir.colText
                         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
                         : Appearance.colors.colOnLayer1
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                     text: titleScroller.fullText
                     onTextChanged: {
+                        root.pendingTrackDirection = 0
                         if (!titleScroller.overflowing) marqueeRow.x = 0
                         if (!titleScroller._marqueeHovered && titleScroller.overflowing && Appearance.animationsEnabled) {
                             scrollAnim.stop()

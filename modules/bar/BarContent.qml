@@ -137,6 +137,11 @@ Item { // Bar content region
     readonly property bool isIslands: root.barAppearance === "islands"
     readonly property bool isScenic: root.barAppearance === "scenic"
     readonly property bool isFrame: root.barAppearance === "frame"
+    readonly property bool zzzDetachedRounded: root.zzzEverywhere
+        && Appearance.zzz.round
+        && root.barAppearance === "classic"
+        && (Config.options?.bar?.showBackground ?? true)
+        && (((Config.options?.bar?.cornerStyle ?? 0) === 1) || ((Config.options?.bar?.cornerStyle ?? 0) === 3))
     readonly property string leftAction: Config.options?.bar?.leftScrollAction ?? "brightness"
     readonly property string rightAction: Config.options?.bar?.rightScrollAction ?? "volume"
 
@@ -189,6 +194,10 @@ Item { // Bar content region
             : root.inirEverywhere ? Appearance.inir.colLayer0
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
             : Appearance.colors.colLayer0
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         border.width: root.zzzEverywhere ? Appearance.zzz.borderThick : 1
         border.color: root.zzzEverywhere ? Appearance.zzz.hairlineStrong
             : root.angelEverywhere ? Appearance.angel.colCardBorder
@@ -208,10 +217,6 @@ Item { // Bar content region
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
         Behavior on border.color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
@@ -446,16 +451,23 @@ Item { // Bar content region
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
         readonly property bool gameModeMinimal: Appearance.gameModeMinimal
         readonly property int cornerStyle: Config.options?.bar?.cornerStyle ?? 0
+        readonly property bool zzzGlassActive: root.zzzEverywhere
+            && root.barAppearance === "classic"
+            && Appearance.effectsEnabled
+            && (Config.options?.appearance?.zzz?.glass ?? true)
         // Float (1) and Card (3) are floating; Aurora makes everything floating except Hug and Rect.
         // Frame appearance always floats; scenic hugs the edge by definition.
-        readonly property bool floatingStyle: root.isFrame
+        readonly property bool floatingStyle: root.zzzDetachedRounded
+            || root.isFrame
             || (!root.isScenic && ((cornerStyle === 1 || cornerStyle === 3) || (auroraEverywhere && cornerStyle !== 0 && cornerStyle !== 2)))
 
         anchors {
             fill: parent
-            margins: floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
+            margins: root.zzzDetachedRounded ? Appearance.sizes.elevationMargin
+                : floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
         }
-        readonly property real barMargin: floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
+        readonly property real barMargin: root.zzzDetachedRounded ? Appearance.sizes.elevationMargin
+            : floatingStyle ? Appearance.sizes.hyprlandGapsOut : 0
         readonly property bool isBottom: Config.options?.bar?.bottom ?? false
 
         readonly property QtObject blendedColors: root.blendedColors
@@ -494,7 +506,10 @@ Item { // Bar content region
         // Color logic per global style and corner style
         color: {
             if (root.zzzEverywhere) {
-                return Appearance.zzz.chrome
+                const zzzBase = cornerStyle === 3 ? Appearance.zzz.chromeAlt : Appearance.zzz.chrome
+                return barBackground.zzzGlassActive
+                    ? ColorUtils.applyAlpha(zzzBase, Appearance.zzz.dark ? 0.88 : 0.84)
+                    : zzzBase
             }
             // Frame is an outline only; scenic paints via the gradient above
             if (root.isFrame || root.isScenic) {
@@ -571,19 +586,30 @@ Item { // Bar content region
             }
         }
 
-        // ZZZ round mode: the flush console bar softens only its INNER edge (the
-        // one facing into the screen) so it reads rounded without leaving gaps at
-        // the screen-edge corners. Square mode and other styles are untouched.
+        // ZZZ corner semantics:
+        // - Round mode keeps the same capsule language at the screen ends.
+        // - Rect stays edge-bound and sharp.
+        // - Float/Card detach and round all visible corners in round mode.
         readonly property real zzzRoundEdge: (root.zzzEverywhere && Appearance.zzz.round) ? Appearance.zzz.panelRadius : -1
-        topLeftRadius: (zzzRoundEdge >= 0 && isBottom) ? zzzRoundEdge : radius
-        topRightRadius: (zzzRoundEdge >= 0 && isBottom) ? zzzRoundEdge : radius
-        bottomLeftRadius: (zzzRoundEdge >= 0 && !isBottom) ? zzzRoundEdge : radius
-        bottomRightRadius: (zzzRoundEdge >= 0 && !isBottom) ? zzzRoundEdge : radius
+        readonly property bool zzzHugCorners: zzzRoundEdge >= 0 && cornerStyle === 0
+        readonly property bool zzzAllCorners: zzzRoundEdge >= 0 && floatingStyle
+        topLeftRadius: (zzzAllCorners || zzzHugCorners) ? zzzRoundEdge : radius
+        topRightRadius: (zzzAllCorners || zzzHugCorners) ? zzzRoundEdge : radius
+        bottomLeftRadius: (zzzAllCorners || zzzHugCorners) ? zzzRoundEdge : radius
+        bottomRightRadius: (zzzAllCorners || zzzHugCorners) ? zzzRoundEdge : radius
         Behavior on topLeftRadius {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
+        Behavior on topRightRadius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         Behavior on bottomLeftRadius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on bottomRightRadius {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
@@ -635,6 +661,12 @@ Item { // Bar content region
         }
 
         clip: true
+
+        ZzzGlassWash {
+            anchors.fill: parent
+            maskRadius: barBackground.zzzRoundEdge >= 0 ? barBackground.zzzRoundEdge : barBackground.radius
+            glassEnabled: barBackground.zzzGlassActive
+        }
 
         layer.enabled: auroraEverywhere && !root.inirEverywhere && !root.zzzEverywhere && !gameModeMinimal && root.barAppearance === "classic"
         layer.effect: GE.OpacityMask {

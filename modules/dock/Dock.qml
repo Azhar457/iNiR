@@ -164,6 +164,9 @@ Scope {
                                 Rectangle {
                                     id: dockVisualBackground
                                     property bool cardStyle: Config.options?.dock?.cardStyle ?? false
+                                    readonly property bool zzzGlassActive: root.zzzEverywhere
+                                        && Appearance.effectsEnabled
+                                        && (Config.options?.appearance?.zzz?.glass ?? true)
                                     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
                                     readonly property bool inirEverywhere: Appearance.inirEverywhere
                                     readonly property bool gameModeMinimal: Appearance.gameModeMinimal
@@ -210,17 +213,34 @@ Scope {
                                     : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                                     : inirEverywhere ? Appearance.inir.roundingNormal
                                     : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
+                                // Organic morph on style/shape switch (organic-transitions)
+                                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                                Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                                Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
                                 ZzzPlate {
                                     anchors.fill: parent
                                     z: -1
                                     visible: root.zzzEverywhere
                                     chamfer: Appearance.zzz.cutCorner
-                                    chamferBottomRight: false
-                                    chamferTopRight: true
-                                    fillColor: Appearance.zzz.chromeAlt
-                                    strokeColor: Appearance.zzz.hairlineStrong
+                                    chamferBottomRight: true
+                                    chamferTopRight: false
+                                    fillColor: dockVisualBackground.zzzGlassActive
+                                        ? ColorUtils.applyAlpha(Appearance.zzz.chromeAlt, Appearance.zzz.dark ? 0.82 : 0.76)
+                                        : Appearance.zzz.chromeAlt
+                                    strokeColor: Appearance.zzz.hairline
                                     strokeWidth: 1
+                                }
+
+                                ZzzGlassWash {
+                                    anchors.fill: parent
+                                    z: -2
+                                    maskRadius: dockVisualBackground.radius
+                                    chamfer: Appearance.zzz.cutCorner
+                                    chamferTopRight: false
+                                    chamferBottomRight: true
+                                    glassEnabled: dockVisualBackground.zzzGlassActive
                                 }
 
                                 clip: true
@@ -320,6 +340,10 @@ Scope {
                                         font.pixelSize: parent.width * 0.5
                                         text: "apps"
                                         color: root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer0
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                        }
                                     }
                                 }
                             }
@@ -347,6 +371,10 @@ Scope {
                                         font.pixelSize: parent.width * 0.5
                                         text: "apps"
                                         color: root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer0
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                        }
                                     }
                                 }
                             }

@@ -114,6 +114,10 @@ RippleButton {
             implicitHeight: 8
             radius: Appearance.rounding.full
             color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colTertiary
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
 
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled

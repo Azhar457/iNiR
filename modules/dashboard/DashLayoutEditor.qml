@@ -7,15 +7,24 @@ import QtQuick
 import QtQuick.Layouts
 
 /**
- * Drag-and-drop dashboard layout editor. Three zones (left, center, right) each
- * render their widget rows in a soft container with a DropArea; rows drag across
- * zones AND from the "Available" tray. Adapted from BarModuleOrderEditor — same
- * uniform-row drop math (insert index = round(y / pitch)) and dragLayer reparent
- * so a lifted row floats above every zone. Writes go per-leaf through Config
- * (never assign a whole object to the dashboard.layout JsonObject).
+ * Drag-and-drop dashboard layout editor. Three zones (left, center, right) plus
+ * an "Available" tray. Widgets reorder within a zone, move across zones, get
+ * removed (drop on the tray) or added (drag a chip onto a zone, or tap it).
  *
- * Used in BOTH the Settings page and the in-panel edit sheet, so the editing
- * model is identical wherever the user reaches it.
+ * Drag mechanism — pointer-driven, NOT Qt's Drag/DropArea. The previous version
+ * reparented the real row into a floating layer and relied on DropArea event
+ * delivery; nested inside two Flickables (the Settings ContentPage scroll and
+ * the in-panel edit sheet) that delivery is unreliable and the gesture was
+ * silently stolen, so drags never committed. This version instead:
+ *   • owns the gesture on a `preventStealing` MouseArea (no Flickable steal),
+ *   • floats a lightweight GHOST that follows the cursor (the real row just
+ *     collapses in place, keeping the column geometry stable),
+ *   • computes the target zone + insert index by hit-testing the cursor against
+ *     each zone's registered geometry every move — fully deterministic, no
+ *     dependence on DropArea entered/dropped signals firing.
+ * Writes still go per-leaf through Config (never assign a whole object to the
+ * dashboard.layout JsonObject). Used in BOTH the Settings page and the in-panel
+ * edit sheet, so the editing model is identical wherever the user reaches it.
  */
 ColumnLayout {
     id: root
@@ -25,6 +34,7 @@ ColumnLayout {
     readonly property int rowH: 38
     readonly property int rowGap: 4
     readonly property real pitch: rowH + rowGap
+    readonly property real dragThreshold: 6
     readonly property string availableZone: "__available__"
     readonly property var zones: ["left", "center", "right"]
 
@@ -63,8 +73,11 @@ ColumnLayout {
         right: ["media", "weather", "calendar"]
     })
     function _getZone(name) {
+        // list<string> from QML is array-LIKE (has .length / indices) but NOT a
+        // real Array, so Array.isArray() is false for it — never use it here, it
+        // would always fall through to defaults. `.length >= 0` is the guard.
         const a = Config.options?.dashboard?.layout?.[name]
-        return Array.isArray(a) ? a : (root._defaults[name] ?? [])
+        return (a && a.length >= 0) ? a : (root._defaults[name] ?? [])
     }
     function _placed() {
         let s = []
@@ -90,6 +103,8 @@ ColumnLayout {
     function _dropMove(srcZone, srcIdx, srcId, dstZone, dstIdx) {
         if (srcZone === root.availableZone) { root._addToZone(srcId, dstZone, dstIdx); return }
         if (srcZone === dstZone) {
+            // dstIdx is computed against liveCount (already excludes the lifted
+            // row), so no srcIdx adjustment is needed after the splice.
             const arr = root._getZone(srcZone).slice()
             const [m] = arr.splice(srcIdx, 1)
             arr.splice(Math.max(0, Math.min(dstIdx, arr.length)), 0, m)
@@ -113,26 +128,133 @@ ColumnLayout {
         })
     }
 
-    // ─── Drag state ─────────────────────────────────────────────────────
-    property var dragInfo: null      // { zone, index, id }
-    property string dropZone: ""
-    property int dropIndex: -1
-    readonly property bool dragging: dragInfo !== null
+    // ─── Drag state (pointer-driven) ────────────────────────────────────
+    property var dragInfo: null      // { zone, index, id } of the lifted item
+    property string dragId: ""       // id being dragged (for the ghost)
+    property string dropZone: ""     // zone currently under the cursor
+    property int dropIndex: -1       // insert slot in dropZone
+    property bool dragging: false
+    property point dragScene: Qt.point(0, 0)   // cursor position in root coords
+
+    // Per-zone hit regions, registered by each zone delegate. 3 fixed zones,
+    // never destroyed during a session, so registration is one-shot.
+    property var _zoneRegions: ({})
+    property var _trayRegion: null
+
     function _indexFromY(y, count) { return Math.max(0, Math.min(Math.round(y / root.pitch), count)) }
-    function _commitDrop(dstZone) {
-        if (root.dragInfo && root.dropIndex >= 0)
-            root._dropMove(root.dragInfo.zone, root.dragInfo.index, root.dragInfo.id, dstZone, root.dropIndex)
+    function _liveCount(zone) {
+        return root._getZone(zone).length - ((root.dragInfo && root.dragInfo.zone === zone) ? 1 : 0)
+    }
+
+    // Cursor (root coords) → {dropZone, dropIndex}. Zone match first, then tray.
+    function _updateDrop(sp) {
+        for (let i = 0; i < root.zones.length; i++) {
+            const zn = root.zones[i]
+            const reg = root._zoneRegions[zn]
+            if (!reg) continue
+            const o = reg.mapToItem(root, 0, 0)
+            if (sp.x >= o.x && sp.x <= o.x + reg.width && sp.y >= o.y && sp.y <= o.y + reg.height) {
+                root.dropZone = zn
+                root.dropIndex = root._indexFromY(sp.y - o.y, root._liveCount(zn))
+                return
+            }
+        }
+        if (root._trayRegion) {
+            const t = root._trayRegion.mapToItem(root, 0, 0)
+            if (sp.x >= t.x && sp.x <= t.x + root._trayRegion.width
+                && sp.y >= t.y && sp.y <= t.y + root._trayRegion.height) {
+                root.dropZone = root.availableZone
+                root.dropIndex = -1
+                return
+            }
+        }
+        root.dropZone = ""
+        root.dropIndex = -1
+    }
+
+    function _arm(zone, index, id) {
+        // Record intent on press; the drag only "begins" past the threshold so a
+        // plain tap/click (chip add, remove button) is never hijacked.
+        root.dragInfo = { zone: zone, index: index, id: id }
+        root.dragId = id
+        root.dragging = false
+    }
+    function _begin(sp) {
+        root.dragging = true
+        root.dragScene = sp
+        root._updateDrop(sp)
+    }
+    function _move(sp) {
+        root.dragScene = sp
+        root._updateDrop(sp)
+    }
+    function _commit() {
+        if (root.dragging && root.dragInfo) {
+            if (root.dropZone === root.availableZone) {
+                if (root.dragInfo.zone !== root.availableZone) root._remove(root.dragInfo.zone, root.dragInfo.index)
+            } else if (root.dropZone !== "" && root.dropIndex >= 0) {
+                root._dropMove(root.dragInfo.zone, root.dragInfo.index, root.dragInfo.id, root.dropZone, root.dropIndex)
+            }
+        }
         root._endDrag()
     }
-    function _endDrag() { root.dragInfo = null; root.dropZone = ""; root.dropIndex = -1 }
+    function _endDrag() {
+        root.dragInfo = null; root.dragId = ""; root.dragging = false
+        root.dropZone = ""; root.dropIndex = -1
+    }
 
-    // Floating layer the dragged row reparents into so it travels over all zones.
+    // Floating overlay: holds the ghost so it travels above every zone/tray.
+    // Sits in a zero-height layout slot at the top; its local coords ≈ root's.
     Item {
         Layout.fillWidth: true
         Layout.preferredHeight: 0
         z: 100
         clip: false
-        Item { id: dragLayer; width: root.width; height: root.height }
+        Item {
+            id: dragLayer
+            width: root.width
+            height: root.height
+
+            // The lifted item, rendered as a single bright row that follows the
+            // cursor. The source row collapses in place while this is visible.
+            Rectangle {
+                id: ghost
+                visible: root.dragging && root.dragId.length > 0
+                width: root.width
+                height: root.rowH
+                radius: Appearance.rounding.small
+                color: Appearance.colors.colLayer2
+                border.color: Appearance.colors.colPrimary
+                border.width: 1
+                scale: root.dragging ? 1.03 : 0.96
+                rotation: root.dragging ? 0.6 : 0
+                opacity: root.dragging ? 0.97 : 0
+                z: 300
+                property point _c: root.mapToItem(dragLayer, root.dragScene.x, root.dragScene.y)
+                x: _c.x - width / 2
+                y: _c.y - height / 2
+                Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+
+                StyledRectangularShadow { target: ghost; z: -1 }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 6
+                    spacing: 8
+                    MaterialSymbol { text: "drag_indicator"; iconSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colSubtext }
+                    MaterialSymbol { text: root._icon(root.dragId); iconSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colOnLayer2 }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: root._label(root.dragId)
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        color: Appearance.colors.colOnLayer2
+                        elide: Text.ElideRight
+                    }
+                }
+            }
+        }
     }
 
     // ─── Header ─────────────────────────────────────────────────────────
@@ -161,57 +283,46 @@ ColumnLayout {
         property string widgetId: ""
         property string zone: ""
         property int rowIndex: -1
-        readonly property bool beingDragged: root.dragInfo && root.dragInfo.id === widgetId && root.dragInfo.zone === zone && root.dragInfo.index === rowIndex
+        readonly property bool isSource: root.dragging && root.dragInfo
+            && root.dragInfo.zone === zone && root.dragInfo.index === rowIndex
+        property point _pressScene: Qt.point(0, 0)
 
         width: parent ? parent.width : implicitWidth
-        height: root.rowH
+        // Collapse out of the flow while this row is the lift source, so the
+        // column reflows to liveCount and the drop-slot math stays exact.
+        height: isSource ? 0 : root.rowH
+        opacity: isSource ? 0 : 1
+        clip: true
         radius: Appearance.rounding.small
-        color: beingDragged ? Appearance.colors.colLayer2
-            : (dragMa.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1)
-        border.color: beingDragged ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
+        color: dragMa.containsMouse ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
+        border.color: Appearance.colors.colOutlineVariant
         border.width: 1
-        scale: beingDragged ? 1.03 : 1
-        rotation: beingDragged ? 0.6 : 0
-        Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-        Behavior on rotation { enabled: Appearance.animationsEnabled; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+        Behavior on height { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
         Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
-
-        StyledRectangularShadow {
-            target: rowRoot.beingDragged ? rowRoot : null
-            visible: rowRoot.beingDragged
-            z: -1
-        }
-
-        Drag.active: dragMa.drag.active
-        Drag.source: rowRoot
-        Drag.hotSpot.x: width / 2
-        Drag.hotSpot.y: height / 2
-        states: State {
-            when: dragMa.drag.active
-            ParentChange { target: rowRoot; parent: dragLayer }
-            PropertyChanges { rowRoot { z: 200 } }
-        }
 
         MouseArea {
             id: dragMa
             anchors.fill: parent
             hoverEnabled: true
-            // preventStealing: the editor is nested inside a Flickable (the
-            // settings ContentPage scroll, and the in-panel `editScroll`).
-            // Without this the Flickable steals the vertical drag gesture the
-            // moment the cursor moves past its threshold, so the row never
-            // actually drags and the drop never commits.
+            // preventStealing: the editor is nested inside Flickables (the
+            // settings scroll + the in-panel edit sheet). Without this the
+            // Flickable steals the vertical gesture and the drag never starts.
             preventStealing: true
-            cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-            drag.target: rowRoot
-            drag.axis: Drag.XAndYAxis
-            onPressed: {
-                root.dragInfo = { zone: rowRoot.zone, index: rowRoot.rowIndex, id: rowRoot.widgetId }
+            cursorShape: (root.dragging && rowRoot.isSource) ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+            onPressed: mouse => {
+                rowRoot._pressScene = mapToItem(root, mouse.x, mouse.y)
+                root._arm(rowRoot.zone, rowRoot.rowIndex, rowRoot.widgetId)
             }
-            onReleased: {
-                if (rowRoot.Drag.target) rowRoot.Drag.drop()
-                else root._endDrag()
+            onPositionChanged: mouse => {
+                if (!root.dragInfo) return
+                const sp = mapToItem(root, mouse.x, mouse.y)
+                if (!root.dragging) {
+                    if (Math.hypot(sp.x - rowRoot._pressScene.x, sp.y - rowRoot._pressScene.y) < root.dragThreshold) return
+                    root._begin(sp)
+                } else root._move(sp)
             }
+            onReleased: { if (root.dragging) root._commit(); else root._endDrag() }
             onCanceled: root._endDrag()
         }
 
@@ -220,6 +331,7 @@ ColumnLayout {
             anchors.leftMargin: 8
             anchors.rightMargin: 6
             spacing: 8
+            visible: !rowRoot.isSource
             MaterialSymbol { text: "drag_indicator"; iconSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colSubtext }
             MaterialSymbol { text: root._icon(rowRoot.widgetId); iconSize: Appearance.font.pixelSize.normal; color: Appearance.colors.colOnLayer1 }
             StyledText {
@@ -296,24 +408,15 @@ ColumnLayout {
                     }
                 }
 
-                DropArea {
+                // Hit/index region — registered with root for cursor hit-testing.
+                Item {
                     id: zoneDrop
                     Layout.fillWidth: true
                     implicitHeight: Math.max(rowCol.implicitHeight, root.rowH)
-                    readonly property string zoneName: zoneCard.zoneName
-                    readonly property int liveCount: zoneCard.zoneItems.length
-                        - ((root.dragInfo && root.dragInfo.zone === zoneName) ? 1 : 0)
-                    function _update(y) {
-                        root.dropZone = zoneName
-                        root.dropIndex = root._indexFromY(y, zoneDrop.liveCount)
-                    }
-                    onEntered: drag => zoneDrop._update(drag.y)
-                    onPositionChanged: drag => zoneDrop._update(drag.y)
-                    onExited: if (root.dropZone === zoneName) { root.dropZone = ""; root.dropIndex = -1 }
-                    onDropped: root._commitDrop(zoneName)
+                    Component.onCompleted: root._zoneRegions[zoneCard.zoneName] = zoneDrop
 
                     Rectangle {
-                        visible: zoneDrop.liveCount === 0
+                        visible: zoneCard.zoneItems.length === 0
                         anchors.fill: parent
                         radius: Appearance.rounding.small
                         color: zoneCard.dropActive ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.9) : "transparent"
@@ -350,22 +453,18 @@ ColumnLayout {
                                 rowIndex: index
                             }
                         }
-                        Item {
-                            visible: root.dragInfo && root.dragInfo.zone === zoneDrop.zoneName
-                            width: parent.width
-                            height: visible ? root.rowH : 0
-                        }
                     }
 
+                    // Drop slot indicator — animates between insert positions.
                     Rectangle {
                         id: dropSlot
-                        visible: zoneCard.dropActive && root.dropIndex >= 0 && zoneDrop.liveCount > 0
+                        visible: zoneCard.dropActive && root.dropIndex >= 0 && root._liveCount(zoneCard.zoneName) > 0
                         x: 6
                         width: parent.width - 12
                         height: 4
                         radius: 2
                         color: Appearance.colors.colPrimary
-                        y: Math.min(root.dropIndex, zoneDrop.liveCount) * root.pitch - root.rowGap / 2 - height / 2
+                        y: Math.min(root.dropIndex, root._liveCount(zoneCard.zoneName)) * root.pitch - root.rowGap / 2 - height / 2
                         z: 50
                         Behavior on y {
                             enabled: Appearance.animationsEnabled
@@ -380,129 +479,114 @@ ColumnLayout {
     }
 
     // ─── Available (unplaced) widgets — chip tray, also a remove target ──
-    DropArea {
-        id: trayDrop
+    Rectangle {
+        id: tray
         Layout.fillWidth: true
         Layout.topMargin: 4
-        implicitHeight: tray.implicitHeight
         readonly property bool removeActive: root.dragging && root.dragInfo
             && root.dragInfo.zone !== root.availableZone && root.dropZone === root.availableZone
-        onEntered: drag => { root.dropZone = root.availableZone; root.dropIndex = -1 }
-        onExited: if (root.dropZone === root.availableZone) root.dropZone = ""
-        onDropped: {
-            // Dropping a placed row here removes it from its zone.
-            if (root.dragInfo && root.dragInfo.zone !== root.availableZone)
-                root._remove(root.dragInfo.zone, root.dragInfo.index)
-            root._endDrag()
-        }
+        implicitHeight: trayInner.implicitHeight + 16
+        radius: Appearance.rounding.normal
+        color: removeActive ? ColorUtils.transparentize(Appearance.colors.colError, 0.9) : Appearance.colors.colLayer0
+        border.color: removeActive ? Appearance.colors.colError : Appearance.colors.colOutlineVariant
+        border.width: 1
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+        Component.onCompleted: root._trayRegion = tray
 
-        Rectangle {
-            id: tray
-            width: parent.width
-            implicitHeight: trayInner.implicitHeight + 16
-            radius: Appearance.rounding.normal
-            color: trayDrop.removeActive ? ColorUtils.transparentize(Appearance.colors.colError, 0.9) : Appearance.colors.colLayer0
-            border.color: trayDrop.removeActive ? Appearance.colors.colError : Appearance.colors.colOutlineVariant
-            border.width: 1
-            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+        ColumnLayout {
+            id: trayInner
+            anchors.fill: parent
+            anchors.margins: 8
+            spacing: 8
 
-            ColumnLayout {
-                id: trayInner
-                anchors.fill: parent
-                anchors.margins: 8
+            RowLayout {
+                Layout.fillWidth: true
                 spacing: 8
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-                    Rectangle {
-                        implicitWidth: 24; implicitHeight: 24
-                        radius: Appearance.rounding.full
-                        color: ColorUtils.transparentize(trayDrop.removeActive ? Appearance.colors.colError : Appearance.colors.colPrimary, 0.85)
-                        MaterialSymbol { anchors.centerIn: parent; text: trayDrop.removeActive ? "delete" : "add_box"; iconSize: Appearance.font.pixelSize.small; color: trayDrop.removeActive ? Appearance.colors.colError : Appearance.colors.colPrimary }
-                    }
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: trayDrop.removeActive ? Translation.tr("Release to remove")
-                            : (root.availableIds.length > 0 ? Translation.tr("Available widgets") : Translation.tr("All widgets placed"))
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.DemiBold
-                        color: trayDrop.removeActive ? Appearance.colors.colError : Appearance.colors.colOnLayer0
-                    }
+                Rectangle {
+                    implicitWidth: 24; implicitHeight: 24
+                    radius: Appearance.rounding.full
+                    color: ColorUtils.transparentize(tray.removeActive ? Appearance.colors.colError : Appearance.colors.colPrimary, 0.85)
+                    MaterialSymbol { anchors.centerIn: parent; text: tray.removeActive ? "delete" : "add_box"; iconSize: Appearance.font.pixelSize.small; color: tray.removeActive ? Appearance.colors.colError : Appearance.colors.colPrimary }
                 }
-
-                Flow {
+                StyledText {
                     Layout.fillWidth: true
-                    visible: root.availableIds.length > 0
-                    spacing: 6
-                    Repeater {
-                        model: root.availableIds
-                        delegate: Rectangle {
-                            id: chip
-                            required property string modelData
-                            readonly property string widgetId: modelData
-                            readonly property bool beingDragged: root.dragInfo && root.dragInfo.zone === root.availableZone && root.dragInfo.id === widgetId
+                    text: tray.removeActive ? Translation.tr("Release to remove")
+                        : (root.availableIds.length > 0 ? Translation.tr("Available widgets") : Translation.tr("All widgets placed"))
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    font.weight: Font.DemiBold
+                    color: tray.removeActive ? Appearance.colors.colError : Appearance.colors.colOnLayer0
+                }
+            }
 
-                            implicitHeight: 32
-                            implicitWidth: chipRow.implicitWidth + 18
-                            radius: Appearance.rounding.full
-                            color: chipMa.containsMouse || beingDragged
-                                ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85)
-                                : ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.95)
-                            border.color: beingDragged ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
-                            border.width: 1
-                            opacity: beingDragged ? 0.92 : 1
-                            scale: beingDragged ? 1.04 : 1
-                            Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+            Flow {
+                Layout.fillWidth: true
+                visible: root.availableIds.length > 0
+                spacing: 6
+                Repeater {
+                    model: root.availableIds
+                    delegate: Rectangle {
+                        id: chip
+                        required property string modelData
+                        readonly property string widgetId: modelData
+                        readonly property bool isSource: root.dragging && root.dragInfo
+                            && root.dragInfo.zone === root.availableZone && root.dragInfo.id === widgetId
+                        property point _pressScene: Qt.point(0, 0)
 
-                            Drag.active: chipMa.drag.active
-                            Drag.source: chip
-                            Drag.hotSpot.x: width / 2
-                            Drag.hotSpot.y: height / 2
-                            states: State {
-                                when: chipMa.drag.active
-                                ParentChange { target: chip; parent: dragLayer }
-                                PropertyChanges { chip { z: 200 } }
+                        implicitHeight: 32
+                        implicitWidth: chipRow.implicitWidth + 18
+                        radius: Appearance.rounding.full
+                        color: chipMa.containsMouse
+                            ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85)
+                            : ColorUtils.transparentize(Appearance.colors.colOnLayer1, 0.95)
+                        border.color: Appearance.colors.colOutlineVariant
+                        border.width: 1
+                        opacity: isSource ? 0.35 : 1
+                        Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+                        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+
+                        MouseArea {
+                            id: chipMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            preventStealing: true
+                            cursorShape: (root.dragging && chip.isSource) ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                            onPressed: mouse => {
+                                chip._pressScene = mapToItem(root, mouse.x, mouse.y)
+                                root._arm(root.availableZone, -1, chip.widgetId)
                             }
-
-                            MouseArea {
-                                id: chipMa
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                                drag.target: chip
-                                drag.axis: Drag.XAndYAxis
-                                onPressed: root.dragInfo = { zone: root.availableZone, index: -1, id: chip.widgetId }
-                                onReleased: {
-                                    if (chip.Drag.target) chip.Drag.drop()
-                                    else root._endDrag()
-                                }
-                                onCanceled: root._endDrag()
-                                // Single tap adds to the emptiest column — fast path
-                                // for users who don't want to drag.
-                                onClicked: {
-                                    let target = "center", best = Infinity
-                                    for (const z of root.zones) {
-                                        const n = root._getZone(z).length
-                                        if (n < best) { best = n; target = z }
-                                    }
-                                    root._addToZone(chip.widgetId, target, -1)
-                                }
+                            onPositionChanged: mouse => {
+                                if (!root.dragInfo) return
+                                const sp = mapToItem(root, mouse.x, mouse.y)
+                                if (!root.dragging) {
+                                    if (Math.hypot(sp.x - chip._pressScene.x, sp.y - chip._pressScene.y) < root.dragThreshold) return
+                                    root._begin(sp)
+                                } else root._move(sp)
                             }
-
-                            RowLayout {
-                                id: chipRow
-                                anchors.centerIn: parent
-                                spacing: 6
-                                MaterialSymbol { text: root._icon(chip.widgetId); iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colOnLayer1 }
-                                StyledText {
-                                    text: root._label(chip.widgetId)
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    color: Appearance.colors.colOnLayer1
+                            onReleased: { if (root.dragging) root._commit(); else root._endDrag() }
+                            onCanceled: root._endDrag()
+                            // Tap (no drag) adds to the emptiest column — fast path.
+                            onClicked: {
+                                if (root.dragging) return
+                                let target = "center", best = Infinity
+                                for (const z of root.zones) {
+                                    const n = root._getZone(z).length
+                                    if (n < best) { best = n; target = z }
                                 }
-                                MaterialSymbol { text: "add"; iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colSubtext }
+                                root._addToZone(chip.widgetId, target, -1)
                             }
+                        }
+
+                        RowLayout {
+                            id: chipRow
+                            anchors.centerIn: parent
+                            spacing: 6
+                            MaterialSymbol { text: root._icon(chip.widgetId); iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colOnLayer1 }
+                            StyledText {
+                                text: root._label(chip.widgetId)
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                color: Appearance.colors.colOnLayer1
+                            }
+                            MaterialSymbol { text: "add"; iconSize: Appearance.font.pixelSize.small; color: Appearance.colors.colSubtext }
                         }
                     }
                 }

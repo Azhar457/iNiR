@@ -163,6 +163,10 @@ PopupWindow {
             radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
                 : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                 : Appearance.inirEverywhere ? (Appearance.inir?.roundingNormal ?? 12) : Appearance.rounding.normal
+            Behavior on radius {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             border.width: 1
             border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
                 : Appearance.angelEverywhere ? Appearance.angel.colBorder
@@ -171,6 +175,10 @@ PopupWindow {
                 : Appearance.auroraEverywhere
                     ? (Appearance.aurora?.colTooltipBorder ?? "transparent")
                     : Appearance.colors.colSurfaceContainerHighest
+            Behavior on border.color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
 
             layer.enabled: true
             layer.smooth: true

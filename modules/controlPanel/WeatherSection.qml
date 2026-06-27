@@ -6,7 +6,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 
-Rectangle {
+PanelSurface {
     id: root
     Layout.fillWidth: true
     implicitHeight: (Weather.enabled && Weather.data.temp && !Weather.data.temp.startsWith("--")) ? contentLayout.implicitHeight + 16 : 0
@@ -25,28 +25,10 @@ Rectangle {
     readonly property string locationText: Weather.visibleCity
     readonly property string secondaryText: locationText || root.weatherDescription
 
-    radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-    color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-         : inirEverywhere ? Appearance.inir.colLayer1
-         : auroraEverywhere ? Appearance.aurora.colSubSurface
-         : Appearance.colors.colLayer1
-    border.width: Appearance.angelEverywhere ? 0
-                : Appearance.zzzEverywhere ? 1
-                : (inirEverywhere ? 1 : 0)
-    border.color: Appearance.angelEverywhere ? "transparent"
-        : Appearance.zzzEverywhere ? Appearance.zzz.hairline
-        : inirEverywhere ? Appearance.inir.colBorder : "transparent"
-    Behavior on border.width {
-        enabled: Appearance.animationsEnabled
-        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-    }
-    Behavior on border.color {
-        enabled: Appearance.animationsEnabled
-        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-    }
+    elevation: 1
+    radiusOverride: inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
 
-    AngelPartialBorder { targetRadius: parent.radius; coverage: 0.45 }
+    AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere }
 
     ColumnLayout {
         id: contentLayout

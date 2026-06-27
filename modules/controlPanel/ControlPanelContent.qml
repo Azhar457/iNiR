@@ -89,7 +89,6 @@ Item {
              : root.inirEverywhere ? Appearance.inir.colLayer0
              : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : Appearance.colors.colLayer0
-
         radius: root.zzzEverywhere ? Appearance.zzz.panelRadius
             : root.angelEverywhere ? Appearance.angel.roundingLarge
             : root.inirEverywhere ? Appearance.inir.roundingLarge

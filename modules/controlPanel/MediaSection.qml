@@ -86,7 +86,8 @@ Item {
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
              : root.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
         color: Appearance.angelEverywhere ? "transparent"
-             : root.inirEverywhere ? Appearance.inir.colLayer1 
+             : Appearance.zzzEverywhere ? Appearance.colors.colLayer1
+             : root.inirEverywhere ? Appearance.inir.colLayer1
              : root.auroraEverywhere ? ColorUtils.transparentize(root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
              : (root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
         border.width: Appearance.angelEverywhere ? 0
@@ -272,7 +273,9 @@ Item {
                             highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                 : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                : root.inirEverywhere ? Appearance.inir.colLayer2 : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
+                                : root.inirEverywhere ? Appearance.inir.colLayer2
+                                : Appearance.zzzEverywhere ? Appearance.colors.colLayer2
+                                : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             handleColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                 : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             value: root.player?.length > 0 ? root.player.position / root.player.length : 0
@@ -290,7 +293,9 @@ Item {
                             highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                 : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                : root.inirEverywhere ? Appearance.inir.colLayer2 : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
+                                : root.inirEverywhere ? Appearance.inir.colLayer2
+                                : Appearance.zzzEverywhere ? Appearance.colors.colLayer2
+                                : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             value: root.player?.length > 0 ? root.player.position / root.player.length : 0
                         }
                     }

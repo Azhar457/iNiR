@@ -32,5 +32,6 @@ Item {
              : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
              : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.7)
              : Appearance.colors.colOutlineVariant
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
     }
 }
