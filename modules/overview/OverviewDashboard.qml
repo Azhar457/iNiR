@@ -21,6 +21,7 @@ Item {
     readonly property bool angelStyle: Appearance.angelEverywhere
     readonly property bool inirStyle: Appearance.inirEverywhere
     readonly property bool auroraStyle: Appearance.auroraEverywhere
+    readonly property bool zzzStyle: Appearance.zzzEverywhere
     property bool panelVisible: true
     readonly property bool useWallpaperBackdrop: root.panelVisible && (root.angelStyle || root.auroraStyle) && !root.inirStyle && root.wallpaperUrl.length > 0
 
@@ -145,6 +146,7 @@ Item {
     readonly property color mediaAccent: hasPlayer ? (angelStyle ? Appearance.angel.colPrimary : inirStyle ? Appearance.inir.colPrimary
         : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)) : colPrimary
     readonly property color mediaTrack: angelStyle ? Appearance.angel.colGlassCard : inirStyle ? Appearance.inir.colLayer2
+        : zzzStyle ? Appearance.colors.colLayer2
         : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
     readonly property color mediaHover: angelStyle ? Appearance.angel.colGlassCardHover : inirStyle ? Appearance.inir.colLayer2Hover
         : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
@@ -998,6 +1000,7 @@ Item {
                                     colPrimary: ResourceUsage.cpuUsage > 0.8 ? Appearance.colors.colError : root.colPrimary
                                     colSecondary: root.angelStyle ? Appearance.angel.colGlassCard
                                         : root.inirStyle ? Appearance.inir.colLayer2
+                                        : root.zzzStyle ? Appearance.colors.colLayer2
                                         : Appearance.colors.colSecondaryContainer
                                     enableAnimation: Appearance.animationsEnabled
                                     animationDuration: 600
@@ -1070,6 +1073,7 @@ Item {
                                     colPrimary: ResourceUsage.memoryUsedPercentage > 0.85 ? Appearance.colors.colError : Appearance.colors.colSecondary
                                     colSecondary: root.angelStyle ? Appearance.angel.colGlassCard
                                         : root.inirStyle ? Appearance.inir.colLayer2
+                                        : root.zzzStyle ? Appearance.colors.colLayer2
                                         : Appearance.colors.colSecondaryContainer
                                     enableAnimation: Appearance.animationsEnabled
                                     animationDuration: 600
@@ -1376,6 +1380,7 @@ Item {
         color: root.angelStyle ? ColorUtils.transparentize(root.colPrimary, 0.78)
             : root.inirStyle ? Appearance.inir.colLayer2
             : root.auroraStyle ? ColorUtils.transparentize(Appearance.colors.colSecondaryContainer, 0.45)
+            : root.zzzStyle ? Appearance.colors.colLayer2
             : Appearance.colors.colSecondaryContainer
         border.width: root.inirStyle ? 1 : 0
         border.color: root.inirStyle ? Appearance.inir.colBorderSubtle : "transparent"

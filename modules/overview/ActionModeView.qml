@@ -25,6 +25,10 @@ Item {
     id: root
     property string query: ""
     property int selectedCategoryIndex: 0
+    // Entering action mode ("/") always starts on "All" (index 0) so the query
+    // is never silently filtered by a category left selected from a previous
+    // session — the user no longer has to Tab back to "All" to capture input.
+    onVisibleChanged: if (visible) selectedCategoryIndex = 0
     property real availableHeight: Number.POSITIVE_INFINITY
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
 
@@ -247,12 +251,14 @@ Item {
                         font.family: Appearance.font.family.monospace
                         color: root.zzzEverywhere ? Appearance.zzz.accent
                             : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                         opacity: root.zzzEverywhere ? 1 : 0.7
                     }
                     StyledText {
                         text: modelData.desc
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                         opacity: root.zzzEverywhere ? 1 : 0.5
                     }
                 }
@@ -447,6 +453,7 @@ Item {
                             : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                             : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
                             : Appearance.rounding.full
+                        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                         color: {
                             if (root.zzzEverywhere)
                                 return delegateBtn.isHighlighted ? Appearance.zzz.accent : Appearance.zzz.paperAlt
@@ -458,6 +465,7 @@ Item {
                                 : (Appearance.inirEverywhere ? Appearance.inir.colLayer2
                                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                                    : Appearance.zzzEverywhere ? Appearance.colors.colLayer2
                                     : Appearance.colors.colSecondaryContainer)
                         }
 
@@ -560,6 +568,7 @@ Item {
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.monospace
                             color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                         }
 
                         Rectangle {
@@ -593,6 +602,7 @@ Item {
                             radius: height / 2
                             color: root.zzzEverywhere ? Appearance.zzz.signal : ColorUtils.transparentize(
                                 Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary, 0.2)
+                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
                             StyledText {
                                 id: installedText
@@ -656,6 +666,7 @@ Item {
                 text: Translation.tr("Searching packages...")
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             }
         }
 
@@ -678,6 +689,7 @@ Item {
                 text: "search_off"
                 iconSize: 28
                 color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             }
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
@@ -715,6 +727,7 @@ Item {
                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                             : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                             : Appearance.colors.colSecondaryContainer
+                        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                         StyledText {
                             id: keyLabel
                             anchors.centerIn: parent
@@ -722,12 +735,14 @@ Item {
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             font.family: Appearance.font.family.monospace
                             color: root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
+                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                         }
                     }
                     StyledText {
                         text: modelData.hint
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                 }
             }

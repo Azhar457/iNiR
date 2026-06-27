@@ -430,6 +430,14 @@ Item { // Wrapper
         border.color: root.zzzEverywhere ? Appearance.zzz.hairline
             : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
             : inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colLayer0Border
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
 
         // Collapsed search: a CLEAN plate (just the left category accent bar). The
         // search field is a small control — no ghost text, tape or frame labels.
@@ -503,6 +511,7 @@ Item { // Wrapper
                 Layout.fillWidth: true
                 height: 1
                 color: root.zzzEverywhere ? Appearance.zzz.hairline : Appearance.colors.colOutlineVariant
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             }
 
             // ── Action Mode View (replaces normal results when in / mode) ──

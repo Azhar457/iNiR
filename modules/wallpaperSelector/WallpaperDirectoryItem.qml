@@ -34,6 +34,9 @@ MouseArea {
         radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
         border.width: Appearance.zzzEverywhere ? 1 : 0
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -57,6 +60,10 @@ MouseArea {
                         width: wallpaperItemImageContainer.width
                         height: wallpaperItemImageContainer.height
                         radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : Appearance.rounding.small
+                        Behavior on radius {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
                 }
 
@@ -68,6 +75,10 @@ MouseArea {
                         target: thumbnailImageLoader
                         anchors.fill: undefined
                         radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : Appearance.rounding.small
+                        Behavior on radius {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
                 }
 

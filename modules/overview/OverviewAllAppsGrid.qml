@@ -153,12 +153,14 @@ Item {
             : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
             : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
         fallbackColor: root.surfaceColor
         inirColor: Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
         wallpaperBackdropEnabled: root.panelVisible && !root.zzzEverywhere
         border.width: root.zzzEverywhere ? Appearance.zzz.borderThick : Appearance.angelEverywhere ? 0 : 1
         border.color: root.surfaceBorderColor
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
         ZzzPanelBackdrop {
             anchors.fill: parent
@@ -223,6 +225,7 @@ Item {
                                     : Translation.tr("Alphabetical index")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 opacity: 0.85
                             }
                         }
@@ -231,6 +234,7 @@ Item {
                             text: Translation.tr("%1 apps").arg(root.appList.length)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                             opacity: 0.7
                         }
                     }
@@ -307,6 +311,7 @@ Item {
                             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                             : Appearance.rounding.normal
+                        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                         color: root.zzzEverywhere ? Appearance.zzz.paperAlt
                             : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                             : Appearance.inirEverywhere ? Appearance.inir.colLayer2
@@ -351,12 +356,14 @@ Item {
                                     font.pixelSize: Appearance.font.pixelSize.normal
                                     font.weight: Font.DemiBold
                                     color: root.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
+                                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 }
 
                                 StyledText {
                                     text: String(catCard.modelData.apps.length)
                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                     color: root.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                     opacity: 0.7
                                 }
                             }
