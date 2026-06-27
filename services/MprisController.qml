@@ -14,13 +14,25 @@ Singleton {
 	
 	// Raw filtered players - updated imperatively to avoid constant re-evaluation
 	property list<MprisPlayer> players: []
+	// Display players with YtMusic duplicate filtering - USE THIS IN UI WIDGETS.
+	// Kept imperative as well: metadata changes can re-evaluate duplicate
+	// filtering without changing player identity, and a fresh array here makes
+	// Repeater-based popups destroy/recreate delegates mid-track transition.
+	property list<MprisPlayer> displayPlayers: []
 	
 	// Debounce timer for _rebuildPlayerList to coalesce rapid signal bursts
 	Timer {
 		id: _rebuildDebounce
 		interval: 50
 		repeat: false
-		onTriggered: root._doRebuildPlayerList()
+		onTriggered: root._doRebuildPlayerList(false)
+	}
+
+	Timer {
+		id: _emptyListGraceTimer
+		interval: 1800
+		repeat: false
+		onTriggered: root._doRebuildPlayerList(true)
 	}
 
 	// Schedule a debounced rebuild
@@ -29,33 +41,43 @@ Singleton {
 	}
 
 	// Actual rebuild logic (called by debounce timer)
-	function _doRebuildPlayerList(): void {
+	function _doRebuildPlayerList(forceEmpty: bool): void {
 		let newList = [];
 		for (const player of Mpris.players.values) {
 			if (isRealPlayer(player)) {
 				newList.push(player);
 			}
 		}
+		const allowEmpty = forceEmpty === true;
+		if (!allowEmpty && newList.length === 0 && (displayPlayers?.length ?? 0) > 0) {
+			_emptyListGraceTimer.restart();
+			return;
+		}
+		if (newList.length > 0)
+			_emptyListGraceTimer.stop();
 		// Only reassign on real membership/order changes: a fresh array with the
 		// same players cascades into displayPlayers and makes every Repeater-based
 		// player UI destroy and recreate its delegates (visible flash on track
 		// change, since title changes schedule rebuilds).
-		let changed = newList.length !== players.length;
-		if (!changed) {
-			for (let i = 0; i < newList.length; i++) {
-				if (newList[i] !== players[i]) { changed = true; break; }
-			}
-		}
-		if (changed) players = newList;
+		if (!_samePlayerOrder(newList, players)) players = newList;
+
+		const nextDisplayPlayers = _filterYtMusicDuplicates(newList);
+		if (!_samePlayerOrder(nextDisplayPlayers, displayPlayers)) displayPlayers = nextDisplayPlayers;
+
 		// Keep trackedPlayer consistent with filtered list
 		if (trackedPlayer && !players.includes(trackedPlayer)) {
 			_manualPlayerSelection = false;
 			trackedPlayer = players[0] ?? null;
 		}
 	}
-	
-	// Display players with YtMusic duplicate filtering - USE THIS IN UI WIDGETS
-	readonly property var displayPlayers: _filterYtMusicDuplicates(players)
+
+	function _samePlayerOrder(a, b): bool {
+		if ((a?.length ?? 0) !== (b?.length ?? 0)) return false;
+		for (let i = 0; i < a.length; i++) {
+			if (a[i] !== b[i]) return false;
+		}
+		return true;
+	}
 	
 	property MprisPlayer trackedPlayer: null;
 	property bool _manualPlayerSelection: false;

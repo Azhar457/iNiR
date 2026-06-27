@@ -18,6 +18,7 @@ QtObject {
     
     // Required properties
     required property MprisPlayer player
+    property int slideDirection: 1
     
     // YtMusic detection
     readonly property bool isYtMusicPlayer: {
@@ -36,6 +37,9 @@ QtObject {
     readonly property string effectiveArtUrl: isYtMusicPlayer 
         ? YtMusic.currentThumbnail 
         : (player?.trackArtUrl ?? "")
+    // Artwork motion is keyed only by real art identity. Metadata-only updates
+    // must not move the cover, or one track change animates twice.
+    readonly property string mediaTransitionKey: (root.effectiveArtUrl ?? "").split("?")[0].split("#")[0]
     readonly property real effectivePosition: isYtMusicPlayer 
         ? YtMusic.currentPosition 
         : (player?.position ?? 0)
@@ -57,8 +61,9 @@ QtObject {
     
     // Art download management
     property string artDownloadLocation: Directories.coverArt
-    readonly property bool downloaded: artworkResolver.ready
-    readonly property string displayedArtFilePath: artworkResolver.displaySource
+    readonly property bool downloaded: root.displayedArtFilePath !== ""
+    readonly property string resolverDisplaySource: artworkResolver.displaySource
+    property string displayedArtFilePath: ""
     
     // Color extraction
     property var colorQuantizer: ColorQuantizer {
@@ -89,6 +94,7 @@ QtObject {
     }
     
     function previous(): void {
+        root.slideDirection = -1
         if (isYtMusicPlayer && YtMusic.canGoPrevious) {
             YtMusic.playPrevious()
         } else {
@@ -97,6 +103,7 @@ QtObject {
     }
     
     function next(): void {
+        root.slideDirection = 1
         if (isYtMusicPlayer && YtMusic.canGoNext) {
             YtMusic.playNext()
         } else {
@@ -115,6 +122,21 @@ QtObject {
     // Art download logic — mirrors BarMediaPlayerItem (the known-good impl)
     function checkAndDownloadArt(): void {
         artworkResolver.refresh()
+    }
+
+    onResolverDisplaySourceChanged: {
+        const src = root.resolverDisplaySource
+        if (src && src.length > 0) {
+            clearArtTimer.stop()
+            root.displayedArtFilePath = src
+        } else {
+            clearArtTimer.restart()
+        }
+    }
+
+    Component.onCompleted: {
+        if (root.resolverDisplaySource && root.resolverDisplaySource.length > 0)
+            root.displayedArtFilePath = root.resolverDisplaySource
     }
 
     onPlayerChanged: Qt.callLater(root.checkAndDownloadArt)
@@ -166,6 +188,14 @@ QtObject {
         artist: root.effectiveArtist
         album: root.player?.trackAlbum ?? ""
         cacheDirectory: root.artDownloadLocation
+    }
+
+    property var clearArtTimer: Timer {
+        interval: 1600
+        onTriggered: {
+            if (!root.resolverDisplaySource || root.resolverDisplaySource.length === 0)
+                root.displayedArtFilePath = ""
+        }
     }
     
     property var positionUpdateTimer: Timer {

@@ -22,6 +22,10 @@ Item {
     property list<real> visualizerPoints: []
     property real radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.normal
+    Behavior on radius {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
     property real screenX: 0
     property real screenY: 0
 
@@ -57,6 +61,11 @@ Item {
         border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : Appearance.inirEverywhere ? 1 : 0
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
             : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        // Organic morph on style/shape switch (organic-transitions)
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         clip: true
 
         layer.enabled: true
@@ -145,7 +154,9 @@ Item {
                 Layout.preferredWidth: 110
                 Layout.preferredHeight: 110
                 artSource: playerBase.displayedArtFilePath
+                transitionKey: playerBase.mediaTransitionKey
                 downloaded: playerBase.downloaded
+                slideDirection: playerBase.slideDirection
                 artRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                     : Appearance.inirEverywhere
                     ? Appearance.inir.roundingSmall
@@ -181,6 +192,7 @@ Item {
                         : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
                     titleSize: Appearance.font.pixelSize.normal
                     artistSize: Appearance.font.pixelSize.smaller
+                    slideDirection: playerBase.slideDirection
                 }
 
                 Item { Layout.fillHeight: true }
@@ -217,6 +229,10 @@ Item {
                             : Appearance.inirEverywhere
                             ? playerBase.inirText
                             : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
 
                     Item { Layout.fillWidth: true }
@@ -262,6 +278,10 @@ Item {
                             : Appearance.inirEverywhere
                             ? playerBase.inirText
                             : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
                 }
             }

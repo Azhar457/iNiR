@@ -22,6 +22,10 @@ Item {
     property list<real> visualizerPoints: []
     property real radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.large
+    Behavior on radius {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
     property real screenX: 0
     property real screenY: 0
     
@@ -51,6 +55,11 @@ Item {
         color: Appearance.zzzEverywhere ? Appearance.zzz.paper : "transparent"
         border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
+        // Organic morph on style/shape switch (organic-transitions)
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         clip: true
         
         layer.enabled: true
@@ -114,8 +123,16 @@ Item {
             anchors.fill: parent
             gradient: Gradient {
                 GradientStop { position: 0.0; color: "transparent" }
-                GradientStop { position: 0.6; color: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.bg0, 0.58) : ColorUtils.transparentize("black", 0.5) }
-                GradientStop { position: 1.0; color: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.bg0, 0.24) : ColorUtils.transparentize("black", 0.2) }
+                GradientStop {
+                    position: 0.6
+                    color: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.bg0, 0.58) : ColorUtils.transparentize("black", 0.5)
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                }
+                GradientStop {
+                    position: 1.0
+                    color: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.bg0, 0.24) : ColorUtils.transparentize("black", 0.2)
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                }
             }
         }
         
@@ -161,6 +178,7 @@ Item {
                 artistColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : ColorUtils.transparentize("white", 0.3)
                 titleSize: Appearance.font.pixelSize.larger
                 artistSize: Appearance.font.pixelSize.normal
+                slideDirection: playerBase.slideDirection
             }
             
             // Progress bar
@@ -186,6 +204,10 @@ Item {
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.family: Appearance.font.family.numbers
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink : "white"
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                 }
                 
                 Item { Layout.fillWidth: true }
@@ -216,6 +238,10 @@ Item {
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.family: Appearance.font.family.numbers
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink : "white"
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                 }
             }
         }

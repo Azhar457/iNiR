@@ -121,9 +121,10 @@ Scope {
 
                 Item {
                     id: cardArea
-                    readonly property real zzzFrameInset: Appearance.zzzEverywhere
-                        ? Math.max(12, Appearance.zzz.markerLength * 0.8)
-                        : 0
+                    // ZZZ panel backdrop removed from the media popup: the heavy
+                    // poster frame behind a media card read as cluttered. The card
+                    // itself now carries the clean ZZZ plate (see PlayerControl).
+                    readonly property real zzzFrameInset: 0
                     width: root.widgetWidth + zzzFrameInset * 2
                     height: playerColumnLayout.implicitHeight + zzzFrameInset * 2
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -153,31 +154,17 @@ Scope {
                             to: "visible"
                             enabled: Appearance.animationsEnabled
                             NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
-                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementResize.duration; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
+                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
                         },
                         Transition {
                             from: "visible"
                             enabled: Appearance.animationsEnabled
                             NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
-                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Easing.InBack; easing.overshoot: 1.0 }
+                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
+                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
                         }
                     ]
-
-                    ZzzPanelBackdrop {
-                        anchors.fill: parent
-                        label: "MEDIA"
-                        index: root.allPlayers.length > 1 ? "STACK" : (MprisController.isPlaying ? "LIVE" : "IDLE")
-                        accentColor: root.allPlayers.length > 0 ? Appearance.zzz.secondary : Appearance.zzz.tertiary
-                        ghostText: "MEDIA"
-                        showTicks: false
-                        showBurst: false
-                        showGrid: false
-                        horizontalBias: 0.08
-                        verticalBias: 0.03
-                        ghostStrength: 0.7
-                    }
 
                     ColumnLayout {
                         id: playerColumnLayout
@@ -220,13 +207,22 @@ Scope {
                                      : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                                      : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
                                      : Appearance.colors.colLayer0
+                                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 radius: root.popupRounding
                                 border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
                                     : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
+                                Behavior on border.width {
+                                    enabled: Appearance.animationsEnabled
+                                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
                                 border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
                                             : Appearance.inirEverywhere ? Appearance.inir.colBorder
                                             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
                                             : "transparent"
+                                Behavior on border.color {
+                                    enabled: Appearance.animationsEnabled
+                                    ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                }
                                 property real padding: 20
                                 implicitWidth: placeholderLayout.implicitWidth + padding * 2
                                 implicitHeight: placeholderLayout.implicitHeight + padding * 2
@@ -246,10 +242,18 @@ Scope {
                                         font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
                                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                                             : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                        }
                                     }
                                     StyledText {
                                         color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
                                             : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                        }
                                         text: Translation.tr("Make sure your player has MPRIS support\nor try turning off duplicate player filtering")
                                         font.pixelSize: Appearance.font.pixelSize.small
                                     }
