@@ -1130,6 +1130,8 @@ Scope {
                 popupAbove: false
                 closeOnFocusLost: false
                 closeOnHoverLost: true
+                closeOnHoverLostAfterEntered: true
+                closeOnHoverLostDelay: 700
                 model: [
                     { text: Translation.tr("Settings"), iconName: "settings", monochromeIcon: true,
                         action: () => { Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]) } },

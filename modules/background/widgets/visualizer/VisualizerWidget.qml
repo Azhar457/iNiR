@@ -190,6 +190,10 @@ AbstractBackgroundWidget {
             : Appearance.inirEverywhere ? Appearance.inir.colPrimary
             : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
             : Appearance.colors.colPrimary
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         opacity: 1.0 - dimFactor * 0.6
     }
 }

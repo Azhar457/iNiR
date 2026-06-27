@@ -39,11 +39,20 @@ Rectangle {
     readonly property bool _glass: (_aurora || _angel) && Appearance.effectsEnabled && root.surfaceUseBlur
     readonly property string _wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
+    // Wallpaper-derived hue so the desktop widgets actually carry the generated
+    // colour per style instead of a near-neutral text tint. Same derivation as
+    // Appearance.wallpaperDominantColor blended toward the primary container.
+    readonly property color _wallpaperTint: ColorUtils.mix(Appearance.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.6)
+    // Tinted plate fill for the flat (material/cards) branch: blend the neutral
+    // surfaceColor toward the wallpaper hue and lift the alpha a little so the
+    // colour reads on the desktop. zzz (carbon) and inir (restraint) opt out.
+    readonly property color _flatFill: ColorUtils.applyAlpha(ColorUtils.mix(surfaceColor, _wallpaperTint, 0.62), Math.min(0.85, surfaceOpacity * 2.2))
+
     radius: surfaceRadius
     color: _glass ? "transparent"
         : _zzz ? Appearance.zzz.paper
         : _inir ? "transparent"
-        : surfaceOpacity > 0 ? ColorUtils.applyAlpha(surfaceColor, surfaceOpacity) : "transparent"
+        : surfaceOpacity > 0 ? _flatFill : "transparent"
     border.width: _zzz ? Appearance.zzz.borderThick : 0
     border.color: _zzz ? Appearance.zzz.hairline : "transparent"
     clip: true
