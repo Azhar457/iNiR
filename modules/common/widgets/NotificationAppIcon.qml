@@ -99,6 +99,10 @@ MaterialShape { // App icon
                         width: notifImage.size
                         height: notifImage.size
                         radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+                        Behavior on radius {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
                 }
             }

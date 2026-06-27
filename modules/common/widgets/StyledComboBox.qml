@@ -71,6 +71,9 @@ ComboBox {
         Behavior on color {
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+        Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
     }
 
     contentItem: RowLayout {
@@ -110,12 +113,53 @@ ComboBox {
         implicitHeight: Math.min(contentItem.implicitHeight + 8, 300)
         padding: 4
 
+        // Shared contextual reveal: grow + fade from the field instead of a hard
+        // appear. Driven by the global popupReveal profile, so zzz gets its
+        // grow-from-origin punch (closedScale 0.90) for free. Durations run
+        // through calcEffectiveDuration → instant when animations are disabled.
+        enter: Transition {
+            NumberAnimation {
+                property: "opacity"
+                from: Appearance.motion.popupReveal.enableFade ? 0 : 1; to: 1
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+            }
+            NumberAnimation {
+                property: "scale"
+                from: Appearance.motion.popupReveal.enableScale ? Appearance.motion.popupReveal.closedScale : 1; to: 1
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+            }
+        }
+        exit: Transition {
+            NumberAnimation {
+                property: "opacity"
+                from: 1; to: Appearance.motion.popupReveal.enableFade ? 0 : 1
+                duration: Appearance.animation.elementMoveExit.duration
+                easing.type: Appearance.animation.elementMoveExit.type
+                easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve
+            }
+            NumberAnimation {
+                property: "scale"
+                from: 1; to: Appearance.motion.popupReveal.enableScale ? Appearance.motion.popupReveal.closedScale : 1
+                duration: Appearance.animation.elementMoveExit.duration
+                easing.type: Appearance.animation.elementMoveExit.type
+                easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve
+            }
+        }
+
         background: Rectangle {
             id: popupBg
             radius: root.radius
             color: root._popupColor
             border.width: 1
             border.color: root._popupBorderColor
+            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+            Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+            Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+            Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         }
 
         contentItem: ListView {

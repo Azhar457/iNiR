@@ -39,7 +39,9 @@ QtObject {
     // GlassBackground blur show through (like Overlay widgets do).
     readonly property color cardColor: Appearance.angelEverywhere
         ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, Appearance.angel.cardTransparentize * 0.7)
-        : Appearance.zzzEverywhere ? Appearance.zzz.tile
+        // bg3 (not tile): the content field sits at bg2 now, so cards must lift a
+        // clear step above it instead of matching it — depth by layer, not stroke.
+        : Appearance.zzzEverywhere ? Appearance.zzz.bg3
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, 0.85)
         : Appearance.colors.colLayer1
@@ -81,7 +83,8 @@ QtObject {
     // ── Section title colors ──
     readonly property color titleExpandedColor: Appearance.angelEverywhere
         ? Appearance.angel.colText
-        : Appearance.zzzEverywhere ? Appearance.zzz.accent
+        // Carbon doctrine: title in light ink; the colour lives in the badge/tick, not the text.
+        : Appearance.zzzEverywhere ? Appearance.zzz.onColor
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnSecondaryContainer
     readonly property color titleCollapsedColor: Appearance.angelEverywhere

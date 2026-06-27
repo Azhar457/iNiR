@@ -17,7 +17,7 @@ Text {
     visible: Appearance.zzzEverywhere
     text: mark
     color: ColorUtils.applyAlpha(Appearance.zzz.onColor,
-        (Appearance.m3colors.darkmode ? 0.05 : 0.06) * strength)
+        (Appearance.m3colors.darkmode ? 0.035 : 0.045) * strength)
     font.family: Appearance.font.family.title
     font.pixelSize: Math.max(48, Math.round((parent ? parent.height : 200) * sizeFactor))
     font.weight: Font.Black

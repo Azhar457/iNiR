@@ -22,6 +22,11 @@ Rectangle {
     radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : 0
     border.width: Appearance.zzzEverywhere ? 1 : 0
     border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
+    // Organic morph on style/shape switch (organic-transitions)
+    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+    Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+    Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
 
     function focusBreadcrumb() {
         root.showBreadcrumb = false;
@@ -57,6 +62,11 @@ Rectangle {
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                 border.width: Appearance.zzzEverywhere ? 1 : 0
                 border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline : "transparent"
+                // Organic morph on style/shape switch (organic-transitions)
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 implicitWidth: addressInput.implicitWidth
                 implicitHeight: addressInput.implicitHeight
 

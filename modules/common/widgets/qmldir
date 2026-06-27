@@ -53,6 +53,7 @@ MaterialCookie 1.0 MaterialCookie.qml
 MaterialLoadingIndicator 1.0 MaterialLoadingIndicator.qml
 MediaArtworkResolver 1.0 MediaArtworkResolver.qml
 singleton MediaArtwork 1.0 MediaArtwork.qml
+MediaCrossSlideImage 1.0 MediaCrossSlideImage.qml
 MaterialPlaceholderMessage 1.0 MaterialPlaceholderMessage.qml
 MaterialShape 1.0 MaterialShape.qml
 MaterialShapeWrappedMaterialSymbol 1.0 MaterialShapeWrappedMaterialSymbol.qml
@@ -73,6 +74,7 @@ NotificationItem 1.0 NotificationItem.qml
 NotificationListView 1.0 NotificationListView.qml
 OptionalMaterialSymbol 1.0 OptionalMaterialSymbol.qml
 PagePlaceholder 1.0 PagePlaceholder.qml
+PanelSurface 1.0 PanelSurface.qml
 PointingHandInteraction 1.0 PointingHandInteraction.qml
 PointingHandLinkHover 1.0 PointingHandLinkHover.qml
 PopupToolTip 1.0 PopupToolTip.qml
@@ -140,6 +142,7 @@ ZzzGlyphBadge 1.0 ZzzGlyphBadge.qml
 ZzzGlyphButton 1.0 ZzzGlyphButton.qml
 ZzzDataChip 1.0 ZzzDataChip.qml
 ZzzDiagonalPattern 1.0 ZzzDiagonalPattern.qml
+ZzzGlassWash 1.0 ZzzGlassWash.qml
 ZzzGraphicPlate 1.0 ZzzGraphicPlate.qml
 ZzzPanelBackdrop 1.0 ZzzPanelBackdrop.qml
 ZzzPlate 1.0 ZzzPlate.qml

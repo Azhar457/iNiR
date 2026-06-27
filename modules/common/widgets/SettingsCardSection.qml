@@ -107,8 +107,13 @@ Item {
         width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick * 2 : 2
         radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : 1
         color: SettingsMaterialPreset.accentColor
-        // Hint the accent on hover so collapsed cards read as interactive
-        opacity: root.expanded ? 0.6 : (headerMouseArea.containsMouse ? 0.3 : 0)
+        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+        // Hint the accent on hover so collapsed cards read as interactive.
+        // ZZZ: pull the accent back hard — the user wants fewer coloured borders,
+        // so it reads as a restrained registration tick, not a loud orange rail.
+        opacity: root.expanded
+            ? (Appearance.zzzEverywhere ? 0.3 : 0.6)
+            : (headerMouseArea.containsMouse ? (Appearance.zzzEverywhere ? 0.16 : 0.3) : 0)
         z: 1
 
         Behavior on opacity {

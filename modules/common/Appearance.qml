@@ -150,11 +150,26 @@ Singleton {
         return animationsEnabled ? baseDuration : 0
     }
 
+    // Concentric corner radius: a child inset by `inset` inside a `parentRadius`
+    // corner must use parentRadius − inset to stay visually concentric with its
+    // container (a selection highlight should echo the surface it sits on, not
+    // invent its own silhouette). Clamped ≥ 0. Use this for every selected/active
+    // plate that lives inside a rounded parent instead of a hand-picked radius.
+    function concentricRadius(parentRadius, inset) {
+        return Math.max(0, parentRadius - inset)
+    }
+
     property QtObject motion: QtObject {
         property QtObject popupReveal: QtObject {
-            property bool enableFade: root.contextualMotionProfile
-            property bool enableScale: root.contextualMotionProfile
-            property real closedScale: root.contextualMotionProfile ? 0.97 : 1.0
+            // ZZZ generalizes the AiModelSelector reveal: every shared popup/menu
+            // grows from its anchored origin with a punchy back-out. The enter
+            // curve under zzz is already animationCurves.zzzOvershoot (see
+            // elementMoveEnter), so a deeper closedScale reads as a console plate
+            // snapping into place rather than a soft material fade.
+            property bool enableFade: root.zzzEverywhere || root.contextualMotionProfile
+            property bool enableScale: root.zzzEverywhere || root.contextualMotionProfile
+            property real closedScale: root.zzzEverywhere ? 0.90
+                : (root.contextualMotionProfile ? 0.97 : 1.0)
         }
     }
 
@@ -315,28 +330,28 @@ Singleton {
         property color colOnPrimary: root.zzzEverywhere ? root.zzz.onAccent : m3colors.m3onPrimary
         property color colPrimaryHover: ColorUtils.mix(colors.colPrimary, colLayer1Hover, 0.87)
         property color colPrimaryActive: ColorUtils.mix(colors.colPrimary, colLayer1Active, 0.7)
-        property color colPrimaryContainer: root.zzzEverywhere ? root.zzz.sticker : m3colors.m3primaryContainer
+        property color colPrimaryContainer: root.zzzEverywhere ? ColorUtils.mix(root.zzz.bg3, root.zzz.sticker, 0.20) : m3colors.m3primaryContainer
         property color colPrimaryContainerHover: ColorUtils.mix(colors.colPrimaryContainer, colors.colOnPrimaryContainer, 0.9)
         property color colPrimaryContainerActive: ColorUtils.mix(colors.colPrimaryContainer, colors.colOnPrimaryContainer, 0.8)
-        property color colOnPrimaryContainer: root.zzzEverywhere ? root.zzz.onSticker : m3colors.m3onPrimaryContainer
+        property color colOnPrimaryContainer: root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onPrimaryContainer
         // Secondary
         property color colSecondary: root.zzzEverywhere ? root.zzz.secondary : m3colors.m3secondary
         property color colSecondaryHover: ColorUtils.mix(colSecondary, colLayer1Hover, 0.85)
         property color colSecondaryActive: ColorUtils.mix(colSecondary, colLayer1Active, 0.4)
         property color colOnSecondary: root.zzzEverywhere ? root.zzz.onSecondary : m3colors.m3onSecondary
-        property color colSecondaryContainer: root.zzzEverywhere ? root.zzz.secondary : m3colors.m3secondaryContainer
+        property color colSecondaryContainer: root.zzzEverywhere ? ColorUtils.mix(root.zzz.bg3, root.zzz.secondary, 0.18) : m3colors.m3secondaryContainer
         property color colSecondaryContainerHover: ColorUtils.mix(colSecondaryContainer, colOnSecondaryContainer, 0.90)
         property color colSecondaryContainerActive: ColorUtils.mix(colSecondaryContainer, colOnSecondaryContainer, 0.54)
-        property color colOnSecondaryContainer: root.zzzEverywhere ? root.zzz.onSecondary : m3colors.m3onSecondaryContainer
+        property color colOnSecondaryContainer: root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onSecondaryContainer
         // Tertiary
         property color colTertiary: root.zzzEverywhere ? root.zzz.tertiary : m3colors.m3tertiary
         property color colTertiaryHover: ColorUtils.mix(colTertiary, colLayer1Hover, 0.85)
         property color colTertiaryActive: ColorUtils.mix(colTertiary, colLayer1Active, 0.4)
-        property color colTertiaryContainer: root.zzzEverywhere ? root.zzz.tertiary : m3colors.m3tertiaryContainer
+        property color colTertiaryContainer: root.zzzEverywhere ? ColorUtils.mix(root.zzz.bg3, root.zzz.tertiary, 0.18) : m3colors.m3tertiaryContainer
         property color colTertiaryContainerHover: ColorUtils.mix(colTertiaryContainer, colOnTertiaryContainer, 0.90)
         property color colTertiaryContainerActive: ColorUtils.mix(colTertiaryContainer, colLayer1Active, 0.54)
         property color colOnTertiary: root.zzzEverywhere ? root.zzz.onAccent : m3colors.m3onTertiary
-        property color colOnTertiaryContainer: root.zzzEverywhere ? root.zzz.onAccent : m3colors.m3onTertiaryContainer
+        property color colOnTertiaryContainer: root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onTertiaryContainer
         // Surface
         property color colBackgroundSurfaceContainer: root.zzzEverywhere ? root.zzz.bg2 : ColorUtils.transparentize(m3colors.m3surfaceContainer, root.backgroundTransparency)
         property color colSurfaceContainerLow: root.zzzEverywhere ? root.zzz.bg1 : ColorUtils.solveOverlayColor(m3colors.m3background, m3colors.m3surfaceContainerLow, 1 - root.contentTransparency)
@@ -396,7 +411,8 @@ Singleton {
     readonly property bool _forceMono: globalStyle === "inir" || _themeMeta.fontStyle === "mono"
     readonly property string _angelFont: "Oxanium"
     readonly property bool _useAngelFont: globalStyle === "angel"
-    // ZZZ forces a heavy geometric display font for the urban graphic feel
+    // ZZZ uses Oxanium (poster geometric). Restored after Space Grotesk felt
+    // thinner/less characteristic — Oxanium keeps the ZZZ identity.
     readonly property string _zzzFont: "Oxanium"
     readonly property bool _useZzzFont: globalStyle === "zzz"
 
@@ -968,16 +984,25 @@ Singleton {
         // wallpaper character and cards read as ugly near-black.
         // (Keeping the 16% / 9% lift factor so warm/anime wallpapers stay
         // tasteful — surfaceSat never reaches raw wallpaper saturation.)
+        // Saturation lifted so the wallpaper hue genuinely READS on the plates —
+        // at near-black lightness a low cap is invisible, leaving dead grey cards.
+        // ZZZ derives its surfaces from the wallpaper like every other style; the
+        // higher plates carry the most chroma (where lightness lets it show), the
+        // base stays closer to carbon.
+        // Carbon-first: surfaces lean near-black like the design-system cards so the
+        // signal accents pop, instead of washing the plates with wallpaper hue.
         readonly property real surfaceSat: dark
-            ? Math.min(0.22, Math.max(0.08, root.m3colors.m3primary.hslSaturation * 0.32))
-            : Math.min(0.16, Math.max(0.06, root.m3colors.m3primary.hslSaturation * 0.20))
-        // Dark ramp deliberately WIDENED so the 5 plates stay distinguishable — the
-        // earlier compressed ramp made the layering read as one flat black.
-        readonly property color bg0: Qt.hsla(surfaceHue, surfaceSat, dark ? 0.030 : 0.978, 1.0)
-        readonly property color bg1: Qt.hsla(surfaceHue, surfaceSat, dark ? 0.055 : 0.958, 1.0)
-        readonly property color bg2: Qt.hsla(surfaceHue, surfaceSat, dark ? 0.082 : 0.930, 1.0)
-        readonly property color bg3: Qt.hsla(surfaceHue, surfaceSat, dark ? 0.114 : 0.898, 1.0)
-        readonly property color bg4: Qt.hsla(surfaceHue, surfaceSat, dark ? 0.150 : 0.860, 1.0)
+            ? Math.min(0.14, Math.max(0.035, root.m3colors.m3primary.hslSaturation * 0.26))
+            : Math.min(0.10, Math.max(0.03, root.m3colors.m3primary.hslSaturation * 0.16))
+        // Dark ramp: base stays carbon (bg0/bg1 near-black for the panel/console
+        // read) but the UPPER plates are lifted enough that (a) consecutive layers
+        // separate and (b) the wallpaper hue becomes visible on cards/elevated
+        // surfaces instead of flat black.
+        readonly property color bg0: Qt.hsla(surfaceHue, surfaceSat * 0.7, dark ? 0.022 : 0.980, 1.0)
+        readonly property color bg1: Qt.hsla(surfaceHue, surfaceSat * 0.85, dark ? 0.055 : 0.956, 1.0)
+        readonly property color bg2: Qt.hsla(surfaceHue, surfaceSat, dark ? 0.092 : 0.926, 1.0)
+        readonly property color bg3: Qt.hsla(surfaceHue, surfaceSat, dark ? 0.138 : 0.890, 1.0)
+        readonly property color bg4: Qt.hsla(surfaceHue, surfaceSat * 1.08, dark ? 0.180 : 0.850, 1.0)
 
         // Text — generated on-surface roles, clamped so ZZZ always gets a confident
         // ink on carbon/paper instead of whatever muted onSurfaceVariant the
@@ -1004,7 +1029,7 @@ Singleton {
         // Signal relax: ZZZ leans ink-paper, so the pops are pulled back from raw
         // wallpaper chroma to a more sophisticated, less neon band. One factor
         // damps the whole triad together so they stay harmonious.
-        readonly property real signalRelax: 0.70
+        readonly property real signalRelax: 0.80
         // Readable band: lighten accent for dark ground, deepen for light.
         readonly property color accent: _primarySat > 0.05
             ? ColorUtils.ensureReadable(ColorUtils.adjustSaturation(ColorUtils.colorWithLightness(_srcPrimary, dark ? 0.60 : 0.46), signalRelax), bg0, 4.5)
@@ -1035,8 +1060,8 @@ Singleton {
         // carbon). Derived from generated roles, no literal colors.
         readonly property color borderColor: ColorUtils.mix(onColor, bg0, 0.36)
         // Subtle hairline for card edges where a full comic stroke is too loud.
-        readonly property color hairline: ColorUtils.applyAlpha(onColor, 0.18)
-        readonly property color hairlineStrong: ColorUtils.applyAlpha(onColor, 0.30)
+        readonly property color hairline: ColorUtils.applyAlpha(onColor, 0.26)
+        readonly property color hairlineStrong: ColorUtils.applyAlpha(onColor, 0.44)
 
         // ── Legacy aliases, now mode-aware so paper/ink consumers follow the mode ──
         readonly property color paper: bg1
@@ -1045,7 +1070,9 @@ Singleton {
         readonly property color inkMuted: onMuted
         readonly property color chrome: Qt.hsla(surfaceHue, surfaceSat * 0.45, dark ? 0.018 : 0.968, 1.0)
         readonly property color chromeAlt: Qt.hsla(surfaceHue, surfaceSat * 0.52, dark ? 0.042 : 0.935, 1.0)
-        readonly property color tile: Qt.hsla(surfaceHue, surfaceSat * 0.62, dark ? 0.068 : 0.890, 1.0)
+        // Lifted a touch in dark mode so cards sit clearly above the near-black
+        // chrome panel (clean separation now the backdrop grid is gone).
+        readonly property color tile: Qt.hsla(surfaceHue, surfaceSat * 0.62, dark ? 0.082 : 0.890, 1.0)
         readonly property color contrastPlate: Qt.hsla(surfaceHue, surfaceSat * 0.36, dark ? 0.860 : 0.085, 1.0)
         readonly property color onContrastPlate: ColorUtils.ensureReadable(onColor, contrastPlate, 4.5)
         readonly property color chromeStroke: ColorUtils.applyAlpha(onColor, dark ? 0.50 : 0.56)
@@ -1076,7 +1103,7 @@ Singleton {
         readonly property color orangeInk: onAccent
         readonly property color limeReadable: ColorUtils.ensureReadable(lemonLime, bg0, 4.5)
         readonly property color orangeReadable: ColorUtils.ensureReadable(pureOrange, bg0, 4.5)
-        readonly property color technicalGrid: ColorUtils.transparentize(onColor, dark ? 0.89 : 0.86)
+        readonly property color technicalGrid: ColorUtils.transparentize(onColor, dark ? 0.92 : 0.89)
         readonly property color technicalGridStrong: ColorUtils.transparentize(onColor, dark ? 0.74 : 0.70)
         readonly property color technicalMarker: accent
         readonly property color technicalWarning: secondary
@@ -1090,6 +1117,25 @@ Singleton {
         // "round" = softer anime UI — pill controls, rounded panels, no chamfer.
         // Driven from config so the user flips the whole shell from settings.
         readonly property bool  round: (Config.options?.appearance?.zzz?.shape ?? "square") === "round"
+        // ── Shape morph axis (cookie-clock feel, applied shell-wide) ──
+        // `round` is the boolean source of truth from config; `shapeT` is its
+        // ANIMATED real mirror in [0,1]. Every geometric token below is bound
+        // to shapeT instead of to `round` directly, so flipping the shape in
+        // settings morphs every radius/chamfer in the shell fluidly instead of
+        // teleporting — one Behavior here, propagated through existing bindings
+        // to every consumer. (Pill radius stays a step: animating 9999 is
+        // nonsensical and pills are meant to read as full-or-not.) Gate the
+        // Behavior on animationsEnabled; use the zzz back-out curve so the morph
+        // carries the same mechanical punch as the cookie clock and popups.
+        property real shapeT: round ? 1.0 : 0.0
+        Behavior on shapeT {
+            enabled: root.animationsEnabled && root.zzzEverywhere
+            NumberAnimation {
+                duration: root.zzz.overshootDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.animationCurves.zzzOvershoot
+            }
+        }
         // Stroke weight — a single 1px hairline in BOTH modes. The softer
         // round read comes from radius + the dropped chamfer, never from a
         // thicker line (a thick border in round mode reads cluttered, and the
@@ -1101,25 +1147,34 @@ Singleton {
         // handle that consumed it into a stadium pill and broke the round-
         // mode settings UI: each SettingsCardSection became impossible).
         // Now: 2 square (console) / 12 round (anime). Real pills use pillRadius.
-        readonly property int   cornerRadius: round ? 12 : 2
+        // Interpolated by shapeT so the flip morphs instead of stepping.
+        readonly property real  cornerRadius: 2 + 10 * shapeT
         // Cards — square 3 / round 12 (calm plate, NOT a pill).
-        readonly property int   cardRadius: round ? 12 : 3
+        readonly property real  cardRadius: 3 + 9 * shapeT
         // Controls (buttons/toggles/sliders) — square 3 / round 14.
-        readonly property int   controlRadius: round ? 14 : 3
+        readonly property real  controlRadius: 3 + 11 * shapeT
         // Panels/surfaces — square 4 / round 18.
-        readonly property int   panelRadius: round ? 18 : 4
+        readonly property real  panelRadius: 4 + 14 * shapeT
         // Chamfer cut — the ZZZ square signature; disabled in round (anime = soft).
-        readonly property int   cutCorner: round ? 0 : 18
+        // Clamped at 0 so overshoot never drives it negative.
+        readonly property real  cutCorner: Math.max(0, 18 * (1.0 - shapeT))
         readonly property int   markerLength: 16
         readonly property int   markerThickness: 2
+        // Poster letter-spacing — the magazine/console crispness from the zzz
+        // design-system cards. Absolute px (small, so it never overflows tight
+        // layouts), and dropped in round mode where the soft anime read wants
+        // tighter type. `tracking` = global body/label baseline applied centrally
+        // in StyledText; `labelTracking` = stronger value for uppercase headers.
+        readonly property real  tracking: 0.75 * (1.0 - shapeT)
+        readonly property real  labelTracking: 1.6 * (1.0 - shapeT)
         // Actual pills (switch thumbs, circular badges, dot indicators). Square
         // mode keeps the console read (controlRadius), round mode = 9999 so
         // `Appearance.rounding.full` consumers become true circles/pills.
-        readonly property int   pillRadius: round ? 9999 : controlRadius
+        readonly property int   pillRadius: round ? 9999 : Math.round(controlRadius)
         // Rounding ladder consumed via Appearance.rounding.* dispatch.
-        readonly property int   roundSmall: round ? 10 : 2
-        readonly property int   roundNormal: round ? 14 : 3
-        readonly property int   roundLarge: round ? 20 : 5
+        readonly property real  roundSmall: 2 + 8 * shapeT
+        readonly property real  roundNormal: 3 + 11 * shapeT
+        readonly property real  roundLarge: 5 + 15 * shapeT
         readonly property bool  useHalftone: true
         readonly property bool  useDiagonals: true
         readonly property var   overshootCurve: [0.34, 1.56, 0.64, 1.0] // back-out punch

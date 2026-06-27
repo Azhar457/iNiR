@@ -446,6 +446,7 @@ Singleton {
                 // softer anime UI — pills for controls, rounded panels, no chamfer.
                 property JsonObject zzz: JsonObject {
                     property string shape: "square" // "square" | "round"
+                    property bool glass: true // subtle wallpaper-blur behind the grid (gated by effectsEnabled)
                 }
                 property JsonObject angel: JsonObject {
                     property JsonObject blur: JsonObject {

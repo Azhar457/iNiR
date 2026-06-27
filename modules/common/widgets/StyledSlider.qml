@@ -35,20 +35,25 @@ Slider {
 
     property var configuration: StyledSlider.Configuration.S
 
-    property real handleDefaultWidth: 3
-    property real handlePressedWidth: 1.5
+    property real handleDefaultWidth: Appearance.zzzEverywhere ? 0 : 3
+    property real handlePressedWidth: Appearance.zzzEverywhere ? 0 : 1.5
     property color highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+        : Appearance.zzzEverywhere ? Appearance.zzz.accentSoft : Appearance.colors.colPrimary
     property color trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
-        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface 
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+        : Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
         : Appearance.colors.colSecondaryContainer
     property color handleColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+        : Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colPrimary
     property color dotColor: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-        : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOnSecondaryContainer
+        : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+        : Appearance.zzzEverywhere ? Appearance.zzz.onMuted : Appearance.colors.colOnSecondaryContainer
     property color dotColorHighlighted: Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
+        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
+        : Appearance.zzzEverywhere ? Appearance.zzz.onColor : Appearance.colors.colOnPrimary
     property real unsharpenRadius: Appearance.rounding.unsharpen
     property real trackWidth: configuration
     property real trackRadius: trackWidth >= StyledSlider.Configuration.XL ? 21

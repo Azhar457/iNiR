@@ -4,6 +4,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 import Qt5Compat.GraphicalEffects as GE
 
 // General-purpose ZZZ content container. Unlike ZzzGraphicPlate (a styled surface),
@@ -35,8 +36,11 @@ Rectangle {
     implicitHeight: layout.implicitHeight + padding * 2
     color: "transparent" // real fill painted by the masked inner layer
     radius: Appearance.zzz.panelRadius
-    border.width: Appearance.zzz.borderThick
-    border.color: Appearance.zzz.hairlineStrong
+    // Outer hairline drawn by the antialiased Shape outline below (a 1px
+    // Rectangle.border on a radius=18 curve renders fuzzy/low-quality; the
+    // Shape stroke matches the crispness of ZzzPlate and the zzz square read).
+    border.width: 0
+    border.color: "transparent"
 
     Behavior on radius {
         enabled: Appearance.animationsEnabled
@@ -115,6 +119,33 @@ Rectangle {
             id: contentHolder
             Layout.fillWidth: true
             spacing: root.spacing
+        }
+    }
+
+    // ── Outer hairline outline (antialiased, follows the panel radius) ──
+    Shape {
+        id: cardOutline
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+        antialiasing: true
+        readonly property real inset: Appearance.zzz.borderThick / 2
+        readonly property real r: Math.max(0, Math.min(root.radius, root.width / 2 - cardOutline.inset, root.height / 2 - cardOutline.inset))
+        ShapePath {
+            fillColor: "transparent"
+            strokeColor: Appearance.zzz.hairlineStrong
+            strokeWidth: Appearance.zzz.borderThick
+            joinStyle: ShapePath.RoundJoin
+            capStyle: ShapePath.RoundCap
+            startX: cardOutline.inset + cardOutline.r
+            startY: cardOutline.inset
+            PathLine { x: root.width - cardOutline.inset - cardOutline.r; y: cardOutline.inset }
+            PathArc { x: root.width - cardOutline.inset; y: cardOutline.inset + cardOutline.r; radiusX: cardOutline.r; radiusY: cardOutline.r }
+            PathLine { x: root.width - cardOutline.inset; y: root.height - cardOutline.inset - cardOutline.r }
+            PathArc { x: root.width - cardOutline.inset - cardOutline.r; y: root.height - cardOutline.inset; radiusX: cardOutline.r; radiusY: cardOutline.r }
+            PathLine { x: cardOutline.inset + cardOutline.r; y: root.height - cardOutline.inset }
+            PathArc { x: cardOutline.inset; y: root.height - cardOutline.inset - cardOutline.r; radiusX: cardOutline.r; radiusY: cardOutline.r }
+            PathLine { x: cardOutline.inset; y: cardOutline.inset + cardOutline.r }
+            PathArc { x: cardOutline.inset + cardOutline.r; y: cardOutline.inset; radiusX: cardOutline.r; radiusY: cardOutline.r }
         }
     }
 }

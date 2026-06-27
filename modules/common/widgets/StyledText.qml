@@ -17,6 +17,11 @@ Text {
         family: defaultFont
         pixelSize: Appearance?.font.pixelSize.small ?? 15
         variableAxes: shouldUseNumberFont ? ({}) : Appearance.font.variableAxes.main
+        // ZZZ poster crispness: a small global letter-spacing under the zzz style
+        // (token-driven, absolute px). Numbers stay untracked so digit columns
+        // don't drift. Other styles unaffected (0).
+        letterSpacing: (Appearance?.zzzEverywhere && !root.shouldUseNumberFont)
+            ? (Appearance?.zzz.tracking ?? 0) : 0
     }
     color: Appearance?.colors.colOnLayer0 ?? "black"
     linkColor: Appearance?.colors.colPrimary

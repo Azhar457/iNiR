@@ -16,6 +16,10 @@ MaterialShape {
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
         : Appearance.colors.colSecondaryContainer
+    Behavior on color {
+        enabled: Appearance.animationsEnabled
+        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
     colSymbol: Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText

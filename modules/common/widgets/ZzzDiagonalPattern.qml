@@ -1,10 +1,16 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Shapes
 import qs.modules.common
 
 // Generated-color diagonal hatching for ZZZ surfaces.
-// Inactive styles create zero delegates.
+//
+// One Shape (a single stroked ShapePath / PathMultiline) per instance instead
+// of ~42 rotated Rectangle delegates. On a busy settings page this collapses
+// the always-resident object + scene-graph node count ~14× (was ~5700 Items
+// across the visible SettingsCardSections), cutting memory and JSGC churn.
+// Zero work when inactive (empty path → nothing to triangulate or draw).
 Item {
     id: root
 
@@ -15,9 +21,22 @@ Item {
     property int stripeThickness: Math.max(1, Appearance.zzz.borderThick)
     property color stripeColor: Appearance.zzz.diagonalStripe
     readonly property bool active: Appearance.zzzEverywhere && Appearance.zzz.useDiagonals
-    readonly property int stripeCount: active
-        ? Math.ceil((width + height * 2) / Math.max(1, stripeSpacing)) + 2
-        : 0
+
+    // -24° from vertical (matches the old rotated-rect lean): every stripe runs
+    // top→bottom edge, tilting left toward the top. Built once per geometry
+    // change as one multiline so the whole hatch is a single stroked path
+    // (one node), not N items. Strokes overflow the bounds; parent clip trims.
+    readonly property real _run: height * Math.tan(24 * Math.PI / 180)
+    readonly property var stripePaths: {
+        if (!active || width <= 0 || height <= 0)
+            return []
+        const sp = Math.max(1, stripeSpacing)
+        const run = _run
+        const out = []
+        for (let b = -run; b <= width + run; b += sp)
+            out.push([Qt.point(b - run, 0), Qt.point(b, height)])
+        return out
+    }
 
     visible: opacity > 0
     opacity: active ? 1 : 0
@@ -31,27 +50,19 @@ Item {
         }
     }
 
-    Repeater {
-        model: root.stripeCount
+    Shape {
+        anchors.fill: parent
+        visible: root.active
+        asynchronous: true
+        preferredRendererType: Shape.CurveRenderer
 
-        Rectangle {
-            required property int index
-
-            width: root.stripeThickness
-            height: Math.max(root.width, root.height) * 2
-            x: index * root.stripeSpacing - root.height
-            y: -root.height / 2
-            rotation: -24
-            color: root.stripeColor
-
-            // NOTE: no per-stripe `Behavior on color`. The hatch color only
-            // changes on a style switch or wallpaper regen — both of which
-            // also drive the parent `Behavior on opacity` (the whole pattern
-            // fades out before a new color lands, then fades back in), so the
-            // snap is invisible. Per-delegate ColorAnimation × ~42 stripes ×
-            // up to 136 cards on a busy settings page = thousands of always-
-            // resident animation evaluators; this is the single biggest idle-
-            // CPU cost under ZZZ. Keep exactly one Behavior (parent opacity).
+        ShapePath {
+            strokeColor: root.stripeColor
+            strokeWidth: root.stripeThickness
+            fillColor: "transparent"
+            capStyle: ShapePath.FlatCap
+            // Single element holding every stripe as a disconnected 2-point line.
+            PathMultiline { paths: root.stripePaths }
         }
     }
 }

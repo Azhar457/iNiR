@@ -19,6 +19,7 @@ Loader {
     property bool noSmoothClosing: false
     property bool closeOnFocusLost: true
     property bool closeOnHoverLost: true
+    property bool closeOnHoverLostAfterEntered: false
     property int closeOnHoverLostDelay: 500  // ms before closing when hover lost (waffle uses 500)
     property bool anchorHovered: false
     signal focusCleared()
@@ -54,6 +55,7 @@ Loader {
         id: popupWindow
         visible: true
         property bool closing: false
+        property bool popupWasHovered: false
 
         Component.onCompleted: {
             realContent.shown = true;
@@ -96,7 +98,11 @@ Loader {
         Timer {
             id: closeTimer
             interval: root.closeOnHoverLostDelay
-            running: root.closeOnHoverLost && popupWindow.visible && !popupWindow.popupContainsMouse && !root.anchorHovered
+            running: root.closeOnHoverLost
+                && popupWindow.visible
+                && !popupWindow.popupContainsMouse
+                && !root.anchorHovered
+                && (!root.closeOnHoverLostAfterEntered || popupWindow.popupWasHovered)
             onTriggered: root.close()
         }
 
@@ -327,6 +333,7 @@ Loader {
 
         HoverHandler {
             id: popupHoverHandler
+            onHoveredChanged: if (hovered) popupWindow.popupWasHovered = true
         }
         readonly property bool popupContainsMouse: popupHoverHandler.hovered
 

@@ -86,6 +86,11 @@ Item {
                     border.color: Appearance.zzzEverywhere ? Appearance.zzz.quietStroke
                         : Appearance.angelEverywhere ? Appearance.angel.colBorder
                         : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                    // Organic morph on style/shape switch (organic-transitions)
+                    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 Rectangle {
@@ -102,10 +107,18 @@ Item {
                         : Appearance.inirEverywhere ? Appearance.inir.colBorderAccent : "transparent"
                     implicitWidth: targetItem ? targetItem.implicitWidth : 0
                     implicitHeight: targetItem ? (Appearance.zzzEverywhere ? 30 : Appearance.angelEverywhere ? 28 : Appearance.inirEverywhere ? 28 : (Appearance.auroraEverywhere ? 32 : targetItem.implicitHeight)) : 0
-                    radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                    // Concentric with groupBackground (same controlRadius, but
+                    // inset ~4px): echo the track's silhouette instead of looking
+                    // more-rounded-than-parent. Other styles keep their own read.
+                    radius: Appearance.zzzEverywhere ? Appearance.concentricRadius(Appearance.zzz.controlRadius, 4)
                         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
                     anchors.verticalCenter: parent.verticalCenter
+                    // Organic morph on style/shape switch (organic-transitions)
+                    Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                    Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+                    Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     // Animation
                     property Item targetItem: tabRepeater.itemAt(root.currentIndex)
                     AnimatedTabIndexPair {

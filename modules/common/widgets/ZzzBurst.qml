@@ -19,8 +19,11 @@ Item {
     property var triadColors: [Appearance.zzz.accent, Appearance.zzz.secondary, Appearance.zzz.tertiary]
     property int bars: 3
     property real slant: 0.55          // horizontal lean as a fraction of height
-    property real barWidthFrac: 0.16   // each bar width as a fraction of width
-    property real gapFrac: 0.10        // gap between bars as a fraction of width
+    property real barWidthFrac: 0.12   // each bar width as a fraction of width (thinner = elegant, not chunky)
+    property real gapFrac: 0.14        // gap between bars as a fraction of width (more air → composed, not loose)
+    // Base opacity: a triad reads as a faint layered accent flourish, NOT three
+    // loud loose lines. Front bar strongest, stepping down per bar.
+    property real triadBaseAlpha: 0.30
     property real falloff: 0.34        // opacity step per bar (front bar strongest)
     property bool mirror: false        // lean the other way
 
@@ -60,7 +63,9 @@ Item {
 
             ShapePath {
                 strokeWidth: 0
-                fillColor: ColorUtils.applyAlpha(bar.baseColor, root.triad ? 1.0 : Math.max(0.12, 1.0 - bar.index * root.falloff))
+                fillColor: ColorUtils.applyAlpha(bar.baseColor, root.triad
+                    ? Math.max(0.10, root.triadBaseAlpha - bar.index * root.falloff)
+                    : Math.max(0.12, 1.0 - bar.index * root.falloff))
                 startX: bar.x0;            startY: root.height
                 PathLine { x: bar.x0 + bar.lean;          y: 0 }
                 PathLine { x: bar.x0 + bar.lean + bar.bw; y: 0 }

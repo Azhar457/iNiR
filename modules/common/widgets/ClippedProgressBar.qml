@@ -52,6 +52,10 @@ ProgressBar {
         anchors.fill: parent
         radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Math.min(width, height) / 2
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         color: root.trackColor
         visible: false
 
@@ -87,6 +91,10 @@ ProgressBar {
 
             radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
                 : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Appearance.rounding.unsharpen
+            Behavior on radius {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             color: root.highlightColor
 
             Behavior on width {

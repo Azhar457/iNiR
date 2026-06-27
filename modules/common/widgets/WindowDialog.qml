@@ -55,15 +55,27 @@ Rectangle {
             : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
             : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colSurfaceContainerHigh
         inirColor: Appearance.inir.colLayer2
         auroraTransparency: Appearance.aurora.popupTransparentize * 0.85
         border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
             : (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
             : Appearance.angelEverywhere ? Appearance.angel.colBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder 
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         
         property real targetY: root.height / 2 - root.backgroundHeight / 2
         y: root.show ? targetY : (targetY - root.backgroundAnimationMovementDistance)

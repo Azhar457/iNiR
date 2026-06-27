@@ -121,6 +121,7 @@ Flow {
             leftmost: index === 0
             rightmost: index === root.options.length - 1
             buttonIcon: modelData.icon || ""
+            buttonPreviewKind: modelData.previewKind || ""
             buttonText: modelData.displayName
             toggled: (root.currentValue != null && root.currentValue == modelData.value) ?? false
             onClicked: {

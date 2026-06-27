@@ -67,6 +67,9 @@ TabButton {
                 id: bubbleBackground
                 color: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.colors.colPrimary
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
+                // Organic morph on style/shape switch (organic-transitions)
+                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 implicitWidth: bubbleText.implicitWidth + 24
                 implicitHeight: root.baseHighlightHeight
 
@@ -77,6 +80,10 @@ TabButton {
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.weight: Font.Medium
                     color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
@@ -107,10 +114,10 @@ TabButton {
             radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                 : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                 : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+            // Organic morph on style/shape switch (organic-transitions)
+            Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
             color: Appearance.zzzEverywhere
-                ? (toggled
-                    ? (root.down ? Appearance.zzz.chromeAlt : root.hovered ? Appearance.zzz.chromeAlt : Appearance.zzz.sticker)
-                    : (root.down ? Appearance.zzz.chromeAlt : root.hovered ? Appearance.zzz.paperAlt : "transparent"))
+                ? "transparent"
                 : Appearance.angelEverywhere
                 ? (toggled
                     ? (root.showToggledHighlight
@@ -185,7 +192,7 @@ TabButton {
                 font.weight: (toggled || root.hovered) ? Font.DemiBold : Font.Normal
                 text: buttonIcon
                 color: Appearance.zzzEverywhere
-                    ? (toggled ? Appearance.zzz.onSticker : Appearance.zzz.inkMuted)
+                    ? (toggled ? Appearance.zzz.accent : (root.hovered ? Appearance.zzz.ink : Appearance.zzz.inkMuted))
                     : toggled
                     ? (root.showToggledHighlight ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colPrimary)
                     : Appearance.colors.colOnLayer1
@@ -211,6 +218,10 @@ TabButton {
             text: buttonText
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
 
             Behavior on opacity {
                 NumberAnimation {

@@ -48,15 +48,27 @@ Item {
         screenHeight: Quickshell.screens[0]?.height ?? 1080
         border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
             : (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
             : Appearance.angelEverywhere ? Appearance.angel.colBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder 
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
         implicitHeight: 56
         implicitWidth: toolbarLayout.implicitWidth + root.padding * 2
         radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : (height / 2)
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
 
         ZzzSurfaceAccent {
             anchors.fill: parent

@@ -189,6 +189,10 @@ Item { // Notification item area
                     visible: !root.onlyNotification
                     font.pixelSize: root.fontSize
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer3
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                     elide: Text.ElideRight
                     text: root.notificationObject?.summary ?? ""
                 }
@@ -202,6 +206,10 @@ Item { // Notification item area
                     }
                     font.pixelSize: root.fontSize
                     color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                     elide: Text.ElideRight
                     wrapMode: Text.Wrap // Needed for proper eliding????
                     maximumLineCount: 1
@@ -228,6 +236,10 @@ Item { // Notification item area
                     Layout.fillWidth: true
                     font.pixelSize: root.fontSize
                     color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.colors.colSubtext
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
                     wrapMode: Text.Wrap
                     elide: Text.ElideRight
                     textFormat: Text.RichText

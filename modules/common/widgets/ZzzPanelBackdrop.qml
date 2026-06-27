@@ -1,8 +1,10 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import qs.modules.common
 import qs.modules.common.functions
+import qs.services
 
 // Shared panel-level ZZZ statement. Use this behind content on major ii
 // surfaces so the strong identity lives at the container level, not repeated
@@ -25,6 +27,12 @@ Item {
     property real horizontalBias: 0.12
     property real verticalBias: 0.04
 
+    // Optional subtle wallpaper-glass: a blurred wallpaper wash behind the grid so
+    // ZZZ's carbon console plate picks up a faint hue of the desktop. Opt-in via
+    // appearance.zzz.glass and gated by effectsEnabled, so it costs nothing when
+    // off / in game mode. The ghost mark, grid and frame stay crisp on top.
+    readonly property bool glass: Appearance.effectsEnabled && (Config.options?.appearance?.zzz?.glass ?? true)
+
     readonly property bool active: Appearance.zzzEverywhere
     readonly property real frameMargin: Math.max(
         Appearance.zzz.markerLength + Appearance.zzz.borderThick * 3,
@@ -45,6 +53,38 @@ Item {
             duration: Appearance.animation.elementMoveFast.duration
             easing.type: Appearance.animation.elementMoveFast.type
             easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+        }
+    }
+
+    // Wallpaper-glass wash (backmost layer). Self-contained blurred crop of the
+    // current wallpaper — no screen-position plumbing — kept low-opacity so it
+    // tints the plate without fighting the grid. FBO releases when the panel is
+    // hidden (layer gated on visible), so closed panels cost zero.
+    Image {
+        id: glassWall
+        anchors.fill: parent
+        z: -1
+        visible: root.active && root.glass && status === Image.Ready
+        // Real wallpaper presence, not a flat wash: enough that the plate breathes
+        // the desktop's colour (the panel reads dead without it), but blurred and
+        // only lightly desaturated so it's atmosphere behind the cards, not a
+        // muddy tint fighting the text. Cards sit opaque on top, so this colours
+        // the panel/content gaps, not the card faces.
+        opacity: Appearance.zzz.dark ? 0.16 : 0.12
+        source: (root.active && root.glass) ? Wallpapers.effectiveWallpaperUrl : ""
+        fillMode: Image.PreserveAspectCrop
+        cache: true
+        asynchronous: true
+        sourceSize.width: width
+        sourceSize.height: height
+        layer.enabled: root.active && root.glass && root.visible
+        layer.effect: MultiEffect {
+            source: glassWall
+            anchors.fill: source
+            saturation: -0.05
+            blurEnabled: true
+            blurMax: 64
+            blur: 1
         }
     }
 
@@ -80,7 +120,12 @@ Item {
         visible: root.active && root.showBurst
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: root.frameMargin + Appearance.zzz.cutCorner
+        // Round: el burst roza la esquina redondeada (margén = panelRadius) para
+        // leerse como un flourish de esquina integrado, no tres líneas sueltas
+        // flotando. Square: margén clásico + chamfer.
+        anchors.margins: Appearance.zzz.round
+            ? Appearance.zzz.panelRadius
+            : (root.frameMargin + Appearance.zzz.cutCorner)
         width: root.burstSize
         height: root.burstSize
         barColor: root.accentColor
@@ -93,7 +138,11 @@ Item {
         index: root.index
         accentColor: root.accentColor
         margin: root.frameMargin
-        showGrid: root.showGrid
-        showTicks: root.showTicks
+        // Doctrina zzz: round = anime soft; la grilla de ingeniería y las
+        // marcas técnicas son vocabulario "console" (square). En round chocan
+        // con la esquina suave y se leen como líneas feas (la línea vertical
+        // izquierda en x=0 y las horizontales "medias"), así que se suprimen.
+        showGrid: root.showGrid && !Appearance.zzz.round
+        showTicks: root.showTicks && !Appearance.zzz.round
     }
 }
