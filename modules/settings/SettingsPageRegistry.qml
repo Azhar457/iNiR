@@ -134,6 +134,13 @@ Singleton {
             desc: Translation.tr("Welcome hub panel & widgets"),
             essential: false,
             component: "modules/settings/DashboardConfig.qml"
+        },
+        {
+            name: Translation.tr("Autostart"),
+            icon: "rocket_launch",
+            desc: Translation.tr("Apps that start with iNiR"),
+            essential: false,
+            component: "modules/settings/AutostartConfig.qml"
         }
     ]
 
@@ -143,7 +150,7 @@ Singleton {
         { label: Translation.tr("Essentials"), pages: [0] },
         { label: Translation.tr("Appearance"), pages: [4, 3, 14] },
         { label: Translation.tr("Shell"), pages: [2, 5, 16, 10, 11] },
-        { label: Translation.tr("System"), pages: [1, 7, 6, 12, 15, 8] },
+        { label: Translation.tr("System"), pages: [1, 7, 6, 12, 15, 8, 17] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
     ]
 
@@ -1419,6 +1426,17 @@ Singleton {
         { pageIndex: 16, pageName: root.pages[16].name, section: Translation.tr("General"), label: Translation.tr("Dashboard"), description: Translation.tr("Centered welcome hub panel with configurable widgets"), keywords: ["dashboard", "hub", "welcome", "panel", "home", "greeting"] },
         { pageIndex: 16, pageName: root.pages[16].name, section: Translation.tr("General"), label: Translation.tr("Panel width"), description: Translation.tr("Dashboard width as a percentage of the screen"), keywords: ["dashboard", "width", "size", "ratio", "screen"] },
         { pageIndex: 16, pageName: root.pages[16].name, section: Translation.tr("General"), label: Translation.tr("GitHub username"), description: Translation.tr("GitHub user for the contributions heatmap widget"), keywords: ["dashboard", "github", "contributions", "heatmap", "username", "activity"] },
-        { pageIndex: 16, pageName: root.pages[16].name, section: Translation.tr("Widgets"), label: Translation.tr("Dashboard widgets"), description: Translation.tr("Place, hide and reorder dashboard widgets per column"), keywords: ["dashboard", "widgets", "layout", "column", "reorder", "clock", "weather", "media", "todo", "calendar", "notifications", "system"] }
+        { pageIndex: 16, pageName: root.pages[16].name, section: Translation.tr("Widgets"), label: Translation.tr("Dashboard widgets"), description: Translation.tr("Place, hide and reorder dashboard widgets per column"), keywords: ["dashboard", "widgets", "layout", "column", "reorder", "clock", "weather", "media", "todo", "calendar", "notifications", "system"] },
+
+        // =====================================================================
+        // Autostart (page 17)
+        // =====================================================================
+        {
+            pageIndex: 17, pageName: root.pages[17].name,
+            section: Translation.tr("General"),
+            label: Translation.tr("Autostart"),
+            description: Translation.tr("Launch apps when iNiR starts"),
+            keywords: ["autostart", "startup", "launch", "apps", "boot", "discord", "steam", "telegram"]
+        }
     ]
 }
