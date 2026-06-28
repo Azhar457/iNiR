@@ -1025,6 +1025,10 @@
         "ai": 0,
         "weeb": 0
     },
+    "autostart": {
+        "enable": false,
+        "entries": []
+    },
     "regionSelector": {
         "circle": {
             "padding": 10,
