@@ -82,6 +82,11 @@ ApplicationWindow {
             name: Translation.tr("Monitors"),
             icon: "desktop",
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WMonitorVisibilityPage.qml")
+        },
+        {
+            name: Translation.tr("Autostart"),
+            icon: "power",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WAutostartPage.qml")
         }
     ]
     
