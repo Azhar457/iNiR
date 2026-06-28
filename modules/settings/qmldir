@@ -5,4 +5,5 @@ ThemePresetCard 1.0 ThemePresetCard.qml
 ColorPickerRow 1.0 ColorPickerRow.qml
 PresetPreviewBar 1.0 PresetPreviewBar.qml
 WaffleConfig 1.0 WaffleConfig.qml
+AutostartConfig 1.0 AutostartConfig.qml
 SettingsOverlay 1.0 SettingsOverlay.qml
