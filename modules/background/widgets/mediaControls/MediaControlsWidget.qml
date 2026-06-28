@@ -117,8 +117,11 @@ AbstractBackgroundWidget {
         }
     }
 
-    // Use MprisController.displayPlayers - centralized filtering
-    readonly property var meaningfulPlayers: MprisController.displayPlayers
+    // Use MprisController.displayPlayers - centralized filtering.
+    // Spread into a plain JS array: ScriptModel.values expects a QVariantList,
+    // but displayPlayers is a typed list<MprisPlayer> (QQmlListReference) which
+    // cannot be assigned to QVariantList directly (silent failure → empty widget).
+    readonly property var meaningfulPlayers: [...MprisController.displayPlayers]
 
     implicitWidth: widgetWidth
     implicitHeight: playerColumnLayout.implicitHeight
@@ -209,6 +212,8 @@ AbstractBackgroundWidget {
                     item.radius = root.popupRounding
                     item.screenX = Qt.binding(() => root.widgetScreenPos.x)
                     item.screenY = Qt.binding(() => root.widgetScreenPos.y)
+                    item.width = Qt.binding(() => root.widgetWidth)
+                    item.height = Qt.binding(() => root.widgetHeight)
                 }
             }
         }
