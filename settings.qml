@@ -1257,9 +1257,16 @@ ApplicationWindow {
                     property int preloadIndex: 0
                     property bool preloadRequested: false
 
+                    // Direction of the last nav change, so pages slide in from the
+                    // correct side (fluid sideways feel, like the coverflow filmstrip).
+                    property int navDirection: 1
+                    property int lastPage: root.currentPage
+
                     Connections {
                         target: root
                         function onCurrentPageChanged() {
+                            pagesStack.navDirection = root.currentPage >= pagesStack.lastPage ? 1 : -1
+                            pagesStack.lastPage = root.currentPage
                             pagesStack.visitedPages[root.currentPage] = true
                             pagesStack.visitedPagesChanged()
                         }
@@ -1345,12 +1352,22 @@ ApplicationWindow {
                             source: root.pages[index].component
                             visible: index === root.currentPage && status === Loader.Ready
                             opacity: visible ? 1 : 0
+                            // Slide in from the side the navigation came from, settle to 0.
+                            x: visible ? 0 : pagesStack.navDirection * 28
 
                             Behavior on opacity {
                                 NumberAnimation {
                                     duration: Appearance.animation.elementMoveFast.duration
                                     easing.type: Appearance.animation.elementMoveEnter.type
                                     easing.bezierCurve: Appearance.animationCurves.emphasizedLastHalf
+                                }
+                            }
+                            Behavior on x {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation {
+                                    duration: Appearance.animation.elementMove.duration
+                                    easing.type: Appearance.animation.elementMove.type
+                                    easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
                                 }
                             }
                         }
