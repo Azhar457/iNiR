@@ -1,3 +1,4 @@
+import qs
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
@@ -152,7 +153,8 @@ QuickToggleButton {
         id: warpPollTimer
         interval: 5000
         repeat: true
-        running: true
+        triggeredOnStart: true
+        running: GlobalStates.sidebarRightOpen
         onTriggered: root.refreshStatus()
     }
 
