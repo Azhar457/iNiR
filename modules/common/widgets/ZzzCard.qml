@@ -7,8 +7,8 @@ import qs.modules.common.functions
 // ZzzCard — the calm unified ZZZ content surface.
 //
 // ONE hairline border (no panel+card+group stacking), a generated fill ramp
-// driven by `elevation`, a radius that respects the square/round shape axis,
-// and an optional left accent tick. Built as a native Rectangle so it obeys
+// driven by `elevation`, and a radius that respects the square/round shape
+// axis. Built as a native Rectangle so it obeys
 // `radius` correctly in BOTH square (small manufactured radius) and round
 // (softer anime) modes — the failure mode this replaces is the old Shape-
 // based plate that ignored radius and stayed sharp in round mode.
@@ -28,14 +28,11 @@ Item {
     // (sunken panel). Reads as a depth ladder WITHOUT stacking borders.
     property int elevation: 0
     property bool showBorder: true
-    property bool showAccent: false
-    property color accentColor: Appearance.zzz.signal
     property color fillColor: elevation === 0 ? Appearance.zzz.tile
                           : elevation === 1 ? Appearance.zzz.paperAlt
                           : Appearance.zzz.chrome
     property color borderColor: Appearance.zzz.hairline
     property real radius: Appearance.zzz.cardRadius
-    property int accentWidth: Math.max(3, Appearance.zzz.hairlineThick + 2)
 
     readonly property bool active: Appearance.zzzEverywhere
 
@@ -67,24 +64,6 @@ Item {
         Behavior on radius {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot }
-        }
-    }
-
-    // Left accent tick — inset to clear the rounded corner, pill-shaped so it
-    // reads clean in both shape modes (square = small pill, round = full pill).
-    Rectangle {
-        visible: root.active && root.showAccent
-        anchors.left: plate.left
-        anchors.top: plate.top
-        anchors.bottom: plate.bottom
-        anchors.margins: Math.max(2, Math.round(root.radius / 2))
-        width: root.accentWidth
-        radius: Appearance.zzz.pillRadius
-        color: root.accentColor
-
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
     }
 

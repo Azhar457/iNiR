@@ -9,8 +9,8 @@ import Qt5Compat.GraphicalEffects as GE
 
 // General-purpose ZZZ content container. Unlike ZzzGraphicPlate (a styled surface),
 // this is a card you wrap content in: it imposes the ZZZ grammar — generated plate,
-// thick technical stroke, left category accent bar, clipped corner, and an optional
-// poster section header — so consumers stop reusing recolored Material cards.
+// thick technical stroke, clipped corner, and an optional poster section header —
+// so consumers stop reusing recolored Material cards.
 //
 // Usage:
 //   ZzzPlateCard { title: "Audio"; symbol: "volume_up"; index: "SND / 02"
@@ -22,7 +22,6 @@ Rectangle {
     property string symbol: ""
     property string index: ""
     property color accentColor: Appearance.zzz.accent
-    property bool showAccentBar: true
     property bool showHeader: title.length > 0 || symbol.length > 0
     property real padding: 14
     property real spacing: 12
@@ -32,7 +31,7 @@ Rectangle {
     readonly property bool active: Appearance.zzzEverywhere
 
     visible: active
-    implicitWidth: layout.implicitWidth + padding * 2 + (showAccentBar ? accentBar.width : 0)
+    implicitWidth: layout.implicitWidth + padding * 2
     implicitHeight: layout.implicitHeight + padding * 2
     color: "transparent" // real fill painted by the masked inner layer
     radius: Appearance.zzz.panelRadius
@@ -77,13 +76,6 @@ Rectangle {
             }
         }
 
-        Rectangle {
-            id: accentBar
-            anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-            width: root.showAccentBar ? Math.max(3, Appearance.zzz.borderThick + 1) : 0
-            color: root.accentColor
-        }
-
         // Clipped-corner technical cue.
         Rectangle {
             anchors.right: parent.right
@@ -100,7 +92,7 @@ Rectangle {
     ColumnLayout {
         id: layout
         anchors.fill: parent
-        anchors.leftMargin: root.padding + (root.showAccentBar ? accentBar.width : 0)
+        anchors.leftMargin: root.padding
         anchors.rightMargin: root.padding
         anchors.topMargin: root.padding
         anchors.bottomMargin: root.padding

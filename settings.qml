@@ -909,7 +909,9 @@ ApplicationWindow {
 
                                     readonly property int pageRealIndex: navItem.modelData.realIndex !== undefined ? navItem.modelData.realIndex : navItem.index
 
-                                    buttonRadius: Math.min(width, height) / 2
+                                    buttonRadius: Appearance.zzzEverywhere
+                                        ? Appearance.zzz.controlRadius
+                                        : Math.min(width, height) / 2
                                     toggled: root.currentPage === pageRealIndex
                                     colBackground: "transparent"
                                     colBackgroundToggled: "transparent"
@@ -920,7 +922,7 @@ ApplicationWindow {
                                             : Appearance.auroraEverywhere
                                                 ? Appearance.aurora.colElevatedSurface
                                                 : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
-                                    colBackgroundHover: Appearance.colLayer1Hover
+                                    colBackgroundHover: Appearance.colors.colLayer1Hover
 
                                     onClicked: root.currentPage = pageRealIndex
 
@@ -937,7 +939,9 @@ ApplicationWindow {
                                                 text: navItem.modelData.icon || ""
                                                 iconSize: 18
                                                 color: navBtn.toggled
-                                                    ? (Appearance.inirEverywhere
+                                                    ? (Appearance.zzzEverywhere
+                                                        ? Appearance.zzz.onSticker
+                                                        : Appearance.inirEverywhere
                                                         ? Appearance.inir.colAccent
                                                         : Appearance.colors.colPrimary)
                                                     : Appearance.colors.colOnSurfaceVariant
@@ -1176,16 +1180,21 @@ ApplicationWindow {
                 id: contentContainer
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                // ZZZ: same bg2 plate + hairline as the overlay-mode content
+                // field, so both settings modes read as the same surface.
                 color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                      : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                     : Appearance.zzzEverywhere ? Appearance.zzz.bg2
                      : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                     : Appearance.m3colors.m3surfaceContainerLow
+                     : Appearance.colors.colSurfaceContainerLow
                 radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                       : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
                       : Appearance.rounding.windowRounding - root.contentPadding
                 border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
+                            : Appearance.zzzEverywhere ? Appearance.zzz.borderThick
                             : Appearance.inirEverywhere ? 1 : 0
                 border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
+                            : Appearance.zzzEverywhere ? Appearance.zzz.hairline
                             : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
                             : "transparent"
 

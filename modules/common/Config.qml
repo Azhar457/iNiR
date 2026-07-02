@@ -1765,6 +1765,12 @@ Singleton {
                     // Optional API key for NSFW & user-specific filters
                     property string apiKey: ""
                 }
+                // News tab - Google News RSS, geo feed follows the Weather location
+                property JsonObject news: JsonObject {
+                    property bool enable: true
+                    property string mode: "local" // "local" | "top" | "topic"
+                    property string topic: "WORLD"
+                }
                 // Anime Schedule tab - AniList API
                 property JsonObject animeSchedule: JsonObject {
                     property bool enable: false

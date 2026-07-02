@@ -986,6 +986,16 @@ ContentPage {
                 }
 
                 SettingsSwitch {
+                    buttonIcon: "newspaper"
+                    text: Translation.tr("News")
+                    checked: Config.options.sidebar?.news?.enable ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.news.enable", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Local and topic headlines from Google News")
+                    }
+                }
+
+                SettingsSwitch {
                     buttonIcon: "calendar_month"
                     text: Translation.tr("Anime Schedule")
                     checked: Config.options.sidebar?.animeSchedule?.enable ?? false
@@ -1838,6 +1848,13 @@ ContentPage {
                     text: Translation.tr("Wallpaper picker")
                     checked: Config.options?.sidebar?.widgets?.wallpaper ?? false
                     onCheckedChanged: Config.setNestedValue("sidebar.widgets.wallpaper", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "schedule"
+                    text: Translation.tr("World Clock")
+                    checked: Config.options?.sidebar?.widgets?.worldClock ?? true
+                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.worldClock", checked)
                 }
             }
 

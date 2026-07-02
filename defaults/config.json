@@ -1234,6 +1234,11 @@
             "limit": 24,
             "apiKey": ""
         },
+        "news": {
+            "enable": true,
+            "mode": "local",
+            "topic": "WORLD"
+        },
         "animeSchedule": {
             "enable": false,
             "showNsfw": false

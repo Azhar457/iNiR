@@ -75,7 +75,9 @@ Item {
     // Material/aurora: simple offset rectangle instead of GPU-blurred RectangularShadow
     // for much better performance (especially with many cards visible at once).
     Rectangle {
-        visible: !Appearance.angelEverywhere && Appearance.effectsEnabled
+        visible: !Appearance.angelEverywhere
+            && !Appearance.zzzEverywhere
+            && Appearance.effectsEnabled
         x: card.x + 0.5
         y: card.y + 1.5
         width: card.width
@@ -92,10 +94,20 @@ Item {
         }
     }
 
-    // Subtle left accent bar when expanded
+    ZzzPlate {
+        anchors.fill: card
+        visible: Appearance.zzzEverywhere
+        fillColor: Appearance.colors.colLayer2
+        strokeColor: Appearance.zzz.hairline
+        strokeWidth: Appearance.zzz.hairlineThick
+        chamfer: Appearance.zzz.cutCorner
+        z: -0.5
+    }
+
+    // Non-ZZZ, non-angel: subtle left accent bar when expanded
     Rectangle {
         id: accentBar
-        visible: !Appearance.angelEverywhere
+        visible: !Appearance.angelEverywhere && !Appearance.zzzEverywhere
         anchors {
             left: card.left
             top: card.top
@@ -104,18 +116,13 @@ Item {
             topMargin: SettingsMaterialPreset.cardRadius
             bottomMargin: SettingsMaterialPreset.cardRadius
         }
-        width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick * 2 : 2
-        radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : 1
+        width: 2
+        radius: 1
         color: SettingsMaterialPreset.accentColor
-        Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
-        // Hint the accent on hover so collapsed cards read as interactive.
-        // ZZZ: pull the accent back hard — the user wants fewer coloured borders,
-        // so it reads as a restrained registration tick, not a loud orange rail.
         opacity: root.expanded
-            ? (Appearance.zzzEverywhere ? 0.3 : 0.6)
-            : (headerMouseArea.containsMouse ? (Appearance.zzzEverywhere ? 0.16 : 0.3) : 0)
+            ? 0.6
+            : (headerMouseArea.containsMouse ? 0.3 : 0)
         z: 1
-
         Behavior on opacity {
             animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
