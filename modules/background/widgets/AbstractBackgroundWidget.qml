@@ -229,31 +229,8 @@ AbstractWidget {
         restoreMode: Binding.RestoreNone
     }
 
-    // Re-clamp position in "free" mode when the widget grows past the screen
-    // edge (e.g. media widget gaining an extra MPRIS player). Without these,
-    // the user has to manually reposition each time content size changes.
-    // Bindings are inactive while user is interacting (drag/resize), and never
-    // overwrite the saved config — only the rendered position.
-    readonly property bool _freeModeOverflowGuard: root.placementStrategy === "free"
-        && Config.ready
-        && root.width > 0 && root.height > 0
-        && !(GlobalStates.widgetEditMode && (root.isDragging || root.containsPress || root._isResizing || root._releaseGuard))
-    readonly property bool _xOverflows: root.x + root.width > root.scaledScreenWidth
-    readonly property bool _yOverflows: root.y + root.height > root.scaledScreenHeight
-    Binding {
-        target: root
-        property: "x"
-        value: Math.max(0, root.scaledScreenWidth - root.width)
-        when: root._freeModeOverflowGuard && root._xOverflows
-        restoreMode: Binding.RestoreNone
-    }
-    Binding {
-        target: root
-        property: "y"
-        value: Math.max(0, root.scaledScreenHeight - root.height)
-        when: root._freeModeOverflowGuard && root._yOverflows
-        restoreMode: Binding.RestoreNone
-    }
+    // Free-mode overflow re-clamp is imperative (in _geometryPlacementDebounce)
+    // — a Binding that reads root.x while writing it loops (Qt warning at :245).
     Behavior on x {
         enabled: Appearance.animationsEnabled && root._autoPosition
         NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
@@ -912,7 +889,9 @@ AbstractWidget {
     onPlacementStrategyChanged: Qt.callLater(root.applyPlacementFromConfig)
     // Re-snap zone positions when screen size changes
     onScaledScreenWidthChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
+        else if (root.placementStrategy === "free") _geometryPlacementDebounce.restart()
     onScaledScreenHeightChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
+        else if (root.placementStrategy === "free") _geometryPlacementDebounce.restart()
     onWidthChanged: _geometryPlacementDebounce.restart()
     onHeightChanged: _geometryPlacementDebounce.restart()
     Timer {
@@ -930,6 +909,14 @@ AbstractWidget {
                 root.snapToZone(root.placementStrategy);
             else if (root._isAutoPlacement)
                 root.refreshPlacementIfNeeded();
+            else if (root.placementStrategy === "free") {
+                // Re-clamp rendered position when the widget grew past the
+                // screen edge. Never overwrites saved config (only root.x/y).
+                if (root.width > 0 && root.x + root.width > root.scaledScreenWidth)
+                    root.x = Math.max(0, root.scaledScreenWidth - root.width);
+                if (root.height > 0 && root.y + root.height > root.scaledScreenHeight)
+                    root.y = Math.max(0, root.scaledScreenHeight - root.height);
+            }
         }
     }
     Connections {

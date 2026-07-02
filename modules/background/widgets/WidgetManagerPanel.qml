@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -492,6 +493,7 @@ Item {
                         MaterialSymbol { text: "zoom_in"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             text: Translation.tr("Scale")
+                            Layout.preferredWidth: 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -514,6 +516,7 @@ Item {
                         MaterialSymbol { text: "opacity"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             text: Translation.tr("Opacity")
+                            Layout.preferredWidth: 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -536,6 +539,7 @@ Item {
                         MaterialSymbol { text: "contrast"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             text: Translation.tr("Dim")
+                            Layout.preferredWidth: 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
@@ -605,6 +609,7 @@ Item {
                         MaterialSymbol { text: "opacity"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             text: Translation.tr("BG opacity")
+                            Layout.preferredWidth: 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                         }
