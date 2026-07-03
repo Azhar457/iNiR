@@ -16,63 +16,9 @@ ContentPage {
 
     // ── Helpers ──────────────────────────────────────────────────────────
 
-    function isDesktopEnabled(desktopId: string): bool {
-        const entries = Config.options?.autostart?.entries ?? []
-        for (let i = 0; i < entries.length; ++i) {
-            if (entries[i].type === "desktop" && entries[i].desktopId === desktopId && entries[i].enabled)
-                return true
-        }
-        return false
-    }
-
-    function setDesktopEnabled(desktopId: string, enabled: bool): void {
-        let entries = [...(Config.options?.autostart?.entries ?? [])]
-        let idx = -1
-        for (let i = 0; i < entries.length; ++i) {
-            if (entries[i].type === "desktop" && entries[i].desktopId === desktopId) {
-                idx = i
-                break
-            }
-        }
-        if (enabled && idx === -1) {
-            entries.push({ type: "desktop", desktopId: desktopId, enabled: true })
-        } else if (enabled && idx !== -1) {
-            entries[idx].enabled = true
-        } else if (!enabled && idx !== -1) {
-            entries[idx].enabled = false
-        }
-        Config.setNestedValue("autostart.entries", entries)
-    }
-
-    function addCommand(command: string): void {
-        const cmd = command.trim()
-        if (cmd.length === 0)
-            return
-        let entries = [...(Config.options?.autostart?.entries ?? [])]
-        entries.push({ type: "command", command: cmd, enabled: true })
-        Config.setNestedValue("autostart.entries", entries)
-        commandInput.text = ""
-    }
-
-    function removeEntry(index: int): void {
-        let entries = [...(Config.options?.autostart?.entries ?? [])]
-        if (index >= 0 && index < entries.length) {
-            entries.splice(index, 1)
-            Config.setNestedValue("autostart.entries", entries)
-        }
-    }
-
-    function setEntryEnabled(index: int, enabled: bool): void {
-        let entries = [...(Config.options?.autostart?.entries ?? [])]
-        if (index >= 0 && index < entries.length) {
-            entries[index].enabled = enabled
-            Config.setNestedValue("autostart.entries", entries)
-        }
-    }
-
     function getCommandEntries(): var {
-        const entries = Config.options?.autostart?.entries ?? []
         const cmds = []
+        const entries = Autostart.entries ?? []
         for (let i = 0; i < entries.length; ++i) {
             if (entries[i].type === "command")
                 cmds.push({ entry: entries[i], originalIndex: i })
@@ -80,7 +26,8 @@ ContentPage {
         return cmds
     }
 
-    // Sorted + filtered app list: enabled first, then alphabetical, filtered by search
+    // Sorted + filtered app list: on first, then alphabetical, filtered by search.
+    // "On" means either a managed entry or an external spawn line matches.
     function getFilteredApps(): var {
         const search = appSearchField.text.toLowerCase().trim()
         const apps = AppSearch.list ?? []
@@ -94,134 +41,311 @@ ContentPage {
             result.push(app)
         }
         result.sort((a, b) => {
-            const aEnabled = root.isDesktopEnabled(a.id)
-            const bEnabled = root.isDesktopEnabled(b.id)
-            if (aEnabled !== bEnabled)
-                return aEnabled ? -1 : 1
+            const aOn = Autostart.isAppOn(a)
+            const bOn = Autostart.isAppOn(b)
+            if (aOn !== bOn)
+                return aOn ? -1 : 1
             return (a.name || "").localeCompare(b.name || "")
         })
         return result
     }
 
-    // ── Layout ───────────────────────────────────────────────────────────
+    // ── Non-niri / missing-file guard ────────────────────────────────────
 
     SettingsCardSection {
         expanded: true
-        icon: "rocket_launch"
-        title: Translation.tr("General")
+        icon: "block"
+        title: Translation.tr("Autostart needs niri")
+        visible: !Autostart.isNiri
 
-        SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "rocket_launch"
-                text: Translation.tr("Start apps on launch")
-                checked: Config.options?.autostart?.enable ?? false
-                onCheckedChanged: Config.setNestedValue("autostart.enable", checked)
-                StyledToolTip {
-                    text: Translation.tr("When enabled, selected apps and commands launch automatically when iNiR starts.")
+        StyledText {
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: Translation.tr("App autostart is managed through niri's startup config, which only applies when niri is the active compositor.")
+            font.pixelSize: Appearance.font.pixelSize.small
+            color: Appearance.colors.colOnSurface
+        }
+    }
+
+    SettingsCardSection {
+        expanded: true
+        icon: "file_off"
+        title: Translation.tr("Startup file not found")
+        visible: Autostart.isNiri && Autostart.status === "missing"
+
+        StyledText {
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: Autostart.startupFilePath.length > 0
+                ? Translation.tr("iNiR couldn't find %1. Re-run the installer to restore it.").arg(Autostart.startupFilePath)
+                : Translation.tr("iNiR couldn't locate your niri startup config.")
+            font.pixelSize: Appearance.font.pixelSize.small
+            color: Appearance.colors.colOnSurface
+        }
+    }
+
+    // ── Info banner ──────────────────────────────────────────────────────
+
+    SettingsCardSection {
+        expanded: true
+        icon: "info"
+        title: Translation.tr("How autostart works")
+        visible: Autostart.isNiri
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 6
+
+            StyledText {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: Translation.tr("Apps and commands here are written to niri's startup file and launched by niri at login — iNiR doesn't start them itself, so they keep running even if the shell restarts.")
+                font.pixelSize: Appearance.font.pixelSize.small
+                color: Appearance.colors.colOnSurface
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                MaterialSymbol {
+                    text: "folder"
+                    iconSize: 16
+                    color: Appearance.colors.colSubtext
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    elide: Text.ElideMiddle
+                    text: Autostart.startupFilePath ?? ""
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.family: Appearance.font.family.monospace
+                    color: Appearance.colors.colSubtext
+                }
+
+                RippleButton {
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    buttonRadius: Appearance.rounding.full
+                    enabled: Autostart.startupFilePath.length > 0
+                    onClicked: Quickshell.execDetached(["/usr/bin/bash", "-lc",
+                        `xdg-open '${Autostart.startupFilePath}' 2>/dev/null || true`])
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "open_in_new"
+                        iconSize: 16
+                        color: Appearance.colors.colOnSurfaceVariant
+                    }
+                }
+
+                RippleButton {
+                    Layout.preferredWidth: 30
+                    Layout.preferredHeight: 30
+                    buttonRadius: Appearance.rounding.full
+                    onClicked: Autostart.reload()
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "refresh"
+                        iconSize: 16
+                        color: Appearance.colors.colOnSurfaceVariant
+                    }
                 }
             }
         }
     }
+
+    // ── Applications ─────────────────────────────────────────────────────
 
     SettingsCardSection {
         expanded: true
         icon: "apps"
         title: Translation.tr("Applications")
+        visible: Autostart.isNiri
 
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 8
 
-            TextField {
+            StyledText {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: Translation.tr("Toggle an app to launch it at login via niri's spawn-at-startup. Apps already in your startup file outside iNiR's control are shown as \"External\" — edit the file below to change those.")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+            }
+
+            MaterialTextField {
                 id: appSearchField
                 Layout.fillWidth: true
                 placeholderText: Translation.tr("Search applications...")
                 font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colOnSurface
-                placeholderTextColor: Appearance.colors.colSubtext
-                background: Rectangle {
-                    color: Appearance.colors.colLayer1
-                    radius: Appearance.rounding.small
-                    border.width: appSearchField.activeFocus ? 2 : 1
-                    border.color: appSearchField.activeFocus
-                        ? Appearance.colors.colPrimary
-                        : Appearance.colors.colLayer0Border
-                }
             }
 
             ListView {
                 id: appListView
                 Layout.fillWidth: true
-                implicitHeight: Math.min(400, appListView.contentHeight)
+                implicitHeight: Math.min(420, appListView.contentHeight)
                 clip: true
                 model: root.getFilteredApps()
+                boundsBehavior: Flickable.StopAtBounds
 
-                delegate: RowLayout {
+                // No apps match the filter
+                PagePlaceholder {
+                    shown: appSearchField.text.length > 0 && appListView.count === 0
+                    icon: "search_off"
+                    title: Translation.tr("No matching apps")
+                    description: Translation.tr("Try a different search term.")
+                    anchors.fill: parent
+                }
+
+                delegate: Item {
                     id: appDelegate
                     required property var modelData
                     required property int index
                     width: appListView.width
-                    spacing: 10
+                    // Fixed height so every switch sits on the same line.
+                    implicitHeight: 48
+                    height: 48
 
-                    Item {
-                        Layout.preferredWidth: 28
-                        Layout.preferredHeight: 28
-                        Layout.alignment: Qt.AlignVCenter
+                    readonly property bool isExternal: Autostart.appEntrySource(appDelegate.modelData) === "external"
+                    readonly property bool isOn: Autostart.isAppOn(appDelegate.modelData)
 
-                        Image {
-                            anchors.fill: parent
-                            source: AppSearch.getIconSource(appDelegate.modelData.icon, appDelegate.modelData.name)
-                            sourceSize.width: 56
-                            sourceSize.height: 56
-                            fillMode: Image.PreserveAspectFit
-                            visible: status === Image.Ready
-                        }
-
-                        MaterialSymbol {
-                            anchors.fill: parent
-                            text: "apps"
-                            iconSize: 22
-                            color: Appearance.colors.colOnSurface
-                            visible: !(AppSearch.getIconSource(appDelegate.modelData.icon, appDelegate.modelData.name).length > 0)
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-
-                        StyledText {
-                            text: appDelegate.modelData.name
-                            font.pixelSize: Appearance.font.pixelSize.normal
-                            color: Appearance.colors.colOnSurface
-                        }
-
-                        StyledText {
-                            text: appDelegate.modelData.comment ?? ""
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colSubtext
-                            elide: Text.ElideRight
-                            visible: (text ?? "").length > 0
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.leftMargin: 4
+                        anchors.rightMargin: 4
+                        radius: Appearance.rounding.small
+                        color: rowHover.hovered
+                            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                               : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                               : Appearance.zzzEverywhere ? Appearance.zzz.bg1
+                               : Appearance.colors.colLayer1Hover)
+                            : "transparent"
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                         }
                     }
 
-                    StyledSwitch {
-                        checked: root.isDesktopEnabled(appDelegate.modelData.id)
-                        onCheckedChanged: root.setDesktopEnabled(appDelegate.modelData.id, checked)
+                    HoverHandler { id: rowHover }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 10
+
+                        Item {
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 32
+                            Layout.alignment: Qt.AlignVCenter
+
+                            Image {
+                                anchors.fill: parent
+                                source: AppSearch.getIconSource(appDelegate.modelData.icon, appDelegate.modelData.name)
+                                sourceSize.width: 64
+                                sourceSize.height: 64
+                                fillMode: Image.PreserveAspectFit
+                                visible: status === Image.Ready
+                            }
+
+                            MaterialSymbol {
+                                anchors.fill: parent
+                                text: "apps"
+                                iconSize: 22
+                                color: Appearance.colors.colOnSurface
+                                visible: !(AppSearch.getIconSource(appDelegate.modelData.icon, appDelegate.modelData.name).length > 0)
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 0
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: appDelegate.modelData.name
+                                font.pixelSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnSurface
+                                elide: Text.ElideRight
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: appDelegate.modelData.comment ?? ""
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                color: Appearance.colors.colSubtext
+                                elide: Text.ElideRight
+                                visible: (text ?? "").length > 0
+                            }
+                        }
+
+                        // External badge: app is launched by a hand-written /
+                        // default line outside iNiR's managed section. No switch —
+                        // a disabled toggle looks broken, and the badge already
+                        // communicates "not managed here".
+                        Rectangle {
+                            Layout.alignment: Qt.AlignVCenter
+                            visible: appDelegate.isExternal
+                            Layout.preferredHeight: 22
+                            Layout.preferredWidth: extBadgeRow.implicitWidth + 16
+                            radius: Appearance.rounding.full
+                            color: Appearance.colors.colPrimaryContainer
+                            opacity: 0.85
+
+                            RowLayout {
+                                id: extBadgeRow
+                                anchors.centerIn: parent
+                                spacing: 4
+
+                                MaterialSymbol {
+                                    text: "link"
+                                    iconSize: 13
+                                    color: Appearance.colors.colOnPrimaryContainer
+                                }
+
+                                StyledText {
+                                    text: Translation.tr("External")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: Appearance.colors.colOnPrimaryContainer
+                                }
+                            }
+                        }
+
+                        // Managed apps get a clean toggle at its natural size.
+                        // External apps show only the badge above (no toggle).
+                        StyledSwitch {
+                            Layout.alignment: Qt.AlignVCenter
+                            visible: !appDelegate.isExternal
+                            checked: appDelegate.isOn
+                            onCheckedChanged: Autostart.setAppEnabled(appDelegate.modelData.id, checked)
+                        }
                     }
                 }
             }
         }
     }
 
+    // ── Custom Commands ──────────────────────────────────────────────────
+
     SettingsCardSection {
         expanded: true
         icon: "terminal"
         title: Translation.tr("Custom Commands")
+        visible: Autostart.isNiri
 
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 8
+
+            StyledText {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: Translation.tr("Shell commands run through niri's spawn-sh-at-startup, so pipes, env vars, and && work.")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+            }
 
             RowLayout {
                 Layout.fillWidth: true
@@ -232,65 +356,109 @@ ContentPage {
                     Layout.fillWidth: true
                     placeholderText: Translation.tr("e.g. telegram-desktop --start-minimized")
                     font.pixelSize: Appearance.font.pixelSize.small
-                    color: Appearance.colors.colOnSurface
-                    placeholderTextColor: Appearance.colors.colSubtext
-                    background: Rectangle {
-                        color: Appearance.colors.colLayer1
-                        radius: Appearance.rounding.small
-                        border.width: commandInput.activeFocus ? 2 : 1
-                        border.color: commandInput.activeFocus
-                            ? Appearance.colors.colPrimary
-                            : Appearance.colors.colLayer0Border
+                    onAccepted: {
+                        Autostart.addCommand(commandInput.text)
+                        commandInput.text = ""
                     }
-                    onAccepted: root.addCommand(commandInput.text)
                 }
 
                 RippleButton {
                     buttonText: Translation.tr("Add")
                     implicitHeight: 36
                     buttonRadius: Appearance.rounding.small
-                    onClicked: root.addCommand(commandInput.text)
+                    onClicked: {
+                        Autostart.addCommand(commandInput.text)
+                        commandInput.text = ""
+                    }
                 }
             }
 
             ListView {
                 id: commandListView
                 Layout.fillWidth: true
-                implicitHeight: Math.min(200, commandListView.contentHeight)
+                implicitHeight: Math.min(240, commandListView.contentHeight)
                 clip: true
                 model: root.getCommandEntries()
+                boundsBehavior: Flickable.StopAtBounds
 
-                delegate: RowLayout {
+                PagePlaceholder {
+                    shown: commandListView.count === 0
+                    icon: "terminal"
+                    title: Translation.tr("No custom commands")
+                    description: Translation.tr("Add a shell command above to run it at login.")
+                    anchors.fill: parent
+                }
+
+                delegate: Item {
                     id: cmdDelegate
                     required property var modelData
                     required property int index
                     width: commandListView.width
-                    spacing: 10
+                    implicitHeight: 44
+                    height: 44
 
-                    MaterialSymbol {
-                        text: "terminal"
-                        iconSize: 22
-                        color: Appearance.colors.colOnSurface
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.leftMargin: 4
+                        anchors.rightMargin: 4
+                        radius: Appearance.rounding.small
+                        color: cmdHover.hovered
+                            ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                               : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                               : Appearance.zzzEverywhere ? Appearance.zzz.bg1
+                               : Appearance.colors.colLayer1Hover)
+                            : "transparent"
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                        }
                     }
 
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: cmdDelegate.modelData.entry.command
-                        font.pixelSize: Appearance.font.pixelSize.normal
-                        color: Appearance.colors.colOnSurface
-                        elide: Text.ElideRight
-                    }
+                    HoverHandler { id: cmdHover }
 
-                    StyledSwitch {
-                        checked: cmdDelegate.modelData.entry.enabled
-                        onCheckedChanged: root.setEntryEnabled(cmdDelegate.modelData.originalIndex, checked)
-                    }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 10
 
-                    RippleButton {
-                        buttonText: Translation.tr("Remove")
-                        implicitHeight: 32
-                        buttonRadius: Appearance.rounding.small
-                        onClicked: root.removeEntry(cmdDelegate.modelData.originalIndex)
+                        MaterialSymbol {
+                            Layout.preferredWidth: 24
+                            Layout.alignment: Qt.AlignVCenter
+                            text: "terminal"
+                            iconSize: 22
+                            color: Appearance.colors.colOnSurface
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            text: cmdDelegate.modelData.entry.command
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                            font.family: Appearance.font.family.monospace
+                            color: Appearance.colors.colOnSurface
+                            elide: Text.ElideRight
+                        }
+
+                        StyledSwitch {
+                            Layout.alignment: Qt.AlignVCenter
+                            checked: cmdDelegate.modelData.entry.enabled
+                            onCheckedChanged: Autostart.setEntryEnabled(cmdDelegate.modelData.originalIndex, checked)
+                        }
+
+                        RippleButton {
+                            Layout.alignment: Qt.AlignVCenter
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 32
+                            buttonRadius: Appearance.rounding.full
+                            onClicked: Autostart.removeEntry(cmdDelegate.modelData.originalIndex)
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: "close"
+                                iconSize: 18
+                                color: Appearance.colors.colOnSurfaceVariant
+                            }
+                        }
                     }
                 }
             }
