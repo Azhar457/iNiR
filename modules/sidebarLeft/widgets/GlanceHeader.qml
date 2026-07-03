@@ -83,12 +83,12 @@ Item {
                 RippleButton {
                     implicitWidth: 36
                     implicitHeight: 36
-                    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-                    colBackground: Appearance.inirEverywhere ? "transparent"
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : (Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full)
+                    colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.inirEverywhere ? "transparent"
                         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colPrimaryContainer
-                    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colPrimaryContainerHover
-                    colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
+                    colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colPrimaryContainerActive
                     opacity: Notifications.silent && (Config.options?.sidebar?.widgets?.glance?.showDnd ?? true) ? 1 : 0
                     visible: opacity > 0
@@ -103,7 +103,11 @@ Item {
                             text: "do_not_disturb_on"
                             iconSize: 18
                             fill: 1
-                            color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colOnPrimaryContainer
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colOnPrimaryContainer)
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                     }
 

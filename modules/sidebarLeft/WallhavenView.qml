@@ -460,12 +460,13 @@ Item {
                         : Appearance.auroraEverywhere
                         ? (commandSuggestions.selectedIndex === index ? Appearance.aurora.colSubSurface : "transparent")
                         : Appearance.zzzEverywhere
-                        ? (commandSuggestions.selectedIndex === index ? Appearance.colors.colLayer1Active : "transparent")
+                        ? (commandSuggestions.selectedIndex === index ? Appearance.zzz.sticker : "transparent")
                         : (commandSuggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
                     bounce: false
                     contentItem: StyledText {
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSecondaryContainer
+                        color: Appearance.zzzEverywhere && commandSuggestions.selectedIndex === index
+                            ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
                         horizontalAlignment: Text.AlignHCenter
                         text: modelData.name
                     }
@@ -520,7 +521,7 @@ Item {
                         : Appearance.auroraEverywhere
                         ? (tagSuggestions.selectedIndex === index ? Appearance.aurora.colSubSurface : "transparent")
                         : Appearance.zzzEverywhere
-                        ? (tagSuggestions.selectedIndex === index ? Appearance.colors.colLayer1Active : "transparent")
+                        ? (tagSuggestions.selectedIndex === index ? Appearance.zzz.sticker : "transparent")
                         : (tagSuggestions.selectedIndex === index ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
                     bounce: false
                     contentItem: RowLayout {
@@ -529,7 +530,8 @@ Item {
                         StyledText {
                             Layout.fillWidth: false
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colOnSecondaryContainer
+                            color: Appearance.zzzEverywhere && tagSuggestions.selectedIndex === index
+                                ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
                             horizontalAlignment: Text.AlignRight
                             text: "#" + (modelData.name ?? "")
                         }
@@ -537,7 +539,8 @@ Item {
                             Layout.fillWidth: false
                             visible: modelData.count !== undefined
                             font.pixelSize: Appearance.font.pixelSize.smaller
-                            color: Appearance.colors.colOnSecondaryContainer
+                            color: Appearance.zzzEverywhere && tagSuggestions.selectedIndex === index
+                                ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer
                             horizontalAlignment: Text.AlignLeft
                             text: modelData.count ?? ""
                         }
@@ -598,7 +601,11 @@ Item {
             id: tagInputContainer
             property real columnSpacing: 5
             Layout.fillWidth: true
-            radius: Appearance.rounding.normal - root.padding
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal - root.padding
+            Behavior on radius {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+            }
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                 : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
             implicitWidth: tagInputField.implicitWidth
@@ -724,7 +731,7 @@ Item {
                     Layout.rightMargin: 5
                     implicitWidth: 40
                     implicitHeight: 40
-                    buttonRadius: Appearance.rounding.small
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                     enabled: tagInputField.text.length > 0
                     toggled: enabled
 
@@ -742,7 +749,9 @@ Item {
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
                         iconSize: 22
-                        color: sendButton.enabled ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2Disabled
+                        color: sendButton.enabled
+                            ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary)
+                            : Appearance.colors.colOnLayer2Disabled
                         text: "arrow_upward"
                     }
                 }

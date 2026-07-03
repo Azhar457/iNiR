@@ -78,12 +78,12 @@ Item {
                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
                     : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainer
+                    : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                     : Appearance.colors.colSecondaryContainer
                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
-                    : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainerHover
+                    : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                     : Appearance.colors.colSecondaryContainerHover
                 onClicked: {
                     tabGroup.clickIndex = 0
@@ -108,12 +108,12 @@ Item {
                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
                     : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainer
+                    : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                     : Appearance.colors.colSecondaryContainer
                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
-                    : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainerHover
+                    : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                     : Appearance.colors.colSecondaryContainerHover
                 onClicked: {
                     tabGroup.clickIndex = 1
@@ -138,12 +138,12 @@ Item {
                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
                     : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainer
+                    : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                     : Appearance.colors.colSecondaryContainer
                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
-                    : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainerHover
+                    : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                     : Appearance.colors.colSecondaryContainerHover
                 onClicked: {
                     tabGroup.clickIndex = 2
@@ -195,11 +195,11 @@ Item {
                             : Appearance.colors.colLayer1Hover
                         colBackgroundToggled: Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                            : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainer
+                            : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                             : Appearance.colors.colSecondaryContainer
                         colBackgroundToggledHover: Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
-                            : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainerHover
+                            : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                             : Appearance.colors.colSecondaryContainerHover
                         
                         onClicked: {

@@ -334,7 +334,11 @@ Item {
                         maskSource: Rectangle {
                             width: swipeView.width
                             height: swipeView.height
-                            radius: Appearance.rounding.small
+                            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                            Behavior on radius {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                            }
                         }
                     }
 

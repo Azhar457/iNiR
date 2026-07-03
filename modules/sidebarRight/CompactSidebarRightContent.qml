@@ -737,6 +737,15 @@ Item {
         visible: !Appearance.inirEverywhere && !Appearance.gameModeMinimal
     }
 
+    ZzzPlate {
+        anchors.fill: bg
+        visible: Appearance.zzzEverywhere && !Appearance.gameModeMinimal
+        fillColor: Appearance.zzz.chrome
+        strokeColor: Appearance.zzz.hairline
+        strokeWidth: Appearance.zzz.hairlineThick
+        chamfer: Appearance.zzz.cutCorner
+    }
+
     Rectangle {
         id: bg
         anchors.fill: parent
@@ -800,12 +809,12 @@ Item {
             : ColorUtils.transparentize(Appearance.colors.colLayer1Active, 0.18)
 
         color: gameModeMinimal  ? "transparent"
-             : Appearance.zzzEverywhere ? Appearance.zzz.chrome
+             : Appearance.zzzEverywhere ? "transparent"
              : inirEverywhere   ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
              : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
 
-        border.width: gameModeMinimal ? 0 : (Appearance.zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
+        border.width: gameModeMinimal ? 0 : (Appearance.zzzEverywhere ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
         Behavior on border.width {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -898,19 +907,6 @@ Item {
             ghostWidthFactor: 0.6
             ghostStrength: 0.55
             z: 0
-        }
-
-        // ZZZ content wash: stepped tile plate lifts content off the bare chrome
-        // so the two-column layout reads cleanly while structural hairlines stay.
-        Rectangle {
-            anchors.fill: parent
-            visible: Appearance.zzzEverywhere
-            color: ColorUtils.applyAlpha(Appearance.zzz.tile, 0.55)
-            z: 0
-            Behavior on color {
-                enabled: Appearance.animationsEnabled
-                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
         }
 
         // ─────────────────────────────────────────────────────────
@@ -1981,26 +1977,31 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 implicitHeight: 32
                 implicitWidth: dndChipContent.implicitWidth + 20
-                buttonRadius: Appearance.rounding.full
+                buttonRadius: bg.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                 colBackground: Notifications.silent
-                    ? (bg.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                    ? (bg.zzzEverywhere ? Appearance.zzz.sticker
+                        : bg.inirEverywhere ? Appearance.inir.colSecondaryContainer
                         : bg.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.60)
                         : Appearance.colors.colSecondaryContainer)
                     : (bg.inirEverywhere ? Appearance.inir.colLayer1
                         : bg.angelEverywhere ? Appearance.angel.colGlassCard
                         : bg.colDarkSurface)
                 colBackgroundHover: Notifications.silent
-                    ? (bg.inirEverywhere ? Appearance.inir.colSecondaryContainerHover
+                    ? (bg.zzzEverywhere ? Appearance.colors.colPrimaryHover
+                        : bg.inirEverywhere ? Appearance.inir.colSecondaryContainerHover
                         : bg.angelEverywhere ? Appearance.angel.colPrimaryHover
                         : Appearance.colors.colSecondaryContainerHover)
-                    : (bg.inirEverywhere ? Appearance.inir.colLayer1Hover
+                    : (bg.zzzEverywhere ? Appearance.colors.colLayer1Hover
+                        : bg.inirEverywhere ? Appearance.inir.colLayer1Hover
                         : bg.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : bg.colDarkSurfaceHover)
                 colRipple: Notifications.silent
-                    ? (bg.inirEverywhere ? Appearance.inir.colSecondaryContainerActive
+                    ? (bg.zzzEverywhere ? Appearance.colors.colPrimaryActive
+                        : bg.inirEverywhere ? Appearance.inir.colSecondaryContainerActive
                         : bg.angelEverywhere ? Appearance.angel.colPrimaryActive
                         : Appearance.colors.colSecondaryContainerActive)
-                    : (bg.inirEverywhere ? Appearance.inir.colLayer1Active
+                    : (bg.zzzEverywhere ? Appearance.colors.colLayer1Active
+                        : bg.inirEverywhere ? Appearance.inir.colLayer1Active
                         : bg.angelEverywhere ? Appearance.angel.colGlassCardActive
                         : bg.colDarkSurfaceActive)
                 onClicked: Notifications.silent = !Notifications.silent
@@ -2014,10 +2015,12 @@ Item {
                         text: Notifications.silent ? "notifications_active" : "notifications_off"
                         iconSize: 16
                         color: Notifications.silent
-                            ? (bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
+                            ? (bg.zzzEverywhere ? Appearance.zzz.onSticker
+                                : bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
                                 : bg.angelEverywhere ? Appearance.angel.colOnPrimary
                                 : Appearance.colors.colOnSecondaryContainer)
-                            : (bg.inirEverywhere ? Appearance.inir.colTextSecondary
+                            : (bg.zzzEverywhere ? Appearance.colors.colSubtext
+                                : bg.inirEverywhere ? Appearance.inir.colTextSecondary
                                 : bg.angelEverywhere ? Appearance.angel.colTextSecondary
                                 : Appearance.colors.colSubtext)
                     }
@@ -2028,10 +2031,12 @@ Item {
                             : Translation.tr("Enable DND")
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: Notifications.silent
-                            ? (bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
+                            ? (bg.zzzEverywhere ? Appearance.zzz.onSticker
+                                : bg.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
                                 : bg.angelEverywhere ? Appearance.angel.colOnPrimary
                                 : Appearance.colors.colOnSecondaryContainer)
-                            : (bg.inirEverywhere ? Appearance.inir.colText
+                            : (bg.zzzEverywhere ? Appearance.colors.colOnLayer1
+                                : bg.inirEverywhere ? Appearance.inir.colText
                                 : bg.angelEverywhere ? Appearance.angel.colText
                                 : Appearance.colors.colOnLayer1)
                     }

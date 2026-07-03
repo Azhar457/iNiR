@@ -284,7 +284,7 @@ Item {
                         implicitWidth: 32
                         implicitHeight: 32
                         enabled: MprisController.canGoPrevious
-                        buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                             : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
@@ -318,7 +318,9 @@ Item {
                             : Appearance.inirEverywhere 
                             ? Appearance.inir.roundingSmall 
                             : (root.effectiveIsPlaying ? Appearance.rounding.normal : Appearance.rounding.full)
-                        colBackground: Appearance.angelEverywhere
+                        colBackground: Appearance.zzzEverywhere
+                            ? (root.effectiveIsPlaying ? Appearance.zzz.sticker : Appearance.colors.colLayer1)
+                            : Appearance.angelEverywhere
                             ? "transparent"
                             : Appearance.inirEverywhere
                             ? "transparent"
@@ -327,7 +329,9 @@ Item {
                                 : (root.effectiveIsPlaying 
                                     ? (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                                     : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer))
-                        colBackgroundHover: Appearance.angelEverywhere
+                        colBackgroundHover: Appearance.zzzEverywhere
+                            ? (root.effectiveIsPlaying ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer1Hover)
+                            : Appearance.angelEverywhere
                             ? Appearance.angel.colGlassCardHover
                             : Appearance.inirEverywhere
                             ? Appearance.inir.colLayer2Hover
@@ -336,7 +340,9 @@ Item {
                                 : (root.effectiveIsPlaying 
                                     ? (blendedColors?.colPrimaryHover ?? Appearance.colors.colPrimaryHover)
                                     : (blendedColors?.colSecondaryContainerHover ?? Appearance.colors.colSecondaryContainerHover))
-                        colRipple: Appearance.angelEverywhere
+                        colRipple: Appearance.zzzEverywhere
+                            ? (root.effectiveIsPlaying ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer1Active)
+                            : Appearance.angelEverywhere
                             ? Appearance.angel.colGlassCardActive
                             : Appearance.inirEverywhere
                             ? Appearance.inir.colLayer2Active
@@ -358,7 +364,9 @@ Item {
                                 text: root.effectiveIsPlaying ? "pause" : "play_arrow"
                                 iconSize: 24
                                 fill: 1
-                                color: Appearance.angelEverywhere
+                                color: Appearance.zzzEverywhere
+                                    ? (root.effectiveIsPlaying ? Appearance.zzz.onSticker : Appearance.colors.colOnLayer1)
+                                    : Appearance.angelEverywhere
                                     ? Appearance.angel.colPrimary
                                     : Appearance.inirEverywhere
                                     ? root.jiraColPrimary
