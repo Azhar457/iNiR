@@ -578,9 +578,9 @@ Singleton {
         }
         
         property QtObject scroll: QtObject {
-            property int duration: root.calcEffectiveDuration(200)
+            property int duration: root.calcEffectiveDuration(root.zzzEverywhere ? root.zzz.overshootDuration : 200)
             property int type: Easing.BezierSpline
-            property list<real> bezierCurve: animationCurves.standardDecel
+            property list<real> bezierCurve: root.zzzEverywhere ? animationCurves.zzzSnap : animationCurves.standardDecel
         }
 
         property QtObject menuDecel: QtObject {
@@ -1060,8 +1060,11 @@ Singleton {
         // carbon). Derived from generated roles, no literal colors.
         readonly property color borderColor: ColorUtils.mix(onColor, bg0, 0.36)
         // Subtle hairline for card edges where a full comic stroke is too loud.
-        readonly property color hairline: ColorUtils.applyAlpha(onColor, 0.26)
-        readonly property color hairlineStrong: ColorUtils.applyAlpha(onColor, 0.44)
+        // Kept near-invisible on purpose: zzz plates separate by FILL contrast
+        // (bg0..bg4), not outlines — bright edge strokes read as accent borders
+        // on every card/button and were removed by maintainer decision.
+        readonly property color hairline: ColorUtils.applyAlpha(onColor, 0.08)
+        readonly property color hairlineStrong: ColorUtils.applyAlpha(onColor, 0.14)
 
         // ── Legacy aliases, now mode-aware so paper/ink consumers follow the mode ──
         readonly property color paper: bg1
@@ -1075,7 +1078,7 @@ Singleton {
         readonly property color tile: Qt.hsla(surfaceHue, surfaceSat * 0.62, dark ? 0.082 : 0.890, 1.0)
         readonly property color contrastPlate: Qt.hsla(surfaceHue, surfaceSat * 0.36, dark ? 0.860 : 0.085, 1.0)
         readonly property color onContrastPlate: ColorUtils.ensureReadable(onColor, contrastPlate, 4.5)
-        readonly property color chromeStroke: ColorUtils.applyAlpha(onColor, dark ? 0.50 : 0.56)
+        readonly property color chromeStroke: ColorUtils.applyAlpha(onColor, dark ? 0.18 : 0.22)
         readonly property color quietStroke: ColorUtils.applyAlpha(onColor, dark ? 0.24 : 0.30)
         readonly property color signal: accent
         readonly property color onSignal: onAccent
