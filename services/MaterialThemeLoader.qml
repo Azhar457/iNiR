@@ -211,6 +211,36 @@ Singleton {
         }
     }
 
+    // Reactive colorInvert toggle: regenerate colors from wallpaper with
+    // --invert-hue flag. The motor recalculates optimal tones for the
+    // complementary hue, producing a natural palette.
+    Connections {
+        target: Config.options?.appearance ?? null
+        function onColorInvertChanged() {
+            root._log("[MaterialThemeLoader] colorInvert changed, regenerating from wallpaper")
+            colorInvertProc.running = true
+        }
+    }
+
+    Process {
+        id: colorInvertProc
+        running: false
+        command: [
+            "/usr/bin/bash",
+            Directories.wallpaperSwitchScriptPath,
+            "--noswitch",
+            "--skip-accent-write"
+        ]
+        onExited: (code, status) => {
+            if (code === 0) {
+                root._forceApply = true
+                root._pendingExternalApply = true
+            }
+            root.scheduleReload()
+            delayedExternalApply.restart()
+        }
+    }
+
     Timer {
         id: delayedFileRead
         interval: Config.options?.hacks?.arbitraryRaceConditionDelay ?? 100

@@ -54,21 +54,16 @@ Singleton {
             "dock.cardStyle": false,
             "sidebar.cardStyle": false,
             "bar.cornerStyle": cornerStyle,
-            "appearance.transparency.enable": false,
         }
 
         if (styleId === "cards") {
             values["dock.cardStyle"] = true
             values["sidebar.cardStyle"] = true
             values["bar.cornerStyle"] = cornerStyle
-        } else if (styleId === "aurora") {
-            values["appearance.transparency.enable"] = true
         } else if (styleId === "angel") {
             values["bar.cornerStyle"] = cornerStyle === 0 ? 1 : cornerStyle
-            values["appearance.transparency.enable"] = true
         } else if (styleId === "zzz") {
             values["bar.cornerStyle"] = cornerStyle
-            values["appearance.transparency.enable"] = false
         }
 
         Config.setNestedValues(values)

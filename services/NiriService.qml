@@ -791,6 +791,23 @@ Singleton {
                     })
     }
 
+    // Focus a workspace by its stable id rather than by per-output index. An
+    // Index reference resolves against the *focused* output, so it cannot
+    // address a workspace on a different monitor; the id reference can. Used by
+    // multi-monitor surfaces (e.g. the workspace strip) to switch to the exact
+    // workspace under the pointer regardless of which output owns it.
+    function switchToWorkspaceById(workspaceId) {
+        return send({
+                        "Action": {
+                            "FocusWorkspace": {
+                                "reference": {
+                                    "Id": workspaceId
+                                }
+                            }
+                        }
+                    })
+    }
+
     function focusWindow(windowId) {
         return send({
                         "Action": {
@@ -802,21 +819,33 @@ Singleton {
     }
 
     function moveWindowToWorkspace(windowId, workspaceIndex, focus) {
-        // First focus the target window so MoveWindowToWorkspace acts on it.
-        send({
-                  "Action": {
-                      "FocusWindow": {
-                          "id": windowId
-                      }
-                  }
-              })
-
+        // Target the window directly by id so the move never has to focus it
+        // first. Passing window_id avoids stealing the current view when
+        // focus === false (e.g. reorganizing windows from the workspace strip).
         return send({
                         "Action": {
                             "MoveWindowToWorkspace": {
-                                "window_id": null,
+                                "window_id": windowId,
                                 "reference": {
                                     "Index": workspaceIndex
+                                },
+                                "focus": focus === undefined ? false : focus
+                            }
+                        }
+                    })
+    }
+
+    // Move a window onto a workspace addressed by its stable id. Like
+    // switchToWorkspaceById, this is output-agnostic — an Index reference would
+    // resolve against the focused output and could land the window on the wrong
+    // monitor in a multi-output setup.
+    function moveWindowToWorkspaceById(windowId, workspaceId, focus) {
+        return send({
+                        "Action": {
+                            "MoveWindowToWorkspace": {
+                                "window_id": windowId,
+                                "reference": {
+                                    "Id": workspaceId
                                 },
                                 "focus": focus === undefined ? false : focus
                             }
