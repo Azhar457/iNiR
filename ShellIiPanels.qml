@@ -23,6 +23,7 @@ import qs.modules.verticalBar
 import qs.modules.wallpaperSelector
 import qs.modules.ii.overlay
 import qs.modules.shellUpdate
+import qs.modules.workspaceStrip
 import "modules/clipboard" as ClipboardModule
 
 import QtQuick
@@ -86,6 +87,7 @@ Item {
     DeferredPanelLoader { identifier: "iiClipboard"; component: ClipboardModule.ClipboardPanel {} }
     DeferredPanelLoader { identifier: "iiShellUpdate"; component: ShellUpdateOverlay {} }
     DeferredPanelLoader { identifier: "iiRecordingOsd"; component: RecordingOsd {} }
+    DeferredPanelLoader { identifier: "iiWorkspaceStrip"; component: WorkspaceStrip {} }
 
     LazyLoader {
         active: Config.ready && (Config.options?.background?.effects?.ripple?.enable ?? false)
