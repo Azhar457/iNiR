@@ -271,13 +271,17 @@ Item {
                             wavy: root.player?.isPlaying ?? false
                             animateWave: root.player?.isPlaying ?? false
                             highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                                : root.inirEverywhere ? root.jiraColPrimary
+                                : Appearance.zzzEverywhere ? Appearance.zzz.accentSoft
+                                : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                 : root.inirEverywhere ? Appearance.inir.colLayer2
-                                : Appearance.zzzEverywhere ? Appearance.colors.colLayer2
+                                : Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
                                 : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             handleColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                                : root.inirEverywhere ? root.jiraColPrimary
+                                : Appearance.zzzEverywhere ? "transparent"
+                                : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             value: root.player?.length > 0 ? root.player.position / root.player.length : 0
                             onMoved: root.player.position = value * root.player.length
                             scrollable: true
@@ -291,10 +295,12 @@ Item {
                             wavy: root.player?.isPlaying ?? false
                             animateWave: root.player?.isPlaying ?? false
                             highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                : root.inirEverywhere ? root.jiraColPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                                : root.inirEverywhere ? root.jiraColPrimary
+                                : Appearance.zzzEverywhere ? Appearance.zzz.accentSoft
+                                : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                 : root.inirEverywhere ? Appearance.inir.colLayer2
-                                : Appearance.zzzEverywhere ? Appearance.colors.colLayer2
+                                : Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
                                 : (root.blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             value: root.player?.length > 0 ? root.player.position / root.player.length : 0
                         }

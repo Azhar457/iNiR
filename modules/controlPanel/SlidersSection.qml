@@ -8,6 +8,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.sidebarRight
 
 PanelSurface {
     id: root
@@ -22,103 +23,15 @@ PanelSurface {
     property var brightnessMonitor: screen ? Brightness.getMonitorForScreen(screen) : null
 
     elevation: 1
-    radiusOverride: inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    radiusOverride: inirEverywhere ? Appearance.inir.roundingNormal
+        : Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+        : Appearance.rounding.normal
 
     AngelPartialBorder { targetRadius: root.radiusOverride; coverage: 0.45; visible: Appearance.angelEverywhere }
 
-    RowLayout {
+    QuickSliders {
         id: slidersRow
         anchors.fill: parent
-        anchors.margins: root.compactMode ? 5 : 6
-        spacing: root.compactMode ? 3 : 4
-
-        // Brightness
-        Loader {
-            Layout.fillWidth: true
-            visible: active
-            active: (Config.options?.sidebar?.quickSliders?.showBrightness ?? true) && !!root.brightnessMonitor
-            sourceComponent: MiniSlider {
-                icon: "brightness_6"
-                value: root.brightnessMonitor?.brightness ?? 0
-                onMoved: (val) => root.brightnessMonitor?.setBrightness(val)
-            }
-        }
-
-        // Volume
-        Loader {
-            Layout.fillWidth: true
-            visible: active
-            active: Config.options?.sidebar?.quickSliders?.showVolume ?? true
-            sourceComponent: MiniSlider {
-                icon: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
-                value: Audio.sink?.audio?.volume ?? 0
-                onMoved: (val) => Audio.setSinkVolume(val)
-                onIconClicked: Audio.toggleMute()
-            }
-        }
-
-        // Mic
-        Loader {
-            Layout.fillWidth: true
-            visible: active
-            active: Config.options?.sidebar?.quickSliders?.showMic ?? false
-            sourceComponent: MiniSlider {
-                icon: Audio.micMuted ? "mic_off" : "mic"
-                value: Audio.micVolume
-                onMoved: (val) => Audio.setSourceVolume(val)
-                onIconClicked: Audio.toggleMicMute()
-            }
-        }
-    }
-
-    component MiniSlider: RowLayout {
-        id: miniSlider
-        property string icon
-        property real value: 0
-        signal moved(real val)
-        signal iconClicked()
-
-        spacing: 4
-
-        RippleButton {
-            implicitWidth: root.compactMode ? 24 : 28
-            implicitHeight: root.compactMode ? 24 : 28
-            buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-            colBackground: "transparent"
-            colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                              : root.inirEverywhere ? Appearance.inir.colLayer2Hover 
-                              : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
-                              : Appearance.colors.colLayer2Hover
-            onClicked: miniSlider.iconClicked()
-            contentItem: MaterialSymbol {
-                anchors.centerIn: parent
-                text: miniSlider.icon
-                iconSize: root.compactMode ? 14 : 16
-                color: Appearance.angelEverywhere ? Appearance.angel.colText
-                     : root.inirEverywhere ? Appearance.inir.colText 
-                     : root.auroraEverywhere ? Appearance.colors.colOnSurface
-                     : Appearance.colors.colOnLayer1
-            }
-        }
-
-        StyledSlider {
-            id: slider
-            Layout.fillWidth: true
-            configuration: StyledSlider.Configuration.M
-            stopIndicatorValues: []
-            scrollable: true
-            value: miniSlider.value
-            
-            onMoved: miniSlider.moved(value)
-            
-            Binding {
-                target: slider
-                property: "value"
-                value: miniSlider.value
-                when: !slider.pressed && !slider._userInteracting
-                restoreMode: Binding.RestoreNone
-            }
-        }
+        compactSurface: true
     }
 }

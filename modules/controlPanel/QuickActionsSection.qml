@@ -137,7 +137,9 @@ PanelSurface {
         Layout.fillWidth: true
         implicitHeight: root.compactMode ? 30 : 36
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-            : root.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+            : root.inirEverywhere ? Appearance.inir.roundingSmall
+            : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+            : Appearance.rounding.small
         
         color: tileMouseArea.containsMouse 
             ? (active 
@@ -159,9 +161,19 @@ PanelSurface {
                  : root.auroraEverywhere ? Appearance.aurora.colSubSurface
                  : Appearance.colors.colLayer2))
 
-        border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : 0)
+        border.width: Appearance.angelEverywhere ? 0 : (root.inirEverywhere ? 1 : Appearance.zzzEverywhere ? 1 : 0)
         border.color: Appearance.angelEverywhere ? "transparent"
-            : root.inirEverywhere ? (active ? Appearance.inir.colPrimary : Appearance.inir.colBorderSubtle) : "transparent"
+            : root.inirEverywhere ? (active ? Appearance.inir.colPrimary : Appearance.inir.colBorderSubtle)
+            : Appearance.zzzEverywhere ? Appearance.zzz.hairline : "transparent"
+
+        Behavior on border.width {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
 
         AngelPartialBorder { targetRadius: parent.radius; coverage: 0.4; borderColor: active ? Appearance.angel.colPrimary : Appearance.angel.colBorderSubtle }
 

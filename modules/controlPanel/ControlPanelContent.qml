@@ -83,19 +83,23 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        implicitHeight: flickable.contentHeight + 24
+        implicitHeight: flickable.contentHeight + (root.compactMode ? 20 : 24)
 
         color: root.zzzEverywhere ? Appearance.zzz.bg0
              : root.inirEverywhere ? Appearance.inir.colLayer0
              : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : Appearance.colors.colLayer0
-        radius: root.zzzEverywhere ? Appearance.zzz.panelRadius
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+        radius: root.zzzEverywhere ? 0
             : root.angelEverywhere ? Appearance.angel.roundingLarge
             : root.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
 
-        border.width: root.zzzEverywhere ? 1 : (root.inirEverywhere ? 1 : (root.auroraEverywhere ? 1 : 1))
-        border.color: root.zzzEverywhere ? Appearance.zzz.borderColor
+        border.width: root.zzzEverywhere ? 0 : (root.inirEverywhere ? 1 : (root.auroraEverywhere ? 1 : 1))
+        border.color: root.zzzEverywhere ? "transparent"
                     : root.angelEverywhere ? Appearance.angel.colBorder
                     : root.inirEverywhere ? Appearance.inir.colBorder
                     : root.auroraEverywhere ? Appearance.aurora.colTooltipBorder
@@ -113,20 +117,22 @@ Item {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
         
         clip: true
 
-        // ZZZ: mask to rounded shape so children never re-square the corners.
+        // ZZZ: mask to chamfered shape so children never escape the cut-corner.
         layer.enabled: root.useWallpaperBackdrop || (root.zzzEverywhere && !Appearance.gameModeMinimal)
         layer.effect: GE.OpacityMask {
-            maskSource: Rectangle {
+            maskSource: Item {
                 width: background.width
                 height: background.height
-                radius: background.radius
+                visible: false
+                ZzzPlate {
+                    anchors.fill: parent
+                    chamfer: root.zzzEverywhere ? Appearance.zzz.cutCorner : 0
+                    chamferBottomRight: root.zzzEverywhere && !Appearance.zzz.round
+                    fillColor: "white"
+                }
             }
         }
 
@@ -200,10 +206,15 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
             flickDeceleration: 3000
 
+            Behavior on contentY {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.scroll.duration; easing.type: Appearance.animation.scroll.type; easing.bezierCurve: Appearance.animation.scroll.bezierCurve }
+            }
+
             ColumnLayout {
                 id: contentLayout
                 width: flickable.width
-                spacing: root.compactMode ? 8 : 10
+                spacing: root.compactMode ? 4 : 6
 
                 // Header with User Profile
                 ProfileHeader {
@@ -271,7 +282,7 @@ Item {
                     sourceComponent: Component { QuickActionsSection {} }
                 }
 
-                Item { Layout.preferredHeight: 8 }
+                Item { Layout.preferredHeight: 2 }
             }
 
             WheelHandler {
@@ -284,5 +295,18 @@ Item {
                 }
             }
         }
+    }
+
+    // ZZZ: hairline stroke following the chamfered outline. Sibling of background,
+    // not child — if it lives inside the layer.enabled Rectangle, the OpacityMask
+    // clips the stroke's outer half and it renders as broken dots.
+    ZzzPlate {
+        anchors.fill: background
+        visible: root.zzzEverywhere
+        fillColor: "transparent"
+        strokeColor: Appearance.zzz.hairline
+        strokeWidth: 1
+        chamfer: Appearance.zzz.cutCorner
+        chamferBottomRight: !Appearance.zzz.round
     }
 }

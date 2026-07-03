@@ -245,7 +245,7 @@ Item {
 
     readonly property color wallpaperDominantColor: (wallpaperColorQuantizer?.colors?.[0] ?? Appearance.colors.colPrimary)
     readonly property QtObject blendedColors: AdaptedMaterialScheme {
-        color: ColorUtils.mix(root.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
+        color: ColorUtils.mix(root.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
     }
 
     // Shadow
@@ -254,11 +254,21 @@ Item {
         visible: (Appearance.angelEverywhere || (!root.inirEverywhere && !root.auroraEverywhere)) && !Appearance.gameModeMinimal
     }
 
+    ZzzPlate {
+        anchors.fill: background
+        visible: Appearance.zzzEverywhere
+        fillColor: Appearance.colors.colLayer0
+        strokeColor: Appearance.zzz.hairlineStrong
+        strokeWidth: Appearance.zzz.hairlineThick
+        chamfer: Appearance.zzz.cutCorner
+    }
+
     Rectangle {
         id: background
         anchors.fill: parent
 
-        color: root.inirEverywhere ? Appearance.inir.colLayer0
+        color: Appearance.zzzEverywhere ? "transparent"
+             : root.inirEverywhere ? Appearance.inir.colLayer0
              : root.auroraEverywhere ? ColorUtils.applyAlpha((root.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : Appearance.colors.colLayer0
 
@@ -267,7 +277,7 @@ Item {
             : root.inirEverywhere ? Appearance.inir.roundingLarge
             : Appearance.rounding.large
 
-        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 1
+        border.width: Appearance.zzzEverywhere ? 0 : 1
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
                     : root.angelEverywhere ? Appearance.angel.colBorder
                     : root.inirEverywhere ? Appearance.inir.colBorder

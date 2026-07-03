@@ -15,7 +15,6 @@ PanelSurface {
     implicitHeight: statsRow.implicitHeight + 12
     elevation: 1
     radiusOverride: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-    techFrame: true
 
     readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true
     // zzz: el placa tiene esquinas redondeadas (panelRadius); el contenido debe
@@ -139,13 +138,14 @@ PanelSurface {
                 anchors.fill: parent
                 visible: Appearance.zzzEverywhere
                 spacing: 2
+                clip: true
                 readonly property int segs: 14
                 readonly property int lit: Math.round(Math.min(1, Math.max(0, bar.value / 100)) * segs)
                 Repeater {
                     model: segRail.segs
                     delegate: Rectangle {
                         required property int index
-                        width: (segRail.width - (segRail.segs - 1) * segRail.spacing) / segRail.segs
+                        width: Math.max(1, (segRail.width - (segRail.segs - 1) * segRail.spacing) / segRail.segs)
                         height: segRail.height
                         radius: Appearance.zzz.cornerRadius
                         color: index < segRail.lit ? bar.barColor : Appearance.zzz.metricTrack

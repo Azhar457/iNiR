@@ -43,7 +43,7 @@ DashCard {
     // Current conditions
     RowLayout {
         visible: root.hasData
-        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignHCenter
         spacing: 12
 
         MaterialSymbol {

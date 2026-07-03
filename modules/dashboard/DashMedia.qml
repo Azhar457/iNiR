@@ -18,7 +18,7 @@ DashCard {
     readonly property bool isPlaying: player?.isPlaying ?? false
 
     RowLayout {
-        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignHCenter
         spacing: 12
 
         // Cover art / placeholder shape
@@ -67,7 +67,9 @@ DashCard {
         }
 
         ColumnLayout {
-            Layout.fillWidth: true
+            // Cap the width so long titles elide instead of stretching the
+            // now-centered media block across the whole card.
+            Layout.maximumWidth: 240
             spacing: 2
 
             StyledText {

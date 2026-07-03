@@ -141,6 +141,18 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 8
+
+            // Center every card's content by default. A child that explicitly
+            // fills width (lists, meters, calendars, full-bleed widgets) keeps
+            // doing so and owns its own internal alignment; a child that doesn't
+            // fill gets centered instead of hugging the left edge.
+            Component.onCompleted: {
+                for (let i = 0; i < inner.children.length; i++) {
+                    const c = inner.children[i]
+                    if (c.Layout && c.Layout.fillWidth !== true && c.Layout.fillHeight !== true)
+                        c.Layout.alignment = Qt.AlignHCenter | Qt.AlignVCenter
+                }
+            }
         }
     }
 }
