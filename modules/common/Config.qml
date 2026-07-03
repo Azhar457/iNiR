@@ -394,7 +394,7 @@ Singleton {
             id: configOptionsJsonAdapter
 
             // Panel system
-            property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard"]
+            property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard", "iiWorkspaceStrip"]
             property list<string> knownPanels: [] // Tracks panels the user has seen; used to distinguish "user disabled" from "new in update"
             property string panelFamily: "ii" // "ii" or "waffle"
             property bool familyTransitionAnimation: true // Show animated overlay when switching families
@@ -402,11 +402,6 @@ Singleton {
             property JsonObject policies: JsonObject {
                 property int ai: 1 // 0: No | 1: Yes | 2: Local
                 property int weeb: 1 // 0: No | 1: Open | 2: Closet
-            }
-
-            property JsonObject autostart: JsonObject {
-                property bool enable: false
-                property var entries: []
             }
 
             property JsonObject ai: JsonObject {
@@ -435,6 +430,7 @@ Singleton {
             property JsonObject appearance: JsonObject {
                 property string theme: "auto" // Theme preset ID: "auto" for wallpaper-based, or preset name like "gruvbox-dark", "catppuccin-mocha", "custom", etc.
                 property string globalStyle: "material" // "material" | "cards" | "aurora" | "inir" | "angel" | "zzz"
+                property bool colorInvert: false // Rotate all m3 colors 180° (complementary palette). Shell-only, does not affect external apps.
                 property JsonObject aurora: JsonObject {
                     property JsonObject transparency: JsonObject {
                         property real overlay: 0.38       // Main panels
@@ -884,6 +880,13 @@ Singleton {
                         property string shape: "pill" // MaterialShape shape name
                         property int widgetScale: 100
                         property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
                         property string colorMode: "auto"
                         property int dim: 0
                     }
@@ -922,9 +925,9 @@ Singleton {
                         property bool showBackground: true
                         property bool useBlur: false
                         property bool showBorder: true
-                        property real backgroundOpacity: 0.06
+                        property real backgroundOpacity: 0.16
                         property real borderWidth: 1
-                        property real borderOpacity: 0.08
+                        property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
                         property real x: 100
@@ -956,9 +959,9 @@ Singleton {
                         property bool showBackground: true
                         property bool useBlur: false
                         property bool showBorder: true
-                        property real backgroundOpacity: 0.06
+                        property real backgroundOpacity: 0.16
                         property real borderWidth: 1
-                        property real borderOpacity: 0.08
+                        property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
                         property real x: 50
@@ -984,9 +987,9 @@ Singleton {
                         property bool showBackground: true
                         property bool useBlur: false
                         property bool showBorder: true
-                        property real backgroundOpacity: 0.06
+                        property real backgroundOpacity: 0.16
                         property real borderWidth: 1
-                        property real borderOpacity: 0.08
+                        property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
                         property real x: 50
@@ -1042,6 +1045,89 @@ Singleton {
                         property string colorMode: "auto"
                         property real x: 80
                         property real y: 80
+                    }
+
+                    property JsonObject network: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int contentWidth: 280
+                        property int contentHeight: 96
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property real x: 80
+                        property real y: 200
+                    }
+
+                    property JsonObject uptime: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int contentWidth: 250
+                        property int contentHeight: 96
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property real x: 80
+                        property real y: 80
+                    }
+
+                    property JsonObject tacho: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int gaugeSize: 180
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property real x: 120
+                        property real y: 120
+                    }
+
+                    property JsonObject newsTicker: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int contentWidth: 320
+                        property int contentHeight: 92
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property real x: 100
+                        property real y: 260
                     }
 
                     property JsonObject editGrid: JsonObject {
@@ -2120,6 +2206,23 @@ Singleton {
             property JsonObject welcomeWizard: JsonObject {
                 property bool completed: false
                 property bool skipped: false
+            }
+
+            property JsonObject workspaceStrip: JsonObject {
+                property string side: "right"
+                property int panelWidth: 480
+                property int previewSize: 150
+                property int triggerWidth: 6
+                property int openDelay: 110
+                property int closeDelay: 320
+                property bool showPreviews: true
+                property bool showAppIcons: true
+                property bool showMetadata: true
+                property bool showMediaPlayer: true
+                property bool perMonitor: true
+                property bool scrollNavigation: false
+                property bool scrollNavigationSwitchWorkspace: true
+                property int scrollNavigationDebounceMs: 180
             }
 
             property JsonObject waffles: JsonObject {

@@ -41,7 +41,7 @@
                 "api_format": "mistral"
             }
         ],
-        "systemPrompt": "## Style\n- Use casual tone, don't be formal! Make sure you answer precisely without hallucination and prefer bullet points over walls of text.\n\n## Context (ignore when irrelevant)\n- You are a helpful sidebar assistant on a {DISTRO} Linux system\n- Desktop environment: {DE}\n- Current date & time: {DATETIME}\n- Focused app: {WINDOWCLASS}\n\n## Presentation\n- Use Markdown features in your response\n- **Bold** text to **highlight keywords**\n- Use h2 headers with emojis (e.g. `## 🐧 Linux`)\n- Bullet points preferred over long paragraphs\n",
+        "systemPrompt": "## Style\n- Use casual tone, don't be formal! Make sure you answer precisely without hallucination and prefer bullet points over walls of text.\n\n## Context (ignore when irrelevant)\n- You are a helpful sidebar assistant on a {DISTRO} Linux system\n- Desktop environment: {DE}\n- Current date & time: {DATETIME}\n- Focused app: {WINDOWCLASS}\n\n## Presentation\n- Use Markdown features in your response\n- **Bold** text to **highlight keywords**\n- Use h2 headers with emojis (e.g. `## \ud83d\udc27 Linux`)\n- Bullet points preferred over long paragraphs\n",
         "tool": "functions"
     },
     "altSwitcher": {
@@ -63,6 +63,7 @@
     },
     "appearance": {
         "globalStyle": "material",
+        "colorInvert": false,
         "iiMotionProfile": "classic",
         "aurora": {
             "transparency": {
@@ -452,6 +453,13 @@
                 "placementStrategy": "free",
                 "widgetScale": 100,
                 "widgetOpacity": 100,
+                "showBackground": true,
+                "useBlur": false,
+                "showBorder": true,
+                "backgroundOpacity": 0.16,
+                "borderWidth": 1,
+                "borderOpacity": 0.2,
+                "cornerRadius": -1,
                 "colorMode": "auto",
                 "dim": 0,
                 "x": 100,
@@ -494,9 +502,9 @@
                 "showBackground": true,
                 "useBlur": false,
                 "showBorder": true,
-                "backgroundOpacity": 0.06,
+                "backgroundOpacity": 0.16,
                 "borderWidth": 1,
-                "borderOpacity": 0.08,
+                "borderOpacity": 0.2,
                 "cornerRadius": -1,
                 "colorMode": "auto",
                 "x": 100,
@@ -525,9 +533,9 @@
                 "showBackground": true,
                 "useBlur": false,
                 "showBorder": true,
-                "backgroundOpacity": 0.06,
+                "backgroundOpacity": 0.16,
                 "borderWidth": 1,
-                "borderOpacity": 0.08,
+                "borderOpacity": 0.2,
                 "cornerRadius": -1,
                 "colorMode": "auto",
                 "x": 50,
@@ -548,9 +556,9 @@
                 "showBackground": true,
                 "useBlur": false,
                 "showBorder": true,
-                "backgroundOpacity": 0.06,
+                "backgroundOpacity": 0.16,
                 "borderWidth": 1,
-                "borderOpacity": 0.08,
+                "borderOpacity": 0.2,
                 "cornerRadius": -1,
                 "colorMode": "auto",
                 "x": 50,
@@ -610,6 +618,85 @@
                 "colorMode": "auto",
                 "x": 80,
                 "y": 80
+            },
+            "network": {
+                "enable": false,
+                "locked": false,
+                "placementStrategy": "free",
+                "contentWidth": 280,
+                "contentHeight": 96,
+                "dim": 0,
+                "widgetScale": 100,
+                "widgetOpacity": 100,
+                "showBackground": true,
+                "useBlur": false,
+                "showBorder": true,
+                "backgroundOpacity": 0.16,
+                "borderWidth": 1,
+                "borderOpacity": 0.2,
+                "cornerRadius": -1,
+                "colorMode": "auto",
+                "x": 80,
+                "y": 200
+            },
+            "uptime": {
+                "enable": false,
+                "locked": false,
+                "placementStrategy": "free",
+                "contentWidth": 250,
+                "contentHeight": 96,
+                "dim": 0,
+                "widgetScale": 100,
+                "widgetOpacity": 100,
+                "showBackground": true,
+                "useBlur": false,
+                "showBorder": true,
+                "backgroundOpacity": 0.16,
+                "borderWidth": 1,
+                "borderOpacity": 0.2,
+                "cornerRadius": -1,
+                "colorMode": "auto",
+                "x": 80,
+                "y": 80
+            },
+            "tacho": {
+                "enable": false,
+                "locked": false,
+                "placementStrategy": "free",
+                "gaugeSize": 180,
+                "dim": 0,
+                "widgetScale": 100,
+                "widgetOpacity": 100,
+                "showBackground": true,
+                "useBlur": false,
+                "showBorder": true,
+                "backgroundOpacity": 0.16,
+                "borderWidth": 1,
+                "borderOpacity": 0.2,
+                "cornerRadius": -1,
+                "colorMode": "auto",
+                "x": 120,
+                "y": 120
+            },
+            "newsTicker": {
+                "enable": false,
+                "locked": false,
+                "placementStrategy": "free",
+                "contentWidth": 320,
+                "contentHeight": 92,
+                "dim": 0,
+                "widgetScale": 100,
+                "widgetOpacity": 100,
+                "showBackground": true,
+                "useBlur": false,
+                "showBorder": true,
+                "backgroundOpacity": 0.16,
+                "borderWidth": 1,
+                "borderOpacity": 0.2,
+                "cornerRadius": -1,
+                "colorMode": "auto",
+                "x": 100,
+                "y": 260
             },
             "editGrid": {
                 "size": 32,
@@ -849,9 +936,21 @@
         "subtitle": "",
         "widthRatio": 0.62,
         "layout": {
-            "left": ["welcome", "clock", "system", "github"],
-            "center": ["notifications", "todo"],
-            "right": ["media", "weather", "calendar"]
+            "left": [
+                "welcome",
+                "clock",
+                "system",
+                "github"
+            ],
+            "center": [
+                "notifications",
+                "todo"
+            ],
+            "right": [
+                "media",
+                "weather",
+                "calendar"
+            ]
         },
         "github": {
             "username": ""
@@ -1024,10 +1123,6 @@
     "policies": {
         "ai": 0,
         "weeb": 0
-    },
-    "autostart": {
-        "enable": false,
-        "entries": []
     },
     "regionSelector": {
         "circle": {
@@ -1728,8 +1823,25 @@
         "iiCoverflowSelector",
         "iiClipboard",
         "iiShellUpdate",
-        "iiDashboard"
+        "iiDashboard",
+        "iiWorkspaceStrip"
     ],
+    "workspaceStrip": {
+        "side": "right",
+        "panelWidth": 480,
+        "previewSize": 150,
+        "triggerWidth": 6,
+        "openDelay": 110,
+        "closeDelay": 320,
+        "showPreviews": true,
+        "showAppIcons": true,
+        "showMetadata": true,
+        "showMediaPlayer": true,
+        "perMonitor": true,
+        "scrollNavigation": false,
+        "scrollNavigationSwitchWorkspace": true,
+        "scrollNavigationDebounceMs": 180
+    },
     "knownPanels": [],
     "powerProfiles": {
         "restoreOnStart": true,
