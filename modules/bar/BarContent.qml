@@ -665,6 +665,12 @@ Item { // Bar content region
         ZzzGlassWash {
             anchors.fill: parent
             maskRadius: barBackground.zzzRoundEdge >= 0 ? barBackground.zzzRoundEdge : barBackground.radius
+            // barBackground is a plain rectangle in zzz (radius always 0 unless
+            // round mode) — it never chamfers a corner. ZzzGlassWash defaults to
+            // a bottom-right chamfer mask, which left an unwashed square wedge
+            // (flat chrome, reading as a stray black corner) wherever the bar
+            // itself has no cut to match. Match the host: no chamfer here.
+            chamfer: 0
             glassEnabled: barBackground.zzzGlassActive
         }
 
@@ -1099,24 +1105,42 @@ Item { // Bar content region
 
             buttonRadius: root.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
 
+            // zzz: transparent everywhere on this Control's own background —
+            // the ZzzPlate below is the only hover/toggle surface. Matches
+            // LeftSidebarButton.qml/CircleUtilButton.qml; leaving these as a
+            // plain rounded fill let it poke out past the ZzzPlate's chamfer.
             colBackground: buttonHovered
-                ? (root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.28)
+                ? (root.zzzEverywhere ? "transparent"
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover)
                 : "transparent"
-            colBackgroundHover: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.32)
+            colBackgroundHover: root.zzzEverywhere ? "transparent"
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
-            colRipple: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
+            colRipple: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.20)
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
-            colBackgroundToggled: root.zzzEverywhere ? Appearance.zzz.sticker
+            colBackgroundToggled: root.zzzEverywhere ? "transparent"
                 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer
-            colBackgroundToggledHover: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.88)
+            colBackgroundToggledHover: root.zzzEverywhere ? "transparent"
                 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover
-            colRippleToggled: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.36)
+            colRippleToggled: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.20)
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive
+
+            // Same chamfer-grows-on-hover language as LeftSidebarButton.qml —
+            // the right sidebar button previously had no zzz plate at all.
+            ZzzPlate {
+                anchors.fill: parent
+                visible: root.zzzEverywhere
+                chamfer: (rightSidebarButton.buttonHovered || rightSidebarButton.toggled) ? Appearance.zzz.cutCorner * 0.7 : Appearance.zzz.cutCorner * 0.35
+                fillColor: rightSidebarButton.toggled ? Appearance.zzz.accentSoft
+                    : rightSidebarButton.buttonHovered ? Appearance.zzz.sticker : "transparent"
+                strokeColor: rightSidebarButton.toggled ? "transparent"
+                    : rightSidebarButton.buttonHovered ? Appearance.zzz.accentSoft : "transparent"
+                strokeWidth: 1
+                z: -1
+            }
 
             toggled: GlobalStates.sidebarRightOpen
             property color colText: root.zzzEverywhere
-                ? (toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
+                ? (toggled ? Appearance.zzz.onAccentSoft : Appearance.zzz.ink)
                 : toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
 
             Behavior on colText {

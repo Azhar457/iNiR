@@ -136,11 +136,11 @@ Item {
                 : Appearance.inirEverywhere ? Appearance.inir.colSelection
                 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
                 : Appearance.colors.colSecondaryContainer
-            colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.88)
+            colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                 : Appearance.inirEverywhere ? Appearance.inir.colSelectionHover
                 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
                 : Appearance.colors.colSecondaryContainerHover
-            colRippleToggled: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.34)
+            colRippleToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive
                 : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive
                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
                 : Appearance.colors.colSecondaryContainerActive

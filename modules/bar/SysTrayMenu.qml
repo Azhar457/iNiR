@@ -130,16 +130,20 @@ PopupWindow {
                 : Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
                 : Appearance.inirEverywhere ? Appearance.inir.colLayer1
                 : Appearance.colors.colLayer0
-            radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
                 : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                 : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.windowRounding
             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
-            border.width: 1
-            border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
+            border.width: Appearance.zzzEverywhere ? 0 : 1
+            border.color: Appearance.zzzEverywhere ? "transparent"
                 : Appearance.angelEverywhere ? Appearance.angel.colBorder
                 : Appearance.inirEverywhere ? Appearance.inir.colBorder
                 : Appearance.colors.colLayer0Border
+            Behavior on border.width {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
             Behavior on border.color {
                 enabled: Appearance.animationsEnabled
                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -269,9 +273,20 @@ PopupWindow {
                     StyledText {
                         Layout.fillWidth: true
                         text: Translation.tr("Back")
-                    }
-                }
             }
+
+            // ZZZ: chamfered hairline stroke following the cut-corner outline.
+            ZzzPlate {
+                anchors.fill: parent
+                visible: Appearance.zzzEverywhere
+                fillColor: "transparent"
+                strokeColor: Appearance.zzz.hairline
+                strokeWidth: 1
+                chamfer: Appearance.zzz.cutCorner
+                chamferBottomRight: !Appearance.zzz.round
+            }
+        }
+    }
         }
 
         Repeater {

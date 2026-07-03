@@ -16,17 +16,21 @@ RippleButton {
     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+    // zzz stays transparent here — the ZzzPlate below is the only hover
+    // surface; it renders a real chamfer, while this Control's own
+    // background is a plain rounded Rectangle that would otherwise poke
+    // out past the chamfered cut (matches CircleUtilButton.qml).
     colBackgroundHover: Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1Hover
-    colRipple: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
+    colRipple: Appearance.zzzEverywhere ? Appearance.colors.colLayer1Active
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer1Active
-    colBackgroundToggled: Appearance.zzzEverywhere ? "transparent"
+    colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
@@ -36,7 +40,7 @@ RippleButton {
         : Appearance.inirEverywhere ? Appearance.inir.colSelectionHover
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
         : Appearance.colors.colSecondaryContainerHover
-    colRippleToggled: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.34)
+    colRippleToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive

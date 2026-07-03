@@ -186,7 +186,7 @@ Scope {
 
                                     readonly property color wallpaperDominantColor: dockWallpaperQuantizer?.colors?.[0] ?? Appearance.colors.colPrimary
                                     readonly property QtObject blendedColors: AdaptedMaterialScheme {
-                                        color: ColorUtils.mix(dockVisualBackground.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.m3colors.m3secondaryContainer
+                                        color: ColorUtils.mix(dockVisualBackground.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
                                     }
 
                                     anchors.fill: parent
@@ -236,7 +236,13 @@ Scope {
                                 ZzzGlassWash {
                                     anchors.fill: parent
                                     z: -2
-                                    maskRadius: dockVisualBackground.radius
+                                    // dockVisualBackground.radius is a fixed small corner-soften
+                                    // (Appearance.zzz.panelRadius), unrelated to round/square shape
+                                    // mode. Passing it straight through forced this mask onto
+                                    // ZzzPlate's ROUNDED renderer (radius>0 wins over chamfer),
+                                    // so the wash ignored the chamfer and leaked past the real
+                                    // chamfered shelf plate below. Only use it in round mode.
+                                    maskRadius: Appearance.zzz.round ? dockVisualBackground.radius : 0
                                     chamfer: Appearance.zzz.cutCorner
                                     chamferTopRight: false
                                     chamferBottomRight: true

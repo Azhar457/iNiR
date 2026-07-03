@@ -57,9 +57,11 @@ Scope {
                 readonly property bool rightDeadPixelWorkaround: (Config.options?.interactions?.deadPixelWorkaround?.enable ?? false)
                     && barRoot.anchors.right
                     && !barRoot.zzzDetachedRounded
+                    && !Appearance.zzzEverywhere
                 readonly property bool bottomDeadPixelWorkaround: (Config.options?.interactions?.deadPixelWorkaround?.enable ?? false)
                     && barRoot.anchors.bottom
                     && !barRoot.zzzDetachedRounded
+                    && !Appearance.zzzEverywhere
 
                 property var brightnessMonitor: Brightness.getMonitorForScreen(barLoader.modelData)
                 property real useShortenedForm: (Appearance.sizes.barHellaShortenScreenWidthThreshold >= screen.width) ? 2 : (Appearance.sizes.barShortenScreenWidthThreshold >= screen.width) ? 1 : 0
