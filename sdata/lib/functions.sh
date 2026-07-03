@@ -169,14 +169,14 @@ rsync_dir(){
   x mkdir -p "$2"
   local dest="$(realpath -se $2)"
   x mkdir -p "$(dirname ${INSTALLED_LISTFILE})"
-  rsync -a --exclude='AGENTS.md' --exclude='CLAUDE.md' --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
+  rsync -a --exclude='AGENTS.md' --exclude='CLAUDE.md' --exclude='CODEX.md' --exclude='PI.md' --exclude='codemap.md' --exclude='.agents/' --exclude='.claude/' --exclude='.codex/' --exclude='.factory/' --exclude='.opencode/' --exclude='.codebase-memory/' --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
 }
 
 rsync_dir__sync(){
   x mkdir -p "$2"
   local dest="$(realpath -se $2)"
   x mkdir -p "$(dirname ${INSTALLED_LISTFILE})"
-  rsync -a --delete --exclude='AGENTS.md' --exclude='CLAUDE.md' --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
+  rsync -a --delete --exclude='AGENTS.md' --exclude='CLAUDE.md' --exclude='CODEX.md' --exclude='PI.md' --exclude='codemap.md' --exclude='.agents/' --exclude='.claude/' --exclude='.codex/' --exclude='.factory/' --exclude='.opencode/' --exclude='.codebase-memory/' --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
 }
 
 function install_file(){

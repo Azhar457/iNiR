@@ -9,6 +9,8 @@
 # ── AI tooling (local-only, never distribute) ─────────────────
 # Agent config files
 AGENTS.md
+CODEX.md
+PI.md
 GEMINI.md*
 CLAUDE.md
 agents/
@@ -20,10 +22,19 @@ session-*.md
 **/codemap.md
 
 # AI tool directories
+.design-system/
+.codex/
 .pi/
+.cortexkit/
+.factory/
 .agents/
 .vera/
 .claude/
+.cline/
+.clinerules/
+.superpowers/
+memory-bank/
+.qmlls.ini
 .cursor/
 .continue/
 .dory/
@@ -47,6 +58,7 @@ opencode.json
 .cursorrules
 .mcp.json
 .memory/
+.codebase-memory/
 .task/
 .devin/
 .tmp/
@@ -55,6 +67,7 @@ context-architect/
 hooks/
 inir-docs/
 inir-mcp/
+mcp/
 
 # GitHub AI-specific (not shipped)
 .github/agents/
@@ -138,9 +151,11 @@ glob
 sys
 *.ps
 
-# ── Wiki / MkDocs (WIP, not shipped yet) ─────────────────────
-mkdocs.yml
+# ── Wiki / MkDocs ───────────────────────────────────────────
+# docs/ and mkdocs.yml are source (shipped). wiki/ is the built site
+# (published to GitHub Pages, not committed to main).
 site/
+wiki/
 
 # ── Stale paths (prevent accidental commits) ─────────────────
 /src/

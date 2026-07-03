@@ -67,19 +67,78 @@ fi
 
 if [[ "$run_runtime" == true ]]; then
     step "runtime restart"
-    bash scripts/inir kill >/dev/null 2>&1 || true
+    bash "$runtime_root/scripts/inir" kill >/dev/null 2>&1 || true
     sleep 1
-    bash scripts/inir run >/tmp/inir-test-local-runtime.log 2>&1 &
+    bash "$runtime_root/scripts/inir" run >/tmp/inir-test-local-runtime.log 2>&1 &
     sleep 3
 
     step "runtime logs"
-    bash scripts/inir logs
+    bash "$runtime_root/scripts/inir" logs
 
     step "runtime filtered errors"
     bash "$launcher" logs --full | grep -iE 'error|ReferenceError|TypeError|binding loop' | tail -80 || true
 
     step "launcher ipc"
     bash "$launcher" ipc shellUpdate diagnose >/dev/null
+fi
+
+step "agent artifact leak guard"
+# The source tree legitimately has AGENTS.md/CLAUDE.md in payload dirs.
+# Distribution stripping removes them post-copy. Validate the stripping
+# contracts exist so no install path can miss them.
+leak_guard=0
+agent_files=(AGENTS.md CLAUDE.md CODEX.md PI.md codemap.md .mcp.json opencode.json)
+agent_dirs=(.claude .factory .opencode .codex .agents .codebase-memory)
+
+# Makefile must strip agent files after cp -a
+for agent_file in "${agent_files[@]}"; do
+    if ! grep -q -- "-name $agent_file" "$runtime_root/Makefile" 2>/dev/null; then
+        printf 'LEAK GUARD: Makefile missing strip for %s\n' "$agent_file" >&2
+        leak_guard=1
+    fi
+done
+for agent_dir in "${agent_dirs[@]}"; do
+    if ! grep -q -- "-name $agent_dir" "$runtime_root/Makefile" 2>/dev/null; then
+        printf 'LEAK GUARD: Makefile missing strip for %s/\n' "$agent_dir" >&2
+        leak_guard=1
+    fi
+done
+if ! grep -q -- '-delete' "$runtime_root/Makefile" 2>/dev/null; then
+    printf 'LEAK GUARD: Makefile missing agent-file strip after payload copy\n' >&2
+    leak_guard=1
+fi
+# rsync-based install (sdata/lib/functions.sh) must exclude agent files
+if [[ -f "$runtime_root/sdata/lib/functions.sh" ]]; then
+    for agent_file in "${agent_files[@]}"; do
+        [[ "$agent_file" == .mcp.json || "$agent_file" == opencode.json ]] && continue
+        if ! grep -q -- "--exclude='$agent_file'" "$runtime_root/sdata/lib/functions.sh" 2>/dev/null; then
+            printf 'LEAK GUARD: sdata/lib/functions.sh missing %s rsync exclude\n' "$agent_file" >&2
+            leak_guard=1
+        fi
+    done
+    for agent_dir in "${agent_dirs[@]}"; do
+        if ! grep -q -- "--exclude='$agent_dir/'" "$runtime_root/sdata/lib/functions.sh" 2>/dev/null; then
+            printf 'LEAK GUARD: sdata/lib/functions.sh missing %s/ rsync exclude\n' "$agent_dir" >&2
+            leak_guard=1
+        fi
+    done
+fi
+# Agent-only directories must not appear in payload manifests
+for agent_dir in "${agent_dirs[@]}"; do
+    if grep -qx "$agent_dir" "$runtime_root/sdata/runtime-payload-dirs.txt" 2>/dev/null; then
+        printf 'LEAK: %s listed in runtime-payload-dirs.txt\n' "$agent_dir" >&2
+        leak_guard=1
+    fi
+done
+for agent_file in "${agent_files[@]}"; do
+    if grep -qx "$agent_file" "$runtime_root/sdata/runtime-root-files.txt" 2>/dev/null; then
+        printf 'LEAK: %s listed in runtime-root-files.txt\n' "$agent_file" >&2
+        leak_guard=1
+    fi
+done
+if [[ "$leak_guard" -eq 1 ]]; then
+    printf 'FAIL: agent artifact distribution guard failed\n' >&2
+    exit 1
 fi
 
 printf '\nAll local distribution checks passed.\n'
