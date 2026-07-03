@@ -622,6 +622,7 @@ switch() {
     [[ "$cfg_harmonize_threshold" != "null" && -n "$cfg_harmonize_threshold" ]] && generate_colors_material_args+=(--harmonize_threshold "$cfg_harmonize_threshold")
     [[ "$cfg_term_fg_boost" != "null" && -n "$cfg_term_fg_boost" ]] && generate_colors_material_args+=(--term_fg_boost "$cfg_term_fg_boost")
     [[ "$cfg_soften_colors" == "true" ]] && generate_colors_material_args+=(--soften)
+    [[ "$cfg_color_invert" == "true" ]] && generate_colors_material_args+=(--invert-hue)
 
     # Generate colors and render templates in one unified Python pass
     if [[ -n "${INIR_VENV:-}" ]]; then
@@ -774,7 +775,8 @@ main() {
             (.appearance.wallpaperTheming.enableVesktop // true),
             (.background.hideUpscaleNotification // false),
             (if .appearance.customTheme.darkmode == null then true else .appearance.customTheme.darkmode end),
-            (.appearance.wallpaperTheming.autoDarkLightMode // false)
+            (.appearance.wallpaperTheming.autoDarkLightMode // false),
+            (.appearance.colorInvert // false)
         ] | .[]' "$SHELL_CONFIG_FILE" 2>/dev/null)
     fi
     cfg_palette_type="${_cfg[0]:-auto}"
@@ -803,6 +805,7 @@ main() {
     cfg_hide_upscale="${_cfg[23]:-false}"
     cfg_preferred_darkmode="${_cfg[24]:-true}"
     cfg_auto_dark_light="${_cfg[25]:-false}"
+    cfg_color_invert="${_cfg[26]:-false}"
 
     set_accent_color() {
         local color="$1"
