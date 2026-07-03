@@ -97,7 +97,9 @@ Item {
     ZzzPlate {
         anchors.fill: card
         visible: Appearance.zzzEverywhere
-        fillColor: Appearance.colors.colLayer2
+        // A step darker than the content field (zzz.bg2) so the card reads as
+        // its own sunken plate instead of blending into the page background.
+        fillColor: Appearance.zzz.bg1
         strokeColor: Appearance.zzz.hairline
         strokeWidth: Appearance.zzz.hairlineThick
         chamfer: Appearance.zzz.cutCorner
