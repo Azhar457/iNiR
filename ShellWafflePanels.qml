@@ -10,6 +10,7 @@ import qs.modules.screenCorners
 import qs.modules.sessionScreen
 import qs.modules.wallpaperSelector
 import qs.modules.ii.overlay
+import qs.modules.workspaceStrip
 import "modules/clipboard" as ClipboardModule
 
 import qs.modules.waffle.actionCenter
@@ -79,6 +80,7 @@ Item {
     DeferredPanelLoader { identifier: "iiCoverflowSelector"; component: WallpaperCoverflow {} }
     DeferredPanelLoader { identifier: "iiClipboard"; extraCondition: Config.options?.panelFamily !== "waffle"; component: ClipboardModule.ClipboardPanel {} }
     DeferredPanelLoader { identifier: "iiRecordingOsd"; component: RecordingOsd {} }
+    DeferredPanelLoader { identifier: "iiWorkspaceStrip"; component: WorkspaceStrip {} }
 
     // Waffle Clipboard - handles IPC when panelFamily === "waffle"
     LazyLoader {

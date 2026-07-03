@@ -368,14 +368,16 @@ ShellRoot {
             "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard",
             "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
             "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar",
-            "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiRecordingOsd", "iiDashboard"
+            "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiRecordingOsd", "iiDashboard",
+            "iiWorkspaceStrip"
         ],
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
             // Shared modules that work with waffle
             // Note: wAltSwitcher is always loaded when waffle is active (not in this list)
             "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
-            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard"
+            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard",
+            "iiWorkspaceStrip"
         ]
     })
 
@@ -477,4 +479,3 @@ ShellRoot {
         function set(family: string): void { root.setPanelFamily(family) }
     }
 }
-
