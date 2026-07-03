@@ -913,16 +913,24 @@ ApplicationWindow {
                                         ? Appearance.zzz.controlRadius
                                         : Math.min(width, height) / 2
                                     toggled: root.currentPage === pageRealIndex
+                                    // Bgless doctrine: zzz selection reads through the sticker pill
+                                    // below, not a Material ripple / opaque hover fill on this
+                                    // Control's own background (which renders above the pill).
+                                    rippleEnabled: !Appearance.zzzEverywhere
                                     colBackground: "transparent"
                                     colBackgroundToggled: "transparent"
-                                    colBackgroundToggledHover: Appearance.angelEverywhere
+                                    colBackgroundToggledHover: Appearance.zzzEverywhere
+                                        ? "transparent"
+                                        : Appearance.angelEverywhere
                                         ? Appearance.angel.colGlassCardHover
                                         : Appearance.inirEverywhere
                                             ? Appearance.inir.colLayer1Hover
                                             : Appearance.auroraEverywhere
                                                 ? Appearance.aurora.colElevatedSurface
                                                 : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
-                                    colBackgroundHover: Appearance.colors.colLayer1Hover
+                                    colBackgroundHover: Appearance.zzzEverywhere
+                                        ? Appearance.zzz.paperAlt
+                                        : Appearance.colors.colLayer1Hover
 
                                     onClicked: root.currentPage = pageRealIndex
 
@@ -940,7 +948,7 @@ ApplicationWindow {
                                                 iconSize: 18
                                                 color: navBtn.toggled
                                                     ? (Appearance.zzzEverywhere
-                                                        ? Appearance.zzz.onSticker
+                                                        ? Appearance.zzz.ink
                                                         : Appearance.inirEverywhere
                                                         ? Appearance.inir.colAccent
                                                         : Appearance.colors.colPrimary)
@@ -978,17 +986,27 @@ ApplicationWindow {
                         }
 
                         // Active indicator: pill travelling behind the active item
-                        Rectangle {
+                        ZzzPlate {
                             id: sharedNavIndicator
                             z: -1
                             parent: navCol
                             x: 0
                             width: navCol.width
-                            radius: Appearance.rounding.small
-                            color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                            radius: Appearance.zzzEverywhere
+                                ? (Appearance.zzz.round ? Appearance.zzz.controlRadius : 0)
+                                : Appearance.rounding.small
+                            chamfer: Appearance.zzzEverywhere && !Appearance.zzz.round ? Appearance.zzz.cutCorner : 0
+                            fillColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                  : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                                  : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                                 : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                                  : Appearance.colors.colPrimaryContainer
+                            strokeColor: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
+                            strokeWidth: Appearance.zzzEverywhere ? Appearance.zzz.hairlineThick : 0
+                            Behavior on radius {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot }
+                            }
 
                             property real targetY: 0
                             property real targetH: 0
@@ -1033,7 +1051,10 @@ ApplicationWindow {
                                 anchors.leftMargin: 4
                                 width: 3
                                 radius: 1.5
-                                height: parent.hasTarget ? parent.height * 0.5 : 0
+                                // ZZZ separates by fill, not outlines — the sticker plate above
+                                // already carries the selection signal (matches SettingsOverlay.qml).
+                                visible: !Appearance.zzzEverywhere
+                                height: (parent.hasTarget && visible) ? parent.height * 0.5 : 0
                                 color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                      : Appearance.inirEverywhere ? Appearance.inir.colAccent
                                      : Appearance.colors.colPrimary
@@ -1261,10 +1282,23 @@ ApplicationWindow {
                     id: pagesStack
                     anchors { top: windowPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
 
-                    // Track which pages have been visited (for lazy loading with cache)
+                    // search-forced-alive pages (transient) + the retention window
+                    // predicate. Direct predicate instead of a warm-all preloader
+                    // timer: the old timer kept instantiating EVERY page on a 100ms
+                    // tick regardless of what was actually visible, so opening
+                    // Settings and clicking around competed with ~18 pages' worth of
+                    // Loader instantiation for the first couple of seconds — that
+                    // was the reported "every tab click lags" stutter.
                     property var visitedPages: ({})
                     property int preloadIndex: 0
                     property bool preloadRequested: false
+                    property int keepRadius: 1
+
+                    function _pageActive(index) {
+                        if (index === root.currentPage) return true
+                        if (Math.abs(index - root.currentPage) <= keepRadius) return true
+                        return visitedPages[index] === true
+                    }
 
                     // Direction of the last nav change, so pages slide in from the
                     // correct side (fluid sideways feel, like the coverflow filmstrip).
@@ -1276,23 +1310,16 @@ ApplicationWindow {
                         function onCurrentPageChanged() {
                             pagesStack.navDirection = root.currentPage >= pagesStack.lastPage ? 1 : -1
                             pagesStack.lastPage = root.currentPage
-                            pagesStack.visitedPages[root.currentPage] = true
-                            pagesStack.visitedPagesChanged()
                         }
                     }
 
-                    Component.onCompleted: {
-                        // Mark initial page as visited
-                        visitedPages[root.currentPage] = true
-                        idlePreloadDelay.start()
-                    }
-
-                    // Warm remaining pages shortly after launch so nav clicks are instant
-                    Timer {
-                        id: idlePreloadDelay
-                        interval: 300
-                        onTriggered: {
-                            if (!pagesStack.preloadRequested) {
+                    // Search-only preload: only while the user is actively searching,
+                    // walk pages into visitedPages so a search-result jump lands
+                    // instantly. Never runs otherwise.
+                    Connections {
+                        target: root
+                        function onSettingsSearchTextChanged() {
+                            if (root.settingsSearchText.length > 0 && !pagesStack.preloadRequested) {
                                 pagesStack.preloadRequested = true
                                 preloadTimer.start()
                             }
@@ -1325,23 +1352,21 @@ ApplicationWindow {
                         }
                     }
 
-                    // Preload all pages for search - faster interval
+                    // Preload pages for search only — never runs while the user is
+                    // just navigating the nav rail.
                     Timer {
                         id: preloadTimer
-                        interval: 100
+                        interval: 140
                         repeat: true
                         onTriggered: {
-                            // Load 2 pages per tick for faster indexing
-                            for (var i = 0; i < 2 && pagesStack.preloadIndex < root.pages.length; i++) {
-                                if (!pagesStack.visitedPages[pagesStack.preloadIndex]) {
-                                    pagesStack.visitedPages[pagesStack.preloadIndex] = true
-                                    pagesStack.visitedPagesChanged()
-                                }
-                                pagesStack.preloadIndex++
+                            if (root.settingsSearchText.length === 0) { stop(); return }
+                            if (pagesStack.preloadIndex >= root.pages.length) { stop(); return }
+                            const i = pagesStack.preloadIndex
+                            if (!pagesStack.visitedPages[i]) {
+                                pagesStack.visitedPages[i] = true
+                                pagesStack.visitedPagesChanged()
                             }
-                            if (pagesStack.preloadIndex >= root.pages.length) {
-                                preloadTimer.stop()
-                            }
+                            pagesStack.preloadIndex++
                         }
                     }
 
@@ -1352,8 +1377,9 @@ ApplicationWindow {
                             id: pageLoader
                             required property int index
                             anchors.fill: parent
-                            // Lazy load: only load when visited, keep loaded after
-                            active: Config.ready && (pagesStack.visitedPages[index] === true)
+                            // Windowed retention: current ± keepRadius stay loaded, plus
+                            // any page search forced alive.
+                            active: Config.ready && pagesStack._pageActive(index)
                             // Current page loads sync (instant content, async incubation of
                             // huge pages is far slower); the eager preloader warms the rest,
                             // so the sync hitch only exists in the first ~2s after launch.

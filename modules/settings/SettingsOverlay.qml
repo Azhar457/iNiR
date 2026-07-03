@@ -24,8 +24,31 @@ Scope {
 
     property bool settingsOpen: GlobalStates.settingsOverlayOpen ?? false
 
-    // Keep the overlay tree unloaded while closed; search can request preload on demand.
-    property bool _panelLoaded: settingsOpen
+    // Keep the PanelWindow alive briefly after close so the scrim backdrop
+    // can fade out (the settings card itself shows/hides instantly, matching
+    // the window-mode settings UI). Without this the Loader tears down the
+    // instant settingsOpen flips false and the scrim cut to black.
+    property bool _panelLoaded: settingsOpen || _closeAnimRunning
+    property bool _closeAnimRunning: false
+
+    onSettingsOpenChanged: {
+        if (settingsOpen) {
+            _closeAnimRunning = false
+            closeAnimTimer.stop()
+        } else {
+            _closeAnimRunning = true
+            closeAnimTimer.restart()
+        }
+    }
+
+    // Match the scrim fade-out (elementMoveFast) + a small margin so teardown
+    // lands right after the backdrop finishes fading.
+    Timer {
+        id: closeAnimTimer
+        interval: Appearance.animation.elementMoveFast.duration + 40
+        repeat: false
+        onTriggered: _closeAnimRunning = false
+    }
 
     // ── Search system (full, same as settings.qml) ──
     property string overlaySearchText: ""
@@ -378,12 +401,14 @@ Scope {
         sourceComponent: PanelWindow {
             id: settingsPanel
 
-            visible: GlobalStates.settingsOverlayOpen ?? false
+            // Stay visible during the close-animation window so the exit morph
+            // renders; the Loader tears down after closeAnimTimer fires.
+            visible: root.settingsOpen || root._closeAnimRunning
 
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:settingsOverlay"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: visible && !GlobalStates.regionSelectorOpen
+            WlrLayershell.keyboardFocus: root.settingsOpen && !GlobalStates.regionSelectorOpen
                 ? WlrKeyboardFocus.Exclusive
                 : WlrKeyboardFocus.None
             color: "transparent"
@@ -442,26 +467,32 @@ Scope {
                 anchors.fill: parent
                 color: Appearance.colors.colScrim
                 opacity: (GlobalStates.settingsOverlayOpen ?? false) ? (Config.options?.settingsUi?.overlayAppearance?.scrimDim ?? 35) / 100 : 0
-                // Must remain interactive even when fully transparent (scrimDim = 0)
-                visible: (GlobalStates.settingsOverlayOpen ?? false)
+                // visible tracks opacity (not settingsOpen) so the close fade-out
+                // actually renders before the Loader tears the panel down.
+                visible: opacity > 0
 
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
                     animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: GlobalStates.settingsOverlayOpen = false
-                }
             }
 
-            // ── Escalonado shadow for angel ──
-            StyledRectangularShadow {
-                target: settingsCard
+            // Click-outside-to-close hit area — a sibling of scrimBg, not a child.
+            // It used to live inside scrimBg, whose `visible: opacity > 0` goes
+            // false whenever scrimDim is set to 0 (fully transparent scrim):
+            // QtQuick excludes invisible items from hit-testing, so a MouseArea
+            // inside an invisible parent silently stops receiving clicks. Scrim
+            // dim and click-outside-to-close are independent concerns and must
+            // not share one visibility flag.
+            MouseArea {
+                anchors.fill: parent
+                visible: GlobalStates.settingsOverlayOpen ?? false
+                onClicked: GlobalStates.settingsOverlayOpen = false
             }
 
-            // ── Floating settings card ──
+            // ── Floating settings card (no separate drop shadow — the card
+            //    sits on the scrim backdrop; the panel border provides depth) ──
+// ── Floating settings card ──
             Rectangle {
                 id: settingsCard
 
@@ -508,20 +539,14 @@ Scope {
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
 
-                // Scale + fade animation
+                // Scale + fade. Exit uses elementMoveExit (snappy ~200ms accel) so
+                // the close feels immediate and matches the window-mode settings;
+                // enter reuses the same Behavior (200ms is smooth enough on open).
+                // Instant show/hide — matches the window-mode settings UI.
+                // No scale/opacity fade (the fade felt heavy and the scrim
+                // backdrop already carries the transition).
                 opacity: (GlobalStates.settingsOverlayOpen ?? false) ? 1 : 0
-                scale: (GlobalStates.settingsOverlayOpen ?? false) ? 1.0 : 0.92
-
-                Behavior on opacity {
-                    enabled: Appearance.animationsEnabled
-                    animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                }
-                Behavior on scale {
-                    enabled: Appearance.animationsEnabled
-                    animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                }
-
-                // Shadow comes from the StyledRectangularShadow above (cheap native RectangularShadow).
+                visible: opacity > 0
 
                 // Glass background for aurora/angel wallpaper blur
                 GlassBackground {
@@ -770,10 +795,9 @@ Scope {
                                         onTextChanged: {
                                             root.overlaySearchText = text;
                                             if (text.length > 0) {
-                                                if (!overlayPagesStack.preloadRequested) {
-                                                    overlayPagesStack.preloadRequested = true
-                                                    overlayPreloadTimer.start()
-                                                }
+                                                // Search-only page preload is armed by
+                                                // overlayPagesStack's own onOverlaySearchTextChanged
+                                                // handler — no need to duplicate that here.
                                                 searchDebounceTimer.restart();
                                             } else {
                                                 // Clear immediately for clean exit morph (no debounce)
@@ -1004,18 +1028,34 @@ Scope {
 
                                                 readonly property int pageRealIndex: navItem.modelData.realIndex !== undefined ? navItem.modelData.realIndex : navItem.index
 
-                                                buttonRadius: Math.min(width, height) / 2
+                                                // Bgless doctrine (matches NavigationRailButton.qml): zzz
+                                                // selection reads through the sticker pill + icon/text
+                                                // colour, not a Material ripple bleeding out from the
+                                                // click point on a transparent nav item.
+                                                rippleEnabled: !Appearance.zzzEverywhere
+
+                                                buttonRadius: Appearance.zzzEverywhere
+                                                    ? Appearance.zzz.controlRadius
+                                                    : Math.min(width, height) / 2
                                                 toggled: overlayCurrentPage === pageRealIndex
                                                 colBackground: "transparent"
                                                 colBackgroundToggled: "transparent"
-                                                colBackgroundToggledHover: Appearance.angelEverywhere
+                                                // zzz: transparent, not paperAlt — this Control's own
+                                                // background renders above sharedNavIndicator (z:1 vs
+                                                // z:-1 below), so any opaque fill here fully hides the
+                                                // sticker pill on hover instead of layering with it.
+                                                colBackgroundToggledHover: Appearance.zzzEverywhere
+                                                    ? "transparent"
+                                                    : Appearance.angelEverywhere
                                                     ? Appearance.angel.colGlassCardHover
                                                     : Appearance.inirEverywhere
                                                         ? Appearance.inir.colLayer1Hover
                                                         : Appearance.auroraEverywhere
                                                             ? Appearance.aurora.colElevatedSurface
                                                             : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
-                                                colBackgroundHover: Appearance.colLayer1Hover
+                                                colBackgroundHover: Appearance.zzzEverywhere
+                                                    ? Appearance.zzz.paperAlt
+                                                    : Appearance.colors.colLayer1Hover
 
                                                 onClicked: overlayCurrentPage = pageRealIndex
 
@@ -1032,7 +1072,9 @@ Scope {
                                                             text: navItem.modelData.icon || ""
                                                             iconSize: 18
                                                             color: navBtn.toggled
-                                                                ? (Appearance.inirEverywhere
+                                                                ? (Appearance.zzzEverywhere
+                                                                    ? Appearance.zzz.ink
+                                                                    : Appearance.inirEverywhere
                                                                     ? Appearance.inir.colAccent
                                                                     : Appearance.colors.colPrimary)
                                                                 : Appearance.colors.colOnSurfaceVariant
@@ -1053,7 +1095,7 @@ Scope {
                                                                 weight: navBtn.toggled ? Font.Medium : Font.Normal
                                                             }
                                                             color: navBtn.toggled
-                                                                ? Appearance.colors.colOnLayer1
+                                                                ? (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1)
                                                                 : Appearance.colors.colOnSurfaceVariant
                                                             elide: Text.ElideRight
 
@@ -1070,17 +1112,31 @@ Scope {
 
                                     // Active indicator: pill travelling behind the active item,
                                     // inside navCol so its y matches the items' coordinate space.
-                                    Rectangle {
+                                    ZzzPlate {
                                         id: sharedNavIndicator
                                         z: -1
                                         parent: navCol
                                         x: 0
                                         width: navCol.width
-                                        radius: Appearance.rounding.small
-                                        color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                                        // ZzzPlate picks its renderer by `radius > 0` alone — setting both
+                                        // radius AND chamfer unconditionally left chamfer as dead code
+                                        // (always rendered rounded, never chamfered in square mode).
+                                        // Gate them like everywhere else that switches on Appearance.zzz.round.
+                                        radius: Appearance.zzzEverywhere
+                                            ? (Appearance.zzz.round ? Appearance.zzz.controlRadius : 0)
+                                            : Appearance.rounding.small
+                                        chamfer: Appearance.zzzEverywhere && !Appearance.zzz.round ? Appearance.zzz.cutCorner : 0
+                                        fillColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                                              : Appearance.inirEverywhere ? Appearance.inir.colLayer2
                                              : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                                             : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                                              : Appearance.colors.colPrimaryContainer
+                                        strokeColor: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
+                                        strokeWidth: Appearance.zzzEverywhere ? Appearance.zzz.hairlineThick : 0
+                                        Behavior on radius {
+                                            enabled: Appearance.animationsEnabled
+                                            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot }
+                                        }
 
                                         property real targetY: 0
                                         property real targetH: 0
@@ -1126,7 +1182,11 @@ Scope {
                                             anchors.leftMargin: 4
                                             width: 3
                                             radius: 1.5
-                                            height: parent.hasTarget ? parent.height * 0.5 : 0
+                                            // ZZZ separates by fill, not outlines (maintainer doctrine) — the
+                                            // sticker plate above already carries the selection signal, so
+                                            // this accent line is redundant clutter there.
+                                            visible: !Appearance.zzzEverywhere
+                                            height: (parent.hasTarget && visible) ? parent.height * 0.5 : 0
                                             color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                                  : Appearance.inirEverywhere ? Appearance.inir.colAccent
                                                  : Appearance.colors.colPrimary
@@ -1359,96 +1419,64 @@ Scope {
                                 id: overlayPagesStack
                                 anchors { top: overlayPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
 
-                                property var visitedPages: ({})
+                                property var visitedPages: ({})   // search-forced-alive pages (transient)
                                 property int preloadIndex: 0
                                 property bool preloadRequested: false
+                                property int keepRadius: 1        // current ± keepRadius stay loaded
+
+                                // A page is active if it's inside the retention window around the
+                                // current page, or search forced it alive. Direct predicate instead
+                                // of a warm-all preloader timer: the old timer kept instantiating
+                                // EVERY page on a tick regardless of window, racing the window's own
+                                // unload logic (load, then immediately unload next tick) — that
+                                // thrash was the reported "every tab click lags" stutter.
+                                function _pageActive(index) {
+                                    if (index === overlayCurrentPage) return true
+                                    if (Math.abs(index - overlayCurrentPage) <= keepRadius) return true
+                                    return visitedPages[index] === true
+                                }
 
                                 Connections {
                                     target: root
                                     function onSettingsOpenChanged() {
                                         if (root.settingsOpen) {
-                                            overlayPagesStack.visitedPages[overlayCurrentPage] = true
-                                            overlayPagesStack.visitedPagesChanged()
                                             if (root.overlaySearchText.length > 0 && !overlayPagesStack.preloadRequested) {
                                                 overlayPagesStack.preloadRequested = true
-                                                overlayPreloadTimer.start()
+                                                overlaySearchPreloadTimer.start()
                                             }
+                                        } else {
+                                            overlayPagesStack.visitedPages = ({})
+                                            overlayPagesStack.preloadRequested = false
+                                            overlayPagesStack.preloadIndex = 0
                                         }
+                                    }
+                                }
+
+                                // Search-only preload: only while the user is actively searching,
+                                // walk pages into visitedPages so a search-result jump lands
+                                // instantly. Never runs otherwise.
+                                Timer {
+                                    id: overlaySearchPreloadTimer
+                                    interval: 140
+                                    repeat: true
+                                    onTriggered: {
+                                        if (root.overlaySearchText.length === 0) { stop(); return }
+                                        if (overlayPagesStack.preloadIndex >= overlayPages.length) { stop(); return }
+                                        const i = overlayPagesStack.preloadIndex
+                                        if (!overlayPagesStack.visitedPages[i]) {
+                                            overlayPagesStack.visitedPages[i] = true
+                                            overlayPagesStack.visitedPagesChanged()
+                                        }
+                                        overlayPagesStack.preloadIndex++
                                     }
                                 }
 
                                 Connections {
                                     target: root
-                                    function onOverlayCurrentPageChanged() {
-                                        const n = overlayPages.length
-                                        const cur = overlayCurrentPage
-                                        overlayPagesStack.visitedPages[cur] = true
-                                        if (cur + 1 < n) overlayPagesStack.visitedPages[cur + 1] = true
-                                        if (cur - 1 >= 0) overlayPagesStack.visitedPages[cur - 1] = true
-                                        overlayPagesStack.visitedPagesChanged()
-                                    }
-                                }
-
-                                Timer {
-                                    id: initialLoadTimer
-                                    interval: 1
-                                    onTriggered: {
-                                        overlayPagesStack.visitedPages[overlayCurrentPage] = true
-                                        overlayPagesStack.visitedPagesChanged()
-                                        adjacentLoadTimer.start()
-                                    }
-                                }
-
-                                // Preload the immediate neighbours shortly after the current
-                                // page is shown, so the first left/right navigation is instant
-                                // without blocking the initial render.
-                                Timer {
-                                    id: adjacentLoadTimer
-                                    interval: 180
-                                    onTriggered: {
-                                        const cur = overlayCurrentPage
-                                        const n = overlayPages.length
-                                        if (cur + 1 < n) overlayPagesStack.visitedPages[cur + 1] = true
-                                        if (cur - 1 >= 0) overlayPagesStack.visitedPages[cur - 1] = true
-                                        overlayPagesStack.visitedPagesChanged()
-                                    }
-                                }
-
-                                Component.onCompleted: {
-                                    initialLoadTimer.start()
-                                    // Warm the remaining pages in the background, one per tick,
-                                    // staggered so the initial render is never blocked. Once warm,
-                                    // every nav click is instant.
-                                    idlePreloadDelay.start()
-                                }
-
-                                Timer {
-                                    id: idlePreloadDelay
-                                    interval: 300
-                                    onTriggered: {
-                                        if (!overlayPagesStack.preloadRequested) {
+                                    function onOverlaySearchTextChanged() {
+                                        if (root.overlaySearchText.length > 0 && !overlayPagesStack.preloadRequested) {
                                             overlayPagesStack.preloadRequested = true
-                                            overlayPreloadTimer.start()
-                                        }
-                                    }
-                                }
-
-                                Timer {
-                                    id: overlayPreloadTimer
-                                    // One page per tick so preload never competes with
-                                    // active navigation.
-                                    interval: 140
-                                    repeat: true
-                                    onTriggered: {
-                                        for (var i = 0; i < 1 && overlayPagesStack.preloadIndex < overlayPages.length; i++) {
-                                            if (!overlayPagesStack.visitedPages[overlayPagesStack.preloadIndex]) {
-                                                overlayPagesStack.visitedPages[overlayPagesStack.preloadIndex] = true
-                                                overlayPagesStack.visitedPagesChanged()
-                                            }
-                                            overlayPagesStack.preloadIndex++
-                                        }
-                                        if (overlayPagesStack.preloadIndex >= overlayPages.length) {
-                                            overlayPreloadTimer.stop()
+                                            overlaySearchPreloadTimer.start()
                                         }
                                     }
                                 }
@@ -1460,38 +1488,17 @@ Scope {
                                         id: overlayPageLoader
                                         required property int index
                                         anchors.fill: parent
-                                        active: Config.ready && (overlayPagesStack.visitedPages[index] === true)
+                                        active: Config.ready && overlayPagesStack._pageActive(index)
                                         // Current page loads sync (instant content, async incubation
-                                        // of huge pages is far slower); the eager preloader below
-                                        // warms everything else, so the sync hitch only exists in
-                                        // the first ~2s after open.
+                                        // of huge pages is far slower); neighbours inside the
+                                        // retention window load async so they don't block the frame.
                                         asynchronous: index !== overlayCurrentPage
                                         source: overlayPages[index].component
 
                                         readonly property bool isCurrentPage: index === overlayCurrentPage && status === Loader.Ready
-                                        visible: isCurrentPage || _pageOpacity > 0
-                                        property real _pageOpacity: isCurrentPage ? 1 : 0
-                                        property real _pageScale: isCurrentPage ? 1 : 0.985
-                                        // Direction-aware horizontal slide
-                                        property real _slideX: isCurrentPage ? 0 : (index < overlayCurrentPage ? -30 : 30)
-
-                                        opacity: _pageOpacity
-                                        scale: _pageScale
-                                        transform: Translate { x: overlayPageLoader._slideX }
-                                        transformOrigin: Item.Center
-
-                                        Behavior on _pageOpacity {
-                                            enabled: Appearance.animationsEnabled
-                                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                        }
-                                        Behavior on _pageScale {
-                                            enabled: Appearance.animationsEnabled
-                                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.emphasizedDecel }
-                                        }
-                                        Behavior on _slideX {
-                                            enabled: Appearance.animationsEnabled
-                                            animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves.emphasizedDecel }
-                                        }
+                                        // Instant page switch — matches the window-mode settings UI
+                                        // (no slide/scale/fade per navigation, which felt laggy).
+                                        visible: isCurrentPage
                                     }
                                 }
                             }
