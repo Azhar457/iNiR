@@ -37,7 +37,10 @@ Item {
         player: root.player
     }
     
-    property QtObject blendedColors: AdaptedMaterialScheme { color: playerBase.artDominantColor }
+    // Theme seed for the whole player. Defaults to the album-art colour (floating popup
+    // keeps that). Desktop host overrides it with the wallpaper seed for cohesion.
+    property color themeSourceColor: playerBase.artDominantColor
+    property QtObject blendedColors: AdaptedMaterialScheme { color: root.themeSourceColor }
     
     StyledRectangularShadow { 
         target: card
@@ -113,7 +116,7 @@ Item {
             visible: Appearance.zzzEverywhere
             label: "NOW PLAYING"
             index: "ART"
-            accentColor: Appearance.zzz.tertiary
+            accentColor: blendedColors?.colPrimary ?? Appearance.zzz.accent
             margin: 12
             showTicks: false
         }
@@ -145,7 +148,7 @@ Item {
             live: playerBase.effectiveIsPlaying
             points: root.visualizerPoints
             maxVisualizerValue: 1000; smoothing: 2
-            color: ColorUtils.transparentize(playerBase.artDominantColor, 0.3)
+            color: ColorUtils.transparentize(root.themeSourceColor, 0.3)
         }
         CavaVisualizer {
             visible: root.vizType === "bars" && root.vizPosition !== "none"
@@ -156,9 +159,9 @@ Item {
             points: root.visualizerPoints
             maxVisualizerValue: 1000; smoothing: 2
             barCount: 32; barSpacing: 2; barRadius: 2; barMinHeight: 1
-            colorLow: ColorUtils.transparentize(playerBase.artDominantColor, 0.3)
-            colorMed: ColorUtils.transparentize(playerBase.artDominantColor, 0.1)
-            colorHigh: playerBase.artDominantColor
+            colorLow: ColorUtils.transparentize(root.themeSourceColor, 0.3)
+            colorMed: ColorUtils.transparentize(root.themeSourceColor, 0.1)
+            colorHigh: root.themeSourceColor
         }
         
         // Controls overlay at bottom
@@ -189,7 +192,7 @@ Item {
                 length: playerBase.effectiveLength
                 canSeek: playerBase.effectiveCanSeek
                 isPlaying: playerBase.effectiveIsPlaying
-                highlightColor: Appearance.zzzEverywhere ? Appearance.zzz.secondary : "white"
+                highlightColor: Appearance.zzzEverywhere ? (blendedColors?.colPrimary ?? Appearance.zzz.accent) : "white"
                 trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack : ColorUtils.transparentize("white", 0.6)
                 onSeekRequested: seconds => playerBase.seek(seconds)
             }
@@ -225,7 +228,7 @@ Item {
                     buttonHoverColor: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.paperAlt, Appearance.zzz.signal, 0.92) : ColorUtils.transparentize("black", 0.3)
                     buttonRippleColor: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.32) : ColorUtils.transparentize("white", 0.5)
                     iconColor: Appearance.zzzEverywhere ? Appearance.zzz.ink : "white"
-                    playIconColor: Appearance.zzzEverywhere ? Appearance.zzz.secondary : "white"
+                    playIconColor: Appearance.zzzEverywhere ? (blendedColors?.colPrimary ?? Appearance.zzz.accent) : "white"
                     onPreviousClicked: playerBase.previous()
                     onPlayPauseClicked: playerBase.togglePlaying()
                     onNextClicked: playerBase.next()

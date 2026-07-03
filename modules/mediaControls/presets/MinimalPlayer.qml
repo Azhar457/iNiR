@@ -36,7 +36,10 @@ Item {
         player: root.player
     }
 
-    property QtObject blendedColors: AdaptedMaterialScheme { color: playerBase.artDominantColor }
+    // Theme seed for the whole player. Defaults to the album-art colour (floating popup
+    // keeps that). Desktop host overrides it with the wallpaper seed for cohesion.
+    property color themeSourceColor: playerBase.artDominantColor
+    property QtObject blendedColors: AdaptedMaterialScheme { color: root.themeSourceColor }
 
     StyledRectangularShadow {
         target: card
@@ -74,7 +77,7 @@ Item {
 
         ZzzGraphicPlate {
             anchors.fill: parent
-            accentColor: Appearance.zzz.secondary
+            accentColor: blendedColors?.colPrimary ?? Appearance.zzz.accent
         }
 
         // Visualizer overlay
@@ -86,7 +89,7 @@ Item {
             live: playerBase.effectiveIsPlaying
             points: root.visualizerPoints
             maxVisualizerValue: 1000; smoothing: 2
-            color: ColorUtils.transparentize(playerBase.artDominantColor, 0.5)
+            color: ColorUtils.transparentize(root.themeSourceColor, 0.5)
         }
         CavaVisualizer {
             visible: root.vizType === "bars" && root.vizPosition !== "none"
@@ -97,9 +100,9 @@ Item {
             points: root.visualizerPoints
             maxVisualizerValue: 1000; smoothing: 2
             barCount: 24; barSpacing: 2; barRadius: 1; barMinHeight: 1
-            colorLow: ColorUtils.transparentize(playerBase.artDominantColor, 0.4)
-            colorMed: ColorUtils.transparentize(playerBase.artDominantColor, 0.2)
-            colorHigh: playerBase.artDominantColor
+            colorLow: ColorUtils.transparentize(root.themeSourceColor, 0.4)
+            colorMed: ColorUtils.transparentize(root.themeSourceColor, 0.2)
+            colorHigh: root.themeSourceColor
         }
 
         RowLayout {
@@ -185,7 +188,7 @@ Item {
                     length: playerBase.effectiveLength
                     canSeek: playerBase.effectiveCanSeek
                     isPlaying: playerBase.effectiveIsPlaying
-                    highlightColor: Appearance.zzzEverywhere ? Appearance.zzz.secondary
+                    highlightColor: Appearance.zzzEverywhere ? (blendedColors?.colPrimary ?? Appearance.zzz.accent)
                         : Appearance.inirEverywhere
                         ? playerBase.inirPrimary
                         : Appearance.auroraEverywhere
@@ -238,7 +241,7 @@ Item {
                             : Appearance.auroraEverywhere
                                 ? Appearance.colors.colOnLayer0
                                 : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-                        playIconColor: Appearance.zzzEverywhere ? Appearance.zzz.secondary
+                        playIconColor: Appearance.zzzEverywhere ? (blendedColors?.colPrimary ?? Appearance.zzz.accent)
                             : Appearance.inirEverywhere
                             ? playerBase.inirPrimary
                             : Appearance.auroraEverywhere
