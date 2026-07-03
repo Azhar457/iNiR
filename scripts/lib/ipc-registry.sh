@@ -2,15 +2,16 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: e4d1632c0a3fd546
-# Targets: 52
+# IPC.md hash: 4f8e5d45b337953e
+# Targets: 54
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="AI chat service. Multi-provider (Gemini, OpenAI, Mistral) with tool support."
   [altSwitcher]="Alt+Tab window switcher. Works across workspaces, unlike some other implementations we won't name."
   [appCatalog]="App catalog service. Browse, search, and install curated applications."
   [audio]="Volume and mute control."
-  [background]="Desktop background and widget edit mode controls."
+  [autostart]="Niri login autostart manager. Reads and writes the managed section of \`~/.config/niri/config.d/50-startup.kdl\` (delimited by \`// >>> inir-managed-autostart >>>\` / \`// <<< inir-managed-autostart <<<\`). Base iNiR lines and any hand-written \`spawn-at-startup\` lines outside the markers are preserved verbatim; toggling an entry comments the line out instead of deleting it. Safe no-op on non-Niri compositors (the page shows a guard instead)."
+  [background]="Desktop background and widget controls."
   [bar]="Top bar visibility."
   [brightness]="Display brightness control."
   [cheatsheet]="Keyboard shortcuts reference. For when you forget what you just configured five minutes ago."
@@ -55,6 +56,7 @@ declare -gA IPC_TARGET_DESC=(
   [wbar]="Waffle taskbar visibility."
   [widgetpower]="Desktop-widget power management (pauses widget rendering on game mode, fullscreen, present windows, or edit mode). Service: \`services/WidgetPowerManager.qml\`."
   [wnotificationCenter]="Waffle notification center."
+  [workspaceStrip]="Workspace edge strip. Shows a compact per-workspace rail and expands it for switching without opening the full overview."
   [wwidgets]="Waffle widgets panel."
   [ytmusic]="Direct YtMusic player control. Use these if you want to control YtMusic specifically, regardless of what other players are active."
   [zoom]="Screen zoom. Accessibility feature, or for reading tiny UI without pretending your monitor is the problem."
@@ -65,7 +67,8 @@ declare -gA IPC_TARGET_FAMILY=(
   [altSwitcher]="shared"
   [appCatalog]="shared"
   [audio]="shared"
-  [background]="waffle"
+  [autostart]="waffle"
+  [background]="shared"
   [bar]="shared"
   [brightness]="shared"
   [cheatsheet]="shared"
@@ -110,6 +113,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [wbar]="waffle"
   [widgetpower]="waffle"
   [wnotificationCenter]="waffle"
+  [workspaceStrip]="shared"
   [wwidgets]="waffle"
   [ytmusic]="shared"
   [zoom]="shared"
@@ -120,7 +124,8 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [altSwitcher]="open close toggle next previous"
   [appCatalog]="refresh search install list"
   [audio]="volumeUp volumeDown mute micMute"
-  [background]="toggleEditMode"
+  [autostart]="status addCommand addApp removeLast reload"
+  [background]="toggleEditMode setWidgetEnabled"
   [bar]="toggle close open"
   [brightness]="increment decrement"
   [cheatsheet]="toggle close open"
@@ -165,6 +170,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [wbar]="toggle close open"
   [widgetpower]="status"
   [wnotificationCenter]="toggle"
+  [workspaceStrip]="open close toggle status"
   [wwidgets]="toggle close open"
   [ytmusic]="playPause next previous stop"
   [zoom]="zoomIn zoomOut"
@@ -188,7 +194,13 @@ declare -gA IPC_FUNCTION_DESC=(
   ["audio:volumeDown"]="Decrease volume"
   ["audio:mute"]="Toggle speaker mute"
   ["audio:micMute"]="Toggle microphone mute"
+  ["autostart:status"]="Return \`niri\\"
+  ["autostart:addCommand"]="Append a managed \`spawn-sh-at-startup\` shell line"
+  ["autostart:addApp"]="Append a managed \`gtk-launch <desktopId>\` entry"
+  ["autostart:removeLast"]="Remove the last managed entry"
+  ["autostart:reload"]="Force re-read the startup file"
   ["background:toggleEditMode"]="Toggle widget edit mode (drag, resize, configure desktop widgets)"
+  ["background:setWidgetEnabled"]="Enable or disable a built-in desktop widget"
   ["bar:toggle"]="Show/hide bar"
   ["bar:close"]="Hide bar"
   ["bar:open"]="Show bar"
@@ -333,6 +345,10 @@ declare -gA IPC_FUNCTION_DESC=(
   ["wbar:open"]="Show taskbar"
   ["widgetpower:status"]="Returns JSON: \`enabled\`, \`widgetsActive\`, and the active \`triggers\` (gameMode, fullscreen, windowsPresent, editMode)"
   ["wnotificationCenter:toggle"]="Open/close notification center"
+  ["workspaceStrip:open"]="Keep the strip expanded"
+  ["workspaceStrip:close"]="Return the strip to hover/peek mode"
+  ["workspaceStrip:toggle"]="Toggle forced expansion"
+  ["workspaceStrip:status"]="Return strip state (\`open\` or \`auto\`)"
   ["wwidgets:toggle"]="Open/close widgets"
   ["wwidgets:close"]="Close widgets"
   ["wwidgets:open"]="Open widgets"
@@ -349,6 +365,9 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["ai:runGet"]="<inputText>"
   ["appCatalog:search"]="<query>"
   ["appCatalog:install"]="<id>"
+  ["autostart:addCommand"]="<cmd>"
+  ["autostart:addApp"]="<desktopId>"
+  ["background:setWidgetEnabled"]="<widgetName> <enabled>"
   ["customWidgets:create"]="<name>"
   ["customWidgets:remove"]="<widgetId>"
   ["globalActions:run"]="<actionId>"
@@ -387,13 +406,14 @@ bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
   [settings]='bind "Super+Comma" { spawn "inir" "settings"; }'
   [voiceSearch]='bind "Super+Shift+V" { spawn "inir" "voiceSearch" "toggle"; }'
   [wallpaperSelector]='bind "Ctrl+Alt+T" { spawn "inir" "wallpaperSelector" "toggle"; }'
+  [workspaceStrip]='bind "Super+Tab" { spawn "inir" "workspaceStrip" "toggle"; }'
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard gamemode globalActions keyboard lock mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard gamemode globalActions keyboard lock mediaControls memory minimize mpris notifications osdVolume osk overview packageSearch panelFamily region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard gamemode globalActions keyboard lock mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard gamemode globalActions keyboard lock mediaControls memory minimize mpris notifications osdVolume osk overview packageSearch panelFamily region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(overlay)
-IPC_WAFFLE_TARGETS=(background customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
+IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 
 declare -gA IPC_KEBAB_ALIASES=(
   [alt-switcher]=altSwitcher
@@ -418,5 +438,6 @@ declare -gA IPC_KEBAB_ALIASES=(
   [waffle-alt-switcher]=waffleAltSwitcher
   [wallpaper-selector]=wallpaperSelector
   [wnotification-center]=wnotificationCenter
+  [workspace-strip]=workspaceStrip
 )
 

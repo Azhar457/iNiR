@@ -39,6 +39,10 @@ WAFFLE_PATH_MARKERS = ("modules/waffle/",)
 # Known duplicate targets (both families register the same target name).
 # LazyLoader prevents both from loading at runtime.
 KNOWN_DUPLICATES = {"bar", "session", "clipboard"}
+# Targets implemented outside either family subtree and loaded by both shells.
+# Some of their docs predate the family sections and may physically appear below
+# the waffle heading, so source location is the authoritative scope.
+KNOWN_SHARED_TARGETS = {"background"}
 
 
 @dataclass
@@ -343,10 +347,10 @@ def merge(
             target.keybind_example = md.keybind_example
 
             # Family from IPC.md section
-            if md.is_waffle:
-                target.family = "waffle"
-            elif name in KNOWN_DUPLICATES:
+            if name in KNOWN_SHARED_TARGETS or name in KNOWN_DUPLICATES:
                 target.family = "shared"
+            elif md.is_waffle:
+                target.family = "waffle"
             else:
                 target.family = _infer_family_from_path(target.qml_file)
         else:
