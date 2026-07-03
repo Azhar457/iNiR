@@ -781,6 +781,7 @@ Singleton {
         const id = root.messageIDs[index];
         root.messageIDs.splice(index, 1);
         root.messageIDs = [...root.messageIDs];
+        root.messageByID[id]?.destroy();
         delete root.messageByID[id];
     }
 
@@ -913,6 +914,9 @@ Singleton {
     }
 
     function clearMessages() {
+        for (const id of root.messageIDs) {
+            root.messageByID[id]?.destroy();
+        }
         root.messageIDs = [];
         root.messageByID = ({});
         root.tokenCount.input = -1;
