@@ -86,6 +86,7 @@ Item {
                 RowLayout {
                     Layout.leftMargin: root._zzz ? 0 : valueProgressBar.height / 2
                     Layout.rightMargin: root._zzz ? 0 : valueProgressBar.height / 2
+                    spacing: 8
 
                     StyledText {
                         color: root._zzz ? Appearance.zzz.onColor : Appearance.colors.colOnLayer0
@@ -93,6 +94,7 @@ Item {
                         font.weight: root._zzz ? Font.Bold : Font.Normal
                         text: root._zzz ? root.name.toUpperCase() : root.name
                         Layout.fillWidth: true
+                        elide: Text.ElideRight
                     }
 
                     StyledText {

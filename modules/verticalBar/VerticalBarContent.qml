@@ -485,15 +485,17 @@ Item { // Bar content region
                 implicitHeight: indicatorsColumnLayout.implicitHeight + 4 * 2
                 implicitWidth: indicatorsColumnLayout.implicitWidth + 6 * 2
 
-                buttonRadius: Appearance.rounding.full
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                 colBackground: buttonHovered ? Appearance.colors.colLayer1Hover : ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
                 colBackgroundHover: Appearance.colors.colLayer1Hover
                 colRipple: Appearance.colors.colLayer1Active
-                colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainer : Appearance.colors.colSecondaryContainer
-                colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colSecondaryContainerHover
-                colRippleToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryContainerActive : Appearance.colors.colSecondaryContainerActive
+                colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colSecondaryContainer
+                colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colSecondaryContainerHover
+                colRippleToggled: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colSecondaryContainerActive
                 toggled: GlobalStates.sidebarRightOpen
-                property color colText: toggled ? (Appearance.zzzEverywhere ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSecondaryContainer) : Appearance.colors.colOnLayer0
+                property color colText: toggled
+                    ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnSecondaryContainer)
+                    : Appearance.colors.colOnLayer0
 
                 Behavior on colText {
                     animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

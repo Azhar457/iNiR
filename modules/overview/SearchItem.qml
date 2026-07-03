@@ -39,7 +39,7 @@ RippleButton {
     readonly property color normalTextColor: root.zzzEverywhere ? Appearance.zzz.ink
         : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color selectedTextColor: root.zzzEverywhere ? Appearance.zzz.onSignal
+    readonly property color selectedTextColor: root.zzzEverywhere ? Appearance.zzz.onSticker
         : Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnLayer1
@@ -49,19 +49,19 @@ RippleButton {
         : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colSubtext
-    readonly property color selectedBackgroundColor: root.zzzEverywhere ? Appearance.zzz.signal
+    readonly property color selectedBackgroundColor: root.zzzEverywhere ? Appearance.zzz.sticker
         : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardHover
         : Appearance.colors.colLayer1
-    readonly property color hoverBackgroundColor: root.zzzEverywhere ? Appearance.zzz.paperAlt
+    readonly property color hoverBackgroundColor: root.zzzEverywhere ? Appearance.colors.colLayer1Hover
         : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardHover
         : Appearance.colors.colLayer1
-    readonly property color pressedBackgroundColor: root.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.signal, Appearance.zzz.ink, 0.78)
+    readonly property color pressedBackgroundColor: root.zzzEverywhere ? Appearance.colors.colPrimaryActive
         : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardActive
         : Appearance.colors.colLayer1Hover
-    readonly property color activeRippleColor: root.zzzEverywhere ? ColorUtils.transparentize(Appearance.zzz.ink, 0.72)
+    readonly property color activeRippleColor: root.zzzEverywhere ? Appearance.colors.colLayer1Active
         : Appearance.angelEverywhere
         ? Appearance.angel.colGlassCardActive
         : Appearance.colors.colLayer1Hover
@@ -71,7 +71,7 @@ RippleButton {
 
     implicitHeight: rowLayout.implicitHeight + root.buttonVerticalPadding * 2
     implicitWidth: rowLayout.implicitWidth + root.buttonHorizontalPadding * 2
-    buttonRadius: root.zzzEverywhere ? Appearance.zzz.pillRadius
+    buttonRadius: root.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
     colBackground: (root.down || root.keyboardDown)
@@ -85,7 +85,7 @@ RippleButton {
     // Matched-char colour must contrast with the CURRENT row background: when the
     // row is selected the bg is the accent plate, so the accent-coloured match
     // would vanish into it — switch to onSignal (the readable on-accent ink).
-    property string highlightPrefix: `<u><font color="${root.zzzEverywhere ? (root.isHighlighted ? Appearance.zzz.onSignal : Appearance.zzz.accent) : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary}">`
+    property string highlightPrefix: `<u><font color="${root.zzzEverywhere ? (root.isHighlighted ? Appearance.zzz.onSticker : Appearance.zzz.accent) : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary}">`
     property string highlightSuffix: `</font></u>`
     function highlightContent(content, query) {
         if (!query || query.length === 0 || content == query || fontType === "monospace")
@@ -259,8 +259,12 @@ RippleButton {
                     sourceComponent: Rectangle {
                         implicitWidth: activeText.implicitHeight
                         implicitHeight: activeText.implicitHeight
-                        radius: Appearance.rounding.full
+                        radius: Appearance.zzzEverywhere ? Appearance.zzz.pillRadius : Appearance.rounding.full
                         color: Appearance.colors.colPrimary
+                        Behavior on radius {
+                            enabled: Appearance.animationsEnabled
+                            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+                        }
                         MaterialSymbol {
                             id: activeText
                             anchors.centerIn: parent
@@ -349,7 +353,7 @@ RippleButton {
                     property string materialIconName: modelData.materialIcon ?? ""
                     implicitHeight: 34
                     implicitWidth: 34
-                    buttonRadius: Appearance.rounding.full
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.pillRadius : Appearance.rounding.full
 
                     colBackgroundHover: root.hoverBackgroundColor
                     colRipple: root.activeRippleColor

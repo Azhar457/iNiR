@@ -387,6 +387,15 @@ Scope {
                 right: true
             }
 
+            ZzzPlate {
+                anchors.fill: panelBackground
+                visible: Appearance.zzzEverywhere && panelBackground.visible
+                fillColor: Appearance.colors.colLayer0
+                strokeColor: Appearance.zzz.borderColor
+                strokeWidth: Appearance.zzz.hairlineThick
+                chamfer: Appearance.zzz.cutCorner
+            }
+
             Rectangle {
                 anchors.fill: parent
                 z: -1
@@ -538,7 +547,7 @@ Scope {
                 Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                 color: {
                     if (Appearance.zzzEverywhere)
-                        return Appearance.zzz.bg0
+                        return "transparent"
                     if (Appearance.angelEverywhere)
                         return Appearance.angel.colGlassPopup
                     if (Appearance.inirEverywhere)
@@ -550,7 +559,7 @@ Scope {
                     const base = ColorUtils.mix(Appearance.colors.colLayer0, Qt.rgba(0, 0, 0, 1), 0.35)
                     return ColorUtils.applyAlpha(base, root.altBackgroundOpacity)
                 }
-                border.width: Appearance.zzzEverywhere ? 1
+                border.width: Appearance.zzzEverywhere ? 0
                     : Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
                     : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : (root.altUseM3Layout ? 1 : 0)
                 border.color: Appearance.zzzEverywhere ? Appearance.zzz.borderColor
@@ -563,6 +572,15 @@ Scope {
                 Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             }
 
+            ZzzPlate {
+                anchors.fill: compactBackground
+                visible: Appearance.zzzEverywhere && compactBackground.visible
+                fillColor: Appearance.colors.colLayer2
+                strokeColor: Appearance.zzz.hairlineStrong
+                strokeWidth: Appearance.zzz.hairlineThick
+                chamfer: Appearance.zzz.cutCorner
+            }
+
             Rectangle {
                 id: compactBackground
                 visible: root.compactStyle
@@ -570,14 +588,14 @@ Scope {
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                     : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
-                color: Appearance.zzzEverywhere ? Appearance.zzz.bg2
+                color: Appearance.zzzEverywhere ? "transparent"
                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
                     : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base 
                     : Appearance.colors.colSurfaceContainerHigh
                 Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
-                border.width: Appearance.zzzEverywhere ? 1
+                border.width: Appearance.zzzEverywhere ? 0
                     : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                     : Appearance.inirEverywhere || Appearance.auroraEverywhere ? 1 : 0
                 border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
@@ -1193,6 +1211,16 @@ Scope {
             }
 
             // List mode content
+            ZzzPlate {
+                anchors.fill: listContent
+                visible: Appearance.zzzEverywhere && listContent.visible
+                fillColor: Appearance.colors.colLayer1
+                strokeColor: Appearance.zzz.hairlineStrong
+                strokeWidth: Appearance.zzz.hairlineThick
+                chamfer: Appearance.zzz.cutCorner
+                z: 1
+            }
+
             Rectangle {
                 id: listContent
                 visible: root.listStyle
@@ -1203,14 +1231,14 @@ Scope {
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
                     : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
-                color: Appearance.zzzEverywhere ? Appearance.zzz.bg1
+                color: Appearance.zzzEverywhere ? "transparent"
                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1 
                     : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base 
                     : Appearance.colors.colSurfaceContainer
                 Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
-                border.width: Appearance.zzzEverywhere ? 1
+                border.width: Appearance.zzzEverywhere ? 0
                     : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                     : Appearance.auroraEverywhere ? 1 : 0
                 border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong

@@ -252,13 +252,22 @@ Scope {
         }
 
         // Main card
+        ZzzPlate {
+            anchors.fill: card
+            visible: root._zzz
+            fillColor: Appearance.colors.colLayer0
+            strokeColor: Appearance.zzz.borderColor
+            strokeWidth: Appearance.zzz.hairlineThick
+            chamfer: Appearance.zzz.cutCorner
+        }
+
         Rectangle {
             id: card
             anchors.centerIn: parent
             width: Math.min(parent.width - 80, 640)
             height: Math.min(parent.height - 80, contentLayout.implicitHeight + 2)
-            color: root.layerColor
-            border.width: 1
+            color: root._zzz ? "transparent" : root.layerColor
+            border.width: root._zzz ? 0 : 1
             border.color: root.borderColor
             radius: root.cardRadius
             clip: true

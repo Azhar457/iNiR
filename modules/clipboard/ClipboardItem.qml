@@ -43,12 +43,19 @@ RippleButton {
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
     // M3 consistent colors: transparent by default, layer3 on hover/select, primaryContainer on press
+    // zzz previously used paperAlt (bg2) for both hover AND isSelected — a
+    // near-neutral surface tone with no hue/saturation shift, so an item in
+    // the list barely read as different from an idle one, and hover vs.
+    // keyboard-selected were indistinguishable from each other. Both now tint
+    // toward the accent color instead, with isSelected noticeably stronger.
     colBackground: Appearance.zzzEverywhere
         ? ((root.down || root.keyboardDown)
             ? Appearance.zzz.signal
-            : ((root.hovered || root.focus || root.isSelected)
-                ? Appearance.zzz.paperAlt
-                : "transparent"))
+            : (root.isSelected
+                ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.24)
+                : ((root.hovered || root.focus)
+                    ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.12)
+                    : "transparent")))
         : (root.down || root.keyboardDown)
         ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
@@ -58,7 +65,7 @@ RippleButton {
                 : Appearance.auroraEverywhere ? Appearance.colors.colLayer3
                 : Appearance.colors.colLayer3)
             : "transparent")
-    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+    colBackgroundHover: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.12)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer3Hover
         : Appearance.auroraEverywhere ? Appearance.colors.colLayer3Hover

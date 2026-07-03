@@ -48,7 +48,7 @@ Scope { // Scope
         baseHeight: 40
         clickedWidth: baseWidth
         clickedHeight: baseHeight + 10
-        buttonRadius: Appearance.rounding.normal
+        buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
     }
 
     Loader {
