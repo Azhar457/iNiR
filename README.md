@@ -120,7 +120,7 @@ I wanted my desktop to look and work a certain way and nothing else did exactly 
 - Better dock/taskbar app icon matching
 
 **Two panel families**, switchable on the fly with `Super+Shift+W`:
-- **Material ii** — floating bar, sidebars, dock, 5 visual styles (material, cards, aurora, inir, angel)
+- **Material ii** — floating bar, sidebars, dock, 6 visual styles (material, cards, aurora, inir, angel, zzz)
 - **Waffle** — Windows 11-inspired taskbar, start menu, action center, notification center
 
 **Automatic theming** — pick a wallpaper and everything adapts:

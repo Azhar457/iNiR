@@ -27,11 +27,11 @@ Two mutually exclusive UI families, switchable at runtime (`Super+Shift+W`):
 |---|---|---|
 | Active when | `panelFamily !== "waffle"` | `panelFamily === "waffle"` |
 | Visual tokens | `Appearance.*` | `Looks.*` |
-| Styles | material, cards, aurora, inir, angel | Single fluent style |
+| Styles | material, cards, aurora, inir, angel, zzz | Single fluent style |
 | Bar | Top (or vertical) | Bottom (Win11 taskbar) |
 | App launcher | Overview | StartMenu with search |
 | Right panel | SidebarRight | ActionCenter + NotificationCenter |
-| Panels | 24 (iiBar, iiDock, iiSidebarLeft, ...) | 24 (wBar, wStartMenu, wActionCenter, ... + shared ii panels) |
+| Panels | 29 (iiBar, iiDock, iiSidebarLeft, ...) | 25 (wBar, wStartMenu, wActionCenter, ... + shared ii panels) |
 
 Each panel uses `PanelLoader` (LazyLoader wrapper):
 ```qml
@@ -43,29 +43,29 @@ PanelLoader {
 ```
 Loads when ALL conditions are true: `Config.ready` + identifier in `enabledPanels` array + `extraCondition`.
 
-Style dispatch priority: **angel > inir > aurora > material**. Cards is a material variant (no separate dispatch).
+Style dispatch priority: **zzz > angel > inir > aurora > material** (`Appearance.qml`: `zzzEverywhere`/`angelEverywhere`/`inirEverywhere`/`auroraEverywhere` are `globalStyle` checks; `auroraEverywhere` is also true when `globalStyle === "angel"`, so angel must be checked before aurora wherever both matter). Cards is a material variant (no separate dispatch).
 
 ## Directory Structure
 
 ```
 shell.qml                     # Root entry — loads services, selects panel family
-ShellIiPanels.qml             # Material Design family (24 panels)
-ShellWafflePanels.qml         # Windows 11 family (24 panels)
+ShellIiPanels.qml             # Material Design family (29 panels)
+ShellWafflePanels.qml         # Windows 11 family (25 panels)
 GlobalStates.qml              # Runtime UI state (panel open/closed booleans)
 FamilyTransitionOverlay.qml   # Animated family switch
 settings.qml                  # Settings GUI (separate Quickshell config)
 welcome.qml                   # First-run wizard
 killDialog.qml                # Process kill confirmation
 
-modules/                      # 30+ UI module directories
+modules/                      # 33 UI module directories
 ├── common/                   # Shared infrastructure
-│   ├── Appearance.qml        # ii visual tokens (881 lines, 400+ properties)
-│   ├── Config.qml            # Central config (JsonAdapter, 1385+ lines)
-│   └── widgets/              # 129 reusable widgets + qmldir
-├── bar/                      # Top bar (ii family, 33 files)
-├── sidebarLeft/              # AI chat, YT Music, widgets (21+ files)
-├── sidebarRight/             # Toggles, calendar, tools (21+ files)
-├── settings/                 # All config UI pages (21 files)
+│   ├── Appearance.qml        # ii visual tokens (1233 lines)
+│   ├── Config.qml            # Central config (JsonAdapter, 2329 lines)
+│   └── widgets/              # 154 reusable widgets + qmldir
+├── bar/                      # Top bar (ii family, 35 files)
+├── sidebarLeft/              # AI chat, YT Music, widgets (70 files incl. subdirs)
+├── sidebarRight/             # Toggles, calendar, tools (74 files incl. subdirs)
+├── settings/                 # All config UI pages (30 files)
 ├── dock/                     # App dock (all 4 positions)
 ├── overview/                 # Workspace overview + app search
 ├── waffle/                   # Windows 11 family
@@ -73,53 +73,53 @@ modules/                      # 30+ UI module directories
 │   ├── startMenu/            # Start menu with search
 │   ├── actionCenter/         # Quick settings
 │   ├── notificationCenter/   # Notification list + calendar
-│   ├── looks/Looks.qml       # Waffle visual tokens (41 design tokens)
-│   └── [14 more subdirs]
-└── [20+ more modules]
+│   ├── looks/Looks.qml       # Waffle visual tokens
+│   └── [13 more subdirs]
+└── [25 more modules]
 
-services/                     # 70+ runtime singletons
+services/                     # 61 top-level runtime singletons (+ services/deferred/)
 ├── qmldir                    # Service module registration
 ├── Audio.qml                 # PipeWire volume, mute, per-app mixer
-├── NiriService.qml           # Niri compositor IPC (1376 lines)
+├── NiriService.qml           # Niri compositor IPC (1574 lines)
 ├── CompositorService.qml     # Compositor detection (Niri vs Hyprland)
 ├── Network.qml               # NetworkManager integration
 ├── Weather.qml               # Weather polling + privacy-aware location
 ├── Bluetooth.qml             # BlueZ device management
 ├── Translation.qml           # i18n string lookup
-└── [60+ more services]
+└── [more services]
 
-scripts/                      # Shell/fish/python helpers
-├── inir                      # CLI launcher (30KB bash, 40+ commands)
+scripts/                      # Shell/fish/python helpers (26 top-level entries)
+├── inir                      # CLI launcher (bash, IPC + lifecycle commands)
 ├── colors/                   # Color generation pipeline
 │   ├── applycolor.sh         # Orchestrator
 │   ├── generate_colors_material.py  # Material You color generation + template rendering
 │   ├── modules/              # Per-app theming (terminals, GTK, etc.)
 │   └── lib/                  # Shared infrastructure
-└── [19+ more scripts]
+└── [more scripts]
 
 sdata/                        # Install/update lifecycle
 ├── lib/                      # Shared bash libraries
-├── migrations/               # Numbered scripts (001–020)
-├── subcmd-install/           # Install phases (1–5)
+├── migrations/               # Numbered scripts (001–031)
+├── subcmd-install/           # Install phases
 └── subcmd-uninstall/         # Uninstall phases
 
 defaults/                     # Shipped defaults
-├── config.json               # Default config (1100+ lines, 51 sections)
+├── config.json               # Default config (1762 lines, 62 top-level keys)
 ├── niri/                     # Niri config templates
 └── [GTK, KDE, fuzzel, etc.]
 
-translations/                 # i18n strings (15+ languages)
+translations/                 # i18n strings (15 languages)
 distro/arch/                  # Arch PKGBUILDs (dependency manifests)
 assets/                       # Icons, wallpapers, systemd unit, desktop entry
-docs/                         # User documentation (14 files)
+docs/                         # User documentation (28 files)
 ```
 
 ## Config System
 
 | Aspect | Details |
 |--------|---------|
-| Schema | `modules/common/Config.qml` — JsonAdapter, 1385+ lines, 51 top-level sections |
-| Defaults | `defaults/config.json` — 1100+ lines |
+| Schema | `modules/common/Config.qml` — JsonAdapter, 2329 lines |
+| Defaults | `defaults/config.json` — 1762 lines, 62 top-level keys |
 | User file | `~/.config/illogical-impulse/config.json` (legacy namespace from fork origin) |
 | Read | `Config.options.path.to.key` — schema-declared properties are typed QML properties with defaults |
 | Write | `Config.setNestedValue("path.to.key", value)` — writes + fires `configChanged()` signal |
@@ -137,10 +137,10 @@ docs/                         # User documentation (14 files)
 
 | Singleton | Dependents | Domain |
 |-----------|-----------|--------|
-| `Config` | 200+ | All config read/write |
-| `Appearance` | 352+ | All ii module visuals |
-| `Translation` | 260+ | All i18n strings |
-| `GlobalStates` | 129+ | Panel visibility state |
+| `Config` | 321+ files | All config read/write |
+| `Appearance` | 488+ files | All ii module visuals |
+| `Translation` | 350+ files | All i18n strings |
+| `GlobalStates` | 160+ files | Panel visibility state |
 | `Looks` | waffle modules | Waffle visual tokens |
 | `NiriService` | compositor modules | Niri IPC, workspaces, windows |
 | `Audio` | medium | PipeWire volume, mute, per-app mixer |
@@ -204,10 +204,10 @@ User config for the running QML shell lives at `~/.config/illogical-impulse/conf
 
 ### Migrations
 
-Location: `sdata/migrations/` (numbered scripts: 001–020).
+Location: `sdata/migrations/` (numbered scripts: 001–031).
 - Append-only — never rename, reorder, or delete existing migrations
 - Idempotent — may run again if state is lost
-- Next number: `021-descriptive-name.sh`
+- Next number: `032-descriptive-name.sh`
 
 ## Daily Development
 
@@ -223,10 +223,12 @@ inir settings               # Open settings GUI
 inir <target> <function> [args...]
 inir overview toggle
 inir audio volumeUp
-
-# Low-level restart (fallback)
-qs kill -c inir; qs -c inir
 ```
+
+Never run raw `qs kill -c inir` / `qs -c inir` by hand — iNiR runs under
+`inir.service` (systemd --user); a bare `qs` invocation kills or duplicates
+the live session outside systemd's supervision. `inir restart` is the only
+correct way to force a restart.
 
 ## Known Harmless Warnings
 
