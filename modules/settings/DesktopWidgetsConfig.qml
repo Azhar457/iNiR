@@ -202,6 +202,20 @@ ContentPage {
         onClicked: if (wsc.toggleAction) wsc.toggleAction(!wsc.active)
     }
 
+    component WidgetResetButton: RippleButton {
+        id: wrb
+        required property string configPath
+        required property var defaults
+        Layout.fillWidth: true
+        text: Translation.tr("Reset to defaults")
+        onClicked: {
+            const updates = {}
+            for (const key in wrb.defaults)
+                updates[wrb.configPath + "." + key] = wrb.defaults[key]
+            Config.setNestedValues(updates)
+        }
+    }
+
     // ── Reusable slider row with icon + inline value ────────
     component SliderRow: RowLayout {
         id: sliderRow
@@ -332,7 +346,33 @@ ContentPage {
             visible: wac.hasCardControls
             title: Translation.tr("Card surface")
 
+            SettingsSwitch {
+                buttonIcon: "format_color_fill"
+                text: Translation.tr("Show background")
+                autoToggle: false
+                checked: Config.getNestedValue(wac.configPath + ".showBackground", wac.configEntry?.showBackground ?? true)
+                onToggledByUser: checked => Config.setNestedValue(wac.configPath + ".showBackground", checked)
+            }
+
+            SettingsSwitch {
+                visible: Appearance.auroraEverywhere || Appearance.angelEverywhere
+                buttonIcon: "blur_on"
+                text: Translation.tr("Blur background")
+                autoToggle: false
+                checked: Config.getNestedValue(wac.configPath + ".useBlur", wac.configEntry?.useBlur ?? false)
+                onToggledByUser: checked => Config.setNestedValue(wac.configPath + ".useBlur", checked)
+            }
+
+            SettingsSwitch {
+                buttonIcon: "border_style"
+                text: Translation.tr("Show border")
+                autoToggle: false
+                checked: Config.getNestedValue(wac.configPath + ".showBorder", wac.configEntry?.showBorder ?? true)
+                onToggledByUser: checked => Config.setNestedValue(wac.configPath + ".showBorder", checked)
+            }
+
             SliderRow {
+                visible: Config.getNestedValue(wac.configPath + ".showBackground", wac.configEntry?.showBackground ?? true)
                 icon: "gradient"
                 label: Translation.tr("Background")
                 configPath: wac.configPath + ".backgroundOpacity"
@@ -342,6 +382,7 @@ ContentPage {
             }
 
             WidgetSettingRow {
+                visible: Config.getNestedValue(wac.configPath + ".showBorder", wac.configEntry?.showBorder ?? true) && !Appearance.zzzEverywhere
                 label: Translation.tr("Border")
                 icon: "border_style"
                 StyledSpinBox {
@@ -353,6 +394,7 @@ ContentPage {
             }
 
             SliderRow {
+                visible: Config.getNestedValue(wac.configPath + ".showBorder", wac.configEntry?.showBorder ?? true)
                 icon: "tonality"
                 label: Translation.tr("Border opacity")
                 configPath: wac.configPath + ".borderOpacity"
@@ -1260,6 +1302,13 @@ ContentPage {
                     Config.setNestedValue("background.widgets.weather.conditionOpacity", 0.7);
                     Config.setNestedValue("background.widgets.weather.widgetScale", 100);
                     Config.setNestedValue("background.widgets.weather.widgetOpacity", 100);
+                    Config.setNestedValue("background.widgets.weather.showBackground", true);
+                    Config.setNestedValue("background.widgets.weather.useBlur", false);
+                    Config.setNestedValue("background.widgets.weather.showBorder", true);
+                    Config.setNestedValue("background.widgets.weather.backgroundOpacity", 0.16);
+                    Config.setNestedValue("background.widgets.weather.borderWidth", 1);
+                    Config.setNestedValue("background.widgets.weather.borderOpacity", 0.2);
+                    Config.setNestedValue("background.widgets.weather.cornerRadius", -1);
                     Config.setNestedValue("background.widgets.weather.colorMode", "auto");
                     Config.setNestedValue("background.widgets.weather.dim", 0);
                     Config.setNestedValue("background.widgets.weather.locked", false);
@@ -1539,9 +1588,9 @@ ContentPage {
                     Config.setNestedValue("background.widgets.visualizer.widgetOpacity", 100);
                     Config.setNestedValue("background.widgets.visualizer.showBackground", true);
                     Config.setNestedValue("background.widgets.visualizer.showBorder", true);
-                    Config.setNestedValue("background.widgets.visualizer.backgroundOpacity", 0.06);
+                    Config.setNestedValue("background.widgets.visualizer.backgroundOpacity", 0.16);
                     Config.setNestedValue("background.widgets.visualizer.borderWidth", 1);
-                    Config.setNestedValue("background.widgets.visualizer.borderOpacity", 0.08);
+                    Config.setNestedValue("background.widgets.visualizer.borderOpacity", 0.2);
                     Config.setNestedValue("background.widgets.visualizer.cornerRadius", -1);
                     Config.setNestedValue("background.widgets.visualizer.colorMode", "auto");
                     Config.setNestedValue("background.widgets.visualizer.locked", false);
@@ -1750,9 +1799,9 @@ ContentPage {
                     Config.setNestedValue("background.widgets.systemMonitor.widgetOpacity", 100);
                     Config.setNestedValue("background.widgets.systemMonitor.showBackground", true);
                     Config.setNestedValue("background.widgets.systemMonitor.showBorder", true);
-                    Config.setNestedValue("background.widgets.systemMonitor.backgroundOpacity", 0.06);
+                    Config.setNestedValue("background.widgets.systemMonitor.backgroundOpacity", 0.16);
                     Config.setNestedValue("background.widgets.systemMonitor.borderWidth", 1);
-                    Config.setNestedValue("background.widgets.systemMonitor.borderOpacity", 0.08);
+                    Config.setNestedValue("background.widgets.systemMonitor.borderOpacity", 0.2);
                     Config.setNestedValue("background.widgets.systemMonitor.cornerRadius", -1);
                     Config.setNestedValue("background.widgets.systemMonitor.colorMode", "auto");
                     Config.setNestedValue("background.widgets.systemMonitor.locked", false);
@@ -1944,15 +1993,398 @@ ContentPage {
                     Config.setNestedValue("background.widgets.battery.widgetOpacity", 100);
                     Config.setNestedValue("background.widgets.battery.showBackground", true);
                     Config.setNestedValue("background.widgets.battery.showBorder", true);
-                    Config.setNestedValue("background.widgets.battery.backgroundOpacity", 0.06);
+                    Config.setNestedValue("background.widgets.battery.backgroundOpacity", 0.16);
                     Config.setNestedValue("background.widgets.battery.borderWidth", 1);
-                    Config.setNestedValue("background.widgets.battery.borderOpacity", 0.08);
+                    Config.setNestedValue("background.widgets.battery.borderOpacity", 0.2);
                     Config.setNestedValue("background.widgets.battery.cornerRadius", -1);
                     Config.setNestedValue("background.widgets.battery.colorMode", "auto");
                     Config.setNestedValue("background.widgets.battery.locked", false);
                     Config.setNestedValue("background.widgets.battery.x", 50);
                     Config.setNestedValue("background.widgets.battery.y", 50);
                 }
+            }
+        }
+    }
+
+    // ── Notes ───────────────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "sticky_note_2"
+        title: Translation.tr("Notes")
+
+        SettingsGroup {
+            WidgetSettingRow {
+                label: Translation.tr("State")
+                icon: "check"
+                trailing: false
+                WidgetToggleChip {
+                    configPath: "background.widgets.notes.enable"
+                    buttonIcon: "check"
+                    buttonText: Translation.tr("Enable")
+                }
+                WidgetPlacementSelector {
+                    configPath: "background.widgets.notes"
+                    configEntry: Config.getNestedValue("background.widgets.notes", ({}))
+                    defaultStrategy: "free"
+                }
+            }
+            WidgetZonePicker {
+                configPath: "background.widgets.notes"
+                configEntry: Config.getNestedValue("background.widgets.notes", ({}))
+            }
+            ContentSubsection {
+                title: Translation.tr("Text")
+                WidgetSettingRow {
+                    label: Translation.tr("Font size")
+                    icon: "format_size"
+                    StyledSpinBox {
+                        from: 10; to: 48; stepSize: 1
+                        value: Config.getNestedValue("background.widgets.notes.fontSize", 14)
+                        onValueModified: Config.setNestedValue("background.widgets.notes.fontSize", value)
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Font")
+                    icon: "font_download"
+                    trailing: false
+                    ConfigSelectionArray {
+                        currentValue: Config.getNestedValue("background.widgets.notes.fontFamily", "sans")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.notes.fontFamily", newValue)
+                        options: [
+                            { displayName: Translation.tr("Sans"), value: "sans" },
+                            { displayName: Translation.tr("Mono"), value: "mono" }
+                        ]
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Alignment")
+                    icon: "format_align_left"
+                    trailing: false
+                    ConfigSelectionArray {
+                        currentValue: Config.getNestedValue("background.widgets.notes.textAlign", "left")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.notes.textAlign", newValue)
+                        options: [
+                            { displayName: Translation.tr("Left"), icon: "format_align_left", value: "left" },
+                            { displayName: Translation.tr("Center"), icon: "format_align_center", value: "center" },
+                            { displayName: Translation.tr("Right"), icon: "format_align_right", value: "right" }
+                        ]
+                    }
+                }
+            }
+            WidgetAppearanceControls {
+                configPath: "background.widgets.notes"
+                configEntry: Config.getNestedValue("background.widgets.notes", ({}))
+                hasCardControls: true
+            }
+            WidgetResetButton {
+                configPath: "background.widgets.notes"
+                defaults: ({
+                    placementStrategy: "free", text: "", fontSize: 14, fontFamily: "sans",
+                    textAlign: "left", contentWidth: 240, contentHeight: 160, dim: 0,
+                    widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.10,
+                    borderWidth: 1, borderOpacity: 0.12, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 80
+                })
+            }
+        }
+    }
+
+    // ── Upcoming Events ─────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "event"
+        title: Translation.tr("Upcoming Events")
+
+        SettingsGroup {
+            WidgetSettingRow {
+                label: Translation.tr("State")
+                icon: "check"
+                trailing: false
+                WidgetToggleChip {
+                    configPath: "background.widgets.calendarUpcoming.enable"
+                    buttonIcon: "check"
+                    buttonText: Translation.tr("Enable")
+                }
+                WidgetPlacementSelector {
+                    configPath: "background.widgets.calendarUpcoming"
+                    configEntry: Config.getNestedValue("background.widgets.calendarUpcoming", ({}))
+                    defaultStrategy: "free"
+                }
+            }
+            WidgetZonePicker {
+                configPath: "background.widgets.calendarUpcoming"
+                configEntry: Config.getNestedValue("background.widgets.calendarUpcoming", ({}))
+            }
+            ContentSubsection {
+                title: Translation.tr("Content")
+                WidgetSettingRow {
+                    label: Translation.tr("Maximum events")
+                    icon: "format_list_numbered"
+                    StyledSpinBox {
+                        from: 1; to: 12; stepSize: 1
+                        value: Config.getNestedValue("background.widgets.calendarUpcoming.maxEvents", 5)
+                        onValueModified: Config.setNestedValue("background.widgets.calendarUpcoming.maxEvents", value)
+                    }
+                }
+                ConfigRow {
+                    SettingsSwitch {
+                        buttonIcon: "today"
+                        text: Translation.tr("Show date")
+                        autoToggle: false
+                        checked: Config.getNestedValue("background.widgets.calendarUpcoming.showDate", true)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.calendarUpcoming.showDate", checked)
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "schedule"
+                        text: Translation.tr("Show time")
+                        autoToggle: false
+                        checked: Config.getNestedValue("background.widgets.calendarUpcoming.showTime", true)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.calendarUpcoming.showTime", checked)
+                    }
+                }
+                ConfigRow {
+                    SettingsSwitch {
+                        buttonIcon: "place"
+                        text: Translation.tr("Show location")
+                        autoToggle: false
+                        checked: Config.getNestedValue("background.widgets.calendarUpcoming.showLocation", false)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.calendarUpcoming.showLocation", checked)
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "view_day"
+                        text: Translation.tr("Group by day")
+                        autoToggle: false
+                        checked: Config.getNestedValue("background.widgets.calendarUpcoming.groupByDay", true)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.calendarUpcoming.groupByDay", checked)
+                    }
+                }
+            }
+            WidgetAppearanceControls {
+                configPath: "background.widgets.calendarUpcoming"
+                configEntry: Config.getNestedValue("background.widgets.calendarUpcoming", ({}))
+                hasCardControls: true
+            }
+            WidgetResetButton {
+                configPath: "background.widgets.calendarUpcoming"
+                defaults: ({
+                    placementStrategy: "free", maxEvents: 5, showDate: true, showTime: true,
+                    showLocation: false, groupByDay: true, contentWidth: 280, contentHeight: 220,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.10,
+                    borderWidth: 1, borderOpacity: 0.12, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 80
+                })
+            }
+        }
+    }
+
+    // ── Network ──────────────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "wifi"
+        title: Translation.tr("Network")
+
+        SettingsGroup {
+            WidgetSettingRow {
+                label: Translation.tr("State")
+                icon: "check"
+                trailing: false
+                WidgetToggleChip {
+                    configPath: "background.widgets.network.enable"
+                    buttonIcon: "check"
+                    buttonText: Translation.tr("Enable")
+                }
+                WidgetPlacementSelector {
+                    configPath: "background.widgets.network"
+                    configEntry: Config.getNestedValue("background.widgets.network", ({}))
+                    defaultStrategy: "free"
+                }
+            }
+            WidgetZonePicker {
+                configPath: "background.widgets.network"
+                configEntry: Config.getNestedValue("background.widgets.network", ({}))
+            }
+            WidgetAppearanceControls {
+                configPath: "background.widgets.network"
+                configEntry: Config.getNestedValue("background.widgets.network", ({}))
+                hasCardControls: true
+            }
+            WidgetResetButton {
+                configPath: "background.widgets.network"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 280, contentHeight: 96,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 200
+                })
+            }
+        }
+    }
+
+    // ── System Uptime ────────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "avg_pace"
+        title: Translation.tr("System uptime")
+
+        SettingsGroup {
+            WidgetSettingRow {
+                label: Translation.tr("State")
+                icon: "check"
+                trailing: false
+                WidgetToggleChip {
+                    configPath: "background.widgets.uptime.enable"
+                    buttonIcon: "check"
+                    buttonText: Translation.tr("Enable")
+                }
+                WidgetPlacementSelector {
+                    configPath: "background.widgets.uptime"
+                    configEntry: Config.getNestedValue("background.widgets.uptime", ({}))
+                    defaultStrategy: "free"
+                }
+            }
+            WidgetZonePicker {
+                configPath: "background.widgets.uptime"
+                configEntry: Config.getNestedValue("background.widgets.uptime", ({}))
+            }
+            WidgetAppearanceControls {
+                configPath: "background.widgets.uptime"
+                configEntry: Config.getNestedValue("background.widgets.uptime", ({}))
+                hasCardControls: true
+            }
+            WidgetResetButton {
+                configPath: "background.widgets.uptime"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 250, contentHeight: 96,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 80
+                })
+            }
+        }
+    }
+
+    // ── CPU Tachometer ────────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "speed"
+        title: Translation.tr("CPU Tachometer")
+
+        SettingsGroup {
+            WidgetSettingRow {
+                label: Translation.tr("State")
+                icon: "check"
+                trailing: false
+                WidgetToggleChip {
+                    configPath: "background.widgets.tacho.enable"
+                    buttonIcon: "check"
+                    buttonText: Translation.tr("Enable")
+                }
+                WidgetPlacementSelector {
+                    configPath: "background.widgets.tacho"
+                    configEntry: Config.getNestedValue("background.widgets.tacho", ({}))
+                    defaultStrategy: "free"
+                }
+            }
+            WidgetZonePicker {
+                configPath: "background.widgets.tacho"
+                configEntry: Config.getNestedValue("background.widgets.tacho", ({}))
+            }
+            WidgetSettingRow {
+                label: Translation.tr("Gauge size")
+                icon: "speed"
+                StyledSpinBox {
+                    from: 100; to: 320; stepSize: 10
+                    value: Config.getNestedValue("background.widgets.tacho.gaugeSize", 180)
+                    onValueModified: Config.setNestedValue("background.widgets.tacho.gaugeSize", value)
+                    StyledToolTip { text: Translation.tr("Gauge diameter (px)") }
+                }
+            }
+            WidgetAppearanceControls {
+                configPath: "background.widgets.tacho"
+                configEntry: Config.getNestedValue("background.widgets.tacho", ({}))
+                hasCardControls: true
+            }
+            WidgetResetButton {
+                configPath: "background.widgets.tacho"
+                defaults: ({
+                    placementStrategy: "free", gaugeSize: 180,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 120, y: 120
+                })
+            }
+        }
+    }
+
+    // ── News Ticker ───────────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "newspaper"
+        title: Translation.tr("News Ticker")
+
+        SettingsGroup {
+            WidgetSettingRow {
+                label: Translation.tr("State")
+                icon: "check"
+                trailing: false
+                WidgetToggleChip {
+                    configPath: "background.widgets.newsTicker.enable"
+                    buttonIcon: "check"
+                    buttonText: Translation.tr("Enable")
+                }
+                WidgetPlacementSelector {
+                    configPath: "background.widgets.newsTicker"
+                    configEntry: Config.getNestedValue("background.widgets.newsTicker", ({}))
+                    defaultStrategy: "free"
+                }
+            }
+            WidgetZonePicker {
+                configPath: "background.widgets.newsTicker"
+                configEntry: Config.getNestedValue("background.widgets.newsTicker", ({}))
+            }
+            WidgetSettingRow {
+                label: Translation.tr("Width")
+                icon: "swap_horiz"
+                StyledSpinBox {
+                    from: 200; to: 600; stepSize: 10
+                    value: Config.getNestedValue("background.widgets.newsTicker.contentWidth", 320)
+                    onValueModified: Config.setNestedValue("background.widgets.newsTicker.contentWidth", value)
+                }
+            }
+            WidgetSettingRow {
+                label: Translation.tr("Height")
+                icon: "swap_vert"
+                StyledSpinBox {
+                    from: 60; to: 300; stepSize: 4
+                    value: Config.getNestedValue("background.widgets.newsTicker.contentHeight", 92)
+                    onValueModified: Config.setNestedValue("background.widgets.newsTicker.contentHeight", value)
+                }
+            }
+            WidgetAppearanceControls {
+                configPath: "background.widgets.newsTicker"
+                configEntry: Config.getNestedValue("background.widgets.newsTicker", ({}))
+                hasCardControls: true
+            }
+            WidgetResetButton {
+                configPath: "background.widgets.newsTicker"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 320, contentHeight: 92,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 100, y: 260
+                })
             }
         }
     }

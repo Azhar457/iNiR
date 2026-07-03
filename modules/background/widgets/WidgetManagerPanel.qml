@@ -40,14 +40,31 @@ Item {
     MouseArea { anchors.fill: parent; z: -1; acceptedButtons: Qt.AllButtons; propagateComposedEvents: false }
 
     // ── Shadow + Background card ──
-    StyledRectangularShadow { target: _bgCard }
+    StyledRectangularShadow {
+        target: _bgCard
+        visible: !Appearance.zzzEverywhere && !Appearance.auroraEverywhere
+    }
 
-    Rectangle {
+    PanelSurface {
         id: _bgCard
         anchors.fill: parent
-        radius: Appearance.rounding.normal
-        color: Appearance.colors.colLayer1
-        border { width: 1; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.08) }
+        elevation: 1
+        radiusOverride: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+            : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+            : Appearance.rounding.normal
+        // No frameLabel: the header right below already titles the panel; the
+        // corner tape label overlapped it (registration marks alone suffice).
+        techFrame: Appearance.zzzEverywhere
+    }
+
+    // Engineering dot grid backdrop — this panel IS the edit surface, so it
+    // speaks the same drafting language as the canvas grid behind it.
+    DotGridCanvas {
+        anchors.fill: parent
+        anchors.margins: 10
+        gridSize: 24
+        dotAlpha: 0.07
     }
 
     // ── Header (drag handle) ──
@@ -219,6 +236,10 @@ Item {
             WidgetCard { widgetKey: "battery"; widgetIcon: "battery_full"; widgetLabel: Translation.tr("Battery"); defaultEnabled: false }
             WidgetCard { widgetKey: "notes"; widgetIcon: "sticky_note_2"; widgetLabel: Translation.tr("Notes"); defaultEnabled: false }
             WidgetCard { widgetKey: "calendarUpcoming"; widgetIcon: "event"; widgetLabel: Translation.tr("Upcoming Events"); defaultEnabled: false }
+            WidgetCard { widgetKey: "network"; widgetIcon: "wifi"; widgetLabel: Translation.tr("Network"); defaultEnabled: false }
+            WidgetCard { widgetKey: "uptime"; widgetIcon: "avg_pace"; widgetLabel: Translation.tr("System uptime"); defaultEnabled: false }
+            WidgetCard { widgetKey: "tacho"; widgetIcon: "speed"; widgetLabel: Translation.tr("CPU Tachometer"); defaultEnabled: false }
+            WidgetCard { widgetKey: "newsTicker"; widgetIcon: "newspaper"; widgetLabel: Translation.tr("News Ticker"); defaultEnabled: false }
 
             // ── Custom widgets section ──
             Item { width: 1; height: 8 }
@@ -291,13 +312,13 @@ Item {
                     StyledText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: Translation.tr("No custom widgets found")
-                        color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.3)
+                        color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.65)
                         font.pixelSize: Appearance.font.pixelSize.small
                     }
                     StyledText {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: "~/.config/inir/widgets/"
-                        color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.2)
+                        color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.48)
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         font.family: Appearance.font.family.monospace
                     }
@@ -323,7 +344,8 @@ Item {
         // background/blur/border controls don't apply to them — hide that section to
         // avoid silent setNestedValue failures (their schemas don't expose those keys).
         readonly property bool _supportsAppearance: !isCustom && [
-            "clock", "visualizer", "systemMonitor", "battery", "notes", "calendarUpcoming"
+            "clock", "weather", "visualizer", "systemMonitor", "battery", "notes",
+            "calendarUpcoming", "network", "uptime", "tacho", "newsTicker"
         ].indexOf(widgetKey) !== -1
         readonly property bool _expanded: card._enabled && _expandToggle
         property bool _expandToggle: false
@@ -378,7 +400,7 @@ Item {
                         spacing: 1
                         StyledText {
                             text: card.widgetLabel
-                            color: card._enabled ? Appearance.colors.colOnLayer1 : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5)
+                            color: card._enabled ? Appearance.colors.colOnLayer1 : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.68)
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.Medium
                         }
@@ -401,7 +423,7 @@ Item {
                             StyledText {
                                 visible: !card._locked && card._enabled
                                 text: Math.round(Config.getNestedValue(card._cfgPrefix + ".widgetScale", 100)) + "%" + " · " + Math.round(Config.getNestedValue(card._cfgPrefix + ".widgetOpacity", 100)) + "% op"
-                                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.35)
+                                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.58)
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 font.family: Appearance.font.family.numbers
                             }

@@ -102,6 +102,7 @@ StyledDropShadow 1.0 StyledDropShadow.qml
 StyledFlickable 1.0 StyledFlickable.qml
 StyledImage 1.0 StyledImage.qml
 StyledIndeterminateProgressBar 1.0 StyledIndeterminateProgressBar.qml
+DotGridCanvas 1.0 DotGridCanvas.qml
 StyledListView 1.0 StyledListView.qml
 StyledProgressBar 1.0 StyledProgressBar.qml
 StyledRadioButton 1.0 StyledRadioButton.qml
