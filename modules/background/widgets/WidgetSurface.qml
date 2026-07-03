@@ -22,6 +22,9 @@ Rectangle {
     property real surfaceBorderWidth: 1
     property real surfaceBorderOpacity: 0.08
     property color surfaceColor: Appearance.colors.colOnLayer0
+    // The widget's accent identity (usually root.widgetAccent) — gives the plate
+    // an actual color seat instead of a neutral wallpaper-luminance scrim.
+    property color surfaceAccent: Appearance.colors.colPrimary
     property real surfaceRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
     // Allows per-widget blur override. When false, blur is disabled even if the
     // active style (aurora/angel) supports it. Lets users get a flat,
@@ -39,24 +42,54 @@ Rectangle {
     readonly property bool _glass: (_aurora || _angel) && Appearance.effectsEnabled && root.surfaceUseBlur
     readonly property string _wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
-    // Wallpaper-derived hue so the desktop widgets carry the generated colour.
-    readonly property color _wallpaperTint: ColorUtils.mix(Appearance.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.6)
-    // LEGIBILITY: surfaceColor is the (contrast-aware) text colour, so the plate
-    // must be the OPPOSITE luminance to make content pop on ANY wallpaper — a
-    // contrasting scrim, lightly tinted with the wallpaper hue for character.
-    // The previous build tinted toward surfaceColor itself, so text and plate sat
-    // at the same luminance and nothing read clearly. zzz/inir keep their own look.
-    readonly property color _scrimBase: ColorUtils.contrastColor(surfaceColor)
-    readonly property color _flatFill: ColorUtils.applyAlpha(ColorUtils.mix(_scrimBase, _wallpaperTint, 0.28), Math.min(0.92, Math.max(0.18, surfaceOpacity * 2.4)))
+    // Wallpaper region brightness behind the widget (0-1; -1 = unknown).
+    // Parent widgets bind their own regionBrightness so the plate opposes the
+    // wallpaper: near-black on bright regions, theme container on dark ones.
+    property real regionBrightness: -1
+    readonly property bool _regionBright: regionBrightness >= 0
+        ? regionBrightness > 0.55
+        : !Appearance.m3colors.darkmode
+
+    // A widget surface is a Material container, not another wallpaper sample.
+    // Keep the generated hue while preserving a predictable surface/on-surface
+    // relationship. Accent belongs to active data and icons, not to the whole card.
+    readonly property color _plateDark: {
+        const p = Qt.color(Appearance.colors.colPrimary);
+        return Qt.hsla(p.hslHue, Math.min(0.22, p.hslSaturation), 0.11, 1.0);
+    }
+    // Always the near-black plate: theme-light fills read as white cards on
+    // bright wallpapers (maintainer call — black plate everywhere).
+    readonly property color _flatFill: ColorUtils.applyAlpha(_plateDark, Math.min(0.96, 0.72 + surfaceOpacity * 0.24))
 
     radius: surfaceRadius
     color: _glass ? "transparent"
-        : _zzz ? Appearance.zzz.paper
+        : _zzz ? "transparent"
         : _inir ? "transparent"
         : surfaceOpacity > 0 ? _flatFill : "transparent"
-    border.width: _zzz ? Appearance.zzz.borderThick : 0
-    border.color: _zzz ? Appearance.zzz.hairline : "transparent"
+    border.width: 0
+    border.color: "transparent"
     clip: true
+
+    ZzzPlate {
+        anchors.fill: parent
+        visible: root._zzz
+        // ZZZ separates by FILL contrast, not outlines (maintainer design law:
+        // bright edge strokes read as accent borders on every card). But the
+        // per-widget showBackground/showBorder toggles still apply —
+        // INDEPENDENTLY, so "border only" (transparent fill + hairline) is
+        // reachable like material. Before this, ZzzPlate always filled with
+        // paper, so toggling Border read as adding a background plate.
+        fillColor: root.surfaceOpacity > 0
+            ? ColorUtils.applyAlpha(Appearance.zzz.paper, Math.min(1.0, 0.70 + root.surfaceOpacity * 0.30))
+            : "transparent"
+        // ZZZ hairline is subtle by design (plates separate by FILL, not
+        // outlines). Respect the per-widget borderOpacity so the slider works in
+        // zzz too, but cap at 0.5 so it never becomes a loud accent border.
+        strokeColor: ColorUtils.applyAlpha(Appearance.zzz.onColor, Math.max(0.06, Math.min(0.5, root.surfaceBorderOpacity * 1.4)))
+        strokeWidth: root.surfaceBorderWidth > 0 ? Appearance.zzz.hairlineThick : 0
+        chamfer: Appearance.zzz.cutCorner
+        radius: Appearance.zzz.round ? root.radius : 0
+    }
 
     Behavior on radius {
         enabled: Appearance.animationsEnabled
@@ -84,21 +117,15 @@ Rectangle {
         border.width: root.surfaceBorderWidth
         border.color: root._inir
             ? ColorUtils.applyAlpha(Appearance.inir.colBorder, root.surfaceBorderOpacity * 3)
-            : ColorUtils.applyAlpha(root.surfaceColor, root.surfaceBorderOpacity)
+            : ColorUtils.applyAlpha(
+                ColorUtils.ensureReadable(Appearance.colors.colPrimary, root._flatFill, 3),
+                Math.max(0.18, root.surfaceBorderOpacity * 2))
     }
 
-    // ZZZ accent registration tick on the top-left corner of the widget plate.
-    Rectangle {
-        anchors { left: parent.left; top: parent.top }
-        width: Appearance.zzz.borderThick + 1
-        height: Math.min(parent.height * 0.28, 18)
-        visible: root._zzz
-        color: Appearance.zzz.accent
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-    }
+    // Removed: the ZZZ accent registration tick. Every fix to keep it inside
+    // the rounded/chamfered corner still read as visual clutter across every
+    // desktop widget at once — removed outright per explicit request instead
+    // of iterating on its geometry again.
 
     // Blur layer for aurora/angel
     layer.enabled: _glass
@@ -169,6 +196,6 @@ Rectangle {
         anchors.fill: parent
         visible: root._inir && root.surfaceOpacity > 0
         radius: root.radius
-        color: ColorUtils.applyAlpha(Appearance.inir.colLayer1, root.surfaceOpacity * 2)
+        color: ColorUtils.applyAlpha(root._plateDark, Math.min(0.96, 0.72 + root.surfaceOpacity * 0.24))
     }
 }

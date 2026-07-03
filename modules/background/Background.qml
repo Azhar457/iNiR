@@ -24,6 +24,10 @@ import qs.modules.background.widgets.systemMonitor
 import qs.modules.background.widgets.battery
 import qs.modules.background.widgets.notes
 import qs.modules.background.widgets.calendar
+import qs.modules.background.widgets.network
+import qs.modules.background.widgets.uptime
+import qs.modules.background.widgets.tacho
+import qs.modules.background.widgets.newsTicker
 import "root:modules/common/functions/parallax.js" as ParallaxMath
 
 Scope {
@@ -32,6 +36,15 @@ Scope {
         function toggleEditMode(): string {
             GlobalStates.widgetEditMode = !GlobalStates.widgetEditMode;
             return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off";
+        }
+
+        function setWidgetEnabled(widgetName: string, enabled: bool): string {
+            const knownWidgets = ["weather", "clock", "mediaControls", "visualizer", "systemMonitor",
+                "battery", "notes", "calendarUpcoming", "network", "uptime"];
+            if (!knownWidgets.includes(widgetName))
+                return "unknown widget: " + widgetName;
+            Config.setNestedValue("background.widgets." + widgetName + ".enable", enabled);
+            return widgetName + (enabled ? " enabled" : " disabled");
         }
     }
 
@@ -96,7 +109,11 @@ Scope {
             { key: "mediaControls",  defaultOn: true,  icon: "album" },
             { key: "visualizer",     defaultOn: false, icon: "graphic_eq" },
             { key: "systemMonitor",  defaultOn: false, icon: "monitor_heart" },
-            { key: "battery",        defaultOn: false, icon: "battery_full" }
+            { key: "battery",        defaultOn: false, icon: "battery_full" },
+            { key: "network",        defaultOn: false, icon: "wifi" },
+            { key: "uptime",         defaultOn: false, icon: "avg_pace" },
+            { key: "tacho",          defaultOn: false, icon: "speed" },
+            { key: "newsTicker",     defaultOn: false, icon: "newspaper" }
         ]
         // Revision counter to force re-evaluation
         property int _zoneRevision: 0
@@ -1109,8 +1126,18 @@ Scope {
             MouseArea {
                 anchors.fill: parent
                 z: 15  // Below WidgetCanvas (z: 20) so widgets can receive input
-                acceptedButtons: Qt.RightButton
+                // Left button too, so a click on the bare desktop closes an
+                // already-open menu — ContextMenu's own closeOnFocusLost
+                // backdrop (a separate fullscreen layer-surface on Niri) sits
+                // above the popup's own surface and swallows clicks meant for
+                // the menu items, so that path stays off; this MouseArea
+                // already reliably gets right-clicks regardless, so reuse it.
+                acceptedButtons: Qt.RightButton | Qt.LeftButton
                 onClicked: function(mouse) {
+                    if (mouse.button === Qt.LeftButton) {
+                        if (desktopContextMenu.active) desktopContextMenu.close()
+                        return
+                    }
                     desktopMenuAnchor.x = mouse.x
                     desktopMenuAnchor.y = mouse.y
                     desktopContextMenu.active = true
@@ -1128,6 +1155,10 @@ Scope {
                 z: 27
                 anchorItem: desktopMenuAnchor
                 popupAbove: false
+                // Left as false: ContextMenu's own closeOnFocusLost backdrop
+                // (see the desktop MouseArea above) blocks clicks on the menu's
+                // own items on Niri. Left-click-to-close is handled by that
+                // MouseArea directly instead.
                 closeOnFocusLost: false
                 closeOnHoverLost: true
                 closeOnHoverLostAfterEntered: true
@@ -1765,6 +1796,62 @@ Scope {
                     Item { id: _hitMask8; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
                     sourceComponent: CalendarUpcomingWidget {
                         widgetIndex: 7
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("network", false)
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask9 : null
+                    Item { id: _hitMask9; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    sourceComponent: NetworkWidget {
+                        widgetIndex: 8
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("uptime", false)
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask10 : null
+                    Item { id: _hitMask10; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    sourceComponent: UptimeWidget {
+                        widgetIndex: 9
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("tacho", false)
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask11 : null
+                    Item { id: _hitMask11; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    sourceComponent: TachoWidget {
+                        widgetIndex: 10
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("newsTicker", false)
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask12 : null
+                    Item { id: _hitMask12; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    sourceComponent: NewsTickerWidget {
+                        widgetIndex: 11
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width

@@ -65,8 +65,8 @@ AbstractBackgroundWidget {
                 Layout.alignment: Qt.AlignHCenter
                 Repeater {
                     model: [
-                        { label: "Sans", value: "sans" },
-                        { label: "Mono", value: "mono" }
+                        { label: Translation.tr("Sans"), value: "sans" },
+                        { label: Translation.tr("Mono"), value: "mono" }
                     ]
                     SelectionGroupButton {
                         required property var modelData
@@ -75,6 +75,25 @@ AbstractBackgroundWidget {
                         toggled: root.fontFamily === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.notes.fontFamily", modelData.value)
                     }
+                }
+            }
+
+            RowLayout {
+                spacing: 6
+                Layout.alignment: Qt.AlignHCenter
+
+                StyledText {
+                    text: Translation.tr("Text size")
+                    color: Appearance.colors.colOnLayer2
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                }
+
+                StyledSpinBox {
+                    from: 10
+                    to: 48
+                    stepSize: 1
+                    value: Config.getNestedValue("background.widgets.notes.fontSize", 14)
+                    onValueModified: Config.setNestedValue("background.widgets.notes.fontSize", value)
                 }
             }
 
@@ -101,12 +120,14 @@ AbstractBackgroundWidget {
 
     // ── Card background ────────────────────────────────────────
     WidgetSurface {
+        regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
         surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.colText
+        surfaceColor: root.widgetSurfaceInk
+        surfaceAccent: root.widgetAccent
         surfaceUseBlur: root.useBlur
         screenX: root.x
         screenY: root.y
@@ -135,7 +156,7 @@ AbstractBackgroundWidget {
             width: editorFlick.width
             text: root.noteText
             wrapMode: TextEdit.Wrap
-            color: root.colText
+            color: root.widgetInk
             selectByMouse: true
             selectByKeyboard: true
             persistentSelection: false
@@ -188,7 +209,7 @@ AbstractBackgroundWidget {
             anchors.leftMargin: 2
             visible: textEdit.text.length === 0 && !textEdit.activeFocus
             text: Translation.tr("Write a note…")
-            color: ColorUtils.applyAlpha(root.colText, 0.4)
+            color: root.widgetInkSubtle
             font.pixelSize: root.fontSize
             font.family: textEdit.font.family
         }

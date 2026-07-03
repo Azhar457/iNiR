@@ -45,7 +45,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: root.displayMode === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.systemMonitor.displayMode", modelData.value)
                     }
@@ -69,7 +69,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: modelData.active
                         onClicked: Config.setNestedValue("background.widgets.systemMonitor." + modelData.key, !modelData.active)
                     }
@@ -142,29 +142,17 @@ AbstractBackgroundWidget {
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
     readonly property int _innerMargin: Appearance.angelEverywhere || Appearance.inirEverywhere ? 6 : 2
 
-    readonly property color cpuColor: Appearance.zzzEverywhere ? Appearance.zzz.accent
-        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-        : Appearance.colors.colPrimary
-    readonly property color memColor: Appearance.zzzEverywhere ? Appearance.zzz.secondary
-        : Appearance.angelEverywhere ? Appearance.angel.colSecondary
-        : Appearance.inirEverywhere ? Appearance.inir.colSecondary
-        : Appearance.auroraEverywhere ? Appearance.colors.colSecondary
-        : Appearance.colors.colSecondary
-    readonly property color gpuColor: Appearance.zzzEverywhere ? Appearance.zzz.tertiary
-        : Appearance.angelEverywhere ? Appearance.angel.colTertiary
-        : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-        : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
-        : Appearance.colors.colTertiary
-    readonly property color tempColor: Appearance.zzzEverywhere ? Appearance.zzz.signal
-        : Appearance.inirEverywhere ? Appearance.inir.colError
-        : Appearance.colors.colError
+    // Shared desktop-widget identity (AbstractBackgroundWidget) so every metric reads
+    // as the same wallpaper-generated family across all widgets.
+    readonly property color cpuColor: root.widgetAccent
+    readonly property color memColor: root.widgetAccent2
+    readonly property color gpuColor: root.widgetAccent3
+    readonly property color tempColor: root.widgetSignal
     readonly property color diskColor: Appearance.zzzEverywhere ? Appearance.zzz.sticker
         : Appearance.colors.colTertiaryContainer
 
     // Animation duration for smooth value transitions
-    readonly property int _animDuration: 1200
+    readonly property int _animDuration: Appearance.animation.elementMove.duration
 
     Component.onCompleted: if (root._active) ResourceUsage.keepAlive()
     Component.onDestruction: if (root._active) ResourceUsage.releaseKeepAlive()
@@ -173,20 +161,15 @@ AbstractBackgroundWidget {
         else ResourceUsage.releaseKeepAlive();
     }
 
-    // ── Card background ──
-    readonly property color colCard: Appearance.zzzEverywhere ? "transparent"
-        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-        : Appearance.auroraEverywhere ? "transparent"
-        : Appearance.colors.colLayer1
-
     WidgetSurface {
+        regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
         surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.colText
+        surfaceColor: root.widgetSurfaceInk
+        surfaceAccent: root.widgetAccent
         surfaceUseBlur: root.useBlur
         screenX: root.x
         screenY: root.y
@@ -255,7 +238,7 @@ AbstractBackgroundWidget {
                 StyledText {
                     visible: root.showLabels
                     text: root._getDisplayText(barRow.modelData.key)
-                    color: ColorUtils.applyAlpha(root.colText, root.fillOpacity)
+                    color: ColorUtils.applyAlpha(root.widgetInk, root.fillOpacity)
                     font {
                         pixelSize: Appearance.font.pixelSize.smaller
                         family: Appearance.font.family.numbers
@@ -315,7 +298,7 @@ AbstractBackgroundWidget {
             StyledText {
                 required property var modelData
                 text: modelData.label
-                color: ColorUtils.applyAlpha(root.colText, 0.3)
+                color: ColorUtils.applyAlpha(root.widgetInk, 0.3)
                 font { pixelSize: Appearance.font.pixelSize.smaller - 2; family: Appearance.font.family.numbers }
                 anchors.right: parent.right
                 anchors.rightMargin: 2
@@ -331,7 +314,7 @@ AbstractBackgroundWidget {
                 anchors { left: parent.left; right: parent.right }
                 y: parent._legendH + (parent.height - parent._legendH) * (1.0 - modelData)
                 height: 1
-                color: ColorUtils.applyAlpha(root.colText, 0.06)
+                color: ColorUtils.applyAlpha(root.widgetInk, 0.06)
             }
         }
 
@@ -431,12 +414,12 @@ AbstractBackgroundWidget {
                     MaterialSymbol {
                         text: ringCol.modelData.icon
                         iconSize: Appearance.font.pixelSize.smaller
-                        color: ColorUtils.applyAlpha(root.colText, 0.6)
+                        color: root.widgetInkMuted
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
-                        text: ringCol.modelData.label
-                        color: ColorUtils.applyAlpha(root.colText, 0.6)
+                        text: Translation.tr(ringCol.modelData.label)
+                        color: root.widgetInkMuted
                         font { pixelSize: Appearance.font.pixelSize.smaller; family: Appearance.font.family.main }
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -480,8 +463,8 @@ AbstractBackgroundWidget {
                     }
 
                     StyledText {
-                        text: textChip.modelData.label
-                        color: ColorUtils.applyAlpha(root.colText, 0.6)
+                        text: Translation.tr(textChip.modelData.label)
+                        color: root.widgetInkMuted
                         font {
                             pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
                             family: Appearance.font.family.main
@@ -501,6 +484,33 @@ AbstractBackgroundWidget {
                     }
                 }
             }
+        }
+    }
+
+    Column {
+        visible: root._resourceModel.length === 0
+        anchors.centerIn: parent
+        spacing: Math.round((Appearance.sizes.spacingSmall ?? 8) / 2)
+
+        MaterialShape {
+            anchors.horizontalCenter: parent.horizontalCenter
+            implicitSize: Math.round(48 * root.scaleFactor)
+            shape: MaterialShape.Shape.Ghostish
+            color: ColorUtils.applyAlpha(root.widgetAccent, 0.16)
+
+            MaterialSymbol {
+                anchors.centerIn: parent
+                text: "monitor_heart"
+                iconSize: Math.round(24 * root.scaleFactor)
+                color: root.widgetAccent
+            }
+        }
+
+        StyledText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: Translation.tr("Select a metric")
+            color: root.widgetInkMuted
+            font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
         }
     }
 }

@@ -52,10 +52,12 @@ AbstractWidget {
     readonly property bool showBorder: root._readConfigKey("showBorder") ?? true
     // Granular card controls — override booleans when present
     readonly property real backgroundOpacity: {
+        if (!showBackground) return 0;
         const v = root._readConfigKey("backgroundOpacity");
         return (v !== undefined && v !== null) ? Math.max(0, Math.min(1, Number(v))) : (showBackground ? 0.06 : 0);
     }
     readonly property real borderWidth: {
+        if (!showBorder) return 0;
         const v = root._readConfigKey("borderWidth");
         return (v !== undefined && v !== null) ? Math.max(0, Math.min(8, Number(v))) : (showBorder ? 1 : 0);
     }
@@ -275,11 +277,19 @@ AbstractWidget {
         
         Behavior on saturation {
             enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+            NumberAnimation {
+                duration: Appearance.animation.elementMove.duration
+                easing.type: Appearance.animation.elementMove.type
+                easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+            }
         }
         Behavior on brightness {
             enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+            NumberAnimation {
+                duration: Appearance.animation.elementMove.duration
+                easing.type: Appearance.animation.elementMove.type
+                easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+            }
         }
     }
 
@@ -363,11 +373,12 @@ AbstractWidget {
             propagateComposedEvents: false
         }
 
-        Rectangle {
+        Toolbar {
             anchors.fill: parent
-            radius: Appearance.rounding.full
-            color: Appearance.colors.colLayer2
-            border { width: 1; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12) }
+            padding: 0
+            spacing: 0
+            screenX: root.x + editToolbar.x
+            screenY: root.y + editToolbar.y
         }
 
         Row {
@@ -508,11 +519,13 @@ AbstractWidget {
                 propagateComposedEvents: false
             }
 
-            Rectangle {
+            PanelSurface {
                 anchors.fill: parent
-                radius: Appearance.rounding.small
-                color: Appearance.colors.colLayer2
-                border { width: 1; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12) }
+                elevation: 2
+                radiusOverride: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                    : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+                    : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+                    : Appearance.rounding.small
             }
 
             Loader {
@@ -851,28 +864,123 @@ AbstractWidget {
 
     property bool needsColText: false
     property color dominantColor: Appearance.colors.colPrimary
-    property bool dominantColorIsDark: dominantColor.hslLightness < 0.5
     // Wallpaper region brightness (0-1, from image analysis). -1 = not yet analyzed.
     property real regionBrightness: -1
     readonly property bool _hasBrightness: regionBrightness >= 0
-    readonly property bool _regionIsLight: _hasBrightness ? regionBrightness > 0.5 : !dominantColorIsDark
+    // How "busy"/high-contrast the region is (0-1, = brightness std-dev / 255).
+    // 0 = flat region (the mean is trustworthy). Higher = textured region where the
+    // mean lies, so legibility must target worst-case sub-areas, not the average.
+    property real regionBrightnessSpread: 0
+    // Representative color of the wallpaper region behind the widget.
+    // dominantColor carries the hue/saturation; regionBrightness is the reliable
+    // luminance anchor (the dominant color alone can lie about overall lightness).
+    readonly property color _regionBg: {
+        const dom = Qt.color(root.dominantColor);
+        if (!root._hasBrightness) return dom;
+        return Qt.hsla(dom.hslHue, dom.hslSaturation, root.regionBrightness, 1.0);
+    }
+    // Body-text tones that carry wallpaper CHARACTER while staying legible — the exact
+    // move the shell's ZZZ style makes for its on-surface ink (Appearance.zzz.onColor):
+    // keep a confident near-white / near-black LIGHTNESS so text always reads, but inject
+    // the wallpaper HUE at LOW saturation so the widget belongs to the wallpaper instead
+    // of being flat grey. Earlier extremes were wrong in both directions: a 10% mix toward
+    // colPrimary dragged the lightness and turned text muddy/yellow on yellow walls, while
+    // pure neutral lost all colour generation. A low-sat hue tint at a fixed light/dark
+    // lightness is the legible middle the shell already uses.
+    // Use the shell's own Material on-surface tokens so widget text matches the rest of
+    // the UI's colour generation: colOnLayer0 is the generated on-surface ink (light in
+    // dark mode), m3inverseOnSurface is its generated opposite (dark in dark mode). We
+    // pick whichever opposes the wallpaper region's luminance, so text is light on dark
+    // regions and dark on bright ones — same tokens, region-aware selection.
+    readonly property color _inkLight: ColorUtils.boostInkSaturation(
+        Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0 : Appearance.m3colors.m3inverseOnSurface,
+        Appearance.m3colors.m3primary)
+    readonly property color _inkDark: ColorUtils.boostInkSaturation(
+        Appearance.m3colors.darkmode ? Appearance.m3colors.m3inverseOnSurface : Appearance.colors.colOnLayer0,
+        Appearance.m3colors.m3primary)
     property color colText: {
-        // colorMode override: force light/dark text
-        if (root.colorMode === "light") return Qt.rgba(1, 1, 1, 0.92);
-        if (root.colorMode === "dark") return Qt.rgba(0, 0, 0, 0.87);
+        if (root.colorMode === "light") return root._inkLight;
+        if (root.colorMode === "dark") return root._inkDark;
         const onBlurredLock = (GlobalStates.screenLocked && (Config.options?.lock?.blur?.enable ?? false))
         if (onBlurredLock) return Appearance.colors.colOnLayer0;
-        // Use wallpaper brightness for contrast-aware text color
-        const accent = Appearance.colors.colPrimary
-        if (root._regionIsLight) {
-            // Light wallpaper region → dark text
-            const dark = Qt.rgba(0, 0, 0, 0.87)
-            return ColorUtils.mix(dark, accent, 0.12)
-        } else {
-            // Dark wallpaper region → light text
-            const light = Qt.rgba(1, 1, 1, 0.92)
-            return ColorUtils.mix(light, accent, 0.15)
-        }
+
+        // Auto: pick the neutral whose luminance opposes the region's MEAN brightness, so
+        // text is DARK on bright wallpapers and LIGHT on dark ones — clean and legible,
+        // never the muddy tinted tone that disappeared on same-hue wallpapers. The halo
+        // (colHalo, scaled by region busyness) carries legibility over textured pixels.
+        const bg = root._regionBg;
+        const wantLight = ColorUtils.contrastRatio(Qt.rgba(1, 1, 1, 1), bg) >= ColorUtils.contrastRatio(Qt.rgba(0, 0, 0, 1), bg);
+        return wantLight ? root._inkLight : root._inkDark;
+    }
+
+    // ── Centralized desktop-widget colour identity ──────────────────────────────
+    // Keep these roles tied directly to the generated palette. The asynchronous
+    // region analysis may adjust text/halo contrast, but must not replace or
+    // re-tone widget accents after the palette has appeared on screen.
+    // Style-dispatched material roles, in [primary, secondary, tertiary] order.
+    readonly property var _accentRoles: Appearance.zzzEverywhere
+        ? [Appearance.zzz.accent, Appearance.zzz.secondary, Appearance.zzz.tertiary]
+        : [Appearance.colors.colPrimary, Appearance.colors.colSecondary, Appearance.colors.colTertiary]
+
+    readonly property color widgetAccent: root._accentRoles[0]
+    readonly property color widgetAccent2: root._accentRoles[1]
+    readonly property color widgetAccent3: root._accentRoles[2]
+    readonly property color widgetSignal:
+        Appearance.zzzEverywhere ? Appearance.zzz.signal
+        : Appearance.colors.colError
+    readonly property bool widgetHasSurface: root.backgroundOpacity > 0 || root.useBlur
+
+    // ── Region-aware plate ──────────────────────────────────────────────────
+    // A widget plate must oppose the wallpaper region behind it, not the shell
+    // theme: a bright Material container over a bright wallpaper reads as glare
+    // (the media-controls widget already solves this with its dark overlays).
+    // On bright regions every solid plate drops to a near-black, hue-tinted
+    // surface; on dark regions the theme container stands as before. Glass
+    // styles (aurora blur / angel) keep their own treatment — blur separates.
+    readonly property bool regionIsBright: root._hasBrightness
+        ? root.regionBrightness > 0.55
+        : !Appearance.m3colors.darkmode
+    readonly property color _plateDark: {
+        const p = Qt.color(Appearance.colors.colPrimary);
+        return Qt.hsla(p.hslHue, Math.min(0.22, p.hslSaturation), 0.11, 1.0);
+    }
+    // Solid plates are ALWAYS the near-black derivative: a light theme plate
+    // over a bright (e.g. yellow) wallpaper read as a white card — maintainer
+    // call: black plate on every wallpaper, like the media player.
+    readonly property color widgetPlateColor: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : root._plateDark
+
+    readonly property color widgetSurfaceInk: Appearance.zzzEverywhere
+        ? Appearance.zzz.onBg
+        : !Appearance.angelEverywhere
+        ? root._inkLight
+        : Appearance.colors.colOnLayer1
+    readonly property color widgetInk: root.widgetHasSurface ? root.widgetSurfaceInk : root.colText
+    readonly property color widgetInkMuted: ColorUtils.applyAlpha(root.widgetInk, 0.66)
+    readonly property color widgetInkSubtle: ColorUtils.applyAlpha(root.widgetInk, 0.58)
+    readonly property real widgetCardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+        : Appearance.rounding.normal
+    // Legacy aliases retained for existing consumers.
+    readonly property color widgetAccentVisible: root.widgetAccent
+    readonly property color widgetAccent2Visible: root.widgetAccent2
+    readonly property color widgetAccent3Visible: root.widgetAccent3
+
+    // Legibility shadow placed BEHIND text and plate-less elements so they
+    // detach from any wallpaper without a visible card. Always dark (a true
+    // shadow) — a white halo behind dark text on bright wallpapers read as a
+    // glow, not a shadow. colHalo is consumed only by the clock.
+    // Alpha scales with region busyness: near-invisible on flat regions, strong
+    // on textured ones — a legibility shadow only where it's actually needed.
+    readonly property real _haloAlpha: 0.35 + 0.45 * Math.min(1, root.regionBrightnessSpread / 0.28)
+    readonly property color colHalo: ColorUtils.applyAlpha(Qt.rgba(0, 0, 0, 1), root._haloAlpha)
+
+    // Compatibility helper: accent identity is owned by MaterialThemeLoader, not by
+    // the later wallpaper-region analysis.
+    function ensureVisible(c: color): color {
+        return c;
     }
 
     property bool wallpaperIsVideo: {
@@ -883,6 +991,7 @@ AbstractWidget {
     
     onWallpaperPathChanged: {
         root.regionBrightness = -1
+        root.regionBrightnessSpread = 0
         if (root.wallpaperPath.length > 0)
             _placementDebounce.restart()
     }
@@ -975,6 +1084,8 @@ AbstractWidget {
                     root.dominantColor = parsedContent.dominant_color || Appearance.colors.colPrimary;
                     if (parsedContent.brightness !== undefined)
                         root.regionBrightness = parsedContent.brightness / 255.0;
+                    if (parsedContent.brightness_std !== undefined)
+                        root.regionBrightnessSpread = parsedContent.brightness_std / 255.0;
                     if (!root._isAutoPlacement) return;
                     root._autoPlaceX = root._clampX(parsedContent.center_x * root.wallpaperScale - root.width / 2);
                     root._autoPlaceY = root._clampY(parsedContent.center_y * root.wallpaperScale - root.height / 2);
@@ -1011,6 +1122,8 @@ AbstractWidget {
                     root.dominantColor = parsedContent.dominant_color || Appearance.colors.colPrimary;
                     if (parsedContent.brightness !== undefined)
                         root.regionBrightness = parsedContent.brightness / 255.0;
+                    if (parsedContent.brightness_std !== undefined)
+                        root.regionBrightnessSpread = parsedContent.brightness_std / 255.0;
                 } catch (e) {
                     console.warn("[Widgets] Failed to parse color-only output:", e);
                 }

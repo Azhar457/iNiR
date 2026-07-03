@@ -109,21 +109,10 @@ AbstractBackgroundWidget {
         return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
     }
 
-    // ── 5-style tokens ─────────────────────────────────────────
-    readonly property color colCard: Appearance.zzzEverywhere ? "transparent"
-        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-        : Appearance.auroraEverywhere ? "transparent"
-        : Appearance.colors.colLayer1
-    readonly property color colBorder: Appearance.zzzEverywhere ? Appearance.zzz.hairline
-        : Appearance.angelEverywhere ? "transparent"
-        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+    // ── Style tokens ───────────────────────────────────────────
     readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-
-    // Dimmed text color for overlay
-    property color dimTextColor: ColorUtils.mix(root.colText, Qt.rgba(0, 0, 0, 1), dimFactor)
 
     CavaProcess {
         id: cavaProcess
@@ -132,6 +121,7 @@ AbstractBackgroundWidget {
 
     // ── Card background ────────────────────────────────────────
     WidgetSurface {
+        regionBrightness: root.regionBrightness
         id: cardBg
         anchors.centerIn: parent
         width: parent.width
@@ -140,7 +130,8 @@ AbstractBackgroundWidget {
         surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.colText
+        surfaceColor: root.widgetSurfaceInk
+        surfaceAccent: root.widgetAccent
         surfaceUseBlur: root.useBlur
         screenX: root.x
         screenY: root.y
@@ -161,20 +152,9 @@ AbstractBackgroundWidget {
         barMinHeight: Config.getNestedValue("background.widgets.visualizer.barMinHeight", 1)
         barRadius: Config.getNestedValue("background.widgets.visualizer.barRadius", 2)
         colorLow: Appearance.zzzEverywhere ? Appearance.zzz.chrome
-            : Appearance.angelEverywhere ? Appearance.angel.colSecondaryContainer
-            : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
-            : Appearance.auroraEverywhere ? Appearance.colors.colSecondaryContainer
             : Appearance.colors.colSecondaryContainer
-        colorMed: Appearance.zzzEverywhere ? Appearance.zzz.accent
-            : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-            : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-            : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-            : Appearance.colors.colPrimary
-        colorHigh: Appearance.zzzEverywhere ? Appearance.zzz.signal
-            : Appearance.angelEverywhere ? Appearance.angel.colTertiary
-            : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-            : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
-            : Appearance.colors.colTertiary
+        colorMed: root.widgetAccent
+        colorHigh: root.widgetAccent3
         opacity: 1.0 - dimFactor * 0.6
     }
 
@@ -185,11 +165,7 @@ AbstractBackgroundWidget {
         points: cavaProcess.points
         live: root._active
         fillOpacity: (root.waveOpacity >= 0 ? root.waveOpacity : (Config.options?.appearance?.cava?.waveOpacity ?? 30)) / 100
-        color: Appearance.zzzEverywhere ? Appearance.zzz.accent
-            : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-            : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-            : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-            : Appearance.colors.colPrimary
+        color: root.widgetAccent
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

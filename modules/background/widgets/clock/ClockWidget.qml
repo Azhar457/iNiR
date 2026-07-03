@@ -49,7 +49,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: root.clockStyle === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.clock.style", modelData.value)
                     }
@@ -72,7 +72,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: root.timeFormat === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.clock.timeFormat", modelData.value)
                     }
@@ -99,23 +99,25 @@ AbstractBackgroundWidget {
     property int digitalFontWeight: Config.getNestedValue("background.widgets.clock.digital.fontWeight", 600)
     property int digitalSpacing: Config.getNestedValue("background.widgets.clock.digital.spacing", 6)
 
-    // ── Style-dispatched accent colors ──
-    readonly property color accentPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-        : Appearance.colors.colPrimary
-    readonly property color accentSecondary: Appearance.angelEverywhere ? Appearance.angel.colSecondary
-        : Appearance.inirEverywhere ? Appearance.inir.colSecondary
-        : Appearance.auroraEverywhere ? Appearance.colors.colSecondary
-        : Appearance.colors.colSecondary
-    readonly property color accentTertiary: Appearance.angelEverywhere ? Appearance.angel.colTertiary
-        : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-        : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
-        : Appearance.colors.colTertiary
-    readonly property color accentPrimaryContainer: Appearance.angelEverywhere ? Appearance.angel.colPrimaryContainer
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
-        : Appearance.auroraEverywhere ? Appearance.colors.colPrimaryContainer
-        : Appearance.colors.colPrimaryContainer
+    // ── Accent colors ── from the shared desktop-widget identity (AbstractBackgroundWidget)
+    // so the clock reads as the same family as weather/sysmon/etc., wallpaper-generated.
+    readonly property color accentPrimary: root.widgetAccent
+    readonly property color accentSecondary: root.widgetAccent2
+    readonly property color accentTertiary: root.widgetAccent3
+    // Region-aware shared plate (dark on bright wallpaper regions).
+    readonly property color accentPrimaryContainer: root.widgetPlateColor
+    // The cookie face is a plate filled with the container colour; on a same-tone
+    // wallpaper it can vanish. ensureVisible() walks its lightness until it reads
+    // against the region behind it, keeping the hue (so it stays wallpaper-themed).
+    readonly property color accentPrimaryContainerVisible: root.ensureVisible(root.accentPrimaryContainer)
+    readonly property color cookieInk: ColorUtils.ensureReadable(
+        ColorUtils.mix(
+            Appearance.colors.colOnPrimaryContainer,
+            ColorUtils.contrastColor(root.accentPrimaryContainerVisible),
+            0.35),
+        root.accentPrimaryContainerVisible,
+        7.0)
+    readonly property color cookieInkMuted: ColorUtils.applyAlpha(root.cookieInk, 0.68)
 
     // Local clock with seconds precision when needed (and power is active)
     SystemClock {
@@ -187,14 +189,19 @@ AbstractBackgroundWidget {
         return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
     }
 
-    // Effective text color for clock based on palette + dim
-    property color clockTextColor: {
-        const dark = Qt.rgba(0, 0, 0, 1);
-        return ColorUtils.mix(root.colText, dark, dimFactor);
+    // Effective text color for clock based on palette + dim.
+    // Dim toward the wallpaper region's luminance opposite (not pure black) so
+    // the text keeps its hue character while becoming less prominent.
+    function dimmed(base: color): color {
+        if (dimFactor <= 0) return base;
+        const target = ColorUtils.contrastColor(root._regionBg);
+        return ColorUtils.mix(base, target, dimFactor * 0.7);
     }
+    property color clockTextColor: root.dimmed(root.colText)
 
     // Card background (mainly for digital mode)
     WidgetSurface {
+        regionBrightness: root.regionBrightness
         anchors.fill: parent
         anchors.margins: -Math.round(8 * root.scaleFactor)
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
@@ -202,6 +209,7 @@ AbstractBackgroundWidget {
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
         surfaceColor: root.colText
+        surfaceAccent: root.widgetAccent
         surfaceUseBlur: root.useBlur
         screenX: root.x + Math.round(8 * root.scaleFactor)
         screenY: root.y + Math.round(8 * root.scaleFactor)
@@ -223,12 +231,12 @@ AbstractBackgroundWidget {
                 CookieClock {
                     anchors.horizontalCenter: parent.horizontalCenter
                     scaleFactor: root.scaleFactor
-                    colBackground: root.accentPrimaryContainer
-                    colOnBackground: ColorUtils.mix(root.accentSecondary, root.accentPrimaryContainer, 0.15)
-                    colBackgroundInfo: ColorUtils.mix(root.accentPrimary, root.accentPrimaryContainer, 0.55)
+                    colBackground: root.accentPrimaryContainerVisible
+                    colOnBackground: root.cookieInk
+                    colBackgroundInfo: root.cookieInkMuted
                     colHourHand: root.accentPrimary
                     colMinuteHand: root.accentTertiary
-                    colSecondHand: root.accentPrimary
+                    colSecondHand: root.cookieInk
                 }
                 FadeLoader {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -248,11 +256,15 @@ AbstractBackgroundWidget {
                 spacing: Math.round(root.digitalSpacing * root.scaleFactor)
 
                 ClockText {
+                    // Material accents (same source the desktop player themes from)
+                    // instead of neutral ink: time = primary, date = secondary.
+                    color: root.dimmed(root.accentPrimary)
                     font.pixelSize: Math.round(90 * Appearance.fontSizeScale * root.timeScale / 100 * root.scaleFactor)
                     text: root.timeText
                 }
                 ClockText {
                     visible: root.showDate
+                    color: root.dimmed(root.accentSecondary)
                     Layout.topMargin: Math.round(-5 * root.scaleFactor)
                     font.pixelSize: Math.round(20 * root.dateScale / 100 * root.scaleFactor)
                     text: root.dateText
@@ -269,7 +281,7 @@ AbstractBackgroundWidget {
                     }
                     color: root.clockTextColor
                     style: root.showShadow ? Text.Raised : Text.Normal
-                    styleColor: Appearance.colors.colShadow
+                    styleColor: root.colHalo
                     text: Config.getNestedValue("background.widgets.clock.quote.text", "")
                 }
             }
@@ -344,7 +356,7 @@ AbstractBackgroundWidget {
         }
         color: root.clockTextColor
         style: root.showShadow ? Text.Raised : Text.Normal
-        styleColor: Appearance.colors.colShadow
+        styleColor: root.colHalo
         animateChange: Config.getNestedValue("background.widgets.clock.digital.animateChange", false)
     }
     component ClockStatusText: Row {
@@ -352,11 +364,7 @@ AbstractBackgroundWidget {
         property alias statusIcon: statusIconWidget.text
         property alias statusText: statusTextWidget.text
         property bool shown: true
-        property color textColor: {
-            const base = root.clockStyle === "cookie" ? root.accentPrimary : root.colText;
-            const dark = Qt.rgba(0, 0, 0, 1);
-            return ColorUtils.mix(base, dark, root.dimFactor);
-        }
+        property color textColor: root.dimmed(root.clockStyle === "cookie" ? root.accentPrimary : root.colText)
         opacity: shown ? 1 : 0
         visible: opacity > 0
         Behavior on opacity {
@@ -369,7 +377,7 @@ AbstractBackgroundWidget {
             iconSize: Appearance.font.pixelSize.huge
             color: statusTextRow.textColor
             style: root.showShadow ? Text.Raised : Text.Normal
-            styleColor: Appearance.colors.colShadow
+            styleColor: root.colHalo
         }
         ClockText {
             id: statusTextWidget
@@ -380,7 +388,7 @@ AbstractBackgroundWidget {
                 weight: Font.Normal
             }
             style: root.showShadow ? Text.Raised : Text.Normal
-            styleColor: Appearance.colors.colShadow
+            styleColor: root.colHalo
         }
     }
 }

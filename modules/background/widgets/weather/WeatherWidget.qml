@@ -17,6 +17,8 @@ AbstractBackgroundWidget {
         size: 200, tempSize: 80, iconSize: 80,
         showTemp: true, showIcon: true, showCondition: false,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
+        showBackground: true, useBlur: false, showBorder: true,
+        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1,
         x: 100, y: 100
     })
 
@@ -28,6 +30,7 @@ AbstractBackgroundWidget {
     readonly property bool showTemp: Config.getNestedValue("background.widgets.weather.showTemp", true)
     readonly property bool showIcon: Config.getNestedValue("background.widgets.weather.showIcon", true)
     readonly property bool showCondition: Config.getNestedValue("background.widgets.weather.showCondition", false)
+    readonly property int visibleContentCount: Number(showTemp) + Number(showIcon) + Number(showCondition)
     readonly property int weatherPadding: Math.round((Config.getNestedValue("background.widgets.weather.padding", 20)) * scaleFactor)
     readonly property int tempFontWeight: Config.getNestedValue("background.widgets.weather.tempFontWeight", 500)
     readonly property real conditionOpacity: Config.getNestedValue("background.widgets.weather.conditionOpacity", 0.7)
@@ -37,7 +40,10 @@ AbstractBackgroundWidget {
     resizableAxes: ({ uniform: "size" })
     resizeMinWidth: 80
     resizeMinHeight: 80
-    needsColText: weatherStyle === "card"
+    // Analyze the region in BOTH modes: card needs colText for its overlay, pill needs
+    // it so ensureVisible() and the region-aware halo can make the shape read on any
+    // wallpaper instead of dissolving into a same-tone background.
+    needsColText: true
 
     // ── Shape name → enum mapping ──
     readonly property var _shapeMap: ({
@@ -50,22 +56,18 @@ AbstractBackgroundWidget {
     })
     readonly property var pillShapeEnum: _shapeMap[weatherShape] ?? MaterialShape.Shape.Pill
 
-    // ── Style-dispatched accent colors ──
-    readonly property color accentPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
-        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-        : Appearance.colors.colPrimary
-    readonly property color accentPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.chrome
-        : Appearance.angelEverywhere ? Appearance.colors.colPrimaryContainer
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
-        : Appearance.auroraEverywhere ? Appearance.colors.colPrimaryContainer
+    // ── Accent colors ── primary from the shared desktop-widget identity.
+    readonly property color accentPrimary: root.widgetAccent
+    readonly property color accentPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.sticker
+        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colPrimaryContainer
-    readonly property color accentOnPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.ink
-        : Appearance.angelEverywhere ? Appearance.colors.colOnPrimaryContainer
-        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
-        : Appearance.auroraEverywhere ? Appearance.colors.colOnPrimaryContainer
+    readonly property color accentOnPrimaryContainer: Appearance.zzzEverywhere ? Appearance.zzz.onSticker
         : Appearance.colors.colOnPrimaryContainer
+    readonly property color shapeFill: root.accentPrimaryContainer
+    readonly property color shapeInk: ColorUtils.ensureReadable(root.accentOnPrimaryContainer, root.shapeFill, 4.5)
+    readonly property color cardInk: ColorUtils.ensureReadable(root.colText, Appearance.colors.colLayer1, 4.5)
 
     // ── Style tokens ──
     readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
@@ -100,7 +102,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: root.weatherStyle === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.weather.style", modelData.value)
                     }
@@ -140,7 +142,7 @@ AbstractBackgroundWidget {
                             hoverEnabled: true
                             onClicked: Config.setNestedValue("background.widgets.weather.shape", modelData.value)
                         }
-                        StyledToolTip { text: modelData.label }
+                        StyledToolTip { text: Translation.tr(modelData.label) }
                     }
                 }
             }
@@ -160,9 +162,12 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: modelData.active
-                        onClicked: Config.setNestedValue("background.widgets.weather." + modelData.key, !modelData.active)
+                        onClicked: {
+                            if (modelData.active && root.visibleContentCount <= 1) return
+                            Config.setNestedValue("background.widgets.weather." + modelData.key, !modelData.active)
+                        }
                     }
                 }
             }
@@ -176,17 +181,42 @@ AbstractBackgroundWidget {
         return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
     }
 
-    // Derived colors per style mode
+    // Derived colors per style mode. Dim toward region luminance opposite, not black.
+    readonly property color _dimTarget: ColorUtils.contrastColor(root._regionBg)
     readonly property color weatherIconColor: weatherStyle === "pill"
-        ? root.accentOnPrimaryContainer : ColorUtils.mix(root.colText, Qt.rgba(0, 0, 0, 1), dimFactor)
+        ? root.shapeInk : ColorUtils.mix(root.widgetAccent, root._dimTarget, dimFactor * 0.35)
     readonly property color weatherConditionColor: weatherStyle === "pill"
-        ? ColorUtils.applyAlpha(root.accentOnPrimaryContainer, root.conditionOpacity)
-        : ColorUtils.applyAlpha(ColorUtils.mix(root.colText, Qt.rgba(0, 0, 0, 1), dimFactor), root.conditionOpacity)
+        ? ColorUtils.applyAlpha(root.shapeInk, root.conditionOpacity)
+        : ColorUtils.applyAlpha(ColorUtils.mix(root.cardInk, root._dimTarget, dimFactor * 0.5), root.conditionOpacity)
 
     // ── Pill/shape mode ──
+    // Soft contact shadow detaches the pill from the wallpaper (shell shadow
+    // vocabulary, same edge as every surface). The fill itself goes through
+    // ensureVisible so the generated colour stays readable on any wallpaper.
     StyledDropShadow {
         target: pillBackground
-        visible: pillBackground.visible
+        visible: pillBackground.visible && !Appearance.zzzEverywhere
+    }
+
+    // zzz: ShapeCanvas (MaterialShape's base) has no stroke/border property, so
+    // the pill previously rendered as a flat colour blob with none of zzz's
+    // hairline-outline language — the one desktop widget with no zzz edge
+    // treatment at all. Fake a hairline stroke with a second, slightly larger
+    // shape behind the fill in the hairline colour.
+    MaterialShape {
+        visible: root.weatherStyle === "pill" && Appearance.zzzEverywhere
+        anchors.centerIn: parent
+        shape: root.pillShapeEnum
+        color: Appearance.zzz.hairlineStrong
+        implicitSize: root.shapeSize + Appearance.zzz.borderThick * 2
+    }
+
+    MaterialShape {
+        visible: root.weatherStyle === "pill" && (Appearance.inirEverywhere || Appearance.angelEverywhere)
+        anchors.centerIn: parent
+        shape: root.pillShapeEnum
+        color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.angel.colCardBorder
+        implicitSize: root.shapeSize + 2
     }
 
     MaterialShape {
@@ -194,26 +224,40 @@ AbstractBackgroundWidget {
         visible: root.weatherStyle === "pill"
         anchors.fill: parent
         shape: root.pillShapeEnum
-        color: root.accentPrimaryContainer
+        color: root.shapeFill
         implicitSize: root.shapeSize
     }
 
-    // ── Card mode (adaptive overlay, boosted opacity) ──
-    Rectangle {
+    // ── Card mode ──
+    WidgetSurface {
+        regionBrightness: root.regionBrightness
         id: cardBackground
         visible: root.weatherStyle === "card"
         anchors.fill: parent
-        radius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
-        color: {
-            const eff = Math.max(root.backgroundOpacity, 0.14)
-            return ColorUtils.applyAlpha(root.colText, eff)
-        }
-        border { width: Math.max(root.borderWidth, 1); color: ColorUtils.applyAlpha(root.colText, Math.max(root.borderOpacity, 0.10)) }
+        surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
+        surfaceOpacity: Math.max(root.backgroundOpacity, 0.16)
+        surfaceBorderWidth: Math.max(root.borderWidth, 1)
+        surfaceBorderOpacity: Math.max(root.borderOpacity, 0.12)
+        surfaceColor: root.cardInk
+        surfaceAccent: root.widgetAccent
+        surfaceUseBlur: root.useBlur
+        screenX: root.x
+        screenY: root.y
+        screenWidth: root.scaledScreenWidth
+        screenHeight: root.scaledScreenHeight
     }
 
     Item {
         anchors.fill: parent
         opacity: 1.0 - root.dimFactor * 0.6
+
+        MaterialSymbol {
+            visible: root.visibleContentCount === 0
+            anchors.centerIn: parent
+            text: "cloud_off"
+            iconSize: Math.round(40 * root.scaleFactor)
+            color: root.weatherStyle === "pill" ? root.shapeInk : root.widgetInkMuted
+        }
 
         StyledText {
             visible: root.showTemp
@@ -222,7 +266,7 @@ AbstractBackgroundWidget {
                 family: Appearance.font.family.expressive
                 weight: root.tempFontWeight
             }
-            color: root.accentPrimary
+            color: root.weatherStyle === "pill" ? root.shapeInk : root.cardInk
             text: Weather.data?.temp.substring(0,Weather.data?.temp.length - 1) ?? "--°"
             anchors {
                 right: parent.right

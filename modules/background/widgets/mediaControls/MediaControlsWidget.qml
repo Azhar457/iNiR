@@ -26,18 +26,26 @@ AbstractBackgroundWidget {
 
     readonly property real widgetWidth: Math.round(Appearance.sizes.mediaControlsWidth * scaleFactor)
     readonly property real widgetHeight: Math.round(Appearance.sizes.mediaControlsHeight * scaleFactor)
+
+    // Desktop players skip the per-track album-art scheme (blendedColors) in favor of
+    // the shell's wallpaper palette, but that leaves their on-surface text reading the
+    // raw, near-neutral Appearance.colors token instead of the boosted ink every other
+    // background widget gets via colText. This overrides just the two ink properties
+    // presets actually use for text (colOnLayer0/colSubtext) — everything else presets
+    // read off blendedColors is left undefined here, so `blendedColors?.x ?? Appearance.colors.x`
+    // falls through to the normal token untouched.
+    readonly property QtObject _desktopInkOverride: QtObject {
+        property color colOnLayer0: ColorUtils.boostInkSaturation(Appearance.colors.colOnLayer0, Appearance.m3colors.m3primary)
+        property color colSubtext: ColorUtils.boostInkSaturation(Appearance.colors.colSubtext, Appearance.m3colors.m3primary)
+    }
     property real popupRounding: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
     resizableAxes: ({ uniform: "widgetScale" })
     resizeMinWidth: 160
     resizeMinHeight: 80
     needsColText: true
 
-    // ── Style-dispatched accent colors ──
-    readonly property color accentPrimary: Appearance.zzzEverywhere ? Appearance.zzz.accent
-        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-        : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-        : Appearance.colors.colPrimary
+    // ── Accent from shared desktop-widget identity (already region-visible) ──
+    readonly property color accentPrimary: root.widgetAccent
 
     readonly property string vizType: Config.getNestedValue("background.widgets.mediaControls.visualizerType", "wave")
     readonly property string vizPosition: Config.getNestedValue("background.widgets.mediaControls.visualizerPosition", "bottom")
@@ -64,7 +72,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: root.selectedPreset === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.mediaControls.playerPreset", modelData.value)
                     }
@@ -85,7 +93,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: root.vizType === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.mediaControls.visualizerType", modelData.value)
                     }
@@ -108,7 +116,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: root.vizPosition === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.mediaControls.visualizerPosition", modelData.value)
                     }
@@ -200,20 +208,41 @@ AbstractBackgroundWidget {
             model: ScriptModel {
                 values: root.meaningfulPlayers
             }
-            delegate: Loader {
+            delegate: Item {
+                id: delegateRoot
                 required property MprisPlayer modelData
-                sourceComponent: root.presetComponent
                 Layout.preferredWidth: root.widgetWidth
                 Layout.preferredHeight: root.widgetHeight
-                
-                onLoaded: {
-                    item.player = modelData
-                    item.visualizerPoints = Qt.binding(() => root.visualizerPoints)
-                    item.radius = root.popupRounding
-                    item.screenX = Qt.binding(() => root.widgetScreenPos.x)
-                    item.screenY = Qt.binding(() => root.widgetScreenPos.y)
-                    item.width = Qt.binding(() => root.widgetWidth)
-                    item.height = Qt.binding(() => root.widgetHeight)
+
+                // Soft contact shadow behind the card — the shell's own shadow
+                // vocabulary, so the desktop player floats with the same edge as every
+                // other surface instead of a bolted-on outline. Declared before the
+                // card (renders behind). Input untouched (it never replaces the card).
+                StyledRectangularShadow {
+                    target: playerLoader
+                    radius: root.popupRounding
+                }
+
+                Loader {
+                    id: playerLoader
+                    anchors.fill: parent
+                    sourceComponent: root.presetComponent
+
+                    onLoaded: {
+                        item.player = delegateRoot.modelData
+                        // Desktop players live on the wallpaper, so they follow the generated
+                        // shell palette (not the album-art scheme the floating popup uses).
+                        // _desktopInkOverride only defines colOnLayer0/colSubtext, so every
+                        // other `?? Appearance.colors.x` fallback still wins.
+                        item.blendedColors = root._desktopInkOverride
+                        item.themeSourceColor = Qt.binding(() => Appearance.colors.colPrimary)
+                        item.visualizerPoints = Qt.binding(() => root.visualizerPoints)
+                        item.radius = root.popupRounding
+                        item.screenX = Qt.binding(() => root.widgetScreenPos.x)
+                        item.screenY = Qt.binding(() => root.widgetScreenPos.y)
+                        item.width = Qt.binding(() => root.widgetWidth)
+                        item.height = Qt.binding(() => root.widgetHeight)
+                    }
                 }
             }
         }

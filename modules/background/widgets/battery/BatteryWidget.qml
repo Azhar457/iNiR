@@ -45,7 +45,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: modelData.label
+                        buttonText: Translation.tr(modelData.label)
                         toggled: root.displayMode === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.battery.displayMode", modelData.value)
                     }
@@ -55,7 +55,7 @@ AbstractBackgroundWidget {
                 Layout.alignment: Qt.AlignHCenter
                 leftmost: true; rightmost: true
                 buttonIcon: "timer"
-                buttonText: "Show time"
+                buttonText: Translation.tr("Show time")
                 toggled: root.showTimeEstimate
                 onClicked: Config.setNestedValue("background.widgets.battery.showTime", !root.showTimeEstimate)
             }
@@ -83,24 +83,16 @@ AbstractBackgroundWidget {
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
 
-    readonly property color accentColor: Battery.isLow
-        ? (Appearance.zzzEverywhere ? Appearance.zzz.signal
-            : Appearance.angelEverywhere ? Appearance.angel.colError
-            : Appearance.inirEverywhere ? Appearance.inir.colError
-            : Appearance.colors.colError)
-        : Battery.isCharging
-            ? (Appearance.zzzEverywhere ? Appearance.zzz.tertiary
-                : Appearance.angelEverywhere ? Appearance.angel.colTertiary
-                : Appearance.inirEverywhere ? Appearance.inir.colTertiary
-                : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
-                : Appearance.colors.colTertiary)
-            : (Appearance.zzzEverywhere ? Appearance.zzz.accent
-                : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                : Appearance.inirEverywhere ? Appearance.inir.colPrimary
-                : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
-                : Appearance.colors.colPrimary)
+    // Shared desktop-widget identity (AbstractBackgroundWidget): low = signal,
+    // charging = tertiary accent, normal = primary accent. Same family everywhere.
+    readonly property color accentColor: Battery.isLow ? root.widgetSignal
+        : Battery.isCharging ? root.widgetAccent3
+        : root.widgetAccent
 
-    readonly property color trackColor: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+    // Region-aware shared plate (dark on bright wallpaper regions).
+    readonly property color trackColor: root.regionIsBright && !Appearance.zzzEverywhere && !Appearance.angelEverywhere
+        ? root.widgetPlateColor
+        : Appearance.zzzEverywhere ? Appearance.zzz.chrome
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
@@ -119,17 +111,19 @@ AbstractBackgroundWidget {
     }
     readonly property string timeLabel: {
         if (!root.showTimeEstimate || root.timeText === "") return "";
-        return Battery.isCharging ? root.timeText + " left" : root.timeText;
+        return Translation.tr("%1 remaining").arg(root.timeText);
     }
 
     // ── Card background ───────────────────────────────────────
     WidgetSurface {
+        regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
         surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
-        surfaceColor: root.colText
+        surfaceColor: root.widgetSurfaceInk
+        surfaceAccent: root.widgetAccent
         surfaceUseBlur: root.useBlur
         screenX: root.x
         screenY: root.y
@@ -161,7 +155,7 @@ AbstractBackgroundWidget {
                 StyledText {
                     anchors.centerIn: parent
                     text: root.percentText
-                    color: root.colText
+                    color: root.widgetInk
                     font {
                         pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
                         family: Appearance.font.family.numbers
@@ -174,7 +168,7 @@ AbstractBackgroundWidget {
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.timeLabel
-                color: ColorUtils.applyAlpha(root.colText, 0.6)
+                color: root.widgetInkMuted
                 visible: root.timeLabel !== ""
                 font {
                     pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
@@ -222,11 +216,19 @@ AbstractBackgroundWidget {
 
                         Behavior on color {
                             enabled: Appearance.animationsEnabled
-                            ColorAnimation { duration: 100 }
+                            ColorAnimation {
+                                duration: Appearance.animation.elementMoveFast.duration
+                                easing.type: Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                            }
                         }
                         Behavior on opacity {
                             enabled: Appearance.animationsEnabled
-                            NumberAnimation { duration: 80 }
+                            NumberAnimation {
+                                duration: Appearance.animation.elementMoveFast.duration
+                                easing.type: Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                            }
                         }
                     }
                 }
@@ -242,12 +244,12 @@ AbstractBackgroundWidget {
 
             StyledText {
                 text: root.percentText
-                color: root.colText
+                color: root.widgetInk
                 font { pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor); family: Appearance.font.family.numbers; weight: Font.DemiBold }
             }
             StyledText {
                 text: root.timeLabel
-                color: ColorUtils.applyAlpha(root.colText, 0.6)
+                color: root.widgetInkMuted
                 visible: root.timeLabel !== ""
                 font { pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor); family: Appearance.font.family.main }
                 anchors.baseline: parent.children[0].baseline
@@ -272,12 +274,12 @@ AbstractBackgroundWidget {
 
             StyledText {
                 text: root.percentText
-                color: root.colText
+                color: root.widgetInk
                 font { pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor); family: Appearance.font.family.numbers; weight: Font.DemiBold }
             }
             StyledText {
                 text: root.timeLabel
-                color: ColorUtils.applyAlpha(root.colText, 0.6)
+                color: root.widgetInkMuted
                 visible: root.timeLabel !== ""
                 font { pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor); family: Appearance.font.family.main }
                 anchors.baseline: parent.children[0].baseline
@@ -303,7 +305,11 @@ AbstractBackgroundWidget {
 
                 Behavior on width {
                     enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: 300; easing.type: Easing.OutQuad }
+                    NumberAnimation {
+                        duration: Appearance.animation.elementResize.duration
+                        easing.type: Appearance.animation.elementResize.type
+                        easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                    }
                 }
             }
         }
