@@ -533,6 +533,16 @@ ContentPage {
                     shape: MaterialShape.Shape.Bun
                 }
             }
+
+            ConfigSwitch {
+                buttonIcon: "invert_colors"
+                text: Translation.tr("Invert colors (complementary)")
+                checked: Config.options?.appearance?.colorInvert ?? false
+                onCheckedChanged: Config.setNestedValue("appearance.colorInvert", checked)
+                StyledToolTip {
+                    text: Translation.tr("Rotate every color 180° on the color wheel, producing the complementary palette. Shell-only: terminals, GTK and other external apps keep their original colors.")
+                }
+            }
         }
     }
 
@@ -1250,10 +1260,10 @@ ContentPage {
                 visible: Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true
                 implicitWidth: applyNowRow.implicitWidth + 20
                 implicitHeight: 36
-                buttonRadius: Appearance.rounding.small
-                colBackground: Appearance.colors.colPrimaryContainer
-                colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                colRipple: Appearance.colors.colPrimaryContainerActive
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer
+                colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
+                colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
 
                 contentItem: RowLayout {
                     id: applyNowRow
@@ -1263,13 +1273,21 @@ ContentPage {
                     MaterialSymbol {
                         text: "sync"
                         iconSize: 16
-                        color: Appearance.colors.colOnPrimaryContainer
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        }
                     }
 
                     StyledText {
                         text: Translation.tr("Apply to open terminals")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnPrimaryContainer
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        }
                     }
                 }
 
@@ -1329,7 +1347,6 @@ ContentPage {
                         "dock.cardStyle": true,
                         "sidebar.cardStyle": true,
                         "bar.cornerStyle": cornerStyle,
-                        "appearance.transparency.enable": false,
                     }
                 }
 
@@ -1338,7 +1355,6 @@ ContentPage {
                         "dock.cardStyle": false,
                         "sidebar.cardStyle": false,
                         "bar.cornerStyle": cornerStyle,
-                        "appearance.transparency.enable": true,
                     }
                 }
 
@@ -1347,7 +1363,6 @@ ContentPage {
                         "dock.cardStyle": false,
                         "sidebar.cardStyle": false,
                         "bar.cornerStyle": cornerStyle,
-                        "appearance.transparency.enable": false,
                     }
                 }
 
@@ -1357,7 +1372,6 @@ ContentPage {
                         "dock.cardStyle": false,
                         "sidebar.cardStyle": false,
                         "bar.cornerStyle": cornerStyle === 0 ? 1 : cornerStyle,
-                        "appearance.transparency.enable": true,
                     }
                 }
 
@@ -1366,7 +1380,6 @@ ContentPage {
                         "dock.cardStyle": false,
                         "sidebar.cardStyle": false,
                         "bar.cornerStyle": cornerStyle,
-                        "appearance.transparency.enable": false,
                     }
                 }
 
@@ -1375,7 +1388,6 @@ ContentPage {
                     "dock.cardStyle": false,
                     "sidebar.cardStyle": false,
                     "bar.cornerStyle": cornerStyle,
-                    "appearance.transparency.enable": false,
                 }
             }
 

@@ -865,17 +865,21 @@ ContentPage {
 
                                 RippleButtonWithIcon {
                                     Layout.fillWidth: true
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                                     materialIcon: "wallpaper"
                                     mainText: Translation.tr("Change wallpaper")
-                                    colBackground: Appearance.colors.colPrimaryContainer
-                                    colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                                    colRipple: Appearance.colors.colPrimaryContainerActive
+                                    colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer
+                                    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
+                                    colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
                                     mainContentComponent: Component {
                                         StyledText {
                                             text: Translation.tr("Change wallpaper")
                                             font.pixelSize: Appearance.font.pixelSize.small
-                                            color: Appearance.colors.colOnPrimaryContainer
+                                            color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                                            Behavior on color {
+                                                enabled: Appearance.animationsEnabled
+                                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                            }
                                         }
                                     }
                                     onClicked: {
@@ -889,7 +893,7 @@ ContentPage {
                                 }
                                 RippleButtonWithIcon {
                                     Layout.fillWidth: true
-                                    buttonRadius: Appearance.rounding.small
+                                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                                     materialIcon: "shuffle"
                                     mainText: Translation.tr("Random")
                                     onClicked: {

@@ -1984,20 +1984,26 @@ ContentPage {
                                 id: coinDelegate
                                 required property string modelData
                                 required property int index
+                                readonly property bool isCurrent: coinList.currentIndex === index
                                 width: coinList.width
                                 implicitHeight: 32
-                                buttonRadius: Appearance.rounding.small
-                                colBackground: coinList.currentIndex === index ? Appearance.colors.colLayer1Hover : "transparent"
-                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                                colBackground: isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.sticker : (isCurrent ? Appearance.colors.colLayer1Hover : "transparent")
+                                colBackgroundHover: isCurrent && Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer1Hover
+                                colRipple: isCurrent && Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer1Active
                                 onClicked: cryptoSection.addCoin(modelData)
 
                                 contentItem: StyledText {
                                     text: coinDelegate.modelData
                                     font.pixelSize: Appearance.font.pixelSize.small
                                     font.family: Appearance.font.family.monospace
-                                    color: Appearance.colors.colOnLayer1
+                                    color: coinDelegate.isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnLayer1
                                     leftPadding: 8
                                     verticalAlignment: Text.AlignVCenter
+                                    Behavior on color {
+                                        enabled: Appearance.animationsEnabled
+                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                    }
                                 }
                             }
                         }
@@ -2353,11 +2359,13 @@ ContentPage {
                                 id: tzDelegate
                                 required property var modelData
                                 required property int index
+                                readonly property bool isCurrent: tzList.currentIndex === index
                                 width: tzList.width
                                 implicitHeight: 38
-                                buttonRadius: Appearance.rounding.small
-                                colBackground: tzList.currentIndex === index ? Appearance.colors.colLayer1Hover : "transparent"
-                                colBackgroundHover: Appearance.colors.colLayer1Hover
+                                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                                colBackground: isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.sticker : (isCurrent ? Appearance.colors.colLayer1Hover : "transparent")
+                                colBackgroundHover: isCurrent && Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer1Hover
+                                colRipple: isCurrent && Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer1Active
                                 onClicked: worldClockSection.addTimezone(tzDelegate.modelData.tz)
 
                                 contentItem: RowLayout {
@@ -2369,7 +2377,11 @@ ContentPage {
                                     MaterialSymbol {
                                         text: worldClockSection.regionIcon(tzDelegate.modelData.tz)
                                         iconSize: 16
-                                        color: Appearance.colors.colSubtext
+                                        color: tzDelegate.isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colSubtext
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                        }
                                     }
                                     ColumnLayout {
                                         Layout.fillWidth: true
@@ -2377,19 +2389,31 @@ ContentPage {
                                         StyledText {
                                             text: worldClockSection.cityLabel(tzDelegate.modelData.tz)
                                             font.pixelSize: Appearance.font.pixelSize.small
-                                            color: Appearance.colors.colOnLayer1
+                                            color: tzDelegate.isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnLayer1
+                                            Behavior on color {
+                                                enabled: Appearance.animationsEnabled
+                                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                            }
                                         }
                                         StyledText {
                                             text: tzDelegate.modelData.tz.split("/").slice(0, -1).join(" / ").replace(/_/g, " ")
                                             font.pixelSize: Appearance.font.pixelSize.smallest
-                                            color: Appearance.colors.colSubtext
+                                            color: tzDelegate.isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colSubtext
+                                            Behavior on color {
+                                                enabled: Appearance.animationsEnabled
+                                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                            }
                                         }
                                     }
                                     StyledText {
                                         text: worldClockSection.offsetLabel(tzDelegate.modelData.off)
                                         font.pixelSize: Appearance.font.pixelSize.smallest
                                         font.family: Appearance.font.family.monospace
-                                        color: Appearance.colors.colSubtext
+                                        color: tzDelegate.isCurrent && Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colSubtext
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                        }
                                     }
                                 }
                             }
@@ -2580,10 +2604,10 @@ ContentPage {
                         RippleButton {
                             Layout.fillWidth: true
                             implicitHeight: 34
-                            buttonRadius: Appearance.rounding.small
-                            colBackground: Appearance.colors.colPrimaryContainer
-                            colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                            colRipple: Appearance.colors.colPrimary
+                            buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                            colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer
+                            colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
+                            colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimary
                             onClicked: worldClockSection.adoptSuggestions()
 
                             contentItem: RowLayout {
@@ -2592,13 +2616,21 @@ ContentPage {
                                 MaterialSymbol {
                                     text: "playlist_add"
                                     iconSize: 16
-                                    color: Appearance.colors.colOnPrimaryContainer
+                                    color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                                    Behavior on color {
+                                        enabled: Appearance.animationsEnabled
+                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                    }
                                 }
                                 StyledText {
                                     text: Translation.tr("Add suggested timezones")
                                     font.pixelSize: Appearance.font.pixelSize.small
                                     font.weight: Font.Medium
-                                    color: Appearance.colors.colOnPrimaryContainer
+                                    color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                                    Behavior on color {
+                                        enabled: Appearance.animationsEnabled
+                                        ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                    }
                                 }
                             }
                         }

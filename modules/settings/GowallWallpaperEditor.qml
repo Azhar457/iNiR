@@ -150,7 +150,7 @@ ColumnLayout {
             RippleButton {
                 Layout.fillWidth: true
                 implicitHeight: 36
-                buttonRadius: Appearance.rounding.small
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                 colBackground: SettingsMaterialPreset.groupColor
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 text: Translation.tr("Use current wallpaper")
@@ -169,7 +169,7 @@ ColumnLayout {
             RippleButton {
                 implicitHeight: 36
                 implicitWidth: browseRow.implicitWidth + 24
-                buttonRadius: Appearance.rounding.small
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
                 colBackground: SettingsMaterialPreset.groupColor
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 onClicked: imageDialog.open()
@@ -637,19 +637,31 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitHeight: 38
                 enabled: !GowallService.busy && GowallService.previewUrl.length > 0
-                buttonRadius: Appearance.rounding.small
-                colBackground: Appearance.colors.colPrimaryContainer
-                colBackgroundHover: Appearance.colors.colPrimaryContainerHover
-                colRipple: Appearance.colors.colPrimaryContainerActive
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimaryContainer
+                colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimaryContainerHover
+                colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.colors.colPrimaryContainerActive
                 onClicked: GowallService.applyPreview()
                 contentItem: RowLayout {
                     anchors.centerIn: parent
                     spacing: 6
-                    MaterialSymbol { text: "check_circle"; iconSize: 16; color: Appearance.colors.colOnPrimaryContainer }
+                    MaterialSymbol {
+                        text: "check_circle"
+                        iconSize: 16
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        }
+                    }
                     StyledText {
                         text: Translation.tr("Apply as wallpaper")
                         font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnPrimaryContainer
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimaryContainer
+                        Behavior on color {
+                            enabled: Appearance.animationsEnabled
+                            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                        }
                     }
                 }
             }

@@ -141,6 +141,13 @@ Singleton {
             desc: Translation.tr("Apps that start with iNiR"),
             essential: false,
             component: "modules/settings/AutostartConfig.qml"
+        },
+        {
+            name: Translation.tr("Workspace Strip"),
+            icon: "view_sidebar",
+            desc: Translation.tr("Edge strip for workspace navigation"),
+            essential: false,
+            component: "modules/settings/WorkspaceStripConfig.qml"
         }
     ]
 
@@ -149,7 +156,7 @@ Singleton {
     readonly property var categories: [
         { label: Translation.tr("Essentials"), pages: [0] },
         { label: Translation.tr("Appearance"), pages: [4, 3, 14] },
-        { label: Translation.tr("Shell"), pages: [2, 5, 16, 10, 11] },
+        { label: Translation.tr("Shell"), pages: [2, 5, 16, 10, 11, 18] },
         { label: Translation.tr("System"), pages: [1, 7, 6, 12, 15, 8, 17] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
     ]
@@ -1437,6 +1444,14 @@ Singleton {
             label: Translation.tr("Autostart"),
             description: Translation.tr("Launch apps when iNiR starts"),
             keywords: ["autostart", "startup", "launch", "apps", "boot", "discord", "steam", "telegram"]
-        }
+        },
+
+        // =====================================================================
+        // Workspace Strip (page 18)
+        // =====================================================================
+        { pageIndex: 18, pageName: root.pages[18].name, section: Translation.tr("Workspace Strip"), label: Translation.tr("Workspace strip"), description: Translation.tr("Hidden edge-hover navigator with workspace previews"), keywords: ["workspace", "strip", "edge", "hover", "navigate", "switch", "thumbnail", "preview"] },
+        { pageIndex: 18, pageName: root.pages[18].name, section: Translation.tr("Interaction"), label: Translation.tr("Hover timing"), description: Translation.tr("Control edge activation and close delays"), keywords: ["workspace", "strip", "hover", "delay", "open", "close", "trigger"] },
+        { pageIndex: 18, pageName: root.pages[18].name, section: Translation.tr("Content"), label: Translation.tr("Window previews"), description: Translation.tr("Live active preview with cached hidden-workspace snapshots"), keywords: ["workspace", "strip", "preview", "live", "cached", "thumbnail", "window"] },
+        { pageIndex: 18, pageName: root.pages[18].name, section: Translation.tr("Content"), label: Translation.tr("Metadata and app icons"), description: Translation.tr("Show focused-window details and filter workspaces per monitor"), keywords: ["workspace", "strip", "metadata", "icons", "monitor", "per-monitor", "apps"] }
     ]
 }

@@ -547,6 +547,7 @@ ContentPage {
 
         SettingsGroup {
             SettingsSwitch {
+                visible: CompositorService.isNiri
                 buttonIcon: "help"
                 text: Translation.tr("Confirm before closing windows")
                 checked: Config.options?.closeConfirm?.enabled ?? false

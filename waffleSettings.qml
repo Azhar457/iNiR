@@ -87,6 +87,11 @@ ApplicationWindow {
             name: Translation.tr("Autostart"),
             icon: "power",
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WAutostartPage.qml")
+        },
+        {
+            name: Translation.tr("Workspace Strip"),
+            icon: "desktop",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WWorkspaceStripPage.qml")
         }
     ]
     
