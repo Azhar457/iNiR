@@ -83,9 +83,9 @@ Item {
     ZzzPlate {
         anchors.fill: parent
         visible: root._zzz && root.zzzChamfer && !root.borderless
-        fillColor: root.elevation <= 0 ? Appearance.colors.colLayer0 : Appearance.colors.colLayer1
+        fillColor: root._fill
         strokeColor: Appearance.zzz.hairline
-        strokeWidth: 1
+        strokeWidth: Appearance.zzz.hairlineThick
         chamfer: Appearance.zzz.cutCorner
     }
 

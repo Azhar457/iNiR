@@ -30,20 +30,8 @@ Rectangle {
         NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
 
-    // ZZZ left category accent bar (inset to follow the rounded corners).
-    Rectangle {
-        visible: Appearance.zzzEverywhere
-        anchors {
-            left: parent.left
-            top: parent.top
-            bottom: parent.bottom
-            topMargin: root.radius
-            bottomMargin: root.radius
-            leftMargin: root.border.width
-        }
-        width: Math.max(3, Appearance.zzz.borderThick + 1)
-        color: Appearance.zzz.accent
-    }
+    // No accent rail here — SettingsGroup lives inside SettingsCardSection
+    // which already has the left accent rail. A second rail here would double.
 
     ColumnLayout {
         id: content
@@ -51,7 +39,6 @@ Rectangle {
             fill: parent
             margins: SettingsMaterialPreset.groupPadding
         }
-        anchors.leftMargin: SettingsMaterialPreset.groupPadding + (Appearance.zzzEverywhere ? Appearance.zzz.borderThick + 4 : 0)
         spacing: SettingsMaterialPreset.groupSpacing
     }
 }

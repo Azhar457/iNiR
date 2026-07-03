@@ -26,8 +26,13 @@ Flow {
         },
     ]
     property var currentValue: null
+    readonly property bool hovered: _hoverHandler.hovered
 
     signal selected(var newValue)
+
+    HoverHandler {
+        id: _hoverHandler
+    }
 
     function _findSettingsContext() {
         var page = null;

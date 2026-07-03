@@ -88,11 +88,17 @@ Rectangle {
         }
     }
 
+    // Left accent bar. `clip: true` above only clips to root's bounding box,
+    // not its rounded silhouette, so a square-cornered rectangle here would
+    // poke past the rounded top-left/bottom-left corners as a stray straight
+    // edge. Matching left-side radii keeps it inside the actual curve.
     Rectangle {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         width: 3
         color: root.fillColor
+        topLeftRadius: root.radius
+        bottomLeftRadius: root.radius
     }
 }

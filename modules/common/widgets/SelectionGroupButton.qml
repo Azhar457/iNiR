@@ -18,8 +18,10 @@ GroupButton {
     property bool leftmost: false
     property bool rightmost: false
     readonly property bool showZzzPreview: Appearance.zzzEverywhere && buttonPreviewKind.length > 0
-    leftRadius: (toggled || leftmost) ? (height / 2) : Appearance.rounding.unsharpenmore
-    rightRadius: (toggled || rightmost) ? (height / 2) : Appearance.rounding.unsharpenmore
+    leftRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : (toggled || leftmost) ? (height / 2) : Appearance.rounding.unsharpenmore
+    rightRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : (toggled || rightmost) ? (height / 2) : Appearance.rounding.unsharpenmore
     Behavior on leftRadius {
         enabled: Appearance.animationsEnabled
         animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }

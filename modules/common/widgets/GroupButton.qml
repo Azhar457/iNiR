@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -40,7 +42,7 @@ Button {
     property color colBackgroundHover: Appearance.colors.colLayer1Hover
     property color colBackgroundActive: Appearance.colors.colLayer1Active
     property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : (Appearance.colors.colPrimary)
-    property color colBackgroundToggledHover: Appearance.zzzEverywhere ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.accent, 0.5) : (Appearance.colors.colPrimaryHover)
+    property color colBackgroundToggledHover: Appearance.colors.colPrimaryHover
     property color colBackgroundToggledActive: Appearance.colors.colPrimaryActive
 
     property real radius: root.down ? root.buttonRadiusPressed : root.buttonRadius

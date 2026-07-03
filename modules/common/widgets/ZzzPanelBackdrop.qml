@@ -105,6 +105,23 @@ Item {
         }
     }
 
+    // Lateral light: a left edge lifted by the surface ink and a right edge gently
+    // grounded by the base. Crossed with the vertical sheen/floor above, the tint
+    // density piles up in the CORNERS and along the LEFT side — the plate reads as
+    // lit from the top-left, not a flat fill. Carbon doctrine: onColor/bg0 only, no
+    // accent wash. Static layer, perf-neutral.
+    Rectangle {
+        anchors.fill: parent
+        visible: root.active
+        radius: Appearance.zzz.panelRadius
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: ColorUtils.applyAlpha(Appearance.zzz.onColor, Appearance.zzz.dark ? 0.06 : 0.04) }
+            GradientStop { position: 0.32; color: "transparent" }
+            GradientStop { position: 1.0; color: ColorUtils.applyAlpha(Appearance.zzz.bg0, Appearance.zzz.dark ? 0.10 : 0.06) }
+        }
+    }
+
     ZzzGhostMark {
         visible: root.active
         anchors.centerIn: parent

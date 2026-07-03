@@ -86,10 +86,16 @@ Item {
 
     // ── Chamfered renderer (square mode) ── true 45° cut geometry.
     Shape {
+        id: outline_chamfer
         anchors.fill: parent
         visible: !root._rounded
         preferredRendererType: Shape.CurveRenderer
         antialiasing: true
+        // Inset so the stroke centerline sits half a pixel inside the bounds,
+        // same as the rounded renderer. Without this, the 1px hairline gets
+        // clipped at the item edge and renders as broken dots/segments on the
+        // vertical edges above the cut corner.
+        readonly property real inset: root.strokeWidth / 2
 
         ShapePath {
             fillColor: root._rounded ? "transparent" : root.fillColor
@@ -97,17 +103,17 @@ Item {
             strokeWidth: root._rounded ? 0 : root.strokeWidth
             joinStyle: ShapePath.MiterJoin
 
-            startX: root.chamferTopLeft ? root._ch : 0
-            startY: 0
+            startX: (root.chamferTopLeft ? root._ch : 0) + outline_chamfer.inset
+            startY: outline_chamfer.inset
 
-            PathLine { x: root.width - (root.chamferTopRight ? root._ch : 0); y: 0 }
-            PathLine { x: root.width; y: root.chamferTopRight ? root._ch : 0 }
-            PathLine { x: root.width; y: root.height - (root.chamferBottomRight ? root._ch : 0) }
-            PathLine { x: root.width - (root.chamferBottomRight ? root._ch : 0); y: root.height }
-            PathLine { x: root.chamferBottomLeft ? root._ch : 0; y: root.height }
-            PathLine { x: 0; y: root.height - (root.chamferBottomLeft ? root._ch : 0) }
-            PathLine { x: 0; y: root.chamferTopLeft ? root._ch : 0 }
-            PathLine { x: root.chamferTopLeft ? root._ch : 0; y: 0 }
+            PathLine { x: root.width - (root.chamferTopRight ? root._ch : 0) - outline_chamfer.inset; y: outline_chamfer.inset }
+            PathLine { x: root.width - outline_chamfer.inset; y: (root.chamferTopRight ? root._ch : 0) + outline_chamfer.inset }
+            PathLine { x: root.width - outline_chamfer.inset; y: root.height - (root.chamferBottomRight ? root._ch : 0) - outline_chamfer.inset }
+            PathLine { x: root.width - (root.chamferBottomRight ? root._ch : 0) - outline_chamfer.inset; y: root.height - outline_chamfer.inset }
+            PathLine { x: (root.chamferBottomLeft ? root._ch : 0) + outline_chamfer.inset; y: root.height - outline_chamfer.inset }
+            PathLine { x: outline_chamfer.inset; y: root.height - (root.chamferBottomLeft ? root._ch : 0) - outline_chamfer.inset }
+            PathLine { x: outline_chamfer.inset; y: (root.chamferTopLeft ? root._ch : 0) + outline_chamfer.inset }
+            PathLine { x: (root.chamferTopLeft ? root._ch : 0) + outline_chamfer.inset; y: outline_chamfer.inset }
         }
     }
 

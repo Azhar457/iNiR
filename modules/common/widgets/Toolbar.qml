@@ -35,18 +35,27 @@ Item {
         }
     }
 
+    ZzzPlate {
+        anchors.fill: background
+        visible: Appearance.zzzEverywhere && !root.transparent
+        fillColor: Appearance.colors.colLayer2
+        strokeColor: Appearance.zzz.hairlineStrong
+        strokeWidth: Appearance.zzz.hairlineThick
+        chamfer: Appearance.zzz.cutCorner
+    }
+
     GlassBackground {
         id: background
         anchors.fill: parent
         visible: !root.transparent
-        fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt : Appearance.colors.colSurfaceContainer
+        fallbackColor: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colSurfaceContainer
         inirColor: Appearance.inir.colLayer2
         auroraTransparency: Appearance.aurora.overlayTransparentize
         screenX: root.screenX
         screenY: root.screenY
         screenWidth: Quickshell.screens[0]?.width ?? 1920
         screenHeight: Quickshell.screens[0]?.height ?? 1080
-        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
+        border.width: Appearance.zzzEverywhere ? 0
             : (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
         Behavior on border.width {
             enabled: Appearance.animationsEnabled

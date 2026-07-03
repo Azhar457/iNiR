@@ -141,6 +141,15 @@ MouseArea { // Notification group area
         visible: false
     }
 
+    ZzzPlate {
+        anchors.fill: background
+        visible: Appearance.zzzEverywhere
+        fillColor: root.popup ? Appearance.colors.colLayer1 : Appearance.colors.colLayer2
+        strokeColor: Appearance.zzz.hairlineStrong
+        strokeWidth: Appearance.zzz.hairlineThick
+        chamfer: Appearance.zzz.cutCorner
+    }
+
     Rectangle { // Background of the notification
         id: background
         anchors.left: parent.left
@@ -148,7 +157,7 @@ MouseArea { // Notification group area
 
         // For popup: glass blur for aurora/angel, solid for others
         // For sidebar: transparent to show parent's blur
-        color: Appearance.zzzEverywhere ? (popup ? Appearance.zzz.paper : Appearance.zzz.paperAlt)
+        color: Appearance.zzzEverywhere ? "transparent"
             : Appearance.angelEverywhere ? (popup ? "transparent" : Appearance.angel.colGlassCard)
             : Appearance.inirEverywhere ? (popup ? Appearance.inir.colLayer2 : Appearance.inir.colLayer1)
             : Appearance.auroraEverywhere ? "transparent"
@@ -158,7 +167,7 @@ MouseArea { // Notification group area
         radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
-        border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
+        border.width: Appearance.zzzEverywhere ? 0
             : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
             : (Appearance.inirEverywhere || (Appearance.auroraEverywhere && popup)) ? 1 : 0
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong

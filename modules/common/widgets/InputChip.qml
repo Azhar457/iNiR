@@ -38,13 +38,13 @@ Item {
         id: chipBackground
         implicitWidth: chipContent.implicitWidth + 20
         implicitHeight: 30
-        radius: height / 2
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.pillRadius : height / 2
         // ZZZ: a tag is a neutral data tile with a hairline, not a bright
         // secondary block (colSecondaryContainer → zzz.secondary signal).
         color: closeArea.containsMouse
             ? Appearance.colors.colErrorContainer
             : Appearance.zzzEverywhere
-                ? (bodyArea.containsMouse ? ColorUtils.mix(Appearance.zzz.tile, Appearance.zzz.onColor, 0.90) : Appearance.zzz.tile)
+                ? (bodyArea.containsMouse ? Appearance.colors.colLayer2Hover : Appearance.colors.colLayer2)
                 : bodyArea.containsMouse
                     ? Appearance.colors.colSecondaryContainerHover
                     : Appearance.colors.colSecondaryContainer
@@ -64,6 +64,10 @@ Item {
         Behavior on border.color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
+        Behavior on radius {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
         }
         Behavior on implicitWidth {
             enabled: Appearance.animationsEnabled

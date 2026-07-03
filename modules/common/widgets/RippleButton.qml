@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -16,11 +18,12 @@ Button {
     property bool buttonHovered: buttonMouseArea.containsMouse
     property string buttonText
     property bool pointingHandCursor: true
-    property real buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
+    property real buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : (Appearance?.rounding?.small ?? 4)
     property real buttonRadiusPressed: buttonRadius
     property real buttonEffectiveRadius: root.down ? root.buttonRadiusPressed : root.buttonRadius
-    property int rippleDuration: 1200
+    property int rippleDuration: Appearance.zzzEverywhere ? Appearance.zzz.overshootDuration : 1200
     property bool rippleEnabled: true
     property var downAction // When left clicking (down)
     property var releaseAction // When left clicking (release)
@@ -31,13 +34,13 @@ Button {
     property color colBackground: Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : (ColorUtils.transparentize(Appearance?.colors.colLayer1Hover, 1) || "transparent")
-    property color colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+    property color colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colLayer1Hover
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : (Appearance.colors.colLayer1Hover)
-    property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.chrome : (Appearance.colors.colPrimary)
-    property color colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt : (Appearance.colors.colPrimaryHover)
-    property color colRipple: Appearance.zzzEverywhere ? Appearance.zzz.chrome : (Appearance.colors.colLayer1Active)
-    property color colRippleToggled: Appearance.zzzEverywhere ? Appearance.zzz.chromeAlt : (Appearance.colors.colPrimaryActive)
+    property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimary
+    property color colBackgroundToggledHover: Appearance.colors.colPrimaryHover
+    property color colRipple: Appearance.colors.colLayer1Active
+    property color colRippleToggled: Appearance.colors.colPrimaryActive
 
     opacity: root.enabled ? 1 : 0.4
     property color buttonColor: ColorUtils.transparentize(root.toggled ?
@@ -220,5 +223,8 @@ Button {
 
     contentItem: StyledText {
         text: root.buttonText
+        color: Appearance.zzzEverywhere
+            ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.onColor)
+            : Appearance.colors.colOnLayer0
     }
 }

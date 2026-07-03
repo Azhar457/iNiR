@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import qs.modules.common
 import qs.modules.common.functions
 import qs.services
@@ -24,7 +26,9 @@ RippleButton {
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer4
     colBackgroundHover: Appearance.zzzEverywhere
-        ? (urgency == NotificationUrgency.Critical ? ColorUtils.applyAlpha(Appearance.zzz.secondary, 0.88) : ColorUtils.mix(Appearance.zzz.paperAlt, Appearance.zzz.signal, 0.92))
+        ? (urgency == NotificationUrgency.Critical
+            ? Appearance.colors.colSecondaryContainerHover
+            : Appearance.colors.colLayer2Hover)
         : (urgency == NotificationUrgency.Critical)
         ? Appearance.colors.colSecondaryContainerHover
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
@@ -32,7 +36,9 @@ RippleButton {
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer4Hover
     colRipple: Appearance.zzzEverywhere
-        ? ColorUtils.applyAlpha(urgency == NotificationUrgency.Critical ? Appearance.zzz.secondary : Appearance.zzz.accent, 0.32)
+        ? (urgency == NotificationUrgency.Critical
+            ? Appearance.colors.colSecondaryContainerActive
+            : Appearance.colors.colLayer2Active)
         : (urgency == NotificationUrgency.Critical)
         ? Appearance.colors.colSecondaryContainerActive
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
