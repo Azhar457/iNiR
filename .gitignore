@@ -168,3 +168,8 @@ version.json
 scripts/zzz-audit.sh
 docs/superpowers/
 docs/powerspec/
+.pi-subagents/
+design-system/
+.impeccable/
+assets/graphify-out/
+skills-lock.json

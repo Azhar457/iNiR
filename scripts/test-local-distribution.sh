@@ -87,8 +87,8 @@ step "agent artifact leak guard"
 # Distribution stripping removes them post-copy. Validate the stripping
 # contracts exist so no install path can miss them.
 leak_guard=0
-agent_files=(AGENTS.md CLAUDE.md CODEX.md PI.md codemap.md .mcp.json opencode.json)
-agent_dirs=(.claude .factory .opencode .codex .agents .codebase-memory)
+agent_files=(AGENTS.md CLAUDE.md CODEX.md PI.md codemap.md .mcp.json opencode.json skills-lock.json)
+agent_dirs=(.claude .factory .opencode .codex .agents .codebase-memory .impeccable .pi-subagents)
 
 # Makefile must strip agent files after cp -a
 for agent_file in "${agent_files[@]}"; do
