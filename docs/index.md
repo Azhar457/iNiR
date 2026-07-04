@@ -1,98 +1,114 @@
 # iNiR
 
-**A complete desktop shell for Niri, built on Quickshell.**
+<div class="inir-home" markdown>
 
-Not a theme. Not dotfiles. The entire desktop interface: bar, sidebars, dock, notifications, settings, theming, everything. One process, one runtime, no separate daemon.
+<section class="inir-masthead" aria-labelledby="inir-title" markdown>
+<div class="inir-masthead__mark" aria-hidden="true">
+  <span>入</span>
+  <span>理</span>
+</div>
+<div class="inir-masthead__copy" markdown>
+<p class="inir-kicker">Niri desktop shell · Quickshell/QML · static reference</p>
 
-Built on [Quickshell](https://quickshell.outfoxxed.me/) (QML shell framework) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
+<h1 id="inir-title">A whole desktop, documented like a system you can trust.</h1>
 
----
+<p class="inir-lede">iNiR is not a theme and not a dotfiles bundle. It is the full desktop surface for Niri: bar, dock, sidebars, notifications, settings, wallpapers, overview, lock screen, IPC, updates, and theming, all running inside one Quickshell process.</p>
 
-## Quick navigation
+<div class="inir-actions" markdown>
+[Install iNiR](INSTALL.md){ .md-button .md-button--primary }
+[Open the reference](IPC.md){ .md-button }
+[View on GitHub](https://github.com/snowarch/inir){ .md-button }
+</div>
+</div>
 
-- **What's new**
-  Current release notes, short version. No archaeology degree required.
-  [Changelog](../CHANGELOG.md)
-
-- **Getting Started**
-  Install iNiR, run the setup wizard, get a shell on screen.
-  [Installation](INSTALL.md)
-
-- **Panel Families**
-  Material ii (6 styles) and Waffle (Windows 11). How they work, how to switch.
-  [Panel families](PANEL_FAMILIES.md)
-
-- **Theming**
-  Wallpaper-based colors, 44 presets, and the pipeline that themes your entire system.
-  [Theming architecture](THEMING_ARCHITECTURE.md)
-
-- **Setup & Updates**
-  Update flow, migrations, rollback, doctor, package-managed installs.
-  [Setup and updates](SETUP.md)
-
-- **IPC Reference**
-  All targets and functions you can call from keybinds, scripts, or terminal.
-  [IPC targets](IPC.md)
-
-- **Calendar**
-  Sync Google Calendar, Outlook, Nextcloud, or any ICS calendar.
-  [Calendar setup](CALENDAR.md)
-
-- **Architecture**
-  How it all fits together. Entry point, services, config, panel loading.
-  [Architecture overview](ARCHITECTURE_OVERVIEW.md)
-
----
-
-## What it looks like
-
-Two panel families, switchable at runtime with `Super+Shift+W`:
-
-|               | **Material ii**                      | **Waffle**                    |
-| ------------- | ------------------------------------ | ----------------------------- |
-| Design tokens | `Appearance.*`                       | `Looks.*`                     |
-| Bar position  | Top (or vertical)                    | Bottom taskbar                |
-| Launcher      | Overview (`Super+Space`)             | Start Menu                    |
-| Right panel   | Sidebar (toggles, calendar, tools)   | Action Center + Notification Center |
-| Styles        | material, cards, aurora, inir, angel, zzz | Fluent                    |
-
-## Common commands
+<aside class="inir-command" aria-label="First run command" markdown>
+<span>first run</span>
 
 ```bash
-inir run            # start the shell
-inir restart        # restart running instance
-inir settings       # open settings UI
-inir logs --full    # view full Quickshell logs
-inir doctor         # health checks and auto-fix
-inir update         # pull + migrate + restart
+git clone https://github.com/snowarch/inir.git
+cd inir
+./setup install
+inir run
 ```
 
-If a page disagrees with the running shell, trust the running shell and open an issue. Docs drift. Code at least has the decency to crash.
+Arch is the automated path. Other distros, package-managed installs, and NixOS are covered in the install docs.
+</aside>
+</section>
 
-## The stack
+<section class="inir-routebook" aria-labelledby="routebook-title" markdown>
+<div markdown>
 
-| Layer | What it does |
-|-------|-------------|
-| **QML runtime** | Quickshell + 760 QML files. Both the UI and system integration in one process. |
-| **Bash control plane** | `scripts/inir` (2400+ lines). Launcher, service lifecycle, IPC routing, diagnostics. |
-| **Python / Go tooling** | Color pipeline, Niri config generation, external app theme generators. |
+## Choose the right page
 
-Primary compositor: **Niri**. Secondary Hyprland support maintained from the fork origin.
+The wiki is organized around what you are trying to do: get a shell on screen, understand the runtime, script it, or extend it without breaking both panel families.
 
----
+</div>
 
-## Key directories
+<nav class="routebook-grid" aria-label="Documentation routes">
+  <a href="INSTALL/"><strong>Install</strong><span>Clone, dependencies, first run, package-managed mode.</span></a>
+  <a href="SETUP/"><strong>Maintain</strong><span>Updates, rollback, migrations, doctor, service control.</span></a>
+  <a href="ARCHITECTURE_OVERVIEW/"><strong>Understand</strong><span>Shell entrypoint, services, modules, startup order.</span></a>
+  <a href="PANEL_FAMILIES/"><strong>Switch families</strong><span>Material ii and Waffle as separate runtime compositions.</span></a>
+  <a href="THEMING_ARCHITECTURE/"><strong>Theme it</strong><span>Wallpaper extraction, presets, QML tokens, external app targets.</span></a>
+  <a href="IPC/"><strong>Script it</strong><span>Targets and functions callable from keybinds or terminal.</span></a>
+</nav>
+</section>
 
-| Path | What's in it |
-|------|-------------|
-| `shell.qml` | Entry point. Singleton init, panel family dispatch. |
-| `services/` | [70+ singletons](SERVICES.md). Audio, network, Niri IPC, theming, Screen Time, everything. |
-| `modules/` | [All UI](MODULES.md). 676 QML files across 30+ module directories. |
-| `modules/common/` | Config, Appearance tokens, 130+ shared widgets. |
-| `defaults/config.json` | Default configuration (~60 sections). |
-| `scripts/inir` | CLI launcher and IPC router. |
-| `scripts/colors/` | Wallpaper-to-color pipeline. |
+<section class="inir-split" aria-labelledby="runtime-title" markdown>
+<div markdown>
 
----
+## Runtime Shape
 
-This documentation reflects the `main` branch. For the repo-level overview, see [ARCHITECTURE.md](https://github.com/snowarch/inir/blob/main/ARCHITECTURE.md).
+iNiR is intentionally one process. The shell keeps its state in shared QML singletons, panel loaders choose one family at a time, and services bridge the desktop to Niri, D-Bus, sockets, subprocesses, and generated theme files.
+
+</div>
+
+<ol class="runtime-flow">
+  <li><span>shell.qml</span><p>Boots the shell, waits for config, applies theme, selects the active family.</p></li>
+  <li><span>Config + services</span><p>Own persistent intent and live system state: audio, network, Niri IPC, wallpapers.</p></li>
+  <li><span>Panel loaders</span><p>Material ii or Waffle loads on demand. Only enabled panels materialize.</p></li>
+  <li><span>Modules</span><p>Bars, panels, overview, settings, notifications, widgets, and lock surfaces render it.</p></li>
+</ol>
+</section>
+
+<section class="family-kakejiku" aria-labelledby="families-title" markdown>
+
+## Two Families
+
+<div class="family-kakejiku__panels">
+  <article>
+    <small>Material ii</small>
+    <h3>Spacious, layered, expressive.</h3>
+    <p>Top bar, Overview launcher, sidebars, Material You color and six visual styles: <code>material</code>, <code>cards</code>, <code>aurora</code>, <code>inir</code>, <code>angel</code>, <code>zzz</code>.</p>
+  </article>
+  <article>
+    <small>Waffle</small>
+    <h3>Dense, mechanical, familiar.</h3>
+    <p>Bottom taskbar, Start menu, Action Center, Notification Center, and its own Fluent-inspired density, motion, and chrome.</p>
+  </article>
+</div>
+
+Switch at runtime with <code>Super+Shift+W</code>. The services layer and config backend stay shared; the visible shell composition changes.
+</section>
+
+<section class="inir-ledger" aria-labelledby="ledger-title" markdown>
+
+## Operator Notes
+
+<div class="ledger-table" markdown>
+
+| Need | Page | Why it matters |
+|------|------|----------------|
+| Package inventory | [Packages](PACKAGES.md) | Every required and optional dependency grouped by role. |
+| Config writes | [Config System](CONFIG_SYSTEM.md) | `Config.setNestedValue()` is the persistence boundary. |
+| Service catalog | [Services](SERVICES.md) | The shared runtime truth used by modules. |
+| Module catalog | [Modules](MODULES.md) | The user-visible QML surface. |
+| Known limits | [Limitations](LIMITATIONS.md) | What is unsupported, experimental, or compositor-specific. |
+| Performance | [QML Performance](OPTIMIZATION.md) | Patterns for keeping the single QML runtime responsive. |
+
+</div>
+
+If a page disagrees with the running shell, trust the running shell and open an issue. Docs drift; code at least has the decency to crash.
+</section>
+
+</div>

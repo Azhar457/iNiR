@@ -15,6 +15,7 @@ Essential packages for Niri + ii to function.
 | Package | Purpose |
 |---------|---------|
 | `niri` | Compositor |
+| `awww` | Wallpaper daemon |
 | `bc` | Math in scripts |
 | `coreutils` | Basic utils |
 | `cliphist` | Clipboard history |
@@ -31,16 +32,15 @@ Essential packages for Niri + ii to function.
 | `libnotify` | Notifications |
 | `pacman-contrib` | checkupdates for update notifications |
 | `wlsunset` | Night light / blue light filter |
-| `dolphin` | File manager (KDE, optional — nautilus is default) |
 | `xdg-desktop-portal` | XDG portal base |
 | `xdg-desktop-portal-gtk` | GTK portal |
 | `xdg-desktop-portal-gnome` | GNOME portal (screenshare) |
 | `polkit` | Privilege elevation |
+| `polkit-gnome` | Polkit auth-dialog agent (works universally) |
 | `networkmanager` | Network management |
 | `gnome-keyring` | Secrets storage |
 | `nautilus` | File manager |
 | `kitty` | Terminal (default) |
-| `foot` | Terminal (fallback) |
 | `fish` | Fish shell (required for scripts) |
 | `gum` | TUI for setup script |
 | `xwayland-satellite` | X11 compatibility |

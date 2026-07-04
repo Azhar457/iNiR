@@ -254,7 +254,7 @@ property string title: NiriService.activeWindow?.title ?? ""
 component PanelLoader: LazyLoader {
     required property string identifier
     property bool extraCondition: true
-    active: Config.ready && Config.options.enabledPanels.includes(identifier) && extraCondition
+    active: Config.ready && (Config.options?.enabledPanels ?? []).includes(identifier) && extraCondition
 }
 ```
 

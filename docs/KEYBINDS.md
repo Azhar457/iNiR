@@ -32,6 +32,7 @@ Change them. Break them. Make them yours. We won't judge.
 | `Mod+Shift+S` | Region screenshot |
 | `Mod+Shift+X` | Region OCR |
 | `Mod+Shift+A` | Region image search |
+| `Mod+Shift+R` | Region screen recording (with audio) |
 | `Print` | Full screenshot (Niri native) |
 | `Ctrl+Print` | Screenshot current screen |
 | `Alt+Print` | Screenshot current window |
@@ -79,7 +80,6 @@ Niri arranges windows in an infinite horizontal strip. These binds control colum
 | Key | Action |
 |-----|--------|
 | `Mod+R` | Cycle preset column widths (⅓ → ½ → ⅔) |
-| `Mod+Shift+R` | Cycle preset window heights |
 | `Mod+Ctrl+R` | Reset window height |
 | `Mod+C` | Center focused column |
 | `Mod+Minus` | Shrink column width 10% |
@@ -116,8 +116,8 @@ Niri arranges windows in an infinite horizontal strip. These binds control colum
 | `Mod+Page_Up` | Focus workspace up |
 | `Mod+Ctrl+Page_Down` | Move column to workspace down |
 | `Mod+Ctrl+Page_Up` | Move column to workspace up |
-| `Mod+WheelDown` | Focus workspace down (mouse) |
-| `Mod+WheelUp` | Focus workspace up (mouse) |
+| `Mod+WheelScrollDown` | Focus workspace down (mouse) |
+| `Mod+WheelScrollUp` | Focus workspace up (mouse) |
 
 ---
 
@@ -156,9 +156,9 @@ All media/volume/brightness keys are routed through iNiR IPC for OSD feedback.
 | `XF86AudioPrev` | Previous track |
 | `XF86MonBrightnessUp` | Brightness up |
 | `XF86MonBrightnessDown` | Brightness down |
-| `Ctrl+Mod+Space` | Play/pause (keyboard) |
-| `Mod+Alt+N` | Next track (keyboard) |
-| `Mod+Alt+P` | Previous track (keyboard) |
+| `Ctrl+Mod+Space` / `Mod+Shift+P` | Play/pause (keyboard) |
+| `Mod+Alt+N` / `Mod+Shift+N` | Next track (keyboard) |
+| `Mod+Alt+P` / `Mod+Shift+B` | Previous track (keyboard) |
 | `Mod+Shift+M` | Toggle mute (keyboard) |
 
 ---

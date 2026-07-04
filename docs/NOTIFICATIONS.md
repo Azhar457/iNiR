@@ -37,7 +37,7 @@ When DND is on, new notifications still arrive and get stored in history. They j
 Notifications persist across shell restarts. History is stored at:
 
 ```
-~/.local/state/user/notifications.json
+~/.local/state/quickshell/user/notifications.json
 ```
 
 View history in the right sidebar (ii) or notification center (waffle). Notifications are grouped by app name for easier scanning.

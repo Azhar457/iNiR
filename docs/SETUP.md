@@ -298,7 +298,7 @@ These checks cover:
 | QML code (`make install` / package style) | `/usr/share/quickshell/inir/` or `/usr/local/share/quickshell/inir/` |
 | User config                               | `~/.config/illogical-impulse/config.json`                            |
 | State files                               | `~/.local/state/quickshell/user/`                                    |
-| Cache                                     | `~/.cache/quickshell/inir/`                                          |
+| Cache                                     | `~/.cache/inir/`                                                     |
 | Launcher                                  | `inir` in the install prefix                                         |
 | Super daemon                              | `~/.local/bin/inir_super_overview_daemon.py`                         |
 | Daemon service                            | `~/.config/systemd/user/inir-super-overview.service`                 |
@@ -383,7 +383,7 @@ The following are removed without prompting (iNiR-exclusive):
 ~/.config/quickshell/inir/                       # Shell configuration
 ~/.config/illogical-impulse/                     # User preferences
 ~/.local/state/quickshell/user/                  # Notifications, todo
-~/.cache/quickshell/inir/                        # Cache
+~/.cache/inir/                                   # Cache
 ~/.local/bin/inir_super_overview_daemon.py       # Super daemon
 ~/.config/systemd/user/inir-super-overview.service # Daemon service
 ~/.config/vesktop/themes/system24.theme.css      # Vesktop theme
@@ -463,7 +463,7 @@ systemctl --user disable --now inir-super-overview.service 2>/dev/null
 rm -rf ~/.config/quickshell/inir
 rm -rf ~/.config/illogical-impulse
 rm -rf ~/.local/state/quickshell/user
-rm -rf ~/.cache/quickshell/inir
+rm -rf ~/.cache/inir
 rm -f ~/.local/bin/inir_super_overview_daemon.py
 rm -f ~/.config/systemd/user/inir-super-overview.service
 rm -f ~/.config/vesktop/themes/system24.theme.css

@@ -133,7 +133,7 @@ Each zone is an array of module ids. Use Settings -> Bar -> Bar module layout un
 
 Known ids include:
 
-`calendar`, `events`, `todo`, `notepad`, `calculator`, `sysmon`, `timer`, `screentime`
+`calendar`, `events`, `todo`, `notepad`, `calculator`, `sysmon`, `weather`, `timer`, `screentime`
 
 `screentime` is only shown when `sidebar.screenTime.enable` is true. The list can contain it while the service is off; the UI filters it out so disabled tracking does not leave a dead card.
 

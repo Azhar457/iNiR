@@ -105,7 +105,7 @@ The ICS URL is stored in your local `config.json` and nowhere else. Fetches go d
 
 The "secret" ICS URL from Google Calendar grants read-only access to that calendar. Anyone with the URL can see your events, so treat it like a password. If compromised, regenerate it from Google Calendar settings.
 
-Event data is cached locally at `~/.local/state/user/calendar-sync-cache.json` so events are available on restart without re-fetching.
+Event data is cached locally at `~/.local/state/quickshell/user/calendar-sync-cache.json` so events are available on restart without re-fetching.
 
 ---
 
@@ -135,6 +135,6 @@ QS_DEBUG=1 qs -c inir    # shows [CalendarSync] log lines
 
 Delete the cache file to force a clean re-fetch:
 ```bash
-rm ~/.local/state/user/calendar-sync-cache.json
+rm ~/.local/state/quickshell/user/calendar-sync-cache.json
 inir restart
 ```

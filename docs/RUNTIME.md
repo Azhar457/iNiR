@@ -70,7 +70,7 @@ inir service status    # check current state
 
 ## The inir launcher
 
-`scripts/inir` is a 2400+ line bash script that wraps Quickshell. It's not the same as running `qs -c inir` directly:
+`scripts/inir` is a 3600+ line bash script that wraps Quickshell. It's not the same as running `qs -c inir` directly:
 
 | | `inir run` | `qs -c inir` |
 |---|---|---|

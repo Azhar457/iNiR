@@ -1,6 +1,6 @@
 # Theming Presets
 
-44 built-in color presets that bypass wallpaper-based color generation and apply predefined palettes.
+46 built-in color presets that bypass wallpaper-based color generation and apply predefined palettes.
 
 ## How presets work
 
@@ -24,7 +24,7 @@ The full, current list of presets lives in `modules/common/ThemePresets.qml` and
 grep -oP '^\s*id:\s*"\K[^"]+' modules/common/ThemePresets.qml | grep -vE '^(auto|custom)$'
 ```
 
-At time of writing there are 44 theme presets (plus the special `auto` and `custom` entries), spanning Catppuccin (4 flavors), Gruvbox, Nord, Dracula, Tokyo Night, Kanagawa, Rose Pine, Everforest, Solarized, Monokai, Ayu, the iNiR signature styles (Angel / Angel Light), and many more. Preset IDs are kebab-case (e.g. `rose-pine`, `gruvbox-dark`, `tokyo-night`, `one-dark`) — use the ID, not a display name, when scripting.
+At time of writing there are 46 theme presets (plus the special `auto` and `custom` entries), spanning Catppuccin (4 flavors), Gruvbox, Nord, Dracula, Tokyo Night, Kanagawa, Rose Pine, Everforest, Solarized, Monokai, Ayu, the iNiR signature styles (Angel / Angel Light), and many more. Preset IDs are kebab-case (e.g. `rose-pine`, `gruvbox-dark`, `tokyo-night`, `one-dark`) — use the ID, not a display name, when scripting.
 
 ## Preset features
 

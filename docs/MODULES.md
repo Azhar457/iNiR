@@ -58,6 +58,7 @@ Users can disable any panel from Settings without touching config files.
 | `tilingOverlay/` | `iiTilingOverlay` | Tiling hints overlay. |
 | `shellUpdate/` | `iiShellUpdate` | Shell update notification banner. |
 | `recordingOsd/` | `iiRecordingOsd` | Screen recording indicator (disabled by default). |
+| `workspaceStrip/` | `iiWorkspaceStrip` | Hover-triggered edge strip with live workspace previews, window thumbnails, drag-to-reorder, and media cards. Shared with waffle. IPC target `workspaceStrip`. |
 
 ## Waffle Panels
 
@@ -97,7 +98,7 @@ Users can disable any panel from Settings without touching config files.
 
 ## Shared Infrastructure
 
-### modules/common/ (~178 files)
+### modules/common/ (~203 files)
 
 The foundation everything else builds on.
 
@@ -107,7 +108,7 @@ The foundation everything else builds on.
 | **Appearance.qml** | ii visual tokens. ~500 properties covering colors, rounding, typography, animation. |
 | **Directories.qml** | Centralized path resolution. Config, cache, data, scripts, media directories. |
 | **widgets/** | 130+ reusable widgets registered in `widgets/qmldir`. Layout, input, display, media, and specialized components. |
-| **ThemePresets.qml** | 44 built-in theme presets. |
+| **ThemePresets.qml** | 46 built-in theme presets. |
 | **StylePresets.qml** | Style variant definitions. |
 
 ## Current notable modules
@@ -143,7 +144,7 @@ If no timezones are configured, it suggests useful zones from the user's locale/
 
 Some panels work under both families. They keep their `ii` prefix but load in waffle mode too:
 
-`iiCheatsheet`, `iiOnScreenKeyboard`, `iiOverlay`, `iiOverview`, `iiRegionSelector`, `iiScreenCorners`, `iiWallpaperSelector`, `iiClipboard`, `iiRecordingOsd`
+`iiCheatsheet`, `iiOnScreenKeyboard`, `iiOverlay`, `iiOverview`, `iiRegionSelector`, `iiScreenCorners`, `iiWallpaperSelector`, `iiClipboard`, `iiRecordingOsd`, `iiWorkspaceStrip`
 
 ## For contributors
 

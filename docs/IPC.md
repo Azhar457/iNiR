@@ -44,6 +44,23 @@ bind "Mod+Space" { spawn "inir" "overview" "toggle"; }
 
 ---
 
+### workspaceStrip
+
+Workspace edge strip. Shows a compact per-workspace rail and expands it for switching without opening the full overview.
+
+| Function | Description |
+|----------|-------------|
+| `open` | Keep the strip expanded |
+| `close` | Return the strip to hover/peek mode |
+| `toggle` | Toggle forced expansion |
+| `status` | Return strip state (`open` or `auto`) |
+
+```kdl
+bind "Super+Tab" { spawn "inir" "workspaceStrip" "toggle"; }
+```
+
+---
+
 ### overlay
 
 The central overlay. Search, quick actions, widgets. The thing that pops up and makes you feel productive.
@@ -713,11 +730,12 @@ Waffle Alt+Tab window switcher. Separate from the ii `altSwitcher` — supports 
 
 ### background
 
-Desktop background and widget edit mode controls.
+Desktop background and widget controls.
 
 | Function | Description |
 |----------|-------------|
 | `toggleEditMode` | Toggle widget edit mode (drag, resize, configure desktop widgets) |
+| `setWidgetEnabled widgetName enabled` | Enable or disable a built-in desktop widget |
 
 ```kdl
 bind "Super+W" { spawn "inir" "background" "toggleEditMode"; }
@@ -757,6 +775,30 @@ Screen recording floating pill OSD. Shows elapsed time and stop button during ac
 | `toggle` | Stop the current recording (if active) |
 | `show` | Reveal the recording OSD pill |
 | `hide` | Collapse/hide the recording OSD pill |
+
+---
+
+### autostart
+
+Niri login autostart manager. Reads and writes the managed section of
+`~/.config/niri/config.d/50-startup.kdl` (delimited by `// >>> inir-managed-autostart >>>` /
+`// <<< inir-managed-autostart <<<`). Base iNiR lines and any hand-written
+`spawn-at-startup` lines outside the markers are preserved verbatim; toggling an
+entry comments the line out instead of deleting it. Safe no-op on non-Niri
+compositors (the page shows a guard instead).
+
+| Function | Description |
+|----------|-------------|
+| `status` | Return `niri\|<path>\|<managedCount>\|<externalCount>\|<state>` |
+| `addApp <desktopId>` | Append a managed `gtk-launch <desktopId>` entry |
+| `addCommand <cmd>` | Append a managed `spawn-sh-at-startup` shell line |
+| `removeLast` | Remove the last managed entry |
+| `reload` | Force re-read the startup file |
+
+The Settings UI (ii: AutostartConfig, waffle: WAutostartPage) is the primary
+interface; these IPC calls exist for scripts/keybinds. Apps the user already
+launches via hand-written lines outside the markers are detected and shown as
+"External" (read-only) in the list.
 
 ---
 

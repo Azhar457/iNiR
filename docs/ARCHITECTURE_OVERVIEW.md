@@ -90,7 +90,7 @@ Every UI component
 External apps (GTK, terminals, Firefox, VS Code, Discord...)
 ```
 
-The pipeline also supports 44 built-in theme presets (Catppuccin, Gruvbox, Nord, etc.) that bypass wallpaper extraction and inject colors directly.
+The pipeline also supports 46 built-in theme presets (Catppuccin, Gruvbox, Nord, etc.) that bypass wallpaper extraction and inject colors directly.
 
 More details: [Theming Architecture](THEMING_ARCHITECTURE.md)
 
@@ -109,7 +109,7 @@ A simplified map of what lives where:
 | `modules/waffle/` | Complete Windows 11 family | Normal |
 | `modules/sidebarLeft/` | AI chat, YT Music, widgets | Normal |
 | `modules/sidebarRight/` | Toggles, calendar, tools | Normal |
-| `translations/` | i18n strings (15+ languages) | Low |
+| `translations/` | i18n strings (15 languages) | Low |
 
 Full breakdown: [Project Map](PROJECT_MAP.md)
 
