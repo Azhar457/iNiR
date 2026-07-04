@@ -387,14 +387,7 @@ Scope {
                 right: true
             }
 
-            ZzzPlate {
-                anchors.fill: panelBackground
-                visible: Appearance.zzzEverywhere && panelBackground.visible
-                fillColor: Appearance.colors.colLayer0
-                strokeColor: Appearance.zzz.borderColor
-                strokeWidth: Appearance.zzz.hairlineThick
-                chamfer: Appearance.zzz.cutCorner
-            }
+
 
             Rectangle {
                 anchors.fill: parent
@@ -570,6 +563,15 @@ Scope {
                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
+            }
+
+            ZzzPlate {
+                anchors.fill: panelBackground
+                visible: Appearance.zzzEverywhere && panelBackground.visible
+                fillColor: Appearance.colors.colLayer0
+                strokeColor: Appearance.zzz.borderColor
+                strokeWidth: Appearance.zzz.hairlineThick
+                chamfer: Appearance.zzz.cutCorner
             }
 
             ZzzPlate {

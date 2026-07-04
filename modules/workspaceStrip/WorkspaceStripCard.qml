@@ -194,7 +194,7 @@ Item {
             visible: preview.visible
             gradient: Gradient {
                 GradientStop { position: 0.55; color: "transparent" }
-                GradientStop { position: 1; color: ColorUtils.transparentize(Appearance.colors.colScrim ?? "#000000", 0.5) }
+                GradientStop { position: 1; color: ColorUtils.transparentize(Appearance.colors.colScrim, 0.5) }
             }
         }
     }

@@ -130,7 +130,7 @@ Item {
             visible: art.ready
             gradient: Gradient {
                 GradientStop { position: 0.5; color: "transparent" }
-                GradientStop { position: 1; color: ColorUtils.transparentize(Appearance.colors.colScrim ?? "#000000", 0.45) }
+                GradientStop { position: 1; color: ColorUtils.transparentize(Appearance.colors.colScrim, 0.45) }
             }
         }
 
