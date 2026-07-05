@@ -1588,6 +1588,7 @@ Scope {
                     // Results card
                     StyledRectangularShadow {
                         target: overlaySearchResultsCard
+                        opacity: overlaySearchResultsCard._cardOpacity
                     }
                     Rectangle {
                         id: overlaySearchResultsCard

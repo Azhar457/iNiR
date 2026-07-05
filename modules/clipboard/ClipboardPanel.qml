@@ -335,6 +335,7 @@ Scope {
         StyledRectangularShadow {
             target: panelBackground
             radius: panelBackground.radius
+            opacity: panelBackground.opacity
             visible: !Appearance.zzzEverywhere
                 && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
         }
