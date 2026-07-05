@@ -216,7 +216,7 @@ Variants {
                 muted: true
                 autoPlay: true
 
-                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !GlobalStates.overviewOpen
+                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive
 
                 function pauseAndShowFirstFrame() {
                     pause()
@@ -326,7 +326,7 @@ Variants {
                 muted: true
                 autoPlay: true
 
-                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !GlobalStates.overviewOpen
+                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive
 
                 function pauseAndShowFirstFrame() {
                     pause()
