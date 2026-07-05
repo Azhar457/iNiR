@@ -50,9 +50,12 @@ ComboBox {
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
         : Appearance.colors.colLayer0Border
-    readonly property color _selectedColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
+    // Dropdown row hover/selected — matched to _popupColor's own layer (Layer3, or
+    // inir's Layer2). The angel/aurora "glass card" tokens used here previously were
+    // tuned for card surfaces, not this opaque popup, and read as barely-there.
+    readonly property color _popupHoverColor: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+        : Appearance.colors.colLayer3Hover
+    readonly property color _selectedColor: Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
         : Appearance.colors.colPrimaryContainer
 
     background: Rectangle {
@@ -106,6 +109,11 @@ ComboBox {
             }
         }
     }
+
+    // Base ComboBox ships its own arrow indicator alongside this custom contentItem —
+    // left unset, the two stack and eat into the text's width (root cause of dropdown
+    // labels looking truncated/shoved right). Custom "expand_more" above is the only one.
+    indicator: Item {}
 
     popup: Popup {
         y: root.height + 4
@@ -190,7 +198,7 @@ ComboBox {
                 : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
                 : Appearance.rounding.unsharpenmore
             color: delegateItem.index === root.currentIndex ? root._selectedColor
-                : delegateItem.hovered ? root._bgHoverColor
+                : delegateItem.hovered ? root._popupHoverColor
                 : "transparent"
 
             Behavior on color {
@@ -198,25 +206,16 @@ ComboBox {
             }
         }
 
+        // Text starts at the same 12px the closed field uses (contentItem above) so the
+        // dropdown lines up with the trigger instead of drifting right. The selected-row
+        // fill (_selectedColor) already marks selection, so the checkmark is a trailing
+        // accent, not a reserved left gutter every row used to pay for.
         contentItem: RowLayout {
             spacing: 6
 
-            MaterialSymbol {
-                Layout.leftMargin: 8
-                text: "check"
-                iconSize: Appearance.font.pixelSize.small
-                color: root._textColor
-                visible: delegateItem.index === root.currentIndex
-            }
-
-            Item {
-                Layout.leftMargin: 8
-                implicitWidth: Appearance.font.pixelSize.small
-                visible: delegateItem.index !== root.currentIndex
-            }
-
             StyledText {
                 Layout.fillWidth: true
+                Layout.leftMargin: 12
                 text: {
                     if (typeof delegateItem.modelData === "object" && delegateItem.modelData !== null) {
                         return delegateItem.modelData[root.textRole] ?? delegateItem.modelData.toString()
@@ -227,6 +226,14 @@ ComboBox {
                 color: root._textColor
                 elide: Text.ElideRight
                 verticalAlignment: Text.AlignVCenter
+            }
+
+            MaterialSymbol {
+                Layout.rightMargin: 8
+                text: "check"
+                iconSize: Appearance.font.pixelSize.small
+                color: root._textColor
+                visible: delegateItem.index === root.currentIndex
             }
         }
     }

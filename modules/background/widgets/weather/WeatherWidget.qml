@@ -266,7 +266,10 @@ AbstractBackgroundWidget {
                 family: Appearance.font.family.expressive
                 weight: root.tempFontWeight
             }
-            color: root.weatherStyle === "pill" ? root.shapeInk : root.cardInk
+            // Matches weatherIconColor so the number and icon read as one coloured
+            // unit in both modes, instead of the icon being tinted and the number
+            // staying flat ink like it did before.
+            color: root.weatherIconColor
             text: Weather.data?.temp.substring(0,Weather.data?.temp.length - 1) ?? "--°"
             anchors {
                 right: parent.right
@@ -277,6 +280,7 @@ AbstractBackgroundWidget {
         }
 
         MaterialSymbol {
+            id: weatherIcon
             visible: root.showIcon
             iconSize: root.weatherIconSize
             color: root.weatherIconColor
@@ -289,18 +293,27 @@ AbstractBackgroundWidget {
             }
         }
 
+        // Grouped with the icon's corner (or that same corner alone, icon off) instead
+        // of bottom-center: organic MaterialShape fills (puffy/flower/heart/cookie...)
+        // taper thinnest at the exact edge-midpoints, so bottom-center sat outside the
+        // visible fill on most shapes — same reason it read as "does nothing" with the
+        // icon off. Font matches the temp number's family instead of the generic body one.
         StyledText {
             visible: root.showCondition
             font {
                 pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
-                family: Appearance.font.family.main
+                family: Appearance.font.family.expressive
             }
             color: root.weatherConditionColor
-            text: Weather.data?.weatherDescription ?? ""
+            text: Weather.data?.description ?? ""
+            elide: Text.ElideRight
+            width: Math.min(implicitWidth, root.width - root.weatherPadding * (root.showIcon ? 3 : 2) - (root.showIcon ? weatherIcon.width : 0))
             anchors {
-                horizontalCenter: parent.horizontalCenter
-                bottom: parent.bottom
-                bottomMargin: Math.round(root.weatherPadding * 0.4)
+                left: root.showIcon ? weatherIcon.right : parent.left
+                leftMargin: root.showIcon ? Math.round(root.weatherPadding * 0.5) : root.weatherPadding
+                verticalCenter: root.showIcon ? weatherIcon.verticalCenter : undefined
+                bottom: root.showIcon ? undefined : parent.bottom
+                bottomMargin: root.showIcon ? 0 : Math.round(root.weatherPadding * 1.2)
             }
         }
     }
