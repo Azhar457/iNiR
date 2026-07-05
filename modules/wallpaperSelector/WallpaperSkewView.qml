@@ -1035,7 +1035,10 @@ Item {
                     asynchronous: true
                     retainWhileLoading: true
                     smooth: true
-                    mipmap: delegateItem.isCurrent && status === Image.Ready
+                    property bool _everReady: false
+                    onStatusChanged: if (status === Image.Ready) _everReady = true
+                    onSourceChanged: _everReady = false
+                    mipmap: delegateItem.isCurrent && _everReady
                     sourceSize.width: delegateItem._sourceW
                     sourceSize.height: delegateItem._sourceH
                 }
@@ -1060,7 +1063,10 @@ Item {
                     asynchronous: true
                     cache: true
                     smooth: true
-                    mipmap: delegateItem.isCurrent && status === Image.Ready
+                    property bool _everReady: false
+                    onStatusChanged: if (status === Image.Ready) _everReady = true
+                    onSourceChanged: _everReady = false
+                    mipmap: delegateItem.isCurrent && _everReady
                     sourceSize.width: delegateItem._sourceW
                     sourceSize.height: delegateItem._sourceH
                     source: {
