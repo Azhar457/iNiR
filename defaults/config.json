@@ -272,6 +272,18 @@
             "sidebars": true,
             "overlays": true,
             "popups": true
+        },
+        "animationSpeed": {
+            "movement": 1.0,
+            "enterExit": 1.0,
+            "clickBounce": 1.0,
+            "scroll": 1.0
+        },
+        "animationCurve": {
+            "movement": "default",
+            "enterExit": "default",
+            "clickBounce": "default",
+            "scroll": "default"
         }
     },
     "apps": {

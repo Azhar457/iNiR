@@ -132,22 +132,78 @@ Singleton {
     }
 
     // Style-aware hover/active fills. One source of truth so every component's hover matches the
-    // active global style instead of re-implementing the angel/inir/aurora/material ternary.
-    readonly property color colLayer1Hover: angelEverywhere ? angel.colGlassCardHover
+    // active global style instead of re-implementing the zzz/angel/inir/aurora/material ternary.
+    // zzz promotes one fill step (paper -> paperAlt) instead of a translucent mix, per its
+    // separate-by-fill doctrine (was missing here; components used to hardcode zzz.paperAlt).
+    readonly property color colLayer1Hover: zzzEverywhere ? zzz.paperAlt
+        : angelEverywhere ? angel.colGlassCardHover
         : inirEverywhere ? inir.colLayer1Hover
         : auroraEverywhere ? aurora.colSubSurfaceHover
         : colors.colLayer1Hover
-    readonly property color colLayer2Hover: angelEverywhere ? angel.colGlassElevatedHover
+    readonly property color colLayer2Hover: zzzEverywhere ? zzz.bg3
+        : angelEverywhere ? angel.colGlassElevatedHover
         : inirEverywhere ? inir.colLayer2Hover
         : auroraEverywhere ? aurora.colElevatedSurfaceHover
         : colors.colLayer2Hover
+    // Active/pressed fills — did not exist at top level before, so click feedback
+    // (RippleButton etc.) read straight from raw `colors.*`, skipping inir/zzz entirely.
+    readonly property color colLayer1Active: zzzEverywhere ? zzz.bg3
+        : angelEverywhere ? angel.colGlassCardActive
+        : inirEverywhere ? inir.colLayer1Active
+        : auroraEverywhere ? aurora.colSubSurfaceActive
+        : colors.colLayer1Active
 
     onEffectsEnabledChanged: if (Qt.application.arguments.indexOf("--debug") !== -1) console.log("[Appearance] effectsEnabled:", effectsEnabled, "gameModeActive:", _gameModeActive)
     onAnimationsEnabledChanged: if (Qt.application.arguments.indexOf("--debug") !== -1) console.log("[Appearance] animationsEnabled:", animationsEnabled)
 
-    // Helper for calculating effective animation duration
-    function calcEffectiveDuration(baseDuration) {
-        return animationsEnabled ? baseDuration : 0
+    // Per-category speed multipliers for the animation presets below, settings-driven.
+    // 1.0 = default speed. Kept separate from raw calcEffectiveDuration(ms) call sites
+    // elsewhere in the shell, which stay untouched at multiplier 1.0.
+    readonly property QtObject animationSpeed: QtObject {
+        readonly property real movement: Config.options?.appearance?.animationSpeed?.movement ?? 1.0
+        readonly property real enterExit: Config.options?.appearance?.animationSpeed?.enterExit ?? 1.0
+        readonly property real clickBounce: Config.options?.appearance?.animationSpeed?.clickBounce ?? 1.0
+        readonly property real scroll: Config.options?.appearance?.animationSpeed?.scroll ?? 1.0
+    }
+
+    // Named, pickable curves for the per-category override below. Reuses the same
+    // list<real> beziers the presets already fall back to — no new motion invented,
+    // just made selectable. "default" (absent from this map) means: keep whatever
+    // style/motion-profile-aware curve the preset already computes.
+    readonly property var animationCurveLibrary: ({
+        standard:          { type: Easing.BezierSpline, curve: animationCurves.standard },
+        standardAccel:     { type: Easing.BezierSpline, curve: animationCurves.standardAccel },
+        standardDecel:     { type: Easing.BezierSpline, curve: animationCurves.standardDecel },
+        emphasized:        { type: Easing.BezierSpline, curve: animationCurves.emphasized },
+        emphasizedAccel:   { type: Easing.BezierSpline, curve: animationCurves.emphasizedAccel },
+        emphasizedDecel:   { type: Easing.BezierSpline, curve: animationCurves.emphasizedDecel },
+        expressive:        { type: Easing.BezierSpline, curve: animationCurves.expressiveDefaultSpatial },
+        expressiveEffects: { type: Easing.BezierSpline, curve: animationCurves.expressiveEffects },
+        zzzOvershoot:      { type: Easing.BezierSpline, curve: animationCurves.zzzOvershoot },
+        zzzSnap:           { type: Easing.BezierSpline, curve: animationCurves.zzzSnap },
+        linear:            { type: Easing.Linear, curve: [] }
+    })
+    function _curveOverride(category) {
+        const name = Config.options?.appearance?.animationCurve?.[category] ?? "default"
+        return (name !== "default" && animationCurveLibrary[name]) ? animationCurveLibrary[name] : null
+    }
+    // defaultType/defaultCurve are what the preset would use with no override — the
+    // style/motion-profile-aware pick already computed at each call site below.
+    function resolveCurveType(category, defaultType) {
+        const override = root._curveOverride(category)
+        return override ? override.type : defaultType
+    }
+    function resolveCurveBezier(category, defaultCurve) {
+        const override = root._curveOverride(category)
+        return override ? override.curve : defaultCurve
+    }
+
+    // Helper for calculating effective animation duration. speedMultiplier is optional;
+    // omitted for the ~80 raw calcEffectiveDuration(ms) call sites across the shell,
+    // passed by the named presets in `animation` below for granular per-category control.
+    function calcEffectiveDuration(baseDuration, speedMultiplier) {
+        if (!animationsEnabled) return 0
+        return Math.round(baseDuration * (speedMultiplier ?? 1.0))
     }
 
     // Concentric corner radius: a child inset by `inset` inside a `parentRadius`
@@ -168,8 +224,11 @@ Singleton {
             // snapping into place rather than a soft material fade.
             property bool enableFade: root.zzzEverywhere || root.contextualMotionProfile
             property bool enableScale: root.zzzEverywhere || root.contextualMotionProfile
+            // 0.97 read as "barely there" in practice — bumped to match zzz's proven-visible
+            // 0.90 pop so Classic (hard snap, no fade) vs Contextual (fade + grow) is unmistakable
+            // on tray menu / context menu / combobox dropdown / widget gear menu.
             property real closedScale: root.zzzEverywhere ? 0.90
-                : (root.contextualMotionProfile ? 0.97 : 1.0)
+                : (root.contextualMotionProfile ? 0.90 : 1.0)
         }
     }
 
@@ -493,9 +552,9 @@ Singleton {
 
     animation: QtObject {
         property QtObject elementMove: QtObject {
-            property int duration: root.calcEffectiveDuration(animationCurves.expressiveDefaultSpatialDuration)
-            property int type: Easing.BezierSpline
-            property list<real> bezierCurve: animationCurves.expressiveDefaultSpatial
+            property int duration: root.calcEffectiveDuration(animationCurves.expressiveDefaultSpatialDuration, root.animationSpeed.movement)
+            property int type: root.resolveCurveType("movement", Easing.BezierSpline)
+            property list<real> bezierCurve: root.resolveCurveBezier("movement", animationCurves.expressiveDefaultSpatial)
             property int velocity: 650
             property Component numberAnimation: Component {
                 NumberAnimation {
@@ -507,9 +566,9 @@ Singleton {
         }
 
         property QtObject elementMoveEnter: QtObject {
-            property int duration: root.calcEffectiveDuration(root.zzzEverywhere ? root.zzz.overshootDuration : (root.contextualMotionProfile ? 440 : 400))
-            property int type: Easing.BezierSpline
-            property list<real> bezierCurve: root.zzzEverywhere ? animationCurves.zzzOvershoot : animationCurves.emphasizedDecel
+            property int duration: root.calcEffectiveDuration(root.zzzEverywhere ? root.zzz.overshootDuration : (root.contextualMotionProfile ? 520 : 400), root.animationSpeed.enterExit)
+            property int type: root.resolveCurveType("enterExit", Easing.BezierSpline)
+            property list<real> bezierCurve: root.resolveCurveBezier("enterExit", root.zzzEverywhere ? animationCurves.zzzOvershoot : animationCurves.emphasizedDecel)
             property int velocity: 650
             property Component numberAnimation: Component {
                 NumberAnimation {
@@ -521,9 +580,9 @@ Singleton {
         }
 
         property QtObject elementMoveExit: QtObject {
-            property int duration: root.calcEffectiveDuration(root.contextualMotionProfile ? 240 : 200)
-            property int type: Easing.BezierSpline
-            property list<real> bezierCurve: animationCurves.emphasizedAccel
+            property int duration: root.calcEffectiveDuration(root.contextualMotionProfile ? 280 : 200, root.animationSpeed.enterExit)
+            property int type: root.resolveCurveType("enterExit", Easing.BezierSpline)
+            property list<real> bezierCurve: root.resolveCurveBezier("enterExit", animationCurves.emphasizedAccel)
             property int velocity: 650
             property Component numberAnimation: Component {
                 NumberAnimation {
@@ -535,9 +594,9 @@ Singleton {
         }
 
         property QtObject elementMoveFast: QtObject {
-            property int duration: root.calcEffectiveDuration(root.contextualMotionProfile ? 240 : animationCurves.expressiveEffectsDuration)
-            property int type: Easing.BezierSpline
-            property list<real> bezierCurve: animationCurves.expressiveEffects
+            property int duration: root.calcEffectiveDuration(root.contextualMotionProfile ? 260 : animationCurves.expressiveEffectsDuration, root.animationSpeed.clickBounce)
+            property int type: root.resolveCurveType("clickBounce", Easing.BezierSpline)
+            property list<real> bezierCurve: root.resolveCurveBezier("clickBounce", animationCurves.expressiveEffects)
             property int velocity: 850
             property Component colorAnimation: Component { ColorAnimation {
                 duration: root.animation.elementMoveFast.duration
@@ -552,9 +611,9 @@ Singleton {
         }
 
         property QtObject elementResize: QtObject {
-            property int duration: root.calcEffectiveDuration(root.contextualMotionProfile ? 340 : 300)
-            property int type: Easing.BezierSpline
-            property list<real> bezierCurve: animationCurves.emphasized
+            property int duration: root.calcEffectiveDuration(root.contextualMotionProfile ? 380 : 300, root.animationSpeed.movement)
+            property int type: root.resolveCurveType("movement", Easing.BezierSpline)
+            property list<real> bezierCurve: root.resolveCurveBezier("movement", animationCurves.emphasized)
             property int velocity: 650
             property Component numberAnimation: Component {
                 NumberAnimation {
@@ -566,9 +625,9 @@ Singleton {
         }
 
         property QtObject clickBounce: QtObject {
-            property int duration: root.calcEffectiveDuration(root.zzzEverywhere ? root.zzz.overshootDuration : 400)
-            property int type: Easing.BezierSpline
-            property list<real> bezierCurve: root.zzzEverywhere ? animationCurves.zzzOvershoot : animationCurves.expressiveDefaultSpatial
+            property int duration: root.calcEffectiveDuration(root.zzzEverywhere ? root.zzz.overshootDuration : 400, root.animationSpeed.clickBounce)
+            property int type: root.resolveCurveType("clickBounce", Easing.BezierSpline)
+            property list<real> bezierCurve: root.resolveCurveBezier("clickBounce", root.zzzEverywhere ? animationCurves.zzzOvershoot : animationCurves.expressiveDefaultSpatial)
             property int velocity: 850
             property Component numberAnimation: Component { NumberAnimation {
                     duration: root.animation.clickBounce.duration
@@ -578,13 +637,15 @@ Singleton {
         }
         
         property QtObject scroll: QtObject {
-            property int duration: root.calcEffectiveDuration(root.zzzEverywhere ? root.zzz.overshootDuration : 200)
-            property int type: Easing.BezierSpline
-            property list<real> bezierCurve: root.zzzEverywhere ? animationCurves.zzzSnap : animationCurves.standardDecel
+            property int duration: root.calcEffectiveDuration(root.zzzEverywhere ? root.zzz.overshootDuration : 200, root.animationSpeed.scroll)
+            property int type: root.resolveCurveType("scroll", Easing.BezierSpline)
+            property list<real> bezierCurve: root.resolveCurveBezier("scroll", root.zzzEverywhere ? animationCurves.zzzSnap : animationCurves.standardDecel)
         }
 
         property QtObject menuDecel: QtObject {
-            property int duration: root.calcEffectiveDuration(root.contextualMotionProfile ? 420 : 350)
+            property int duration: root.calcEffectiveDuration(root.contextualMotionProfile ? 460 : 350, root.animationSpeed.scroll)
+            // No override curve store here: menuDecel has no live consumers today, keeps
+            // its own Easing.OutExpo baseline (see git history) rather than the bezier family.
             property int type: Easing.OutExpo
         }
 

@@ -704,6 +704,23 @@ Singleton {
                     property bool overlays: true
                     property bool popups: true
                 }
+                // Per-category multipliers on top of Appearance.animation.* base durations.
+                // 1.0 = default speed, <1 faster, >1 slower. Zeroed regardless when
+                // performance.reduceAnimations disables animations.
+                property JsonObject animationSpeed: JsonObject {
+                    property real movement: 1.0   // elementMove, elementResize
+                    property real enterExit: 1.0  // elementMoveEnter, elementMoveExit
+                    property real clickBounce: 1.0 // clickBounce, elementMoveFast
+                    property real scroll: 1.0     // scroll, menuDecel
+                }
+                // Curve override per category. "default" keeps the existing style/motion-profile
+                // aware pick in Appearance.animation.*; any other value forces that curve everywhere.
+                property JsonObject animationCurve: JsonObject {
+                    property string movement: "default"
+                    property string enterExit: "default"
+                    property string clickBounce: "default"
+                    property string scroll: "default"
+                }
             }
 
             property JsonObject performance: JsonObject {

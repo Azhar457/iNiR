@@ -599,6 +599,147 @@ ContentPage {
         }
     }
 
+    // Motion Section
+    SettingsCardSection {
+        visible: (Config.options?.panelFamily ?? "ii") !== "waffle"
+        expanded: false
+        icon: "animation"
+        title: Translation.tr("Motion")
+
+        component MotionRow: RowLayout {
+            id: motionRow
+            Layout.fillWidth: true
+            spacing: 8
+
+            required property string label
+            required property string tooltip
+            required property string key
+
+            // Short, human words instead of motion-design jargon — the label is the
+            // explanation, so the dropdown never needs to truncate or carry a tooltip.
+            readonly property var curveOptions: [
+                { displayName: Translation.tr("Default"), value: "default" },
+                { displayName: Translation.tr("Smooth"), value: "standard" },
+                { displayName: Translation.tr("Speed up"), value: "standardAccel" },
+                { displayName: Translation.tr("Ease out"), value: "standardDecel" },
+                { displayName: Translation.tr("Swoop"), value: "emphasized" },
+                { displayName: Translation.tr("Swoop in"), value: "emphasizedAccel" },
+                { displayName: Translation.tr("Swoop out"), value: "emphasizedDecel" },
+                { displayName: Translation.tr("Bouncy"), value: "expressive" },
+                { displayName: Translation.tr("Punchy"), value: "expressiveEffects" },
+                { displayName: Translation.tr("Overshoot"), value: "zzzOvershoot" },
+                { displayName: Translation.tr("Snap"), value: "zzzSnap" },
+                { displayName: Translation.tr("Linear"), value: "linear" }
+            ]
+
+            RowLayout {
+                Layout.preferredWidth: 90
+                spacing: 2
+
+                StyledText {
+                    text: motionRow.label
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    color: Appearance.colors.colOnLayer1
+                }
+
+                MaterialSymbol {
+                    text: "info"
+                    iconSize: Appearance.font.pixelSize.small
+                    color: Appearance.colors.colSubtext
+                    MouseArea {
+                        id: infoArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.WhatsThisCursor
+                        StyledToolTip {
+                            extraVisibleCondition: false
+                            alternativeVisibleCondition: infoArea.containsMouse
+                            text: motionRow.tooltip
+                        }
+                    }
+                }
+            }
+
+            StyledText {
+                text: speedSlider.value.toFixed(2) + "x"
+                font.pixelSize: Appearance.font.pixelSize.small
+                font.family: Appearance.font.family.monospace
+                color: Appearance.colors.colPrimary
+                Layout.preferredWidth: 38
+                horizontalAlignment: Text.AlignRight
+            }
+
+            StyledSlider {
+                id: speedSlider
+                Layout.fillWidth: true
+                from: 0.5
+                to: 2.0
+                stepSize: 0.05
+                value: Config.options?.appearance?.animationSpeed?.[motionRow.key] ?? 1.0
+                configuration: StyledSlider.Configuration.S
+                onMoved: if (!pressed) Config.setNestedValue(`appearance.animationSpeed.${motionRow.key}`, Math.round(value * 100) / 100)
+            }
+
+            StyledComboBox {
+                Layout.preferredWidth: 145
+                model: motionRow.curveOptions
+                textRole: "displayName"
+                currentIndex: {
+                    const current = Config.options?.appearance?.animationCurve?.[motionRow.key] ?? "default"
+                    const idx = motionRow.curveOptions.findIndex(o => o.value === current)
+                    return idx >= 0 ? idx : 0
+                }
+                onActivated: index => Config.setNestedValue(`appearance.animationCurve.${motionRow.key}`, motionRow.curveOptions[index].value)
+            }
+        }
+
+        SettingsGroup {
+            ConfigSelectionArray {
+                currentValue: Config.options?.appearance?.iiMotionProfile ?? "classic"
+                onSelected: newValue => Config.setNestedValue("appearance.iiMotionProfile", newValue)
+                options: [
+                    { displayName: Translation.tr("Classic"), icon: "motion_photos_paused", value: "classic" },
+                    { displayName: Translation.tr("Contextual"), icon: "gesture", value: "contextual" }
+                ]
+            }
+
+            MotionRow { label: Translation.tr("Movement"); tooltip: Translation.tr("Element move & resize — used almost everywhere"); key: "movement" }
+            MotionRow { label: Translation.tr("Enter/exit"); tooltip: Translation.tr("Panels & popups appearing or leaving"); key: "enterExit" }
+            MotionRow { label: Translation.tr("Click"); tooltip: Translation.tr("Click feedback and fast reactive transitions"); key: "clickBounce" }
+            MotionRow { label: Translation.tr("Scroll"); tooltip: Translation.tr("Scrolling lists and flickables"); key: "scroll" }
+
+            RippleButton {
+                Layout.fillWidth: true
+                implicitHeight: 36
+                buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                colBackground: Appearance.colors.colLayer1
+                colBackgroundHover: Appearance.colLayer1Hover
+                colRipple: Appearance.colLayer1Active
+
+                RowLayout {
+                    anchors.centerIn: parent
+                    spacing: 8
+                    MaterialSymbol {
+                        text: "restart_alt"
+                        iconSize: Appearance.font.pixelSize.normal
+                        color: Appearance.colors.colOnSurface
+                    }
+                    StyledText {
+                        text: Translation.tr("Reset to defaults")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                    }
+                }
+
+                onClicked: {
+                    for (const key of ["movement", "enterExit", "clickBounce", "scroll"]) {
+                        Config.setNestedValue(`appearance.animationSpeed.${key}`, 1.0)
+                        Config.setNestedValue(`appearance.animationCurve.${key}`, "default")
+                    }
+                }
+            }
+        }
+    }
+
     // Theme Scheduling Section
     SettingsCardSection {
         visible: !(Config.options?.settingsUi?.easyMode ?? false)

@@ -33,13 +33,11 @@ Button {
 
     property color colBackground: Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : (ColorUtils.transparentize(Appearance?.colors.colLayer1Hover, 1) || "transparent")
-    property color colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colLayer1Hover
-        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : (Appearance.colors.colLayer1Hover)
+        : "transparent"
+    property color colBackgroundHover: Appearance.colLayer1Hover
     property color colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.colors.colPrimary
     property color colBackgroundToggledHover: Appearance.colors.colPrimaryHover
-    property color colRipple: Appearance.colors.colLayer1Active
+    property color colRipple: Appearance.colLayer1Active
     property color colRippleToggled: Appearance.colors.colPrimaryActive
 
     opacity: root.enabled ? 1 : 0.4
