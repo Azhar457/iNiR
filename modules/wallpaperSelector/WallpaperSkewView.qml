@@ -70,7 +70,7 @@ Item {
     property int _flippedImageIndex: -1
 
     function _isFavourite(fileName: string): bool {
-        return !!_favouritesDb[fileName]
+        return !!((_favouritesDb ?? {})[fileName])
     }
 
     function _toggleFavourite(fileName: string): void {
@@ -1035,7 +1035,7 @@ Item {
                     asynchronous: true
                     retainWhileLoading: true
                     smooth: true
-                    mipmap: delegateItem.isCurrent
+                    mipmap: delegateItem.isCurrent && status === Image.Ready
                     sourceSize.width: delegateItem._sourceW
                     sourceSize.height: delegateItem._sourceH
                 }
@@ -1060,7 +1060,7 @@ Item {
                     asynchronous: true
                     cache: true
                     smooth: true
-                    mipmap: delegateItem.isCurrent
+                    mipmap: delegateItem.isCurrent && status === Image.Ready
                     sourceSize.width: delegateItem._sourceW
                     sourceSize.height: delegateItem._sourceH
                     source: {
