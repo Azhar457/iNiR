@@ -59,12 +59,15 @@ RippleButton {
         : (root.down || root.keyboardDown)
         ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
-        : ((root.hovered || root.focus || root.isSelected)
+        : (root.isSelected
             ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                 : Appearance.inirEverywhere ? Appearance.inir.colLayer3
-                : Appearance.auroraEverywhere ? Appearance.colors.colLayer3
                 : Appearance.colors.colLayer3)
-            : "transparent")
+            : ((root.hovered || root.focus)
+                ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer3Hover
+                    : Appearance.colors.colLayer3Hover)
+                : "transparent"))
     colBackgroundHover: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.12)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer3Hover
