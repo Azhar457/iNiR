@@ -302,6 +302,7 @@ Item {
                     font.pixelSize: Appearance.font.pixelSize.small
                     font.weight: Font.Medium
                     color: root.colPrimary
+                    horizontalAlignment: Text.AlignHCenter
                 }
             }
         }
