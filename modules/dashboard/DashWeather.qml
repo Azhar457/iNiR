@@ -21,8 +21,18 @@ DashCard {
         Layout.fillWidth: true
         spacing: 6
 
+        MascotImage {
+            id: weatherMascot
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: 96
+            Layout.preferredHeight: 96
+            surface: "dashboard"
+            pose: "weather-umbrella"
+        }
+
         MaterialShapeWrappedMaterialSymbol {
             Layout.alignment: Qt.AlignHCenter
+            visible: !weatherMascot.active
             text: "partly_cloudy_day"
             shape: MaterialShape.Shape.Puffy
             padding: 10

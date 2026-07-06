@@ -5,6 +5,7 @@ import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
 
 Item {
     id: root
@@ -33,8 +34,7 @@ Item {
         popup: false
     }
 
-    // Placeholder when list is empty
-    MaterialPlaceholderMessage {
+    Item {
         anchors {
             left: parent.left
             right: parent.right
@@ -43,12 +43,52 @@ Item {
             topMargin: 24
             bottomMargin: 28
         }
-        maximumWidth: 280
-        compact: true
-        shown: Notifications.list.length === 0
-        icon: "notifications_active"
-        text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("Clear")
-        shape: MaterialShape.Shape.Ghostish
+        visible: opacity > 0
+        opacity: Notifications.list.length === 0 ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+            }
+        }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 4
+            visible: !emptyMascot.active
+
+            MaterialPlaceholderMessage {
+                Layout.alignment: Qt.AlignHCenter
+                icon: "notifications_active"
+                shape: MaterialShape.Shape.Ghostish
+                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("Clear")
+            }
+        }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 4
+            visible: emptyMascot.active
+
+            MascotImage {
+                id: emptyMascot
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 128
+                Layout.preferredHeight: 128
+                surface: "emptyStates"
+                pose: "notifications-clear"
+            }
+
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
+                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("Clear")
+                font.pixelSize: Appearance.font.pixelSize.normal
+                font.weight: Font.DemiBold
+                color: Appearance.colors.colOnSurface
+            }
+        }
     }
 
     ButtonGroup {

@@ -398,6 +398,7 @@ Item {
             anchors.fill: parent
             shown: (root.mode === "folder" ? root.categorizedApps.length : root.groupedApps.length) === 0
             icon: "apps_off"
+            mascotPose: "chibi-shrug"
             title: Translation.tr("No apps found")
             description: Translation.tr("No desktop applications are visible on this system.")
             descriptionHorizontalAlignment: Text.AlignHCenter

@@ -173,7 +173,6 @@ ContentPage {
                         color: Appearance.colors.colPrimary
                     }
 
-                    // Avatar interaction feedback
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor

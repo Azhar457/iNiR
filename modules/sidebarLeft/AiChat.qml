@@ -415,11 +415,45 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
             MaterialPlaceholderMessage {
                 anchors.fill: parent
                 z: 2
-                shown: Ai.messageIDs.length === 0
+                shown: Ai.messageIDs.length === 0 && !aiMascot.active
                 icon: "neurology"
                 text: Translation.tr("Large language models")
                 explanation: Translation.tr("Type /key to get started with online models\nCtrl+O to expand the sidebar\nCtrl+P to detach sidebar into a window")
                 shape: MaterialShape.Shape.PixelCircle
+            }
+
+            ColumnLayout {
+                anchors.centerIn: parent
+                z: 2
+                visible: aiMascot.active && Ai.messageIDs.length === 0
+                spacing: 8
+                width: Math.min(parent.width - 32, 340)
+
+                MascotImage {
+                    id: aiMascot
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 120
+                    Layout.preferredHeight: 120
+                    surface: "aiChat"
+                    pose: "welcome-wave"
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Translation.tr("Large language models")
+                    font.pixelSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnLayer0
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    text: Translation.tr("Type /key to get started with online models\nCtrl+O to expand the sidebar\nCtrl+P to detach sidebar into a window")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                }
             }
 
             ScrollToBottomButton {

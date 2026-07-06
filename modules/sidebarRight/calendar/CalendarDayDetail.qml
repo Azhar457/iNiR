@@ -270,8 +270,18 @@ Item {
             visible: !root.hasEvents
             spacing: 8
 
+            MascotImage {
+                id: noEventsMascot
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 88
+                Layout.preferredHeight: 88
+                surface: "emptyStates"
+                pose: "sleep-dnd"
+            }
+
             MaterialSymbol {
                 Layout.alignment: Qt.AlignHCenter
+                visible: !noEventsMascot.active
                 text: "event_busy"
                 iconSize: 32
                 color: root.colSubtext

@@ -697,12 +697,25 @@ Scope {
                             root.copyEntry(rawEntry)
                         }
 
-                        StyledText {
+                        ColumnLayout {
                             visible: listView.count === 0
                             anchors.centerIn: parent
-                            text: Translation.tr("No clipboard entries")
-                            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-                            font.pixelSize: Appearance.font.pixelSize.small
+                            spacing: 8
+
+                            MascotImage {
+                                Layout.alignment: Qt.AlignHCenter
+                                Layout.preferredWidth: 96
+                                Layout.preferredHeight: 96
+                                surface: "emptyStates"
+                                pose: "box-hideout"
+                            }
+
+                            StyledText {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: Translation.tr("No clipboard entries")
+                                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                                font.pixelSize: Appearance.font.pixelSize.small
+                            }
                         }
                     }
                 }

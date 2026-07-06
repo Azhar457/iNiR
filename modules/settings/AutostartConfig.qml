@@ -384,6 +384,7 @@ ContentPage {
                 PagePlaceholder {
                     shown: commandListView.count === 0
                     icon: "terminal"
+                    mascotPose: "salute-ready"
                     title: Translation.tr("No custom commands")
                     description: Translation.tr("Add a shell command above to run it at login.")
                     anchors.fill: parent

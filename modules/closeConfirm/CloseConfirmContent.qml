@@ -45,8 +45,21 @@ Item {
         }
     }
 
+    // Mascot peering over the dialog edge; drawn first so the card overlaps her
+    MascotImage {
+        anchors.bottom: dialog.top
+        anchors.bottomMargin: -12
+        anchors.right: dialog.right
+        anchors.rightMargin: 24
+        width: 92
+        height: 92
+        pose: "warning-concerned"
+        surface: "dialogs"
+    }
+
     // Dialog using Material WindowDialog
     WindowDialog {
+        id: dialog
         anchors.centerIn: parent
         backgroundWidth: 340
         zzzLabel: "CLOSE"

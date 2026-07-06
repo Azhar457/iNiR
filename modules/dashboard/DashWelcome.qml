@@ -94,8 +94,18 @@ DashCard {
                     NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
 
+                MascotImage {
+                    id: welcomeMascot
+                    anchors.centerIn: parent
+                    width: 62
+                    height: 62
+                    surface: "dashboard"
+                    pose: "welcome-wave"
+                }
+
                 MaterialSymbol {
                     anchors.centerIn: parent
+                    visible: !welcomeMascot.active
                     text: "person"
                     iconSize: 36
                     color: root.colAccent

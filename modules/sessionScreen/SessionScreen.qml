@@ -244,6 +244,14 @@ Scope {
                     }
                 }
 
+                MascotImage {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 110
+                    Layout.preferredHeight: 110
+                    surface: "session"
+                    pose: "goodbye-wave"
+                }
+
                 ColumnLayout {
                     Layout.alignment: Qt.AlignHCenter
                     spacing: 0

@@ -822,8 +822,18 @@ Item {
                     width: parent.width - 32
                     spacing: 8
 
+                    MascotImage {
+                        id: emptyMascot
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 96
+                        Layout.preferredHeight: 96
+                        surface: "emptyStates"
+                        pose: "theme-artist"
+                    }
+
                     MaterialSymbol {
                         Layout.alignment: Qt.AlignHCenter
+                        visible: !emptyMascot.active
                         text: "imagesmode"
                         iconSize: 36
                         color: root._accent

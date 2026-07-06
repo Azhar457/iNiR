@@ -326,6 +326,7 @@ Scope {
 
                     // Icon
                     Rectangle {
+                        visible: !updateMascot.active
                         width: 44
                         height: 44
                         radius: root.sectionRadius
@@ -340,6 +341,15 @@ Scope {
                             iconSize: Appearance.font.pixelSize.huge
                             color: root.accentColor
                         }
+                    }
+
+                    MascotImage {
+                        id: updateMascot
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: 72
+                        Layout.preferredHeight: 72
+                        surface: "updates"
+                        pose: root.hasUpdate ? "update-ready" : "success-celebrate"
                     }
 
                     ColumnLayout {
@@ -517,6 +527,12 @@ Scope {
                         // Error header
                         RowLayout {
                             spacing: 8
+                            MascotImage {
+                                Layout.preferredWidth: 64
+                                Layout.preferredHeight: 64
+                                pose: "doctor-checkup"
+                                surface: "updates"
+                            }
                             MaterialSymbol {
                                 text: "error"
                                 iconSize: Appearance.font.pixelSize.normal
@@ -1285,6 +1301,12 @@ Scope {
                         }
                         spacing: 8
 
+                        MascotImage {
+                            Layout.preferredWidth: 48
+                            Layout.preferredHeight: 48
+                            pose: "dead-crash"
+                            surface: "updates"
+                        }
                         MaterialSymbol {
                             text: "error"
                             iconSize: Appearance.font.pixelSize.normal
