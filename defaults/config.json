@@ -631,26 +631,6 @@
                 "x": 80,
                 "y": 80
             },
-            "network": {
-                "enable": false,
-                "locked": false,
-                "placementStrategy": "free",
-                "contentWidth": 280,
-                "contentHeight": 96,
-                "dim": 0,
-                "widgetScale": 100,
-                "widgetOpacity": 100,
-                "showBackground": true,
-                "useBlur": false,
-                "showBorder": true,
-                "backgroundOpacity": 0.16,
-                "borderWidth": 1,
-                "borderOpacity": 0.2,
-                "cornerRadius": -1,
-                "colorMode": "auto",
-                "x": 80,
-                "y": 200
-            },
             "uptime": {
                 "enable": false,
                 "locked": false,
@@ -670,25 +650,6 @@
                 "colorMode": "auto",
                 "x": 80,
                 "y": 80
-            },
-            "tacho": {
-                "enable": false,
-                "locked": false,
-                "placementStrategy": "free",
-                "gaugeSize": 180,
-                "dim": 0,
-                "widgetScale": 100,
-                "widgetOpacity": 100,
-                "showBackground": true,
-                "useBlur": false,
-                "showBorder": true,
-                "backgroundOpacity": 0.16,
-                "borderWidth": 1,
-                "borderOpacity": 0.2,
-                "cornerRadius": -1,
-                "colorMode": "auto",
-                "x": 120,
-                "y": 120
             },
             "newsTicker": {
                 "enable": false,

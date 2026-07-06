@@ -236,10 +236,9 @@ Item {
             WidgetCard { widgetKey: "battery"; widgetIcon: "battery_full"; widgetLabel: Translation.tr("Battery"); defaultEnabled: false }
             WidgetCard { widgetKey: "notes"; widgetIcon: "sticky_note_2"; widgetLabel: Translation.tr("Notes"); defaultEnabled: false }
             WidgetCard { widgetKey: "calendarUpcoming"; widgetIcon: "event"; widgetLabel: Translation.tr("Upcoming Events"); defaultEnabled: false }
-            WidgetCard { widgetKey: "network"; widgetIcon: "wifi"; widgetLabel: Translation.tr("Network"); defaultEnabled: false }
             WidgetCard { widgetKey: "uptime"; widgetIcon: "avg_pace"; widgetLabel: Translation.tr("System uptime"); defaultEnabled: false }
-            WidgetCard { widgetKey: "tacho"; widgetIcon: "speed"; widgetLabel: Translation.tr("CPU Tachometer"); defaultEnabled: false }
             WidgetCard { widgetKey: "newsTicker"; widgetIcon: "newspaper"; widgetLabel: Translation.tr("News Ticker"); defaultEnabled: false }
+            WidgetCard { widgetKey: "mascot"; widgetIcon: "pets"; widgetLabel: Translation.tr("Mascot"); defaultEnabled: false }
 
             // ── Custom widgets section ──
             Item { width: 1; height: 8 }
@@ -345,7 +344,7 @@ Item {
         // avoid silent setNestedValue failures (their schemas don't expose those keys).
         readonly property bool _supportsAppearance: !isCustom && [
             "clock", "weather", "visualizer", "systemMonitor", "battery", "notes",
-            "calendarUpcoming", "network", "uptime", "tacho", "newsTicker", "mascot"
+            "calendarUpcoming", "uptime", "newsTicker", "mascot"
         ].indexOf(widgetKey) !== -1
         readonly property bool _expanded: card._enabled && _expandToggle
         property bool _expandToggle: false

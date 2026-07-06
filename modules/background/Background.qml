@@ -24,9 +24,7 @@ import qs.modules.background.widgets.systemMonitor
 import qs.modules.background.widgets.battery
 import qs.modules.background.widgets.notes
 import qs.modules.background.widgets.calendar
-import qs.modules.background.widgets.network
 import qs.modules.background.widgets.uptime
-import qs.modules.background.widgets.tacho
 import qs.modules.background.widgets.newsTicker
 import qs.modules.background.widgets.mascot
 import "root:modules/common/functions/parallax.js" as ParallaxMath
@@ -41,7 +39,7 @@ Scope {
 
         function setWidgetEnabled(widgetName: string, enabled: bool): string {
             const knownWidgets = ["weather", "clock", "mediaControls", "visualizer", "systemMonitor",
-                "battery", "notes", "calendarUpcoming", "network", "uptime", "tacho", "newsTicker", "mascot"];
+                "battery", "notes", "calendarUpcoming", "uptime", "newsTicker", "mascot"];
             if (!knownWidgets.includes(widgetName))
                 return "unknown widget: " + widgetName;
             Config.setNestedValue("background.widgets." + widgetName + ".enable", enabled);
@@ -111,9 +109,7 @@ Scope {
             { key: "visualizer",     defaultOn: false, icon: "graphic_eq" },
             { key: "systemMonitor",  defaultOn: false, icon: "monitor_heart" },
             { key: "battery",        defaultOn: false, icon: "battery_full" },
-            { key: "network",        defaultOn: false, icon: "wifi" },
             { key: "uptime",         defaultOn: false, icon: "avg_pace" },
-            { key: "tacho",          defaultOn: false, icon: "speed" },
             { key: "newsTicker",     defaultOn: false, icon: "newspaper" },
             { key: "mascot",         defaultOn: false, icon: "pets" }
         ]
@@ -1807,39 +1803,11 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("network", false)
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask9 : null
-                    Item { id: _hitMask9; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
-                    sourceComponent: NetworkWidget {
-                        widgetIndex: 8
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
                     shown: bgRoot._widgetEnabled("uptime", false)
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask10 : null
                     Item { id: _hitMask10; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
                     sourceComponent: UptimeWidget {
                         widgetIndex: 9
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetEnabled("tacho", false)
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask11 : null
-                    Item { id: _hitMask11; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
-                    sourceComponent: TachoWidget {
-                        widgetIndex: 10
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width

@@ -418,6 +418,51 @@ ContentPage {
         }
     }
 
+    // ── Overview: every widget toggleable at a glance ─────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: true
+        icon: "dashboard_customize"
+        title: Translation.tr("Widgets at a glance")
+
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Toggle any widget here; fine-tune it in its section below")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: 6
+                Repeater {
+                    model: [
+                        { key: "clock", icon: "schedule", label: Translation.tr("Clock"), def: true },
+                        { key: "weather", icon: "cloud", label: Translation.tr("Weather"), def: false },
+                        { key: "mediaControls", icon: "album", label: Translation.tr("Media"), def: false },
+                        { key: "visualizer", icon: "graphic_eq", label: Translation.tr("Visualizer"), def: false },
+                        { key: "systemMonitor", icon: "monitor_heart", label: Translation.tr("System"), def: false },
+                        { key: "battery", icon: "battery_full", label: Translation.tr("Battery"), def: false },
+                        { key: "notes", icon: "sticky_note_2", label: Translation.tr("Notes"), def: false },
+                        { key: "calendarUpcoming", icon: "event", label: Translation.tr("Events"), def: false },
+                        { key: "uptime", icon: "avg_pace", label: Translation.tr("Uptime"), def: false },
+                        { key: "newsTicker", icon: "newspaper", label: Translation.tr("News"), def: false },
+                        { key: "mascot", icon: "pets", label: Translation.tr("Mascot"), def: false }
+                    ]
+                    delegate: WidgetToggleChip {
+                        required property var modelData
+                        configPath: "background.widgets." + modelData.key + ".enable"
+                        defaultValue: modelData.def
+                        buttonIcon: modelData.icon
+                        buttonText: modelData.label
+                    }
+                }
+            }
+        }
+    }
+
     // ── Edit Mode & Grid ─────────────────────────────────────
     SettingsCardSection {
         expanded: true
@@ -1080,6 +1125,64 @@ ContentPage {
                 }
             }
         }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.clock"
+                defaults: ({
+                    "cookie": {
+                                        "aiStyling": false,
+                                        "constantlyRotate": false,
+                                        "dateInClock": true,
+                                        "dateStyle": "bubble",
+                                        "dialNumberStyle": "full",
+                                        "hourHandStyle": "hollow",
+                                        "hourMarks": false,
+                                        "minuteHandStyle": "hide",
+                                        "secondHandStyle": "hide",
+                                        "sides": 15,
+                                        "timeIndicators": false,
+                                        "useSineCookie": false,
+                                        "size": 230,
+                                        "preset": "default"
+                    },
+                    "dateStyle": "long",
+                    "digital": {
+                                        "animateChange": true,
+                                        "fontWeight": 600,
+                                        "spacing": 6,
+                                        "preset": "default"
+                    },
+                    "dim": 70,
+                    "fontFamily": "Space Grotesk",
+                    "placementStrategy": "free",
+                    "quote": {
+                                        "enable": false,
+                                        "text": ""
+                    },
+                    "showDate": true,
+                    "showSeconds": false,
+                    "showShadow": true,
+                    "style": "digital",
+                    "timeFormat": "system",
+                    "timeScale": 100,
+                    "dateScale": 100,
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "showBackground": false,
+                    "useBlur": false,
+                    "showBorder": false,
+                    "backgroundOpacity": 0,
+                    "borderWidth": 0,
+                    "borderOpacity": 0.08,
+                    "cornerRadius": -1,
+                    "colorMode": "auto",
+                    "x": 100,
+                    "y": 100,
+                    "locked": false
+})
+            }
+        }
     }
 
     // ── Weather ──────────────────────────────────────────────
@@ -1319,6 +1422,41 @@ ContentPage {
                 }
             }
         }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.weather"
+                defaults: ({
+                    "placementStrategy": "free",
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "showBackground": true,
+                    "useBlur": false,
+                    "showBorder": true,
+                    "backgroundOpacity": 0.16,
+                    "borderWidth": 1,
+                    "borderOpacity": 0.2,
+                    "cornerRadius": -1,
+                    "colorMode": "auto",
+                    "dim": 0,
+                    "x": 100,
+                    "y": 200,
+                    "preset": "default",
+                    "style": "pill",
+                    "shape": "pill",
+                    "size": 200,
+                    "tempSize": 80,
+                    "iconSize": 80,
+                    "showTemp": true,
+                    "showIcon": true,
+                    "showCondition": false,
+                    "padding": 20,
+                    "tempFontWeight": 500,
+                    "conditionOpacity": 0.7,
+                    "locked": false
+})
+            }
+        }
     }
 
     // ── Media Controls ───────────────────────────────────────
@@ -1425,6 +1563,25 @@ ContentPage {
                     Config.setNestedValue("background.widgets.mediaControls.x", 100);
                     Config.setNestedValue("background.widgets.mediaControls.y", 100);
                 }
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.mediaControls"
+                defaults: ({
+                    "placementStrategy": "free",
+                    "playerPreset": "full",
+                    "visualizerType": "wave",
+                    "visualizerPosition": "bottom",
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "colorMode": "auto",
+                    "dim": 0,
+                    "x": 240,
+                    "y": 240,
+                    "locked": false
+})
             }
         }
     }
@@ -1599,6 +1756,36 @@ ContentPage {
                     Config.setNestedValue("background.widgets.visualizer.x", 100);
                     Config.setNestedValue("background.widgets.visualizer.y", 100);
                 }
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.visualizer"
+                defaults: ({
+                    "placementStrategy": "free",
+                    "vizType": "bars",
+                    "barCount": 48,
+                    "barSpacing": 2,
+                    "dim": 0,
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "showBackground": true,
+                    "useBlur": false,
+                    "showBorder": true,
+                    "backgroundOpacity": 0.16,
+                    "borderWidth": 1,
+                    "borderOpacity": 0.2,
+                    "cornerRadius": -1,
+                    "colorMode": "auto",
+                    "x": 100,
+                    "y": 100,
+                    "barRadius": 2,
+                    "barMinHeight": 1,
+                    "contentWidth": 304,
+                    "contentHeight": 104,
+                    "locked": false
+})
             }
         }
     }
@@ -1812,6 +1999,42 @@ ContentPage {
                 }
             }
         }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.systemMonitor"
+                defaults: ({
+                    "placementStrategy": "free",
+                    "displayMode": "bars",
+                    "barCount": 32,
+                    "barSpacing": 2,
+                    "trackAlpha": 0.08,
+                    "fillOpacity": 0.7,
+                    "graphFillOpacity": 0.3,
+                    "showCpu": true,
+                    "showMemory": true,
+                    "showGpu": true,
+                    "showLabels": true,
+                    "dim": 0,
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "showBackground": true,
+                    "useBlur": false,
+                    "showBorder": true,
+                    "backgroundOpacity": 0.16,
+                    "borderWidth": 1,
+                    "borderOpacity": 0.2,
+                    "cornerRadius": -1,
+                    "colorMode": "auto",
+                    "x": 50,
+                    "y": 400,
+                    "preset": "default",
+                    "contentWidth": 320,
+                    "contentHeight": 120,
+                    "locked": false
+})
+            }
+        }
     }
 
     // ── Battery ──────────────────────────────────────────────
@@ -2006,6 +2229,38 @@ ContentPage {
                 }
             }
         }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.battery"
+                defaults: ({
+                    "placementStrategy": "free",
+                    "displayMode": "ring",
+                    "showTime": true,
+                    "ringSize": 72,
+                    "dim": 0,
+                    "widgetScale": 100,
+                    "widgetOpacity": 100,
+                    "showBackground": true,
+                    "useBlur": false,
+                    "showBorder": true,
+                    "backgroundOpacity": 0.16,
+                    "borderWidth": 1,
+                    "borderOpacity": 0.2,
+                    "cornerRadius": -1,
+                    "colorMode": "auto",
+                    "x": 50,
+                    "y": 50,
+                    "preset": "default",
+                    "ringLineWidth": 6,
+                    "barCount": 20,
+                    "barSpacing": 2,
+                    "barRadius": 2,
+                    "pillHeight": 12,
+                    "locked": false
+})
+            }
+        }
     }
 
     // ── Notes ───────────────────────────────────────────────
@@ -2183,51 +2438,6 @@ ContentPage {
         }
     }
 
-    // ── Network ──────────────────────────────────────────────
-    SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
-        icon: "wifi"
-        title: Translation.tr("Network")
-
-        SettingsGroup {
-            WidgetSettingRow {
-                label: Translation.tr("State")
-                icon: "check"
-                trailing: false
-                WidgetToggleChip {
-                    configPath: "background.widgets.network.enable"
-                    buttonIcon: "check"
-                    buttonText: Translation.tr("Enable")
-                }
-                WidgetPlacementSelector {
-                    configPath: "background.widgets.network"
-                    configEntry: Config.getNestedValue("background.widgets.network", ({}))
-                    defaultStrategy: "free"
-                }
-            }
-            WidgetZonePicker {
-                configPath: "background.widgets.network"
-                configEntry: Config.getNestedValue("background.widgets.network", ({}))
-            }
-            WidgetAppearanceControls {
-                configPath: "background.widgets.network"
-                configEntry: Config.getNestedValue("background.widgets.network", ({}))
-                hasCardControls: true
-            }
-            WidgetResetButton {
-                configPath: "background.widgets.network"
-                defaults: ({
-                    placementStrategy: "free", contentWidth: 280, contentHeight: 96,
-                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
-                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
-                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
-                    colorMode: "auto", locked: false, x: 80, y: 200
-                })
-            }
-        }
-    }
-
     // ── System Uptime ────────────────────────────────────────
     SettingsCardSection {
         visible: root.isIiActive
@@ -2354,61 +2564,6 @@ ContentPage {
                     useBlur: false, showBorder: false, backgroundOpacity: 0.16,
                     borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
                     colorMode: "auto", pose: "reading", locked: false, x: 120, y: 320
-                })
-            }
-        }
-    }
-
-    // ── CPU Tachometer ────────────────────────────────────────
-    SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
-        icon: "speed"
-        title: Translation.tr("CPU Tachometer")
-
-        SettingsGroup {
-            WidgetSettingRow {
-                label: Translation.tr("State")
-                icon: "check"
-                trailing: false
-                WidgetToggleChip {
-                    configPath: "background.widgets.tacho.enable"
-                    buttonIcon: "check"
-                    buttonText: Translation.tr("Enable")
-                }
-                WidgetPlacementSelector {
-                    configPath: "background.widgets.tacho"
-                    configEntry: Config.getNestedValue("background.widgets.tacho", ({}))
-                    defaultStrategy: "free"
-                }
-            }
-            WidgetZonePicker {
-                configPath: "background.widgets.tacho"
-                configEntry: Config.getNestedValue("background.widgets.tacho", ({}))
-            }
-            WidgetSettingRow {
-                label: Translation.tr("Gauge size")
-                icon: "speed"
-                StyledSpinBox {
-                    from: 100; to: 320; stepSize: 10
-                    value: Config.getNestedValue("background.widgets.tacho.gaugeSize", 180)
-                    onValueModified: Config.setNestedValue("background.widgets.tacho.gaugeSize", value)
-                    StyledToolTip { text: Translation.tr("Gauge diameter (px)") }
-                }
-            }
-            WidgetAppearanceControls {
-                configPath: "background.widgets.tacho"
-                configEntry: Config.getNestedValue("background.widgets.tacho", ({}))
-                hasCardControls: true
-            }
-            WidgetResetButton {
-                configPath: "background.widgets.tacho"
-                defaults: ({
-                    placementStrategy: "free", gaugeSize: 180,
-                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
-                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
-                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
-                    colorMode: "auto", locked: false, x: 120, y: 120
                 })
             }
         }

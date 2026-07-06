@@ -1129,27 +1129,6 @@ Singleton {
                         property real y: 80
                     }
 
-                    property JsonObject network: JsonObject {
-                        property bool enable: false
-                        property bool locked: false
-                        property string placementStrategy: "free"
-                        property int contentWidth: 280
-                        property int contentHeight: 96
-                        property int widgetScale: 100
-                        property int widgetOpacity: 100
-                        property bool showBackground: true
-                        property bool useBlur: false
-                        property bool showBorder: true
-                        property real backgroundOpacity: 0.16
-                        property real borderWidth: 1
-                        property real borderOpacity: 0.20
-                        property real cornerRadius: -1
-                        property string colorMode: "auto"
-                        property int dim: 0
-                        property real x: 80
-                        property real y: 200
-                    }
-
                     property JsonObject uptime: JsonObject {
                         property bool enable: false
                         property bool locked: false
@@ -1190,26 +1169,6 @@ Singleton {
                         property string pose: "reading"
                         property real x: 120
                         property real y: 320
-                    }
-
-                    property JsonObject tacho: JsonObject {
-                        property bool enable: false
-                        property bool locked: false
-                        property string placementStrategy: "free"
-                        property int gaugeSize: 180
-                        property int widgetScale: 100
-                        property int widgetOpacity: 100
-                        property bool showBackground: true
-                        property bool useBlur: false
-                        property bool showBorder: true
-                        property real backgroundOpacity: 0.16
-                        property real borderWidth: 1
-                        property real borderOpacity: 0.20
-                        property real cornerRadius: -1
-                        property string colorMode: "auto"
-                        property int dim: 0
-                        property real x: 120
-                        property real y: 120
                     }
 
                     property JsonObject newsTicker: JsonObject {
