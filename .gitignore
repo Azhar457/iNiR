@@ -173,3 +173,7 @@ design-system/
 .impeccable/
 assets/graphify-out/
 skills-lock.json
+opencode.jsonc
+
+# Mascot GIF source frames (pipeline intermediates; GIFs ship, frames don't)
+assets/images/mascot/frames/
