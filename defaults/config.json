@@ -1091,6 +1091,10 @@
         "personality": {
             "enabled": true,
             "idleMoodIntervalMinutes": 30
+        },
+        "chaos": {
+            "enable": false,
+            "allowRearrange": false
         }
     },
     "media": {

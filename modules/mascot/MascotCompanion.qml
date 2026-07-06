@@ -296,6 +296,12 @@ Scope {
     }
 
     function poke(): bool {
+        // Chaos mode: once in a while the idle visit is a full desktop romp
+        if (chaosEnabled && !rompActive
+            && Date.now() - _lastRompAt > 30 * 60 * 1000
+            && Math.random() < 0.12) {
+            return startRomp()
+        }
         const ctxs = _smartCandidates()
         const ctxLines = _manifest.contextLines ?? ({})
         if (ctxs.length && Math.random() < 0.6) {
@@ -588,10 +594,41 @@ Scope {
     }
     Timer { id: wsHopsWindow; interval: 4000; onTriggered: root._wsHops = 0 }
 
+    // ── Chaos mode: she runs across the desktop and messes with it ──────
+    property bool rompActive: false
+    property double _lastRompAt: 0
+    readonly property bool chaosEnabled: companionEnabled && MascotChaos.enabled
+    function startRomp(): bool {
+        if (!chaosEnabled || suppressed || rompActive) {
+            console.log(`[MascotCompanion] romp denied (chaos=${chaosEnabled} suppressed=${suppressed} active=${rompActive})`)
+            return false
+        }
+        _lastRompAt = Date.now()
+        rompActive = true
+        return true
+    }
+    Loader {
+        id: rompLoader
+        active: root.rompActive
+        sourceComponent: MascotRomp {
+            rompScreen: root.companionScreen
+            onFinished: root.rompActive = false
+        }
+    }
+
     IpcHandler {
         target: "mascot"
 
         function poke(): void { root.poke() }
+        // Chaos mode: run across the desktop and mess with widgets/panels
+        function romp(): void { root.startRomp() }
+        // Undo the chaos: every displaced widget returns home
+        function tidy(): void {
+            MascotChaos.tidy()
+            const t = root._manifest.chaos?.tidy ?? ({})
+            if (root.show(t.pose ?? "checklist-steps", "right"))
+                root.line = Translation.tr(root._pickFrom(t.lines ?? ["You saw nothing."]))
+        }
         // Named "appear" because "show" collides with the `qs ipc show` subcommand
         function appear(pose: string, edge: string): void { root.show(pose, edge) }
         function appearContextual(pose: string, sourceWidget: string): void {

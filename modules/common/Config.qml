@@ -490,6 +490,10 @@ Singleton {
                     property bool enabled: true // Session-long mood flavor (sleepy/hyper/snarky/contemplative)
                     property int idleMoodIntervalMinutes: 30 // How often mood rolls (with ±50% jitter)
                 }
+                property JsonObject chaos: JsonObject {
+                    property bool enable: false // Chaos mode: she may run across the desktop and mess with widgets/panels
+                    property bool allowRearrange: false // Let her actually relocate widgets (otherwise everything bounces back)
+                }
             }
 
             property JsonObject appearance: JsonObject {

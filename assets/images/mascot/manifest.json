@@ -211,6 +211,28 @@
     { "pose": "bored-chin-rest", "line": "Still staring? I charge by the minute." }
   ],
   "prankPoses": ["fisheye-inspect", "detective-glass", "popcorn-watch", "chibi-pointing-laugh", "edge-peek"],
+  "chaos": {
+    "run": "heroic-run",
+    "bonk": {
+      "pose": "chibi-mallet",
+      "after": "chibi-pointing-laugh",
+      "lines": ["Bonk. Physics included.", "It was in my way.", "Newton sends his regards.", "Oops. Anyway.", "That's for hogging my desktop."]
+    },
+    "toss": {
+      "pose": "heavy-lift",
+      "after": "peace-wink",
+      "lines": ["Redecorating. You're welcome.", "It looks better over there.", "Feng shui. Trust me.", "MOVING DAY.", "I do interior design now."]
+    },
+    "quake": {
+      "pose": "chibi-mallet",
+      "after": "laughing-roast",
+      "lines": ["Structural integrity test.", "Your bar needed percussion.", "Knock knock.", "Earthquake drill. You failed.", "The floor is my instrument."]
+    },
+    "tidy": {
+      "pose": "checklist-steps",
+      "lines": ["Fine. Cleaning up my own chaos.", "Everything back. Like nothing happened.", "You saw nothing.", "Order restored. Temporarily."]
+    }
+  },
   "reactions": {
     "battery": { "poses": ["battery-low"], "edge": "left", "source": "battery" },
     "update": { "poses": ["update-ready", "gift-giving", "chef-flambe"], "edge": "top", "source": "update" },

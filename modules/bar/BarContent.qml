@@ -23,6 +23,24 @@ Item { // Bar content region
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
     property alias backgroundItem: barBackground
 
+    // Mascot chaos: her ground slam rattles the bar
+    property real _quakeY: 0
+    transform: Translate { y: root._quakeY }
+    SequentialAnimation {
+        id: _quakeAnim
+        NumberAnimation { target: root; property: "_quakeY"; to: 7; duration: 60; easing.type: Easing.OutQuad }
+        NumberAnimation { target: root; property: "_quakeY"; to: -5; duration: 70; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: root; property: "_quakeY"; to: 3; duration: 70; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: root; property: "_quakeY"; to: 0; duration: 90; easing.type: Easing.OutBack }
+    }
+    Connections {
+        target: MascotChaos
+        enabled: MascotChaos.enabled
+        function onPanelShake() {
+            if (Appearance.animationsEnabled) _quakeAnim.restart()
+        }
+    }
+
     // Right-click context menu anchor (invisible, positioned at click)
     Item {
         id: barContextMenuAnchor
