@@ -177,3 +177,5 @@ opencode.jsonc
 
 # Mascot GIF source frames (pipeline intermediates; GIFs ship, frames don't)
 assets/images/mascot/frames/
+# Mascot generation prompt catalog (AI/agent tooling, local-only)
+assets/images/mascot/PROMPTS.md
