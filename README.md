@@ -288,6 +288,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code patterns, and
 ---
 
 <p align="center">
+  <img src="assets/images/mascot/inir-mascot-hero-banner.png" alt="iNiR mascot leaning on the iNiR logotype" width="720">
+</p>
+
+---
+
+<p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">Contributors</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
   <a href="LICENSE">MIT License</a>

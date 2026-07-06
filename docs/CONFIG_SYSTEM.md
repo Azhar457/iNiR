@@ -1,5 +1,7 @@
 # Config System
 
+![iNiR mascot judging your settings](assets/inir-mascot-settings-judging.png){ align=right width=150 }
+
 How configuration works in iNiR, from the user's perspective and from the code side.
 
 ## For users

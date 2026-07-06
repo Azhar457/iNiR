@@ -1,5 +1,7 @@
 # Known Limitations
 
+![iNiR mascot inspecting a caught bug](assets/inir-mascot-bug-net.png){ align=right width=150 }
+
 Things that don't work, work weirdly, or will bite you when you least expect it. Read this before filing a bug report - I promise half your questions are answered here.
 
 ---

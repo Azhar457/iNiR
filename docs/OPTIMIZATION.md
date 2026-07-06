@@ -1,5 +1,7 @@
 # QML/Quickshell Performance Optimization Guide
 
+![iNiR mascot riding a rocket](assets/inir-mascot-rocket-ride.png){ align=right width=130 }
+
 Best practices for optimizing iNiR based on Qt6 QML documentation and KDAB recommendations.
 
 ## Quick Reference

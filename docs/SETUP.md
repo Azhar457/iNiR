@@ -1,5 +1,7 @@
 # Setup & Updates
 
+![iNiR mascot celebrating a finished setup](assets/inir-mascot-wizard-complete.png){ align=right width=150 }
+
 ## Interactive Menu
 
 ```bash

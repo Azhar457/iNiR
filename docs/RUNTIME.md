@@ -1,5 +1,7 @@
 # Runtime and Boot Pipeline
 
+![iNiR mascot with a stethoscope](assets/inir-mascot-doctor-checkup.png){ align=right width=150 }
+
 What happens between "user logs in" and "shell is on screen", step by step.
 
 ## The full sequence

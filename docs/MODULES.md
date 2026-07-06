@@ -59,6 +59,7 @@ Users can disable any panel from Settings without touching config files.
 | `shellUpdate/` | `iiShellUpdate` | Shell update notification banner. |
 | `recordingOsd/` | `iiRecordingOsd` | Screen recording indicator (disabled by default). |
 | `workspaceStrip/` | `iiWorkspaceStrip` | Hover-triggered edge strip with live workspace previews, window thumbnails, drag-to-reorder, and media cards. Shared with waffle. IPC target `workspaceStrip`. |
+| `mascot/` | `iiMascotCompanion` | Playful mascot companion: peeks from screen edges, reacts to music/battery/network/updates, click interactions. Never over fullscreen or game mode. Shared with waffle. IPC target `mascot`. |
 
 ## Waffle Panels
 
@@ -144,11 +145,11 @@ If no timezones are configured, it suggests useful zones from the user's locale/
 
 Some panels work under both families. They keep their `ii` prefix but load in waffle mode too:
 
-`iiCheatsheet`, `iiOnScreenKeyboard`, `iiOverlay`, `iiOverview`, `iiRegionSelector`, `iiScreenCorners`, `iiWallpaperSelector`, `iiClipboard`, `iiRecordingOsd`, `iiWorkspaceStrip`
+`iiCheatsheet`, `iiOnScreenKeyboard`, `iiOverlay`, `iiOverview`, `iiRegionSelector`, `iiScreenCorners`, `iiWallpaperSelector`, `iiClipboard`, `iiRecordingOsd`, `iiWorkspaceStrip`, `iiMascotCompanion`
 
 ## For contributors
 
-1. Check the AGENTS.md (read by Claude Code via its sibling `CLAUDE.md` symlink) in the module directory you're editing (if one exists)
+1. Read [Architecture Overview](ARCHITECTURE_OVERVIEW.md) to locate the module's place in the tree and its owning family
 2. Identify which family owns the module before making visual changes
 3. Use the correct token system: `Appearance.*` for ii, `Looks.*` for waffle
 4. Register new panels in the appropriate panels file

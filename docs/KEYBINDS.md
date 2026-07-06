@@ -1,5 +1,7 @@
 # Default Keybinds
 
+![iNiR mascot directing window traffic](assets/inir-mascot-marshaller-windows.png){ align=right width=150 }
+
 These are the default keybinds shipped with iNiR. They live in `~/.config/niri/config.d/70-binds.kdl` after install.
 
 Change them. Break them. Make them yours. We won't judge.

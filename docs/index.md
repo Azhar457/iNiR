@@ -21,6 +21,11 @@
 </div>
 </div>
 
+<div class="inir-masthead__aside">
+<figure class="inir-masthead__mascot">
+  <img src="assets/inir-mascot-docs-guide.png" alt="iNiR mascot presenting the documentation">
+</figure>
+
 <aside class="inir-command" aria-label="First run command" markdown>
 <span>first run</span>
 
@@ -33,6 +38,7 @@ inir run
 
 Arch is the automated path. Other distros, package-managed installs, and NixOS are covered in the install docs.
 </aside>
+</div>
 </section>
 
 <section class="inir-routebook" aria-labelledby="routebook-title" markdown>
