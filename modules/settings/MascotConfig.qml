@@ -185,6 +185,54 @@ ContentPage {
             }
         }
 
+        // Chaos mode: she runs across the desktop and messes with it
+        SettingsGroup {
+            StyledText {
+                text: Translation.tr("Chaos mode")
+                font.pixelSize: Appearance.font.pixelSize.normal
+                color: Appearance.colors.colOnLayer1
+            }
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Rarely, instead of a quiet visit, she runs across the desktop and bonks your widgets, hurls them around or rattles the bar")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
+            SettingsSwitch {
+                buttonIcon: "cyclone"
+                text: Translation.tr("Enable chaos mode")
+                checked: Config.options?.mascot?.chaos?.enable ?? false
+                enabled: Config.options?.mascot?.companion?.enable ?? true
+                onCheckedChanged: Config.setNestedValue("mascot.chaos.enable", checked)
+            }
+            SettingsSwitch {
+                buttonIcon: "open_with"
+                text: Translation.tr("Let her rearrange widgets")
+                checked: Config.options?.mascot?.chaos?.allowRearrange ?? false
+                enabled: Config.options?.mascot?.chaos?.enable ?? false
+                onCheckedChanged: Config.setNestedValue("mascot.chaos.allowRearrange", checked)
+                StyledToolTip {
+                    text: Translation.tr("Displaced widgets keep their new position; otherwise everything bounces back home")
+                }
+            }
+            Flow {
+                Layout.fillWidth: true
+                spacing: 5
+                RippleButtonWithIcon {
+                    materialIcon: "cyclone"
+                    mainText: Translation.tr("Unleash chaos")
+                    enabled: Config.options?.mascot?.chaos?.enable ?? false
+                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "romp"])
+                }
+                RippleButtonWithIcon {
+                    materialIcon: "cleaning_services"
+                    mainText: Translation.tr("Tidy up")
+                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "tidy"])
+                }
+            }
+        }
+
         // Try her right now instead of waiting for the interval
         SettingsGroup {
             Flow {

@@ -204,6 +204,13 @@ Singleton {
             description: Translation.tr("What she reacts to and which pose each event uses"),
             keywords: ["mascot", "reactions", "events", "music", "battery", "notifications", "wallpaper", "screenshot", "gaming", "unlock", "pose", "image", "artist", "video", "monitor", "focused"]
         },
+        {
+            pageIndex: 19, pageName: root.pages[19].name,
+            section: Translation.tr("Mascot"),
+            label: Translation.tr("Chaos mode"),
+            description: Translation.tr("She runs across the desktop, bonks widgets and rattles the bar"),
+            keywords: ["mascot", "chaos", "romp", "kick", "bonk", "widgets", "rearrange", "tidy", "physics"]
+        },
 
         // =====================================================================
         // General (page 1) — per-option entries

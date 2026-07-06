@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: c82a81e6fb4128b3
+# IPC.md hash: 2014305e2157184b
 # Targets: 56
 
 declare -gA IPC_TARGET_DESC=(
@@ -26,7 +26,7 @@ declare -gA IPC_TARGET_DESC=(
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
   [keyboard]="Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info."
   [lock]="Lock screen. For when you need to pretend you're working."
-  [mascot]="Playful mascot companion (needs \`mascot.enable\` and the companion switch in Settings › Quick). She peeks from screen edges and reacts to events; never appears over fullscreen apps, game mode, the lock screen or the session screen."
+  [mascot]="Playful mascot companion (needs \`mascot.enable\` and the companion switch in Settings › Mascot). She peeks from screen edges and reacts to events; every reaction and its pose is configurable in the dedicated Mascot settings page. Never appears over fullscreen apps, game mode, the lock screen or the session screen."
   [mascotMood]="Session-long mood state that flavors the mascot's idle lines (needs \`mascot.personality.enabled\`). The mood re-rolls on a jittered interval and starts from the time of day."
   [mediaControls]="Floating media controls panel."
   [memory]="Memory pressure monitoring for JSGCHeap accumulation (Qt V4 memfd leak). Notifies user when memory is high, lets them decide when to restart."
@@ -144,7 +144,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [globalActions]="run runWithArgs list search open"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate deactivate status focus"
-  [mascot]="poke appear appearContextual appearWithLine hide"
+  [mascot]="poke romp tidy appear appearContextual appearWithLine hide"
   [mascotMood]="set current"
   [mediaControls]="toggle close open"
   [memory]="collect stats restart dismiss reset"
@@ -252,6 +252,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["lock:status"]="Return lock state (\`locked\`, \`activating\`, or \`unlocked\`)"
   ["lock:focus"]="Refocus the lock screen input"
   ["mascot:poke"]="Ask her to peek from a random edge with a random pose"
+  ["mascot:romp"]=""
+  ["mascot:tidy"]=""
   ["mascot:appear"]="Show a specific catalog pose from \`left\`, \`right\`, \`top\` or \`bottom\`"
   ["mascot:appearContextual"]="Show near the triggering widget (\`battery\`, \`media\`, \`update\`, \`network\`, \`dnd\`). Requires \`mascot.companion.contextualPlacement\` to be enabled for event reactions; this IPC call bypasses that check for testing."
   ["mascot:appearWithLine"]="Show a specific pose saying an exact line (used by the bar widget easter eggs)"
