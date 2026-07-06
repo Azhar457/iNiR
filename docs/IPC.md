@@ -292,7 +292,7 @@ Centered welcome hub panel (ii family): greeting, clock, notifications, media, w
 
 ### mascot
 
-Playful mascot companion (needs `mascot.enable` and the companion switch in Settings › Quick). She peeks from screen edges and reacts to events; never appears over fullscreen apps, game mode, the lock screen or the session screen.
+Playful mascot companion (needs `mascot.enable` and the companion switch in Settings › Mascot). She peeks from screen edges and reacts to events; every reaction and its pose is configurable in the dedicated Mascot settings page. Never appears over fullscreen apps, game mode, the lock screen or the session screen.
 
 | Function | Description |
 |----------|-------------|

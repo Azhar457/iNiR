@@ -59,7 +59,7 @@ Users can disable any panel from Settings without touching config files.
 | `shellUpdate/` | `iiShellUpdate` | Shell update notification banner. |
 | `recordingOsd/` | `iiRecordingOsd` | Screen recording indicator (disabled by default). |
 | `workspaceStrip/` | `iiWorkspaceStrip` | Hover-triggered edge strip with live workspace previews, window thumbnails, drag-to-reorder, and media cards. Shared with waffle. IPC target `workspaceStrip`. |
-| `mascot/` | `iiMascotCompanion` | Playful mascot companion: peeks from screen edges, reacts to music/battery/network/updates, click interactions. Never over fullscreen or game mode. Shared with waffle. IPC target `mascot`. |
+| `mascot/` | `iiMascotCompanion` | Playful mascot companion: peeks from screen edges, reacts to shell events (music, battery, network, updates, notifications, screenshots, gaming, unlock), click interactions. Every reaction and its pose is configurable in Settings › Mascot; a desktop widget variant lives in Settings › Widgets. Never over fullscreen or game mode. Shared with waffle. IPC targets `mascot`, `mascotMood`. |
 
 ## Waffle Panels
 
