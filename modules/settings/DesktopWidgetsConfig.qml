@@ -1,6 +1,8 @@
 import qs
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -2266,6 +2268,92 @@ ContentPage {
                     useBlur: false, showBorder: true, backgroundOpacity: 0.16,
                     borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
                     colorMode: "auto", locked: false, x: 80, y: 80
+                })
+            }
+        }
+    }
+
+    // ── Mascot ───────────────────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "pets"
+        title: Translation.tr("Mascot")
+
+        SettingsGroup {
+            id: mascotWidgetGroup
+
+            // Pose thumbnails come straight from the mascot manifest
+            property var poseOptions: []
+            FileView {
+                path: Quickshell.shellPath("assets/images/mascot/manifest.json")
+                onLoadedChanged: {
+                    if (!loaded) return
+                    try {
+                        const m = JSON.parse(text())
+                        const set = new Set()
+                        Object.keys(m.linesByPose ?? {}).forEach(p => set.add(p))
+                        ;(m.idlePicks ?? []).forEach(p => set.add(p[0]))
+                        ;(m.animatedPoses ?? []).forEach(p => set.add(p))
+                        const anim = m.animatedPoses ?? []
+                        mascotWidgetGroup.poseOptions = Array.from(set).sort().map(p => ({
+                            displayName: p,
+                            value: p,
+                            image: Quickshell.shellPath(`assets/images/mascot/inir-mascot-${p}.${anim.includes(p) ? "gif" : "png"}`)
+                        }))
+                    } catch (e) {
+                        console.warn("[DesktopWidgetsConfig] mascot manifest load failed:", e)
+                    }
+                }
+            }
+
+            WidgetSettingRow {
+                label: Translation.tr("State")
+                icon: "check"
+                trailing: false
+                WidgetToggleChip {
+                    configPath: "background.widgets.mascot.enable"
+                    buttonIcon: "check"
+                    buttonText: Translation.tr("Enable")
+                }
+                WidgetPlacementSelector {
+                    configPath: "background.widgets.mascot"
+                    configEntry: Config.getNestedValue("background.widgets.mascot", ({}))
+                    defaultStrategy: "free"
+                }
+            }
+            StyledText {
+                Layout.fillWidth: true
+                visible: !(Config.options?.mascot?.enable ?? false)
+                text: Translation.tr("Needs the global mascot switch (Settings › Mascot)")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
+            MascotPoseGallery {
+                Layout.fillWidth: true
+                label: Translation.tr("Pose on the desktop")
+                options: mascotWidgetGroup.poseOptions
+                currentValue: Config.getNestedValue("background.widgets.mascot.pose", "reading")
+                onSelected: value => Config.setNestedValue("background.widgets.mascot.pose", value)
+            }
+            WidgetZonePicker {
+                configPath: "background.widgets.mascot"
+                configEntry: Config.getNestedValue("background.widgets.mascot", ({}))
+            }
+            WidgetAppearanceControls {
+                configPath: "background.widgets.mascot"
+                configEntry: Config.getNestedValue("background.widgets.mascot", ({}))
+                hasCardControls: true
+            }
+            WidgetResetButton {
+                configPath: "background.widgets.mascot"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 200,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: false,
+                    useBlur: false, showBorder: false, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", pose: "reading", locked: false, x: 120, y: 320
                 })
             }
         }

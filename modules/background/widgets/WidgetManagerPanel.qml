@@ -345,7 +345,7 @@ Item {
         // avoid silent setNestedValue failures (their schemas don't expose those keys).
         readonly property bool _supportsAppearance: !isCustom && [
             "clock", "weather", "visualizer", "systemMonitor", "battery", "notes",
-            "calendarUpcoming", "network", "uptime", "tacho", "newsTicker"
+            "calendarUpcoming", "network", "uptime", "tacho", "newsTicker", "mascot"
         ].indexOf(widgetKey) !== -1
         readonly property bool _expanded: card._enabled && _expandToggle
         property bool _expandToggle: false

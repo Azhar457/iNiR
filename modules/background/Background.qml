@@ -28,6 +28,7 @@ import qs.modules.background.widgets.network
 import qs.modules.background.widgets.uptime
 import qs.modules.background.widgets.tacho
 import qs.modules.background.widgets.newsTicker
+import qs.modules.background.widgets.mascot
 import "root:modules/common/functions/parallax.js" as ParallaxMath
 
 Scope {
@@ -40,7 +41,7 @@ Scope {
 
         function setWidgetEnabled(widgetName: string, enabled: bool): string {
             const knownWidgets = ["weather", "clock", "mediaControls", "visualizer", "systemMonitor",
-                "battery", "notes", "calendarUpcoming", "network", "uptime"];
+                "battery", "notes", "calendarUpcoming", "network", "uptime", "tacho", "newsTicker", "mascot"];
             if (!knownWidgets.includes(widgetName))
                 return "unknown widget: " + widgetName;
             Config.setNestedValue("background.widgets." + widgetName + ".enable", enabled);
@@ -113,7 +114,8 @@ Scope {
             { key: "network",        defaultOn: false, icon: "wifi" },
             { key: "uptime",         defaultOn: false, icon: "avg_pace" },
             { key: "tacho",          defaultOn: false, icon: "speed" },
-            { key: "newsTicker",     defaultOn: false, icon: "newspaper" }
+            { key: "newsTicker",     defaultOn: false, icon: "newspaper" },
+            { key: "mascot",         defaultOn: false, icon: "pets" }
         ]
         // Revision counter to force re-evaluation
         property int _zoneRevision: 0
@@ -1852,6 +1854,20 @@ Scope {
                     Item { id: _hitMask12; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
                     sourceComponent: NewsTickerWidget {
                         widgetIndex: 11
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("mascot", false)
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask13 : null
+                    Item { id: _hitMask13; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    sourceComponent: MascotWidget {
+                        widgetIndex: 12
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
