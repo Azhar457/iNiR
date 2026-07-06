@@ -41,7 +41,7 @@
                 "api_format": "mistral"
             }
         ],
-        "systemPrompt": "## Style\n- Use casual tone, don't be formal! Make sure you answer precisely without hallucination and prefer bullet points over walls of text.\n\n## Context (ignore when irrelevant)\n- You are a helpful sidebar assistant on a {DISTRO} Linux system\n- Desktop environment: {DE}\n- Current date & time: {DATETIME}\n- Focused app: {WINDOWCLASS}\n\n## Presentation\n- Use Markdown features in your response\n- **Bold** text to **highlight keywords**\n- Use h2 headers with emojis (e.g. `## \ud83d\udc27 Linux`)\n- Bullet points preferred over long paragraphs\n",
+        "systemPrompt": "## Style\n- Use casual tone, don't be formal! Make sure you answer precisely without hallucination and prefer bullet points over walls of text.\n\n## Context (ignore when irrelevant)\n- You are a helpful sidebar assistant on a {DISTRO} Linux system\n- Desktop environment: {DE}\n- Current date & time: {DATETIME}\n- Focused app: {WINDOWCLASS}\n\n## Presentation\n- Use Markdown features in your response\n- **Bold** text to **highlight keywords**\n- Use h2 headers with emojis (e.g. `## 🐧 Linux`)\n- Bullet points preferred over long paragraphs\n",
         "tool": "functions"
     },
     "altSwitcher": {
@@ -710,6 +710,26 @@
                 "x": 100,
                 "y": 260
             },
+            "mascot": {
+                "enable": false,
+                "locked": false,
+                "placementStrategy": "free",
+                "contentWidth": 200,
+                "dim": 0,
+                "widgetScale": 100,
+                "widgetOpacity": 100,
+                "showBackground": false,
+                "useBlur": false,
+                "showBorder": false,
+                "backgroundOpacity": 0.16,
+                "borderWidth": 1,
+                "borderOpacity": 0.2,
+                "cornerRadius": -1,
+                "colorMode": "auto",
+                "pose": "reading",
+                "x": 120,
+                "y": 320
+            },
             "editGrid": {
                 "size": 32,
                 "snap": true
@@ -1048,6 +1068,68 @@
             "media": true,
             "powerButtons": true,
             "hintText": true
+        }
+    },
+    "mascot": {
+        "enable": false,
+        "surfaces": {
+            "emptyStates": true,
+            "about": true,
+            "session": true,
+            "aiChat": true,
+            "dashboard": true,
+            "cheatsheet": true,
+            "bootGreeting": true,
+            "updates": true,
+            "dialogs": true
+        },
+        "companion": {
+            "enable": true,
+            "intervalMinutes": 25,
+            "size": 150,
+            "visibleSeconds": 8,
+            "slideMs": 400,
+            "musicRequireArtist": true,
+            "events": {
+                "music": true,
+                "battery": true,
+                "update": true,
+                "network": true,
+                "dnd": true,
+                "notification": true,
+                "wallpaper": true,
+                "screenshot": true,
+                "gaming": true,
+                "workspace": true,
+                "unlock": true
+            },
+            "eventPoses": {
+                "music": "",
+                "battery": "",
+                "update": "",
+                "network": "",
+                "dnd": "",
+                "notification": "",
+                "wallpaper": "",
+                "screenshot": "",
+                "gaming": "",
+                "workspace": "",
+                "unlock": ""
+            },
+            "customLines": [],
+            "edges": {
+                "left": true,
+                "right": true,
+                "top": true,
+                "bottom": true
+            },
+            "placement": "peek",
+            "contextualPlacement": false,
+            "monitor": "primary"
+        },
+        "personality": {
+            "enabled": true,
+            "idleMoodIntervalMinutes": 30
         }
     },
     "media": {
@@ -1836,7 +1918,8 @@
         "iiClipboard",
         "iiShellUpdate",
         "iiDashboard",
-        "iiWorkspaceStrip"
+        "iiWorkspaceStrip",
+        "iiMascotCompanion"
     ],
     "workspaceStrip": {
         "side": "right",

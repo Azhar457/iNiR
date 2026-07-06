@@ -1,5 +1,7 @@
 # IPC Reference
 
+![iNiR mascot presenting a terminal](assets/inir-mascot-terminal-demo.png){ align=right width=150 }
+
 iNiR exposes IPC targets you can call from Niri keybinds, scripts, or your terminal.
 
 > **Quick discovery:** `inir help` lists all targets, `inir <target> --help` shows available functions.
@@ -285,6 +287,31 @@ Centered welcome hub panel (ii family): greeting, clock, notifications, media, w
 | `toggle` | Open/close dashboard |
 | `open` | Open dashboard |
 | `close` | Close dashboard |
+
+---
+
+### mascot
+
+Playful mascot companion (needs `mascot.enable` and the companion switch in Settings › Quick). She peeks from screen edges and reacts to events; never appears over fullscreen apps, game mode, the lock screen or the session screen.
+
+| Function | Description |
+|----------|-------------|
+| `poke` | Ask her to peek from a random edge with a random pose |
+| `appear <pose> <edge>` | Show a specific catalog pose from `left`, `right`, `top` or `bottom` |
+| `appearContextual <pose> <sourceWidget>` | Show near the triggering widget (`battery`, `media`, `update`, `network`, `dnd`). Requires `mascot.companion.contextualPlacement` to be enabled for event reactions; this IPC call bypasses that check for testing. |
+| `appearWithLine <pose> <edge> <line>` | Show a specific pose saying an exact line (used by the bar widget easter eggs) |
+| `hide` | Send her away immediately |
+
+---
+
+### mascotMood
+
+Session-long mood state that flavors the mascot's idle lines (needs `mascot.personality.enabled`). The mood re-rolls on a jittered interval and starts from the time of day.
+
+| Function | Description |
+|----------|-------------|
+| `set <mood>` | Force a mood: `neutral`, `sleepy`, `hyper`, `snarky` or `contemplative` |
+| `current` | Print the current mood |
 
 ---
 

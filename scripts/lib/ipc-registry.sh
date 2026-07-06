@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 4f8e5d45b337953e
-# Targets: 54
+# IPC.md hash: c82a81e6fb4128b3
+# Targets: 56
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="AI chat service. Multi-provider (Gemini, OpenAI, Mistral) with tool support."
@@ -26,6 +26,8 @@ declare -gA IPC_TARGET_DESC=(
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
   [keyboard]="Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info."
   [lock]="Lock screen. For when you need to pretend you're working."
+  [mascot]="Playful mascot companion (needs \`mascot.enable\` and the companion switch in Settings › Quick). She peeks from screen edges and reacts to events; never appears over fullscreen apps, game mode, the lock screen or the session screen."
+  [mascotMood]="Session-long mood state that flavors the mascot's idle lines (needs \`mascot.personality.enabled\`). The mood re-rolls on a jittered interval and starts from the time of day."
   [mediaControls]="Floating media controls panel."
   [memory]="Memory pressure monitoring for JSGCHeap accumulation (Qt V4 memfd leak). Notifies user when memory is high, lets them decide when to restart."
   [minimize]="Window minimization (Niri workaround - moves windows to hidden workspace)."
@@ -83,6 +85,8 @@ declare -gA IPC_TARGET_FAMILY=(
   [globalActions]="shared"
   [keyboard]="shared"
   [lock]="shared"
+  [mascot]="shared"
+  [mascotMood]="shared"
   [mediaControls]="shared"
   [memory]="shared"
   [minimize]="shared"
@@ -140,6 +144,8 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [globalActions]="run runWithArgs list search open"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate deactivate status focus"
+  [mascot]="poke appear appearContextual appearWithLine hide"
+  [mascotMood]="set current"
   [mediaControls]="toggle close open"
   [memory]="collect stats restart dismiss reset"
   [minimize]="minimize restore"
@@ -245,6 +251,13 @@ declare -gA IPC_FUNCTION_DESC=(
   ["lock:deactivate"]="Cancel lock and mark screen unlocked"
   ["lock:status"]="Return lock state (\`locked\`, \`activating\`, or \`unlocked\`)"
   ["lock:focus"]="Refocus the lock screen input"
+  ["mascot:poke"]="Ask her to peek from a random edge with a random pose"
+  ["mascot:appear"]="Show a specific catalog pose from \`left\`, \`right\`, \`top\` or \`bottom\`"
+  ["mascot:appearContextual"]="Show near the triggering widget (\`battery\`, \`media\`, \`update\`, \`network\`, \`dnd\`). Requires \`mascot.companion.contextualPlacement\` to be enabled for event reactions; this IPC call bypasses that check for testing."
+  ["mascot:appearWithLine"]="Show a specific pose saying an exact line (used by the bar widget easter eggs)"
+  ["mascot:hide"]="Send her away immediately"
+  ["mascotMood:set"]="Force a mood: \`neutral\`, \`sleepy\`, \`hyper\`, \`snarky\` or \`contemplative\`"
+  ["mascotMood:current"]="Print the current mood"
   ["mediaControls:toggle"]="Open/close media controls"
   ["mediaControls:close"]="Hide media controls"
   ["mediaControls:open"]="Show media controls"
@@ -374,6 +387,10 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["globalActions:runWithArgs"]="<actionId> <args>"
   ["globalActions:list"]="<category>"
   ["globalActions:search"]="<query>"
+  ["mascot:appear"]="<pose> <edge>"
+  ["mascot:appearContextual"]="<pose> <sourceWidget>"
+  ["mascot:appearWithLine"]="<pose> <edge> <line>"
+  ["mascotMood:set"]="<mood>"
   ["minimize:restore"]="<windowId>"
   ["packageSearch:search"]="<query>"
   ["panelFamily:set"]="<family>"
@@ -410,8 +427,8 @@ bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard gamemode globalActions keyboard lock mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard gamemode globalActions keyboard lock mediaControls memory minimize mpris notifications osdVolume osk overview packageSearch panelFamily region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overview packageSearch panelFamily region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(overlay)
 IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 
@@ -424,6 +441,7 @@ declare -gA IPC_KEBAB_ALIASES=(
   [coverflow-selector]=coverflowSelector
   [custom-widgets]=customWidgets
   [global-actions]=globalActions
+  [mascot-mood]=mascotMood
   [media-controls]=mediaControls
   [osd-volume]=osdVolume
   [package-search]=packageSearch

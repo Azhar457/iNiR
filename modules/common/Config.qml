@@ -394,7 +394,7 @@ Singleton {
             id: configOptionsJsonAdapter
 
             // Panel system
-            property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard", "iiWorkspaceStrip"]
+            property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard", "iiWorkspaceStrip", "iiMascotCompanion"]
             property list<string> knownPanels: [] // Tracks panels the user has seen; used to distinguish "user disabled" from "new in update"
             property string panelFamily: "ii" // "ii" or "waffle"
             property bool familyTransitionAnimation: true // Show animated overlay when switching families
@@ -425,6 +425,71 @@ Singleton {
                         "requires_key": true
                     }
                 ]
+            }
+
+            property JsonObject mascot: JsonObject {
+                property bool enable: false // Show the iNiR mascot illustration across shell surfaces (empty states, About, etc.)
+                property JsonObject surfaces: JsonObject {
+                    // Where the static mascot may appear; each maps to a group of placements
+                    property bool emptyStates: true // Notifications, clipboard, todo, media, calendar, wallpapers, search results
+                    property bool about: true // About pages
+                    property bool session: true // Session (power) screen
+                    property bool aiChat: true // AI chat greeting
+                    property bool dashboard: true // Dashboard welcome/weather cards
+                    property bool cheatsheet: true // Cheatsheet nav rail
+                    property bool bootGreeting: true // Boot welcome wave
+                    property bool updates: true // Shell update overlay
+                }
+                property JsonObject companion: JsonObject {
+                    property bool enable: true // Playful companion: she peeks from screen edges and reacts to events (needs mascot.enable)
+                    property int intervalMinutes: 25 // Roughly how often she peeks on her own; event reactions are rate-limited separately
+                    property int size: 150 // Sprite size in px
+                    property int visibleSeconds: 8 // How long a peek stays before she slides away (hover keeps her)
+                    property int slideMs: 400 // Slide in/out animation duration
+                    property bool musicRequireArtist: true // Ignore artist-less MPRIS players (browser videos posing as music)
+                    property JsonObject events: JsonObject {
+                        // Which shell events she reacts to (event reactions, not idle peeks)
+                        property bool music: true
+                        property bool battery: true
+                        property bool update: true
+                        property bool network: true
+                        property bool dnd: true
+                        property bool notification: true
+                        property bool wallpaper: true
+                        property bool screenshot: true
+                        property bool gaming: true
+                        property bool workspace: true
+                        property bool unlock: true
+                    }
+                    property JsonObject eventPoses: JsonObject {
+                        // Per-event pose override; "" rotates the manifest pose pool
+                        property string music: ""
+                        property string battery: ""
+                        property string update: ""
+                        property string network: ""
+                        property string dnd: ""
+                        property string notification: ""
+                        property string wallpaper: ""
+                        property string screenshot: ""
+                        property string gaming: ""
+                        property string workspace: ""
+                        property string unlock: ""
+                    }
+                    property list<string> customLines: [] // Extra things she can say on idle peeks (one per entry)
+                    property JsonObject edges: JsonObject {
+                        property bool left: true
+                        property bool right: true
+                        property bool top: true
+                        property bool bottom: true
+                    }
+                    property string placement: "peek" // "peek" | "panel-sitter" — float off-screen edge or sit on bar/dock
+                    property bool contextualPlacement: false // Opt-in: appear near triggering widget instead of random edge
+                    property string monitor: "primary" // "primary" | "focused" — which screen she appears on
+                }
+                property JsonObject personality: JsonObject {
+                    property bool enabled: true // Session-long mood flavor (sleepy/hyper/snarky/contemplative)
+                    property int idleMoodIntervalMinutes: 30 // How often mood rolls (with ±50% jitter)
+                }
             }
 
             property JsonObject appearance: JsonObject {
@@ -1104,6 +1169,27 @@ Singleton {
                         property int dim: 0
                         property real x: 80
                         property real y: 80
+                    }
+
+                    property JsonObject mascot: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int contentWidth: 200
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: false
+                        property bool useBlur: false
+                        property bool showBorder: false
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property string pose: "reading"
+                        property real x: 120
+                        property real y: 320
                     }
 
                     property JsonObject tacho: JsonObject {

@@ -6,6 +6,7 @@ import qs.modules.controlPanel
 import qs.modules.dashboard
 import qs.modules.dock
 import qs.modules.lock
+import qs.modules.mascot
 import qs.modules.mediaControls
 import qs.modules.notificationPopup
 import qs.modules.onScreenDisplay
@@ -88,6 +89,7 @@ Item {
     DeferredPanelLoader { identifier: "iiShellUpdate"; component: ShellUpdateOverlay {} }
     DeferredPanelLoader { identifier: "iiRecordingOsd"; component: RecordingOsd {} }
     DeferredPanelLoader { identifier: "iiWorkspaceStrip"; component: WorkspaceStrip {} }
+    DeferredPanelLoader { identifier: "iiMascotCompanion"; extraCondition: Config.options?.mascot?.enable ?? false; component: MascotCompanion {} }
 
     LazyLoader {
         active: Config.ready && (Config.options?.background?.effects?.ripple?.enable ?? false)

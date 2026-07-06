@@ -104,7 +104,6 @@ Singleton {
     property bool waffleAltSwitcherOpen: false
     property bool waffleClipboardOpen: false
     property bool waffleTaskViewOpen: false
-
     // Panel family transition animation state
     property bool familyTransitionActive: false
     property string familyTransitionDirection: "left" // "left" = current exits left, new enters from right

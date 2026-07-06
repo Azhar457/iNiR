@@ -1,6 +1,7 @@
 import qs.modules.bootGreeting
 import qs.modules.cheatsheet
 import qs.modules.lock
+import qs.modules.mascot
 import qs.modules.onScreenKeyboard
 import qs.modules.recordingOsd
 import qs.modules.overview
@@ -81,6 +82,7 @@ Item {
     DeferredPanelLoader { identifier: "iiClipboard"; extraCondition: Config.options?.panelFamily !== "waffle"; component: ClipboardModule.ClipboardPanel {} }
     DeferredPanelLoader { identifier: "iiRecordingOsd"; component: RecordingOsd {} }
     DeferredPanelLoader { identifier: "iiWorkspaceStrip"; component: WorkspaceStrip {} }
+    DeferredPanelLoader { identifier: "iiMascotCompanion"; extraCondition: Config.options?.mascot?.enable ?? false; component: MascotCompanion {} }
 
     // Waffle Clipboard - handles IPC when panelFamily === "waffle"
     LazyLoader {
