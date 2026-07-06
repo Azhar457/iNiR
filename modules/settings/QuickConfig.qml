@@ -1664,7 +1664,6 @@ ContentPage {
         }
     }
 
-    // Game Mode
     SettingsCardSection {
         expanded: false
         icon: "sports_esports"

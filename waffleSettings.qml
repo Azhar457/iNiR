@@ -92,6 +92,11 @@ ApplicationWindow {
             name: Translation.tr("Workspace Strip"),
             icon: "desktop",
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WWorkspaceStripPage.qml")
+        },
+        {
+            name: Translation.tr("Mascot"),
+            icon: "image",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WMascotPage.qml")
         }
     ]
     

@@ -148,6 +148,13 @@ Singleton {
             desc: Translation.tr("Edge strip for workspace navigation"),
             essential: false,
             component: "modules/settings/WorkspaceStripConfig.qml"
+        },
+        {
+            name: Translation.tr("Mascot"),
+            icon: "pets",
+            desc: Translation.tr("Companion behavior, reactions, poses"),
+            essential: false,
+            component: "modules/settings/MascotConfig.qml"
         }
     ]
 
@@ -156,7 +163,7 @@ Singleton {
     readonly property var categories: [
         { label: Translation.tr("Essentials"), pages: [0] },
         { label: Translation.tr("Appearance"), pages: [4, 3, 14] },
-        { label: Translation.tr("Shell"), pages: [2, 5, 16, 10, 11, 18] },
+        { label: Translation.tr("Shell"), pages: [2, 5, 16, 10, 11, 18, 19] },
         { label: Translation.tr("System"), pages: [1, 7, 6, 12, 15, 8, 17] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
     ]
@@ -182,6 +189,20 @@ Singleton {
             label: Translation.tr("Bar & screen"),
             description: Translation.tr("Bar position and screen rounding"),
             keywords: ["bar", "position", "screen", "round", "corner"]
+        },
+        {
+            pageIndex: 19, pageName: root.pages[19].name,
+            section: Translation.tr("Mascot"),
+            label: Translation.tr("Mascot"),
+            description: Translation.tr("Mascot illustration and playful companion"),
+            keywords: ["mascot", "cat", "girl", "companion", "waifu", "illustration", "peek"]
+        },
+        {
+            pageIndex: 19, pageName: root.pages[19].name,
+            section: Translation.tr("Mascot"),
+            label: Translation.tr("Event reactions"),
+            description: Translation.tr("What she reacts to and which pose each event uses"),
+            keywords: ["mascot", "reactions", "events", "music", "battery", "notifications", "wallpaper", "screenshot", "gaming", "unlock", "pose", "image", "artist", "video", "monitor", "focused"]
         },
 
         // =====================================================================
