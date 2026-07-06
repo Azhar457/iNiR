@@ -27,7 +27,9 @@ Singleton {
     // First-seen config positions, key -> { x, y } — the "before chaos" state
     property var originals: ({})
 
-    signal impact(string widgetKey, real vx, real vy, bool persist)
+    // mode: "bounce" (spring back home) | "persist" (keep the new spot) |
+    //       "wreck" (knocked out — falls to the floor and stays there until tidy)
+    signal impact(string widgetKey, real vx, real vy, string mode)
     signal panelShake()
     signal tidied()
 

@@ -228,6 +228,18 @@
       "after": "laughing-roast",
       "lines": ["Structural integrity test.", "Your bar needed percussion.", "Knock knock.", "Earthquake drill. You failed.", "The floor is my instrument."]
     },
+    "wreck": {
+      "pose": "chibi-mallet",
+      "after": "laughing-roast",
+      "lines": ["DEMOLITION TIME.", "This one dies today.", "Warranty? Void.", "It had a good run. It's over now.", "Critical hit."]
+    },
+    "trip": {
+      "pose": "dead-crash",
+      "lines": ["...ow.", "The floor attacked me.", "I meant to do that.", "Physics betrayed me."],
+      "after_lines": ["You saw NOTHING.", "Not a word.", "The floor started it.", "I'm fine. FINE."]
+    },
+    "dodge": ["Oh, it DODGED. Cute.", "Hold still, coward.", "So it wants to play.", "Fine. Round two."],
+    "notify": ["Nothing happened. Don't check your widgets.", "Your desktop had it coming.", "Redecoration complete. No refunds.", "I take payment in pats.", "inir mascot tidy — if you're boring."],
     "tidy": {
       "pose": "checklist-steps",
       "lines": ["Fine. Cleaning up my own chaos.", "Everything back. Like nothing happened.", "You saw nothing.", "Order restored. Temporarily."]

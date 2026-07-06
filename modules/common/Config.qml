@@ -439,6 +439,7 @@ Singleton {
                     property bool cheatsheet: true // Cheatsheet nav rail
                     property bool bootGreeting: true // Boot welcome wave
                     property bool updates: true // Shell update overlay
+                    property bool dialogs: true // Close confirmation and similar dialogs
                 }
                 property JsonObject companion: JsonObject {
                     property bool enable: true // Playful companion: she peeks from screen edges and reacts to events (needs mascot.enable)

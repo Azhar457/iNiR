@@ -256,6 +256,7 @@ AbstractWidget {
     property real _flingRise: 120
     property real _flingSpin: 0
     property bool _flingPersist: false
+    property bool _flingWreck: false
 
     transform: [
         Rotation { origin.x: root.width / 2; origin.y: root.height / 2; angle: root._chaosAngle },
@@ -268,6 +269,8 @@ AbstractWidget {
         id: _chaosReportDebounce
         interval: 250
         onTriggered: MascotChaos.report(root.configEntryName, root.x, root.y, root.width, root.height)
+        // widgets born while chaos is already on still need a first report
+        Component.onCompleted: if (root._chaosWatch) restart()
     }
     on_ChaosWatchChanged: {
         if (_chaosWatch) _chaosReportDebounce.restart()
@@ -305,6 +308,10 @@ AbstractWidget {
     NumberAnimation { id: _chaosStraighten; target: root; property: "_chaosAngle"; to: 0; duration: 300; easing.type: Easing.OutQuad }
 
     function _chaosSettle(): void {
+        if (root._flingWreck) {
+            // stays face-down on the floor until tidy() picks it back up
+            return
+        }
         if (root._flingPersist) {
             const nx = root._clampX(root.x + root._chaosDX)
             const ny = root._clampY(root.y + root._chaosDY)
@@ -324,25 +331,33 @@ AbstractWidget {
     Connections {
         target: MascotChaos
         enabled: MascotChaos.enabled
-        function onImpact(widgetKey, vx, vy, persist) {
+        function onImpact(widgetKey, vx, vy, mode) {
             if (widgetKey !== root.configEntryName) return
             if (GlobalStates.screenLocked || !root.visible) return
             _chaosFling.stop()
             _chaosReturn.stop()
             MascotChaos.rememberOriginal(root.configEntryName, root.x, root.y)
-            root._flingPersist = persist && root.placementStrategy === "free" && !root.locked
+            root._flingWreck = mode === "wreck"
+            root._flingPersist = mode === "persist" && root.placementStrategy === "free" && !root.locked
             root._flingX = vx
-            root._flingY = root._flingPersist ? vy : 0
-            root._flingRise = 90 + Math.random() * 70
-            root._flingSpin = (vx >= 0 ? 1 : -1) * (8 + Math.random() * 14)
+            if (root._flingWreck) {
+                // knocked out: drop to the floor and lie there, badly
+                root._flingY = Math.max(0, root.scaledScreenHeight - root.y - root.height - 8)
+                root._flingRise = 40 + Math.random() * 40
+                root._flingSpin = (vx >= 0 ? 1 : -1) * (60 + Math.random() * 30)
+            } else {
+                root._flingY = root._flingPersist ? vy : 0
+                root._flingRise = 90 + Math.random() * 70
+                root._flingSpin = (vx >= 0 ? 1 : -1) * (8 + Math.random() * 14)
+            }
             _chaosFling.restart()
         }
         function onTidied() {
             _chaosFling.stop()
             _chaosReturn.stop()
-            root._chaosDX = 0
-            root._chaosDY = 0
-            root._chaosAngle = 0
+            root._flingWreck = false
+            // ease everything back upright instead of teleporting
+            _chaosReturn.restart()
         }
     }
 
