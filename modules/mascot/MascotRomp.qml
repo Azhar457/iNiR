@@ -39,7 +39,12 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
     color: "transparent"
-    mask: Region {}
+    // Click-through except her sprite; chase mode captures the whole screen
+    // so every click becomes a spot for her to pounce on
+    mask: Region { item: romp.phase === "chase" ? chaseCatchArea : sprite }
+
+    // Which behavior this window starts in ("romp" | "chase")
+    property string startMode: "romp"
 
     readonly property bool suppressed: GameMode.active || GameMode.hasAnyFullscreenWindow
         || GlobalStates.screenLocked || GlobalStates.sessionOpen
@@ -77,6 +82,19 @@ PanelWindow {
         return pool.length ? Translation.tr(pool[Math.floor(Math.random() * pool.length)]) : ""
     }
 
+    // Chaos poses can be a single name or a pool; pools rotate with memory
+    property var _recentActPoses: []
+    function _pickActPose(p, fallback): string {
+        if (!p) return fallback
+        if (typeof p === "string") return p
+        const fresh = p.filter(x => !romp._recentActPoses.includes(x))
+        const src = fresh.length ? fresh : p
+        const pick = src[Math.floor(Math.random() * src.length)]
+        romp._recentActPoses.push(pick)
+        while (romp._recentActPoses.length > 3) romp._recentActPoses.shift()
+        return pick
+    }
+
     function _actXFor(t): real {
         return Math.max(0, Math.min(t.x + t.w / 2 - romp.spriteSize / 2, romp.width - romp.spriteSize))
     }
@@ -94,7 +112,7 @@ PanelWindow {
             return true
         }
 
-        const options = ["quake"]
+        const options = ["quake", "punt"]
         if (targets.length > 0) {
             options.push("bonk", "bonk", "wreck")
             if (targets.length >= 2) options.push("rampage", "rampage")
@@ -107,6 +125,9 @@ PanelWindow {
 
         if (romp.planType === "quake") {
             stops.push({ kind: "quake", actX: romp.width * (0.30 + Math.random() * 0.40) })
+        } else if (romp.planType === "punt") {
+            // she kicks the bar/dock directly — the panels take it personally
+            stops.push({ kind: "punt", actX: romp.width * (0.15 + Math.random() * 0.70) })
         } else if (romp.planType === "rampage") {
             // tear through up to 3 widgets, escalating
             const n = Math.min(3, shuffled.length)
@@ -176,7 +197,9 @@ PanelWindow {
     property string phase: "idle" // enter | act | aftermath | leave
     property bool _enterFromLeft: Math.random() < 0.5
     property real spriteX: 0
-    property string pose: _chaosCfg.run ?? "heroic-run"
+    // Run style picked once per outing (usually the run cycle, sometimes tiptoes)
+    property string _runPose: "heroic-run"
+    property string pose: _runPose
     property string line: ""
     readonly property bool running: phase === "enter" || phase === "leave"
     readonly property bool movingRight: runTween.to > spriteX
@@ -191,6 +214,20 @@ PanelWindow {
 
     function _begin(): void {
         if (romp.suppressed || !MascotChaos.enabled) { romp._abort(); return }
+        romp._runPose = romp._pickActPose(romp._chaosCfg.run, "heroic-run")
+        if (romp.startMode === "chase") {
+            // run in to center stage first, then the game is on
+            romp._enterFromLeft = Math.random() < 0.5
+            romp.spriteX = romp._enterFromLeft ? -romp.spriteSize : romp.width + romp.spriteSize
+            romp.pose = romp._runPose
+            romp.phase = "enter"
+            romp.planStops = [{ kind: "chase", actX: romp.width * 0.45 }]
+            romp.planIndex = 0
+            romp.planType = "chase"
+            console.log("[MascotRomp] chase mode")
+            romp._runTo(romp.width * 0.45)
+            return
+        }
         if (!romp._makePlan()) { romp._abort(); return }
         romp.planIndex = 0
         const first = romp.planStops[0]
@@ -200,7 +237,7 @@ PanelWindow {
         // single hits fling in her run direction so she "kicks through"
         if ((romp.planType === "bonk" || romp.planType === "wreck") && first.kind === "hit")
             first.vx = (romp._enterFromLeft ? 1 : -1) * Math.abs(first.vx)
-        romp.pose = romp._chaosCfg.run ?? "heroic-run"
+        romp.pose = romp._runPose
         romp.line = ""
         romp.phase = "enter"
         console.log(`[MascotRomp] ${romp.planType} (${romp.planStops.length} stop${romp.planStops.length > 1 ? "s" : ""})`)
@@ -215,11 +252,16 @@ PanelWindow {
 
     property bool _dodged: false
     function _phaseDone(): void {
+        if (romp.phase === "chase") { romp._chaseTimeout(); return }
         const stop = romp.planStops[romp.planIndex]
+        if (romp.phase === "enter" && stop.kind === "chase") {
+            romp._startChase()
+            return
+        }
         if (romp.phase === "enter") {
-            const cfgKey = stop.kind === "trip" ? "trip" : (stop.kind === "quake" ? "quake" : romp._hitCfgKey(stop))
+            const cfgKey = stop.kind === "hit" ? romp._hitCfgKey(stop) : stop.kind
             const act = romp._chaosCfg[cfgKey] ?? ({})
-            romp.pose = act.pose ?? (stop.kind === "trip" ? "dead-crash" : "chibi-mallet")
+            romp.pose = romp._pickActPose(act.pose, stop.kind === "trip" ? "dead-crash" : "chibi-mallet")
             romp.line = romp._pickLine(act.lines)
             romp.phase = "act"
             phaseTimer.interval = stop.kind === "trip" ? 2000 : 620
@@ -247,9 +289,11 @@ PanelWindow {
             }
             // the hit lands
             if (stop.kind === "quake") {
-                MascotChaos.panelShake()
+                MascotChaos.panelShake(1)
                 for (const t of MascotChaos.targets())
                     MascotChaos.impact(t.key, (Math.random() - 0.5) * 90, 0, "bounce")
+            } else if (stop.kind === "punt") {
+                MascotChaos.panelShake(2.4)
             } else {
                 MascotChaos.impact(stop.key, stop.vx, stop.vy, stop.mode)
                 romp._checkDomino(stop)
@@ -257,21 +301,22 @@ PanelWindow {
             romp.planIndex++
             if (romp.planIndex < romp.planStops.length) {
                 // rampage: on to the next victim
-                romp.pose = romp._chaosCfg.run ?? "heroic-run"
+                romp.pose = romp._runPose
                 romp.line = ""
                 romp.phase = "enter"
                 romp._runTo(romp.planStops[romp.planIndex].actX)
                 return
             }
-            const act = romp._chaosCfg[romp._hitCfgKey(stop)] ?? ({})
-            romp.pose = act.after ?? "chibi-pointing-laugh"
+            const cfgKey = stop.kind === "hit" ? romp._hitCfgKey(stop) : stop.kind
+            const act = romp._chaosCfg[cfgKey] ?? ({})
+            romp.pose = romp._pickActPose(act.after, "chibi-pointing-laugh")
             romp.phase = "aftermath"
             phaseTimer.interval = 1500
             phaseTimer.restart()
             if (stop.mode === "wreck" || romp.planType === "rampage")
                 romp._maybeCallingCard()
         } else if (romp.phase === "aftermath") {
-            romp.pose = romp._chaosCfg.run ?? "heroic-run"
+            romp.pose = romp._runPose
             romp.line = ""
             romp.phase = "leave"
             // keep going in the same direction, out the far side
@@ -291,18 +336,110 @@ PanelWindow {
 
     function _abort(): void {
         runTween.stop()
+        chaseXTween.stop()
+        chaseYTween.stop()
         phaseTimer.stop()
         romp.finished()
     }
 
+    // ── Chase mode: she hunts your mouse clicks ─────────────────────────
+    // Every click is a spot to pounce on; click HER to catch her and win.
+    property int _chaseClicks: 0
+    property real spriteY: -1 // -1 = glued to the ground
+    NumberAnimation { id: chaseXTween; target: romp; property: "spriteX"; duration: 320; easing.type: Easing.OutQuad }
+    NumberAnimation {
+        id: chaseYTween
+        target: romp
+        property: "spriteY"
+        duration: 320
+        easing.type: Easing.OutQuad
+        onStopped: if (romp.phase === "chase") romp.pose = "crouch-inspect"
+    }
+
+    function _startChase(): void {
+        runTween.stop()
+        romp._chaseClicks = 0
+        romp.phase = "chase"
+        romp.pose = "follow-me"
+        romp.line = romp._pickLine(romp._chaosCfg.chase?.lines ?? ["Catch me if you can."])
+        if (romp.spriteY < 0) romp.spriteY = romp.groundY
+        phaseTimer.interval = 25000
+        phaseTimer.restart()
+    }
+
+    function _chasePounce(cx: real, cy: real): void {
+        romp._chaseClicks++
+        if (romp._chaseClicks > 14) { romp._endChase("bored"); return }
+        romp.pose = "fisheye-reach"
+        romp.line = ""
+        chaseXTween.stop(); chaseYTween.stop()
+        chaseXTween.to = Math.max(0, Math.min(cx - romp.spriteSize / 2, romp.width - romp.spriteSize))
+        chaseYTween.to = Math.max(0, Math.min(cy - romp.spriteSize / 2, romp.height - romp.spriteSize))
+        chaseXTween.restart(); chaseYTween.restart()
+    }
+
+    function _chaseTimeout(): void { romp._endChase("timeout") }
+
+    function _endChase(how: string): void {
+        phaseTimer.stop()
+        chaseXTween.stop(); chaseYTween.stop()
+        const c = romp._chaosCfg.chase ?? ({})
+        if (how === "caught") {
+            romp.pose = "purr-content"
+            romp.line = romp._pickLine(c.caught ?? ["Okay. You win. This once."])
+        } else if (how === "bored") {
+            romp.pose = "facepalm"
+            romp.line = romp._pickLine(c.bored ?? ["I have things to wreck. Bye."])
+        } else {
+            romp.pose = "shrug-annoyed"
+            romp.line = romp._pickLine(c.timeout ?? ["Too slow. Noted."])
+        }
+        // settle to the ground, brag a moment, then leave
+        romp.spriteY = -1
+        romp.phase = "aftermath"
+        phaseTimer.interval = 1800
+        phaseTimer.restart()
+    }
+
     // ── Visuals ─────────────────────────────────────────────────────────
+    // Chase mode: the whole screen becomes her playground and every click
+    // a pounce target; clicking her ends the game (you caught her)
+    Item {
+        id: chaseCatchArea
+        anchors.fill: parent
+        visible: romp.phase === "chase"
+        MouseArea {
+            anchors.fill: parent
+            enabled: romp.phase === "chase"
+            onClicked: mouse => {
+                const inSprite = mouse.x >= sprite.x && mouse.x <= sprite.x + sprite.width
+                    && mouse.y >= sprite.y && mouse.y <= sprite.y + sprite.height
+                if (inSprite) romp._endChase("caught")
+                else romp._chasePounce(mouse.x, mouse.y)
+            }
+        }
+    }
+
     Item {
         id: sprite
         width: romp.spriteSize
         height: romp.spriteSize
         x: romp.spriteX
-        y: romp.groundY + bob
+        y: (romp.spriteY >= 0 ? romp.spriteY : romp.groundY) + bob
         property real bob: 0
+
+        // Poked mid-romp: she startles — and might turn it into a game
+        TapHandler {
+            enabled: romp.phase === "act" || romp.phase === "aftermath"
+            onTapped: {
+                if (Math.random() < 0.45) {
+                    romp._startChase()
+                } else {
+                    romp.pose = "annoyed-poked"
+                    romp.line = romp._pickLine(romp._chaosCfg.startle ?? ["HEY. Working here."])
+                }
+            }
+        }
 
         // run-cycle bob: little hops while she's moving
         SequentialAnimation {

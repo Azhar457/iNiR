@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 2014305e2157184b
+# IPC.md hash: af6ab796fa047b7b
 # Targets: 56
 
 declare -gA IPC_TARGET_DESC=(
@@ -144,7 +144,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [globalActions]="run runWithArgs list search open"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate deactivate status focus"
-  [mascot]="poke romp tidy appear appearContextual appearWithLine hide"
+  [mascot]="poke romp chase tidy appear appearContextual appearWithLine hide"
   [mascotMood]="set current"
   [mediaControls]="toggle close open"
   [memory]="collect stats restart dismiss reset"
@@ -252,8 +252,9 @@ declare -gA IPC_FUNCTION_DESC=(
   ["lock:status"]="Return lock state (\`locked\`, \`activating\`, or \`unlocked\`)"
   ["lock:focus"]="Refocus the lock screen input"
   ["mascot:poke"]="Ask her to peek from a random edge with a random pose"
-  ["mascot:romp"]=""
-  ["mascot:tidy"]=""
+  ["mascot:romp"]="Chaos mode: she runs across the desktop and bonks a widget, hurls one to a new spot, or ground-slams so the bar rattles. Needs \`mascot.chaos.enable\`; widgets only keep new positions with \`mascot.chaos.allowRearrange\`"
+  ["mascot:chase"]=""
+  ["mascot:tidy"]="Undo the chaos — every displaced widget returns to its pre-chaos position"
   ["mascot:appear"]="Show a specific catalog pose from \`left\`, \`right\`, \`top\` or \`bottom\`"
   ["mascot:appearContextual"]="Show near the triggering widget (\`battery\`, \`media\`, \`update\`, \`network\`, \`dnd\`). Requires \`mascot.companion.contextualPlacement\` to be enabled for event reactions; this IPC call bypasses that check for testing."
   ["mascot:appearWithLine"]="Show a specific pose saying an exact line (used by the bar widget easter eggs)"

@@ -43,7 +43,12 @@
         ["magic-hat", "right"],
         ["crouch-inspect", "bottom"],
         ["sit-peace-wink", "bottom"],
-        ["punk-reach", "right"]
+        ["punk-reach", "right"],
+        ["map-explorer", "left"],
+        ["speech-bubble-calm", "right"],
+        ["waffle-snack", "left"],
+        ["todo-done", "right"],
+        ["salute-ready", "left"]
     ],
   "linesByPose": {
     "music-vibe": ["Decent taste. Barely.", "Volume up. Trust me.", "This song says a lot about you.", "Bass. More bass.", "Is this on shuffle or is this really your taste?"],
@@ -131,7 +136,23 @@
     "handheld-gaming": ["One more level. That's a lie.", "My APM is higher than yours.", "Game mode: respected. Mine, not yours.", "Pause? Never heard of it."],
     "chef-flambe": ["Cooking something. It might be a feature.", "Flambé. Like your last deploy.", "Chef's special: fixes with a side of sass.", "It's not burnt. It's caramelized."],
     "skater-trick": ["Kickflip over your taskbar.", "Speed is a feature.", "Landed it. First try. Witnessed.", "Your shell boots slower than my ollie."],
-    "punk-reach": ["New look. Same judgment.", "Alt style unlocked. Deal with it.", "The chains are decorative. The attitude isn't.", "Come on. We're skipping the boring parts."]
+    "punk-reach": ["New look. Same judgment.", "Alt style unlocked. Deal with it.", "The chains are decorative. The attitude isn't.", "Come on. We're skipping the boring parts."],
+    "map-explorer": ["I mapped your workspaces. It's chaos in here.", "X marks the bug.", "Uncharted territory: your downloads folder.", "Adventure? On THIS desktop? Bold."],
+    "speech-bubble-calm": ["Just saying things. Calmly. For once.", "This is my inside voice.", "Serenity. Limited time offer.", "No roast today. Rain check."],
+    "waffle-snack": ["Waffles. Objectively the best family.", "Snack break. Judging continues after.", "I only eat artisanal pixels.", "Crunchy. Like your keybinds."],
+    "todo-done": ["Todo list: annihilated.", "All checked. By me. You watched.", "Productivity has been achieved. Somewhere.", "Done. Next impossible thing, please."],
+    "salute-ready": ["Reporting for duty. Reluctantly.", "Standing by. Clock's ticking.", "Orders received. Ignoring most of them.", "Ready. For a nap. But also duty."],
+    "privacy-lock": ["Your secrets stayed secret. I checked.", "Vault status: sealed. By me.", "Nothing leaked on my watch.", "The lock held. Obviously. I designed the shift."],
+    "quota-empty": ["Battery's done. So am I, honestly.", "Empty tank. Zero regrets.", "We ran it to the last drop.", "Recharge. Both of you."],
+    "guide-point-up": ["Up there. The thing blinking at you.", "Look up. No, higher.", "That pill in the bar? It wants you."],
+    "guide-point-down": ["Down there. Your dock survived. Barely.", "Look down. That's where it landed.", "The floor section. Yes."],
+    "guide-point-side": ["Over there. Follow the finger.", "That way. Trust the finger.", "Sideways. It's always sideways."],
+    "follow-me": ["Follow me. Try to keep up.", "This way. No questions.", "Come on. Chase me if you can.", "Catch me and I MIGHT behave."],
+    "success-celebrate": ["VICTORY. Screenshot this moment.", "We did it. Mostly me.", "Confetti earned. Confetti deployed.", "Flawless. As rehearsed."],
+    "community-highfive": ["High five. You've earned exactly one.", "Team effort. I supervised.", "Good hit. Don't get used to it.", "Up top. Don't leave me hanging."],
+    "chibi-thumbsup": ["Approved. Tiny but official.", "It works. Ship it.", "Thumbs up. Legally binding.", "Certified good enough."],
+    "chibi-roast-bubble": ["I have opinions about this.", "The roast is ready.", "Free critique incoming.", "Somebody had to say it."],
+    "terminal-demo": ["Watch the terminal. Magic happens.", "Live demo. No rehearsal. Courage.", "This command does everything. Trust me."]
   },
   "idleLines": [
     "Just checking.",
@@ -167,7 +188,7 @@
     "I read the man page so you didn't. Again.",
     "Nothing is broken right now. Enjoy it. It won't last."
   ],
-  "animatedPoses": ["tail-sway", "ear-twitch", "sleepy-nod", "wave-loop", "idle-blink", "idle-breathe", "purr-content", "typing-loop", "chibi-bounce"],
+  "animatedPoses": ["tail-sway", "ear-twitch", "sleepy-nod", "wave-loop", "idle-blink", "idle-breathe", "purr-content", "typing-loop", "chibi-bounce", "run-cycle"],
   "mirrorOnRight": ["edge-peek"],
   "poseAffinity": {
     "edge-peek": ["left", "right"],
@@ -192,11 +213,11 @@
       "lines": ["Do I look clickable to you?", "...What.", "Wow. Rude.", "Hands to yourself.", "I felt that.", "Poking me won't fix your code.", "One. You get one.", "This is being logged.", "I blink and you attack."]
     },
     "tier2": {
-      "poses": ["purr-content", "heart-eyes-pat", "shy-flustered", "chibi-love", "peace-wink"],
+      "poses": ["purr-content", "heart-eyes-pat", "shy-flustered", "chibi-love", "peace-wink", "community-highfive", "chibi-thumbsup"],
       "lines": ["...okay. Pats are acceptable.", "Don't make it weird.", "Fine. Five seconds.", "...Hmph.", "You're lucky you're cute.", "Purring is involuntary. Ignore it.", "This changes nothing between us.", "Two more seconds. Then dignity returns.", "I tolerate you. Warmly."]
     },
     "tier4": {
-      "poses": ["chibi-rage", "laughing-roast", "facepalm", "chibi-cry", "chibi-mallet"],
+      "poses": ["chibi-rage", "laughing-roast", "facepalm", "chibi-cry", "chibi-mallet", "chibi-roast-bubble"],
       "lines": ["THAT'S IT. I'm out.", "I don't get paid enough for this.", "Banned. Forever.", "CONSEQUENCES.", "Bonk has been earned.", "Filing a complaint. Against you.", "My lawyer will hear about this."]
     }
   },
@@ -212,29 +233,41 @@
   ],
   "prankPoses": ["fisheye-inspect", "detective-glass", "popcorn-watch", "chibi-pointing-laugh", "edge-peek"],
   "chaos": {
-    "run": "heroic-run",
+    "run": ["run-cycle", "run-cycle", "run-cycle", "tiptoe-sneak"],
     "bonk": {
-      "pose": "chibi-mallet",
-      "after": "chibi-pointing-laugh",
+      "pose": ["mallet-swing", "side-kick", "chibi-mallet"],
+      "after": ["chibi-pointing-laugh", "laughing-roast", "dust-hands", "peace-wink"],
       "lines": ["Bonk. Physics included.", "It was in my way.", "Newton sends his regards.", "Oops. Anyway.", "That's for hogging my desktop."]
     },
     "toss": {
-      "pose": "heavy-lift",
-      "after": "peace-wink",
+      "pose": ["heavy-lift", "carry-crate", "hurl-throw"],
+      "after": ["peace-wink", "chibi-thumbsup", "dust-hands"],
       "lines": ["Redecorating. You're welcome.", "It looks better over there.", "Feng shui. Trust me.", "MOVING DAY.", "I do interior design now."]
     },
     "quake": {
-      "pose": "chibi-mallet",
-      "after": "laughing-roast",
+      "pose": "ground-slam",
+      "after": ["laughing-roast", "success-celebrate", "dust-hands"],
       "lines": ["Structural integrity test.", "Your bar needed percussion.", "Knock knock.", "Earthquake drill. You failed.", "The floor is my instrument."]
     },
+    "punt": {
+      "pose": "side-kick",
+      "after": ["guide-point-up", "guide-point-down", "stomp-victory"],
+      "lines": ["FIELD GOAL.", "The bar looked at me funny.", "Panels fear me. As they should.", "Kick delivered. Invoice pending.", "That's called percussion maintenance."]
+    },
+    "chase": {
+      "lines": ["Catch me if you can.", "Your mouse. My game.", "Click somewhere. I dare you.", "Try to keep up."],
+      "caught": ["Okay. You win. This once.", "...fine. Pats accepted.", "Caught. I let you. Obviously.", "Impressive reflexes. For a human."],
+      "timeout": ["Too slow. Noted.", "The mouse survives. Today.", "We'll call it a draw. (I won.)"],
+      "bored": ["I have things to wreck. Bye.", "This game needs better prey.", "Fourteen clicks and no catch. Sad."]
+    },
+    "startle": ["HEY. Working here.", "Do NOT interrupt the chaos.", "Poke me again. See what happens.", "Rude. I'm mid-crime."],
     "wreck": {
-      "pose": "chibi-mallet",
-      "after": "laughing-roast",
+      "pose": ["mallet-swing", "side-kick"],
+      "after": ["stomp-victory", "laughing-roast", "dust-hands"],
       "lines": ["DEMOLITION TIME.", "This one dies today.", "Warranty? Void.", "It had a good run. It's over now.", "Critical hit."]
     },
     "trip": {
-      "pose": "dead-crash",
+      "pose": "trip-fall",
       "lines": ["...ow.", "The floor attacked me.", "I meant to do that.", "Physics betrayed me."],
       "after_lines": ["You saw NOTHING.", "Not a word.", "The floor started it.", "I'm fine. FINE."]
     },
@@ -246,17 +279,17 @@
     }
   },
   "reactions": {
-    "battery": { "poses": ["battery-low"], "edge": "left", "source": "battery" },
-    "update": { "poses": ["update-ready", "gift-giving", "chef-flambe"], "edge": "top", "source": "update" },
+    "battery": { "poses": ["battery-low", "quota-empty"], "edge": "left", "source": "battery" },
+    "update": { "poses": ["update-ready", "gift-giving", "chef-flambe", "guide-point-up"], "edge": "top", "source": "update" },
     "network": { "poses": ["cable-defeat", "shrug-annoyed"], "edge": "left", "source": "network" },
     "dnd": { "poses": ["sleep-dnd", "shh-finger"], "edge": "right", "source": "dnd" },
     "notification": { "poses": ["detective-glass", "gossip-phone", "popcorn-watch", "fisheye-inspect", "sticky-notes"], "edge": "right", "source": "" },
     "wallpaper": { "poses": ["theme-artist", "paint-roller", "arms-crossed-confident", "fisheye-inspect"], "edge": "right", "source": "" },
     "screenshot": { "poses": ["camera-boop", "peace-wink", "presenting"], "edge": "right", "source": "" },
-    "gaming": { "poses": ["gaming-focus", "fist-pump", "battle-point", "handheld-gaming"], "edge": "right", "source": "" },
-    "workspace": { "poses": ["marshaller-windows", "workspace-juggle", "facepalm", "heavy-lift"], "edge": "top", "source": "" },
+    "gaming": { "poses": ["gaming-focus", "fist-pump", "battle-point", "handheld-gaming", "salute-ready", "success-celebrate"], "edge": "right", "source": "" },
+    "workspace": { "poses": ["marshaller-windows", "workspace-juggle", "facepalm", "heavy-lift", "map-explorer", "guide-point-side"], "edge": "top", "source": "" },
     "music": { "poses": ["music-vibe", "music-conductor", "visualizer-surf"], "edge": "right", "source": "media" },
-    "unlock": { "poses": ["key-offer", "waving-hi", "welcoming"], "edge": "right", "source": "" }
+    "unlock": { "poses": ["key-offer", "waving-hi", "welcoming", "privacy-lock"], "edge": "right", "source": "" }
   },
   "linesByPoseSource": {
     "battery-low": ["Your battery is at 12%. That's a choice.", "Plug. In. Now.", "Critical battery. Critical life choices."],

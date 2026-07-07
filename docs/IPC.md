@@ -300,7 +300,8 @@ Playful mascot companion (needs `mascot.enable` and the companion switch in Sett
 | `appear <pose> <edge>` | Show a specific catalog pose from `left`, `right`, `top` or `bottom` |
 | `appearContextual <pose> <sourceWidget>` | Show near the triggering widget (`battery`, `media`, `update`, `network`, `dnd`). Requires `mascot.companion.contextualPlacement` to be enabled for event reactions; this IPC call bypasses that check for testing. |
 | `appearWithLine <pose> <edge> <line>` | Show a specific pose saying an exact line (used by the bar widget easter eggs) |
-| `romp` | Chaos mode: she runs across the desktop and bonks a widget, hurls one to a new spot, or ground-slams so the bar rattles. Needs `mascot.chaos.enable`; widgets only keep new positions with `mascot.chaos.allowRearrange` |
+| `romp` | Chaos mode: she runs across the desktop and bonks a widget, wrecks one onto the floor, hurls one to a new spot, rampages through several, kicks the bar/dock, or ground-slams so everything rattles. Needs `mascot.chaos.enable`; widgets only keep new positions with `mascot.chaos.allowRearrange` |
+| `chase` | Chase game: she hunts your mouse — every click is a spot she pounces on; click *her* to catch her and win |
 | `tidy` | Undo the chaos — every displaced widget returns to its pre-chaos position |
 | `hide` | Send her away immediately |
 

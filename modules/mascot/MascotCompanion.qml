@@ -300,7 +300,7 @@ Scope {
         if (chaosEnabled && !rompActive
             && Date.now() - _lastRompAt > 30 * 60 * 1000
             && Math.random() < 0.12) {
-            return startRomp()
+            return startRomp(Math.random() < 0.2 ? "chase" : "romp")
         }
         const ctxs = _smartCandidates()
         const ctxLines = _manifest.contextLines ?? ({})
@@ -596,14 +596,16 @@ Scope {
 
     // ── Chaos mode: she runs across the desktop and messes with it ──────
     property bool rompActive: false
+    property string rompMode: "romp"
     property double _lastRompAt: 0
     readonly property bool chaosEnabled: companionEnabled && MascotChaos.enabled
-    function startRomp(): bool {
+    function startRomp(mode: string): bool {
         if (!chaosEnabled || suppressed || rompActive) {
             console.log(`[MascotCompanion] romp denied (chaos=${chaosEnabled} suppressed=${suppressed} active=${rompActive})`)
             return false
         }
         _lastRompAt = Date.now()
+        rompMode = mode
         rompActive = true
         return true
     }
@@ -612,6 +614,7 @@ Scope {
         active: root.rompActive
         sourceComponent: MascotRomp {
             rompScreen: root.companionScreen
+            startMode: root.rompMode
             onFinished: root.rompActive = false
         }
     }
@@ -621,7 +624,9 @@ Scope {
 
         function poke(): void { root.poke() }
         // Chaos mode: run across the desktop and mess with widgets/panels
-        function romp(): void { root.startRomp() }
+        function romp(): void { root.startRomp("romp") }
+        // Chase game: she hunts your mouse clicks — click her to catch her
+        function chase(): void { root.startRomp("chase") }
         // Undo the chaos: every displaced widget returns home
         function tidy(): void {
             MascotChaos.tidy()

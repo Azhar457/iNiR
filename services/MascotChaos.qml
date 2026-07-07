@@ -30,7 +30,8 @@ Singleton {
     // mode: "bounce" (spring back home) | "persist" (keep the new spot) |
     //       "wreck" (knocked out — falls to the floor and stays there until tidy)
     signal impact(string widgetKey, real vx, real vy, string mode)
-    signal panelShake()
+    // intensity 1 = ground-slam rumble; 2 = direct kick to the panel
+    signal panelShake(real intensity)
     signal tidied()
 
     function report(key: string, x: real, y: real, w: real, h: real): void {

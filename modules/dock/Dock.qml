@@ -134,6 +134,26 @@ Scope {
                         // implicitWidth: dockBackground.implicitWidth
                         // implicitHeight: dockBackground.implicitHeight
 
+                        // Mascot chaos: quakes and kicks rattle the dock too
+                        property real _quakeY: 0
+                        property real _quakeScale: 1
+                        transform: Translate { y: dockHoverRegion._quakeY }
+                        SequentialAnimation {
+                            id: _dockQuakeAnim
+                            NumberAnimation { target: dockHoverRegion; property: "_quakeY"; to: -6 * dockHoverRegion._quakeScale; duration: 60; easing.type: Easing.OutQuad }
+                            NumberAnimation { target: dockHoverRegion; property: "_quakeY"; to: 4 * dockHoverRegion._quakeScale; duration: 70; easing.type: Easing.InOutQuad }
+                            NumberAnimation { target: dockHoverRegion; property: "_quakeY"; to: -2 * dockHoverRegion._quakeScale; duration: 70; easing.type: Easing.InOutQuad }
+                            NumberAnimation { target: dockHoverRegion; property: "_quakeY"; to: 0; duration: 90; easing.type: Easing.OutBack }
+                        }
+                        Connections {
+                            target: MascotChaos
+                            enabled: MascotChaos.enabled
+                            function onPanelShake(intensity) {
+                                dockHoverRegion._quakeScale = Math.max(1, intensity)
+                                if (Appearance.animationsEnabled) _dockQuakeAnim.restart()
+                            }
+                        }
+
                         Item {
                             id: dockBackground
 
