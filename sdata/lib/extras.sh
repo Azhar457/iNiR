@@ -161,3 +161,35 @@ extras_refresh_yamis_icons_on_update() {
     extras_install_yamis_icons
   fi
 }
+
+# Optional mascot art pack: every Kira pose/animation the shell can use.
+# The repo ships only the manifest + base reference; the images install
+# straight into the shell's assets dir (the exact path QML resolves), and
+# `setup update`'s rsync excludes them so the pack survives updates.
+extras_install_mascot_pack() {
+  local pack_url="https://github.com/snowarch/iNiR/releases/download/mascot-pack-v1/inir-mascot-pack-v1.tar.gz"
+  local shell_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
+  local dest="${shell_dir}/assets/images/mascot"
+
+  tui_info "Optional mascot art pack: ~160 poses/animations, ~20 MiB download."
+  tui_dim "Installs into the shell assets dir; enable her later in Settings › Mascot."
+
+  if [[ ! -d "$shell_dir" ]]; then
+    log_warning "iNiR shell dir not found at ${shell_dir}, skipping mascot pack"
+    return 0
+  fi
+  mkdir -p "$dest"
+
+  local tmp
+  tmp="$(mktemp -d)"
+  if curl -fsSL --retry 2 -o "${tmp}/pack.tar.gz" "$pack_url" \
+     && tar -xzf "${tmp}/pack.tar.gz" -C "$dest"; then
+    local count
+    count=$(find "$dest" -maxdepth 1 \( -name 'inir-mascot-*.png' -o -name 'inir-mascot-*.gif' \) | wc -l)
+    log_success "Mascot pack installed (${count} assets in ${dest})"
+  else
+    log_warning "Failed to download/extract the mascot pack (network?), continuing"
+  fi
+  rm -rf "$tmp"
+  return 0
+}

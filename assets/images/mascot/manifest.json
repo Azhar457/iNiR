@@ -48,7 +48,12 @@
         ["speech-bubble-calm", "right"],
         ["waffle-snack", "left"],
         ["todo-done", "right"],
-        ["salute-ready", "left"]
+        ["salute-ready", "left"],
+        ["mood-shuffle", "left"],
+        ["mood-shuffle", "right"],
+        ["alert-look", "right"],
+        ["lean-peek", "left"],
+        ["cheer-ready", "right"]
     ],
   "linesByPose": {
     "music-vibe": ["Decent taste. Barely.", "Volume up. Trust me.", "This song says a lot about you.", "Bass. More bass.", "Is this on shuffle or is this really your taste?"],
@@ -152,7 +157,25 @@
     "community-highfive": ["High five. You've earned exactly one.", "Team effort. I supervised.", "Good hit. Don't get used to it.", "Up top. Don't leave me hanging."],
     "chibi-thumbsup": ["Approved. Tiny but official.", "It works. Ship it.", "Thumbs up. Legally binding.", "Certified good enough."],
     "chibi-roast-bubble": ["I have opinions about this.", "The roast is ready.", "Free critique incoming.", "Somebody had to say it."],
-    "terminal-demo": ["Watch the terminal. Magic happens.", "Live demo. No rehearsal. Courage.", "This command does everything. Trust me."]
+    "terminal-demo": ["Watch the terminal. Magic happens.", "Live demo. No rehearsal. Courage.", "This command does everything. Trust me."],
+    "mood-shuffle": ["Pick a mood. I have several.", "Today's forecast: judgmental with sparkles.", "Emotional range: yes.", "All of these are about your config."],
+    "alert-look": ["I heard something. It was your fan.", "Something moved. Probably a bug.", "On alert. Standing by.", "That sound? Your RAM crying."],
+    "lean-peek": ["What are we looking at?", "Inspecting. Lower. There.", "Hm. Suspicious floor.", "I dropped my dignity here somewhere."],
+    "cheer-ready": ["Ready when you are!", "Let's GO. Whatever it is.", "Hype mode: armed.", "Today we win something."],
+    "cheer-wink": ["Nailed it! Mostly you. Partly me.", "That deserved a wink.", "Winning looks good on us.", "Cute AND effective."],
+    "side-hop": ["Hop. For no reason.", "Lateral movement. Tactical.", "Dodged your expectations.", "Cardio, but stylish."],
+    "back-turned": ["I'm not ignoring you. Okay, I am.", "Talk to the tail.", "Dramatic exit in progress.", "You may admire from behind."],
+    "fight-guard": ["Guard up. Always.", "Try me.", "First rule: protect the ahoge.", "Sparring hours: now."],
+    "jab-punch": ["Jab. Jab. Config fixed.", "Percussive maintenance!", "One punch. Many problems.", "The bug felt that."],
+    "high-kick": ["KICK. Clean form, obviously.", "Above the bar. Literally.", "Leg day pays off.", "That's a ten. Judges agree."],
+    "spin-dodge": ["Whiffed? Never. Recalibrating.", "Spin move. Patented.", "You saw a dodge. It was style.", "Evasion: 100%."],
+    "sport-ready": ["Warm-up complete. Chaos next.", "Athletic AND smug.", "Stretch first. Wreck second.", "Game face: on."],
+    "dash-twist": ["Zoom. With flair.", "Speed round!", "Catch up. If you can.", "Momentum is a lifestyle."],
+    "flee-back": ["Strategic retreat. STRATEGIC.", "Not fleeing. Repositioning.", "Bye. For tactical reasons.", "The exit chose me."],
+    "pounce-point": ["THERE. Get it.", "Target acquired.", "Pounce protocol engaged.", "You point, I pounce. Wait. Reverse that."],
+    "alert-look2": [],
+    "crouch-ready": ["Stalking. Professionally.", "Low profile. High intent.", "Pre-pounce checklist: done.", "Silence. Hunting."],
+    "prowl-low": ["Closer... closer...", "You can't see me. (You can.)", "Ground level operations.", "Sneaking loudly."]
   },
   "idleLines": [
     "Just checking.",
@@ -188,7 +211,8 @@
     "I read the man page so you didn't. Again.",
     "Nothing is broken right now. Enjoy it. It won't last."
   ],
-  "animatedPoses": ["tail-sway", "ear-twitch", "sleepy-nod", "wave-loop", "idle-blink", "idle-breathe", "purr-content", "typing-loop", "chibi-bounce", "run-cycle"],
+  "animatedPoses": ["tail-sway", "ear-twitch", "sleepy-nod", "wave-loop", "idle-blink", "idle-breathe", "purr-content", "typing-loop", "chibi-bounce", "run-cycle", "mood-shuffle", "dash-loop"],
+  "facesRight": ["dash-loop"],
   "mirrorOnRight": ["edge-peek"],
   "poseAffinity": {
     "edge-peek": ["left", "right"],
@@ -233,9 +257,10 @@
   ],
   "prankPoses": ["fisheye-inspect", "detective-glass", "popcorn-watch", "chibi-pointing-laugh", "edge-peek"],
   "chaos": {
-    "run": ["run-cycle", "run-cycle", "run-cycle", "tiptoe-sneak"],
+    "run": ["run-cycle", "run-cycle", "dash-loop", "dash-loop", "tiptoe-sneak"],
+    "dodge_pose": ["spin-dodge", "chibi-rage"],
     "bonk": {
-      "pose": ["mallet-swing", "side-kick", "chibi-mallet"],
+      "pose": ["mallet-swing", "side-kick", "jab-punch", "chibi-mallet"],
       "after": ["chibi-pointing-laugh", "laughing-roast", "dust-hands", "peace-wink"],
       "lines": ["Bonk. Physics included.", "It was in my way.", "Newton sends his regards.", "Oops. Anyway.", "That's for hogging my desktop."]
     },
@@ -250,11 +275,17 @@
       "lines": ["Structural integrity test.", "Your bar needed percussion.", "Knock knock.", "Earthquake drill. You failed.", "The floor is my instrument."]
     },
     "punt": {
-      "pose": "side-kick",
+      "pose": ["side-kick", "high-kick"],
       "after": ["guide-point-up", "guide-point-down", "stomp-victory"],
       "lines": ["FIELD GOAL.", "The bar looked at me funny.", "Panels fear me. As they should.", "Kick delivered. Invoice pending.", "That's called percussion maintenance."]
     },
+    "bonk_extra_poses": ["jab-punch"],
     "chase": {
+      "invite": ["follow-me", "fight-guard", "sport-ready"],
+      "pounce": "pounce-point",
+      "wait": "crouch-ready",
+      "stalk": "prowl-low",
+      "flee": "flee-back",
       "lines": ["Catch me if you can.", "Your mouse. My game.", "Click somewhere. I dare you.", "Try to keep up."],
       "caught": ["Okay. You win. This once.", "...fine. Pats accepted.", "Caught. I let you. Obviously.", "Impressive reflexes. For a human."],
       "timeout": ["Too slow. Noted.", "The mouse survives. Today.", "We'll call it a draw. (I won.)"],

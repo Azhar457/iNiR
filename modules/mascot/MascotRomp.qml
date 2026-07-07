@@ -280,7 +280,7 @@ PanelWindow {
                 // the widget saw it coming — quick sidestep, she whiffs
                 romp._dodged = true
                 MascotChaos.impact(stop.key, (Math.random() < 0.5 ? -1 : 1) * 70, 0, "bounce")
-                romp.pose = "chibi-rage"
+                romp.pose = romp._pickActPose(romp._chaosCfg.dodge_pose, "chibi-rage")
                 romp.line = romp._pickLine(romp._chaosCfg.dodge ?? ["Oh, it DODGED. Cute."])
                 romp.phase = "act"
                 phaseTimer.interval = 900
@@ -353,14 +353,14 @@ PanelWindow {
         property: "spriteY"
         duration: 320
         easing.type: Easing.OutQuad
-        onStopped: if (romp.phase === "chase") romp.pose = "crouch-inspect"
+        onStopped: if (romp.phase === "chase") romp.pose = romp._chaosCfg.chase?.wait ?? "crouch-ready"
     }
 
     function _startChase(): void {
         runTween.stop()
         romp._chaseClicks = 0
         romp.phase = "chase"
-        romp.pose = "follow-me"
+        romp.pose = romp._pickActPose(romp._chaosCfg.chase?.invite, "follow-me")
         romp.line = romp._pickLine(romp._chaosCfg.chase?.lines ?? ["Catch me if you can."])
         if (romp.spriteY < 0) romp.spriteY = romp.groundY
         phaseTimer.interval = 25000
@@ -370,7 +370,7 @@ PanelWindow {
     function _chasePounce(cx: real, cy: real): void {
         romp._chaseClicks++
         if (romp._chaseClicks > 14) { romp._endChase("bored"); return }
-        romp.pose = "fisheye-reach"
+        romp.pose = romp._chaosCfg.chase?.pounce ?? "pounce-point"
         romp.line = ""
         chaseXTween.stop(); chaseYTween.stop()
         chaseXTween.to = Math.max(0, Math.min(cx - romp.spriteSize / 2, romp.width - romp.spriteSize))
@@ -459,8 +459,9 @@ PanelWindow {
             asynchronous: true
             smooth: false
             mipmap: false
-            // heroic-run art faces left; mirror when she's headed right
-            mirror: romp.running && romp.movingRight
+            // run art faces left unless listed in manifest facesRight;
+            // mirror whenever art facing and travel direction disagree
+            mirror: romp.running && (romp.movingRight !== (romp._manifest.facesRight ?? []).includes(romp.pose))
         }
     }
 

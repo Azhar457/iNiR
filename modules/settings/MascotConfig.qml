@@ -44,6 +44,31 @@ ContentPage {
         title: Translation.tr("Mascot")
 
         SettingsGroup {
+            // The art pack is an optional download (setup › Extras); probe one
+            // pack asset and surface install instructions when it's missing
+            Image {
+                id: packProbe
+                visible: false
+                source: Quickshell.shellPath("assets/images/mascot/inir-mascot-edge-peek.png")
+                asynchronous: true
+            }
+            Rectangle {
+                Layout.fillWidth: true
+                visible: packProbe.status === Image.Error
+                implicitHeight: packMissingText.implicitHeight + 20
+                radius: Appearance.rounding.small
+                color: Appearance.colors.colSecondaryContainer
+                StyledText {
+                    id: packMissingText
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    text: Translation.tr("Mascot art pack not installed — run `./setup` and pick Extras › Install mascot pack (~20 MiB). Everything below stays inert until then.")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colOnSecondaryContainer
+                    wrapMode: Text.Wrap
+                }
+            }
+
             SettingsSwitch {
                 buttonIcon: "pets"
                 text: Translation.tr("Show mascot illustration")
