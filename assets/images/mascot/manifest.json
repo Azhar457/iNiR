@@ -215,6 +215,18 @@
     [
       "cheer-ready",
       "right"
+    ],
+    [
+      "yawn-stretch",
+      "left"
+    ],
+    [
+      "lying-lazy",
+      "bottom"
+    ],
+    [
+      "sit-laptop",
+      "right"
     ]
   ],
   "linesByPose": {
@@ -941,6 +953,54 @@
       "You can't see me. (You can.)",
       "Ground level operations.",
       "Sneaking loudly."
+    ],
+    "yawn-stretch": [
+      "Big stretch. Bigger judgment.",
+      "Recharging. Do not perceive.",
+      "That yawn was load-bearing.",
+      "Nap window: opening."
+    ],
+    "lying-lazy": [
+      "The floor and I have an understanding.",
+      "Horizontal productivity.",
+      "I live here now.",
+      "Five more minutes. Non-negotiable."
+    ],
+    "sit-laptop": [
+      "Shipping features. Allegedly.",
+      "My commits are cleaner than yours.",
+      "Do not disturb: coding.",
+      "One more refactor. I lied."
+    ],
+    "shocked-jump": [
+      "WHAT. WHO. WHERE.",
+      "My whole life flashed. It was mostly naps.",
+      "Warn me next time!",
+      "Tail status: MAXIMUM FLOOF."
+    ],
+    "point-up-shout": [
+      "TO VICTORY. Or lunch.",
+      "ONWARD. That way. Probably.",
+      "This is my dramatic moment.",
+      "Sky's the limit. I checked."
+    ],
+    "tail-flick": [
+      "The tail speaks for itself.",
+      "Irritation: visible.",
+      "Flick. Flick. Meaning: no.",
+      "My patience, visualized."
+    ],
+    "jump-bounce": [
+      "Boing. Professional boing.",
+      "Gravity is optional today.",
+      "Air time!",
+      "Bounce protocol active."
+    ],
+    "spin-attack": [
+      "SPIN TO WIN.",
+      "Revolution! Literally.",
+      "That was 720 degrees of style.",
+      "Dizzy? Never heard of her."
     ]
   },
   "idleLines": [
@@ -989,7 +1049,10 @@
     "chibi-bounce",
     "run-cycle",
     "mood-shuffle",
-    "dash-loop"
+    "dash-loop",
+    "jump-bounce",
+    "tail-flick",
+    "spin-attack"
   ],
   "facesRight": [
     "dash-loop"
@@ -1046,6 +1109,9 @@
     "box-hideout": [
       "left",
       "right",
+      "bottom"
+    ],
+    "lying-lazy": [
       "bottom"
     ]
   },
@@ -1159,11 +1225,14 @@
       "run-cycle",
       "dash-loop",
       "dash-loop",
+      "heroic-run",
+      "heroic-run",
       "tiptoe-sneak"
     ],
     "dodge_pose": [
       "spin-dodge",
-      "chibi-rage"
+      "chibi-rage",
+      "shocked-jump"
     ],
     "bonk": {
       "pose": [
@@ -1223,12 +1292,14 @@
     "punt": {
       "pose": [
         "side-kick",
-        "high-kick"
+        "high-kick",
+        "spin-attack"
       ],
       "after": [
         "guide-point-up",
         "guide-point-down",
-        "stomp-victory"
+        "stomp-victory",
+        "point-up-shout"
       ],
       "lines": [
         "FIELD GOAL.",
@@ -1309,7 +1380,7 @@
       ]
     },
     "parkour": {
-      "hop": "side-hop",
+      "hop": "jump-bounce",
       "after": [
         "dust-hands",
         "peace-wink",
@@ -1325,7 +1396,8 @@
     "wreck": {
       "pose": [
         "mallet-swing",
-        "side-kick"
+        "side-kick",
+        "spin-attack"
       ],
       "after": [
         "stomp-victory",
@@ -1397,6 +1469,25 @@
         "Everything back before anyone notices.",
         "Damage report: handled.",
         "The chaos was a demo. This is the product."
+      ]
+    },
+    "startle_pose": [
+      "tail-flick",
+      "shocked-jump",
+      "annoyed-poked"
+    ],
+    "beat": {
+      "pose": [
+        "alert-look",
+        "point-at-viewer",
+        "tail-flick",
+        "mood-shuffle"
+      ],
+      "lines": [
+        "What.",
+        "You were staring.",
+        "Mid-errand. Yes?",
+        "Keep up."
       ]
     }
   },
@@ -1472,7 +1563,8 @@
         "battle-point",
         "handheld-gaming",
         "salute-ready",
-        "success-celebrate"
+        "success-celebrate",
+        "point-up-shout"
       ],
       "edge": "right",
       "source": ""

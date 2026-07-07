@@ -55,7 +55,8 @@ PanelWindow {
 
     readonly property int spriteSize: Config.options?.mascot?.companion?.size ?? 150
     readonly property real groundY: height - spriteSize
-    readonly property real runSpeed: 0.5 // px per ms
+    // gait varies per outing: usually a stroll-to-jog, sometimes zoomies
+    property real runSpeed: 0.5 // px per ms, rolled in _begin
 
     property var _manifest: ({})
     readonly property var _chaosCfg: _manifest.chaos ?? ({})
@@ -242,13 +243,38 @@ PanelWindow {
         id: runTween
         target: romp
         property: "spriteX"
-        onStopped: romp._phaseDone()
+        onStopped: {
+            if (romp._beatPending) { romp._playBeat(); return }
+            romp._phaseDone()
+        }
     }
     Timer { id: phaseTimer; onTriggered: romp._phaseDone() }
+
+    // Mid-run beat: on long runs she sometimes stops halfway, looks at
+    // YOU for a moment, then carries on — tiny pauses read as intent
+    property bool _beatPending: false
+    property real _beatFinalX: 0
+    Timer {
+        id: beatTimer
+        interval: 750
+        onTriggered: {
+            romp.pose = romp._runPose
+            romp.line = ""
+            romp._runTo(romp._beatFinalX)
+        }
+    }
+    function _playBeat(): void {
+        romp._beatPending = false
+        const b = romp._chaosCfg.beat ?? ({})
+        romp.pose = romp._pickActPose(b.pose, "alert-look")
+        if (Math.random() < 0.3) romp.line = romp._pickLine(b.lines)
+        beatTimer.restart()
+    }
 
     function _begin(): void {
         if (romp.suppressed || !MascotChaos.enabled) { romp._abort(); return }
         romp._runPose = romp._pickActPose(romp._chaosCfg.run, "heroic-run")
+        romp.runSpeed = Math.random() < 0.15 ? 0.95 : (0.40 + Math.random() * 0.35)
         if (romp.startMode === "cleanup") {
             // the encore: she comes back, fixes her own mess, leaves proud
             romp._enterFromLeft = Math.random() < 0.5
@@ -293,8 +319,18 @@ PanelWindow {
     }
 
     function _runTo(x: real): void {
+        const dist = Math.abs(x - romp.spriteX)
+        if (romp.phase === "enter" && !romp._beatPending && dist > 600 && Math.random() < 0.35) {
+            romp._beatPending = true
+            romp._beatFinalX = x
+            const midX = romp.spriteX + (x - romp.spriteX) * (0.35 + Math.random() * 0.30)
+            runTween.to = midX
+            runTween.duration = Math.max(300, Math.abs(midX - romp.spriteX) / romp.runSpeed)
+            runTween.restart()
+            return
+        }
         runTween.to = x
-        runTween.duration = Math.max(450, Math.abs(x - romp.spriteX) / romp.runSpeed)
+        runTween.duration = Math.max(450, dist / romp.runSpeed)
         runTween.restart()
     }
 
