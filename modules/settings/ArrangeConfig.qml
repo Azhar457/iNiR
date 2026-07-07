@@ -9,31 +9,58 @@ import qs.modules.common
 import qs.modules.common.widgets
 
 /**
- * Arrange settings: reorder nav groups, rename them, add new ones, and move
- * pages between groups. The arrangement persists as a JSON string in
- * settingsUi.categories ("" = defaults; property var inside JsonObject
- * crashes the VME, hence the string). SettingsPageRegistry sanitizes on
- * read, so a broken value can never hide a page — anything missing lands
- * in a trailing "More" group. Built per the inir-settings-ui method:
- * data-driven Repeaters over the effective arrangement, every mutation
- * writes the whole snapshot back through Config.setNestedValue.
+ * Arrange settings — pick & place editor for the settings nav.
+ *
+ * Interaction model (no fragile drag, no arrow spam): tap a page chip or
+ * a group handle to LIFT it; every valid insertion point lights up as an
+ * ArrangeDropSlot; tap one to place, tap the lifted thing again (or the
+ * banner) to cancel. Groups are cards; pages are ArrangeChips flowing
+ * inside them.
+ *
+ * Persistence: settingsUi.categories as a JSON string ("" = defaults;
+ * `property var` inside JsonObject crashes the VME). Every mutation
+ * writes a full snapshot; SettingsPageRegistry sanitizes on read so no
+ * page can ever be lost — orphans land in a trailing "More" group.
+ * Components + method: inir-settings-ui skill.
  */
 ContentPage {
     id: root
     settingsPageIndex: 20
     settingsPageName: Translation.tr("Arrange")
 
+    // lifted: null | { type: "page", ci, pi, pageIdx } | { type: "group", index }
+    property var lifted: null
+    readonly property bool liftActive: lifted !== null
+    readonly property bool liftIsPage: liftActive && lifted.type === "page"
+    readonly property bool liftIsGroup: liftActive && lifted.type === "group"
+
     function _snapshot(): var {
         return SettingsPageRegistry.categories.map(c => ({ label: c.label, pages: c.pages.slice() }))
     }
     function _save(cats): void {
         Config.setNestedValue("settingsUi.categories", JSON.stringify(cats))
+        root.lifted = null
     }
-    function moveCategory(i: int, delta: int): void {
+    function placePage(targetCi: int, insertPos: int): void {
+        if (!root.liftIsPage) return
         const c = _snapshot()
-        const j = i + delta
-        if (j < 0 || j >= c.length) return
-        const t = c[i]; c[i] = c[j]; c[j] = t
+        const { ci, pi } = root.lifted
+        if (!c[ci] || !c[targetCi]) { root.lifted = null; return }
+        const page = c[ci].pages.splice(pi, 1)[0]
+        let pos = insertPos
+        if (targetCi === ci && insertPos > pi) pos--
+        c[targetCi].pages.splice(Math.max(0, Math.min(pos, c[targetCi].pages.length)), 0, page)
+        _save(c)
+    }
+    function placeGroup(insertPos: int): void {
+        if (!root.liftIsGroup) return
+        const c = _snapshot()
+        const from = root.lifted.index
+        if (!c[from]) { root.lifted = null; return }
+        const g = c.splice(from, 1)[0]
+        let pos = insertPos
+        if (insertPos > from) pos--
+        c.splice(Math.max(0, Math.min(pos, c.length)), 0, g)
         _save(c)
     }
     function renameCategory(i: int, label: string): void {
@@ -53,22 +80,6 @@ ContentPage {
         c.push({ label: Translation.tr("New group"), pages: [] })
         _save(c)
     }
-    function movePage(ci: int, pi: int, delta: int): void {
-        const c = _snapshot()
-        const pages = c[ci]?.pages
-        if (!pages) return
-        const j = pi + delta
-        if (j < 0 || j >= pages.length) return
-        const t = pages[pi]; pages[pi] = pages[j]; pages[j] = t
-        _save(c)
-    }
-    function movePageTo(ci: int, pi: int, targetCi: int): void {
-        const c = _snapshot()
-        if (!c[ci] || !c[targetCi] || ci === targetCi) return
-        const page = c[ci].pages.splice(pi, 1)[0]
-        c[targetCi].pages.push(page)
-        _save(c)
-    }
 
     SettingsCardSection {
         expanded: true
@@ -78,98 +89,155 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Reorder groups and pages, rename groups, or move pages wherever you like. The search always finds everything, no matter the arrangement.")
+                text: Translation.tr("Tap a page or a group handle to pick it up, then tap where it should go. Search always finds everything, whatever you do here.")
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
                 wrapMode: Text.Wrap
+            }
+
+            // Floating status banner while something is lifted
+            Rectangle {
+                Layout.fillWidth: true
+                visible: root.liftActive
+                implicitHeight: bannerRow.implicitHeight + 16
+                radius: Appearance.rounding.small
+                color: Appearance.colors.colPrimaryContainer
+
+                RowLayout {
+                    id: bannerRow
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 8
+
+                    MaterialSymbol {
+                        text: root.liftIsGroup ? "folder" : "description"
+                        iconSize: 20
+                        color: Appearance.colors.colOnPrimaryContainer
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: {
+                            if (root.liftIsGroup)
+                                return Translation.tr("Moving group “%1” — tap a slot between groups").arg(SettingsPageRegistry.categories[root.lifted.index]?.label ?? "")
+                            const p = SettingsPageRegistry.pages[root.lifted?.pageIdx ?? -1]
+                            return Translation.tr("Moving “%1” — tap a slot inside any group").arg(p?.name ?? "")
+                        }
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colOnPrimaryContainer
+                        elide: Text.ElideRight
+                    }
+                    RippleButtonWithIcon {
+                        materialIcon: "close"
+                        mainText: Translation.tr("Cancel")
+                        onClicked: root.lifted = null
+                    }
+                }
             }
 
             Flow {
                 Layout.fillWidth: true
                 spacing: 5
                 RippleButtonWithIcon {
-                    materialIcon: "add"
+                    materialIcon: "create_new_folder"
                     mainText: Translation.tr("Add group")
                     onClicked: root.addCategory()
                 }
                 RippleButtonWithIcon {
                     materialIcon: "restart_alt"
                     mainText: Translation.tr("Reset arrangement")
-                    onClicked: Config.setNestedValue("settingsUi.categories", "")
+                    onClicked: {
+                        root.lifted = null
+                        Config.setNestedValue("settingsUi.categories", "")
+                    }
                 }
             }
         }
 
+        // Group cards with drop bars between them
         Repeater {
-            model: SettingsPageRegistry.categories.length
-            delegate: SettingsGroup {
-                id: catGroup
+            model: SettingsPageRegistry.categories.length + 1
+            delegate: ColumnLayout {
+                id: slotCol
                 required property int index
-                readonly property var cat: SettingsPageRegistry.categories[catGroup.index] ?? ({ label: "", pages: [] })
+                Layout.fillWidth: true
+                spacing: 0
 
-                RowLayout {
+                // Insertion bar for group moves (before group `index`)
+                ArrangeDropSlot {
                     Layout.fillWidth: true
-                    spacing: 6
-
-                    MaterialTextField {
-                        Layout.fillWidth: true
-                        text: catGroup.cat.label
-                        onEditingFinished: if (text !== catGroup.cat.label) root.renameCategory(catGroup.index, text)
-                    }
-                    RippleButtonWithIcon {
-                        materialIcon: "arrow_upward"
-                        onClicked: root.moveCategory(catGroup.index, -1)
-                    }
-                    RippleButtonWithIcon {
-                        materialIcon: "arrow_downward"
-                        onClicked: root.moveCategory(catGroup.index, 1)
-                    }
-                    RippleButtonWithIcon {
-                        materialIcon: "delete"
-                        visible: catGroup.cat.pages.length === 0
-                        onClicked: root.removeCategory(catGroup.index)
-                    }
+                    compact: false
+                    active: root.liftIsGroup && root.lifted.index !== slotCol.index && root.lifted.index !== slotCol.index - 1
+                    onPlaced: root.placeGroup(slotCol.index)
                 }
 
-                Repeater {
-                    model: catGroup.cat.pages.length
-                    delegate: RowLayout {
-                        id: pageRow
-                        required property int index
-                        readonly property int pageIdx: catGroup.cat.pages[pageRow.index] ?? 0
-                        readonly property var page: SettingsPageRegistry.pages[pageRow.pageIdx] ?? ({ name: "?", icon: "help" })
+                SettingsGroup {
+                    id: catGroup
+                    visible: slotCol.index < SettingsPageRegistry.categories.length
+                    readonly property var cat: SettingsPageRegistry.categories[slotCol.index] ?? ({ label: "", pages: [] })
+                    readonly property bool groupLifted: root.liftIsGroup && root.lifted.index === slotCol.index
+
+                    RowLayout {
                         Layout.fillWidth: true
-                        Layout.leftMargin: 12
+                        spacing: 8
+
+                        // The group's grab handle — tap to lift the whole group
+                        ArrangeChip {
+                            icon: "drag_indicator"
+                            label: catGroup.cat.pages.length.toString()
+                            lifted: catGroup.groupLifted
+                            dimmed: root.liftActive && !catGroup.groupLifted
+                            onTapped: {
+                                root.lifted = catGroup.groupLifted ? null : ({ type: "group", index: slotCol.index })
+                            }
+                        }
+                        MaterialTextField {
+                            Layout.fillWidth: true
+                            text: catGroup.cat.label
+                            onEditingFinished: if (text !== catGroup.cat.label) root.renameCategory(slotCol.index, text)
+                        }
+                        RippleButtonWithIcon {
+                            materialIcon: "delete"
+                            visible: catGroup.cat.pages.length === 0 && !root.liftActive
+                            onClicked: root.removeCategory(slotCol.index)
+                        }
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
                         spacing: 6
 
-                        MaterialSymbol {
-                            text: pageRow.page.icon ?? "settings"
-                            iconSize: 18
-                            color: Appearance.colors.colOnLayer1
-                        }
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: pageRow.page.name ?? "?"
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.colors.colOnLayer1
-                            elide: Text.ElideRight
-                        }
-                        RippleButtonWithIcon {
-                            materialIcon: "arrow_upward"
-                            onClicked: root.movePage(catGroup.index, pageRow.index, -1)
-                        }
-                        RippleButtonWithIcon {
-                            materialIcon: "arrow_downward"
-                            onClicked: root.movePage(catGroup.index, pageRow.index, 1)
-                        }
-                        StyledComboBox {
-                            Layout.preferredWidth: 150
-                            model: SettingsPageRegistry.categories.map((c, i) => ({ displayName: c.label, value: i }))
-                            textRole: "displayName"
-                            currentIndex: catGroup.index
-                            onActivated: idx => {
-                                if (idx !== catGroup.index)
-                                    root.movePageTo(catGroup.index, pageRow.index, idx)
+                        Repeater {
+                            model: catGroup.cat.pages.length + 1
+                            delegate: Row {
+                                id: chipCell
+                                required property int index
+                                readonly property bool isTail: chipCell.index >= catGroup.cat.pages.length
+                                readonly property int pageIdx: isTail ? -1 : (catGroup.cat.pages[chipCell.index] ?? -1)
+                                readonly property var page: SettingsPageRegistry.pages[chipCell.pageIdx] ?? null
+                                readonly property bool chipLifted: root.liftIsPage
+                                    && root.lifted.ci === slotCol.index && root.lifted.pi === chipCell.index
+                                spacing: 6
+
+                                // Insertion tile before this chip (and as the tail slot)
+                                ArrangeDropSlot {
+                                    compact: true
+                                    active: root.liftIsPage
+                                        && !(root.lifted.ci === slotCol.index
+                                             && (root.lifted.pi === chipCell.index || root.lifted.pi === chipCell.index - 1))
+                                    onPlaced: root.placePage(slotCol.index, chipCell.index)
+                                }
+
+                                ArrangeChip {
+                                    visible: !chipCell.isTail
+                                    icon: chipCell.page?.icon ?? "settings"
+                                    label: chipCell.page?.name ?? "?"
+                                    lifted: chipCell.chipLifted
+                                    dimmed: root.liftActive && !chipCell.chipLifted
+                                    onTapped: {
+                                        root.lifted = chipCell.chipLifted ? null
+                                            : ({ type: "page", ci: slotCol.index, pi: chipCell.index, pageIdx: chipCell.pageIdx })
+                                    }
+                                }
                             }
                         }
                     }
