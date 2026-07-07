@@ -487,9 +487,22 @@ Singleton {
                     property bool contextualPlacement: false // Opt-in: appear near triggering widget instead of random edge
                     property string monitor: "primary" // "primary" | "focused" — which screen she appears on
                 }
+                property JsonObject surfacePoses: JsonObject {
+                    // Per-surface pose override for static placements ("" = each
+                    // spot's curated default). Animated placements keep their loop.
+                    property string emptyStates: ""
+                    property string about: ""
+                    property string session: ""
+                    property string aiChat: ""
+                    property string dashboard: ""
+                    property string cheatsheet: ""
+                    property string updates: ""
+                    property string dialogs: ""
+                }
                 property JsonObject personality: JsonObject {
                     property bool enabled: true // Session-long mood flavor (sleepy/hyper/snarky/contemplative)
                     property int idleMoodIntervalMinutes: 30 // How often mood rolls (with ±50% jitter)
+                    property bool commentary: true // Personal observations (3AM commits, uptime, app marathons); off = generic lines only
                 }
                 property JsonObject chaos: JsonObject {
                     property bool enable: false // Chaos mode: she may run across the desktop and mess with widgets/panels

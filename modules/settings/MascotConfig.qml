@@ -184,6 +184,17 @@ ContentPage {
             }
 
             SettingsSwitch {
+                buttonIcon: "record_voice_over"
+                text: Translation.tr("Personal commentary")
+                checked: Config.options?.mascot?.personality?.commentary ?? true
+                enabled: Config.options?.mascot?.companion?.enable ?? true
+                onCheckedChanged: Config.setNestedValue("mascot.personality.commentary", checked)
+                StyledToolTip {
+                    text: Translation.tr("Observations about YOUR habits — 3AM sessions, uptime, app marathons. Off = she only makes generic small talk")
+                }
+            }
+
+            SettingsSwitch {
                 buttonIcon: "psychology"
                 text: Translation.tr("Mood personality")
                 checked: Config.options?.mascot?.personality?.enabled ?? true
@@ -427,6 +438,42 @@ ContentPage {
                         currentValue: Config.options?.mascot?.companion?.eventPoses?.[eventRow.modelData.key] ?? ""
                         onSelected: value => Config.setNestedValue("mascot.companion.eventPoses." + eventRow.modelData.key, value)
                     }
+                }
+            }
+        }
+
+        // Which image each placement shows — override any spot's curated pose
+        SettingsGroup {
+            StyledText {
+                text: Translation.tr("Surface poses")
+                font.pixelSize: Appearance.font.pixelSize.normal
+                color: Appearance.colors.colOnLayer1
+            }
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Pick your own image for each placement; Auto keeps the curated default. Animated spots keep their animation.")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
+            Repeater {
+                model: [
+                    { key: "emptyStates", label: Translation.tr("Empty states (notifications, clipboard, todo…)") },
+                    { key: "about", label: Translation.tr("About pages") },
+                    { key: "session", label: Translation.tr("Session screen") },
+                    { key: "aiChat", label: Translation.tr("AI chat") },
+                    { key: "dashboard", label: Translation.tr("Dashboard") },
+                    { key: "cheatsheet", label: Translation.tr("Cheatsheet") },
+                    { key: "updates", label: Translation.tr("Update overlay") },
+                    { key: "dialogs", label: Translation.tr("Dialogs") }
+                ]
+                delegate: MascotPoseGallery {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    label: modelData.label
+                    options: mascotReactionsGroup.poseOptions
+                    currentValue: Config.options?.mascot?.surfacePoses?.[modelData.key] ?? ""
+                    onSelected: value => Config.setNestedValue("mascot.surfacePoses." + modelData.key, value)
                 }
             }
         }

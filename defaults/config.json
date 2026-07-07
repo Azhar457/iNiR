@@ -1090,9 +1090,20 @@
             "contextualPlacement": false,
             "monitor": "primary"
         },
+        "surfacePoses": {
+            "emptyStates": "",
+            "about": "",
+            "session": "",
+            "aiChat": "",
+            "dashboard": "",
+            "cheatsheet": "",
+            "updates": "",
+            "dialogs": ""
+        },
         "personality": {
             "enabled": true,
-            "idleMoodIntervalMinutes": 30
+            "idleMoodIntervalMinutes": 30,
+            "commentary": true
         },
         "chaos": {
             "enable": false,

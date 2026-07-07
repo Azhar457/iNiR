@@ -13,7 +13,7 @@ Image {
     id: root
 
     property string pose
-    // Placement group for the per-surface toggles in Settings › Quick › Mascot.
+    // Placement group for the per-surface toggles in Settings › Mascot.
     // Empty = only gated by the master switch.
     property string surface: ""
     readonly property bool active: (Config.options?.mascot?.enable ?? false) && surfaceEnabled
@@ -24,10 +24,20 @@ Image {
         const v = s[surface]
         return v === undefined ? true : v
     }
+    // Per-surface pose override (Settings › Mascot › Surface poses):
+    // users pick their own image for each placement group
+    readonly property string effectivePose: {
+        if (surface.length > 0) {
+            const o = Config.options?.mascot?.surfacePoses
+            const v = o ? (o[surface] ?? "") : ""
+            if (v.length > 0) return v
+        }
+        return pose
+    }
 
     visible: active
-    source: (active && pose.length > 0)
-        ? Quickshell.shellPath(`assets/images/mascot/inir-mascot-${pose}.png`)
+    source: (active && effectivePose.length > 0)
+        ? Quickshell.shellPath(`assets/images/mascot/inir-mascot-${effectivePose}.png`)
         : ""
     sourceSize.width: 256
     sourceSize.height: 256

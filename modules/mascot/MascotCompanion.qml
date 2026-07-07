@@ -207,8 +207,8 @@ Scope {
         const add = (pose, edge, n) => { for (let i = 0; i < n; i++) bag.push([pose, edge]) }
         if (mood === "sleepy") { add("sleepy-nod", "left", 3); add("chibi-sleepy", "left", 2) }
         if (mood === "hyper") { add("chibi-bounce", "right", 2); add("chibi-happy", "right", 1); add("energy-drink", "right", 2); add("skater-trick", "right", 1) }
-        if (hour >= 1 && hour < 6) { add("late-night", "right", 4); add("sleepy-nod", "left", 2) }
-        if (hour >= 6 && hour < 11) add("morning-coffee", "left", 4)
+        if (commentaryOn && hour >= 1 && hour < 6) { add("late-night", "right", 4); add("sleepy-nod", "left", 2) }
+        if (commentaryOn && hour >= 6 && hour < 11) add("morning-coffee", "left", 4)
         add(Math.random() < 0.5 ? "mate-break" : "tea-break", "right", 2)
         add("tail-sway", "right", 2); add("ear-twitch", "left", 1); add("idle-breathe", "right", 2)
         const fresh = bag.filter(p => !_recentPoses.includes(p[0]))
@@ -248,6 +248,9 @@ Scope {
     // instead of pure random. Each candidate names a manifest contextLines
     // pool; %1 in a line is filled with the candidate's arg.
     property string _lastContext: ""
+    // Personal observations (your uptime, your 3AM, your app marathons) are
+    // charming to some and grating to others — one switch turns them off
+    readonly property bool commentaryOn: Config.options?.mascot?.personality?.commentary ?? true
     function _smartCandidates() {
         const out = []
         const now = new Date()
@@ -258,10 +261,10 @@ Scope {
             out.push({ key: "media-playing", pose: "music-vibe", edge: "right", arg: t.length > 40 ? t.substring(0, 37) + "..." : t })
         }
         const notifCount = Notifications.list?.length ?? 0
-        if (notifCount >= 10)
+        if (commentaryOn && notifCount >= 10)
             out.push({ key: "notif-pileup", pose: "detective-glass", edge: "right", arg: notifCount })
         const upDays = parseInt((DateTime.uptime.match(/(\d+)\s*d/) ?? [])[1] ?? "0")
-        if (upDays >= 2)
+        if (commentaryOn && upDays >= 2)
             out.push({ key: "uptime-days", pose: "tired-dev", edge: "left", arg: upDays })
         if (day === 1 && hour >= 6 && hour < 12)
             out.push({ key: "monday", pose: "morning-coffee", edge: "left" })
@@ -271,7 +274,7 @@ Scope {
             out.push({ key: "weekend", pose: "reading", edge: "right" })
         if (Battery.isPluggedIn && Battery.percentage >= 0.97)
             out.push({ key: "battery-full", pose: "peace-wink", edge: "left" })
-        if (root._focusApp.length > 0 && Date.now() - root._focusSince > 45 * 60 * 1000)
+        if (commentaryOn && root._focusApp.length > 0 && Date.now() - root._focusSince > 45 * 60 * 1000)
             out.push({ key: "app-marathon", pose: "typing-loop", edge: "right", arg: root._prettyAppName(root._focusApp) })
         // Wet weather outside → umbrella commentary (wttr WWO rain/sleet/thunder codes)
         if (Weather.enabled) {
@@ -280,10 +283,10 @@ Scope {
                 out.push({ key: "weather-wet", pose: "weather-umbrella", edge: "top", arg: Weather.data?.description ?? "" })
         }
         // Music "playing" into a muted sink deserves a call-out
-        if (_eventEnabled("music") && MprisController.isPlaying && (Audio.sink?.audio?.muted ?? false))
+        if (commentaryOn && _eventEnabled("music") && MprisController.isPlaying && (Audio.sink?.audio?.muted ?? false))
             out.push({ key: "muted-media", pose: "facepalm", edge: "right" })
         const winCount = NiriService.windows?.length ?? 0
-        if (winCount >= 12)
+        if (commentaryOn && winCount >= 12)
             out.push({ key: "window-pileup", pose: Math.random() < 0.5 ? "marshaller-windows" : "heavy-lift", edge: "top", arg: winCount })
         // Never the same commentary twice in a row
         return out.filter(c => c.key !== root._lastContext)
