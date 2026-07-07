@@ -337,10 +337,18 @@ AbstractWidget {
             _chaosFling.stop()
             _chaosReturn.stop()
             MascotChaos.rememberOriginal(root.configEntryName, root.x, root.y)
-            root._flingWreck = mode === "wreck"
+            root._flingWreck = mode === "wreck" || mode === "vanish"
             root._flingPersist = mode === "persist" && root.placementStrategy === "free" && !root.locked
             root._flingX = vx
-            if (root._flingWreck) {
+            if (mode === "vanish") {
+                // stolen: carried clean off the screen edge until tidy
+                root._flingX = vx >= 0
+                    ? root.scaledScreenWidth - root.x + root.width
+                    : -(root.x + root.width * 2)
+                root._flingY = 0
+                root._flingRise = 30
+                root._flingSpin = 0
+            } else if (root._flingWreck) {
                 // knocked out: drop to the floor and lie there, badly
                 root._flingY = Math.max(0, root.scaledScreenHeight - root.y - root.height - 8)
                 root._flingRise = 40 + Math.random() * 40

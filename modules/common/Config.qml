@@ -494,6 +494,7 @@ Singleton {
                 property JsonObject chaos: JsonObject {
                     property bool enable: false // Chaos mode: she may run across the desktop and mess with widgets/panels
                     property bool allowRearrange: false // Let her actually relocate widgets (otherwise everything bounces back)
+                    property bool sfx: true // Impact foley from the freedesktop sound theme during chaos
                 }
             }
 
@@ -1172,6 +1173,7 @@ Singleton {
                         property string colorMode: "auto"
                         property int dim: 0
                         property string pose: "reading"
+                        property string customPath: "" // any user image/GIF replaces the catalog pose
                         property real x: 120
                         property real y: 320
                     }

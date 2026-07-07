@@ -688,6 +688,7 @@
                 "cornerRadius": -1,
                 "colorMode": "auto",
                 "pose": "reading",
+                "customPath": "",
                 "x": 120,
                 "y": 320
             },
@@ -1095,7 +1096,8 @@
         },
         "chaos": {
             "enable": false,
-            "allowRearrange": false
+            "allowRearrange": false,
+            "sfx": true
         }
     },
     "media": {

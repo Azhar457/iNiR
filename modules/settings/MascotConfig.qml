@@ -232,6 +232,16 @@ ContentPage {
                 onCheckedChanged: Config.setNestedValue("mascot.chaos.enable", checked)
             }
             SettingsSwitch {
+                buttonIcon: "volume_up"
+                text: Translation.tr("Impact sounds")
+                checked: Config.options?.mascot?.chaos?.sfx ?? true
+                enabled: Config.options?.mascot?.chaos?.enable ?? false
+                onCheckedChanged: Config.setNestedValue("mascot.chaos.sfx", checked)
+                StyledToolTip {
+                    text: Translation.tr("Little thuds and bells from the system sound theme when she hits things")
+                }
+            }
+            SettingsSwitch {
                 buttonIcon: "open_with"
                 text: Translation.tr("Let her rearrange widgets")
                 checked: Config.options?.mascot?.chaos?.allowRearrange ?? false

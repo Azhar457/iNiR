@@ -2547,6 +2547,17 @@ ContentPage {
                 currentValue: Config.getNestedValue("background.widgets.mascot.pose", "reading")
                 onSelected: value => Config.setNestedValue("background.widgets.mascot.pose", value)
             }
+            WidgetSettingRow {
+                label: Translation.tr("Custom image")
+                icon: "image"
+                trailing: false
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Path to any image or GIF (empty = pose above)")
+                    text: Config.getNestedValue("background.widgets.mascot.customPath", "")
+                    onEditingFinished: Config.setNestedValue("background.widgets.mascot.customPath", text.trim())
+                }
+            }
             WidgetZonePicker {
                 configPath: "background.widgets.mascot"
                 configEntry: Config.getNestedValue("background.widgets.mascot", ({}))

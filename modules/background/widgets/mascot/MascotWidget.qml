@@ -36,19 +36,41 @@ AbstractBackgroundWidget {
     resizeMinHeight: 96
 
     readonly property string pose: Config.getNestedValue("background.widgets.mascot.pose", "reading")
+    // Any user-supplied image/GIF replaces the catalog pose entirely
+    readonly property string customPath: Config.getNestedValue("background.widgets.mascot.customPath", "")
 
     // GIF poses need AnimatedImage playback; the manifest says which ones
-    property var _animatedPoses: []
+    // (kept whole: the click ladder reads its pose pools from it too)
+    property var _manifest: ({})
+    readonly property var _animatedPoses: _manifest.animatedPoses ?? []
     FileView {
         path: Quickshell.shellPath("assets/images/mascot/manifest.json")
         onLoadedChanged: {
             if (!loaded) return
             try {
-                root._animatedPoses = JSON.parse(text()).animatedPoses ?? []
+                root._manifest = JSON.parse(text())
             } catch (e) {
                 console.warn("[MascotWidget] manifest load failed:", e)
             }
         }
+    }
+
+    // Click ladder: pokes escalate through the same manifest pose tiers as
+    // the live companion (annoyed → pats → rage), reverting after a moment.
+    // With a custom image the ladder is hers no more — clicks just poke the
+    // companion instead.
+    property string _reactPose: ""
+    property int _clicks: 0
+    Timer { id: _reactRevert; interval: 6000; onTriggered: root._reactPose = "" }
+    Timer { id: _clickReset; interval: 1600; onTriggered: root._clicks = 0 }
+    function _reactToClick(): void {
+        root._clicks++
+        _clickReset.restart()
+        const tiers = root._manifest.clickTiers ?? ({})
+        const tier = root._clicks >= 4 ? tiers.tier4 : (root._clicks >= 2 ? tiers.tier2 : tiers.tier1)
+        const pool = tier?.poses ?? ["annoyed-poked"]
+        root._reactPose = pool[Math.floor(Math.random() * pool.length)]
+        _reactRevert.restart()
     }
 
     // Card chrome is off by default — she's a cutout living on the desktop.
@@ -73,15 +95,22 @@ AbstractBackgroundWidget {
         id: sprite
         anchors.fill: parent
         anchors.margins: Math.round(6 * root.scaleFactor)
-        source: Quickshell.shellPath(`assets/images/mascot/inir-mascot-${root.pose}.${root._animatedPoses.includes(root.pose) ? "gif" : "png"}`)
+        source: {
+            if (root.customPath.length > 0)
+                return root.customPath.startsWith("file://") ? root.customPath : "file://" + root.customPath
+            const p = root._reactPose.length > 0 ? root._reactPose : root.pose
+            return Quickshell.shellPath(`assets/images/mascot/inir-mascot-${p}.${root._animatedPoses.includes(p) ? "gif" : "png"}`)
+        }
         playing: root.powerActive
         fillMode: Image.PreserveAspectFit
         asynchronous: true
-        smooth: false
+        // custom images aren't pixel art — smooth them; catalog stays crisp
+        smooth: root.customPath.length > 0
         mipmap: false
 
-        // Fallback when the mascot switch is off or the pose asset is gone
-        visible: (Config.options?.mascot?.enable ?? false) && status !== Image.Error
+        // Custom images render regardless of the mascot switch; catalog
+        // poses stay gated behind it
+        visible: (root.customPath.length > 0 || (Config.options?.mascot?.enable ?? false)) && status !== Image.Error
     }
     MaterialSymbol {
         anchors.centerIn: parent
@@ -91,9 +120,16 @@ AbstractBackgroundWidget {
         color: root.widgetSurfaceInk
     }
 
-    // Tapping her on the desktop summons the live companion
+    // Tapping her reacts locally (pose ladder); custom images poke the
+    // live companion instead
     TapHandler {
         enabled: !GlobalStates.widgetEditMode && sprite.visible
-        onTapped: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "poke"])
+        onTapped: {
+            if (root.customPath.length > 0) {
+                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "poke"])
+            } else {
+                root._reactToClick()
+            }
+        }
     }
 }

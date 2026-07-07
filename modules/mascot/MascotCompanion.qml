@@ -616,7 +616,17 @@ Scope {
             rompScreen: root.companionScreen
             startMode: root.rompMode
             onFinished: root.rompActive = false
+            // she always comes back to clean up her own destruction —
+            // a few minutes later, in a random new form
+            onWrecked: {
+                encoreTimer.interval = (120 + Math.random() * 180) * 1000
+                encoreTimer.restart()
+            }
         }
+    }
+    Timer {
+        id: encoreTimer
+        onTriggered: if (root.chaosEnabled && !root.suppressed && !root.rompActive) root.startRomp("cleanup")
     }
 
     IpcHandler {

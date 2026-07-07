@@ -37,50 +37,66 @@ ContentPage {
     readonly property bool liftIsGroup: liftActive && lifted.type === "group"
 
     function _snapshot(): var {
-        return SettingsPageRegistry.categories.map(c => ({ label: c.label, pages: c.pages.slice() }))
+        return ({
+            groups: SettingsPageRegistry.categories.map(c => ({ label: c.label, pages: c.pages.slice() })),
+            hidden: SettingsPageRegistry.hiddenPages.slice()
+        })
     }
-    function _save(cats): void {
-        Config.setNestedValue("settingsUi.categories", JSON.stringify(cats))
+    function _save(arr): void {
+        Config.setNestedValue("settingsUi.categories", JSON.stringify(arr))
         root.lifted = null
+    }
+    // lifted page may come from a group (ci >= 0) or from the hidden zone (ci === -1)
+    function _takeLifted(arr): var {
+        const { ci, pi } = root.lifted
+        if (ci === -1) return arr.hidden.splice(pi, 1)[0]
+        return arr.groups[ci]?.pages.splice(pi, 1)[0]
     }
     function placePage(targetCi: int, insertPos: int): void {
         if (!root.liftIsPage) return
-        const c = _snapshot()
-        const { ci, pi } = root.lifted
-        if (!c[ci] || !c[targetCi]) { root.lifted = null; return }
-        const page = c[ci].pages.splice(pi, 1)[0]
+        const a = _snapshot()
+        const page = _takeLifted(a)
+        if (page === undefined || !a.groups[targetCi]) { root.lifted = null; return }
         let pos = insertPos
-        if (targetCi === ci && insertPos > pi) pos--
-        c[targetCi].pages.splice(Math.max(0, Math.min(pos, c[targetCi].pages.length)), 0, page)
-        _save(c)
+        if (root.lifted.ci === targetCi && insertPos > root.lifted.pi) pos--
+        a.groups[targetCi].pages.splice(Math.max(0, Math.min(pos, a.groups[targetCi].pages.length)), 0, page)
+        _save(a)
+    }
+    function hidePage(): void {
+        if (!root.liftIsPage) return
+        const a = _snapshot()
+        const page = _takeLifted(a)
+        if (page === undefined) { root.lifted = null; return }
+        if (!a.hidden.includes(page)) a.hidden.push(page)
+        _save(a)
     }
     function placeGroup(insertPos: int): void {
         if (!root.liftIsGroup) return
-        const c = _snapshot()
+        const a = _snapshot()
         const from = root.lifted.index
-        if (!c[from]) { root.lifted = null; return }
-        const g = c.splice(from, 1)[0]
+        if (!a.groups[from]) { root.lifted = null; return }
+        const g = a.groups.splice(from, 1)[0]
         let pos = insertPos
         if (insertPos > from) pos--
-        c.splice(Math.max(0, Math.min(pos, c.length)), 0, g)
-        _save(c)
+        a.groups.splice(Math.max(0, Math.min(pos, a.groups.length)), 0, g)
+        _save(a)
     }
     function renameCategory(i: int, label: string): void {
-        const c = _snapshot()
-        if (!c[i] || label.trim().length === 0) return
-        c[i].label = label.trim()
-        _save(c)
+        const a = _snapshot()
+        if (!a.groups[i] || label.trim().length === 0) return
+        a.groups[i].label = label.trim()
+        _save(a)
     }
     function removeCategory(i: int): void {
-        const c = _snapshot()
-        if (!c[i] || c[i].pages.length > 0) return
-        c.splice(i, 1)
-        _save(c)
+        const a = _snapshot()
+        if (!a.groups[i] || a.groups[i].pages.length > 0) return
+        a.groups.splice(i, 1)
+        _save(a)
     }
     function addCategory(): void {
-        const c = _snapshot()
-        c.push({ label: Translation.tr("New group"), pages: [] })
-        _save(c)
+        const a = _snapshot()
+        a.groups.push({ label: Translation.tr("New group"), pages: [] })
+        _save(a)
     }
 
     SettingsCardSection {
@@ -284,6 +300,71 @@ ContentPage {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        // Hidden zone: drop a page here and it leaves the sidebar entirely.
+        // Search still finds hidden pages, and lifting a chip brings it back.
+        SettingsGroup {
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                MaterialSymbol {
+                    text: "visibility_off"
+                    iconSize: 20
+                    color: Appearance.colors.colSubtext
+                }
+                StyledText {
+                    text: Translation.tr("Hidden pages")
+                    font.pixelSize: Appearance.font.pixelSize.normal
+                    font.weight: Font.DemiBold
+                    color: Appearance.colors.colOnLayer1
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("— out of the sidebar, still searchable")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                    elide: Text.ElideRight
+                }
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: 6
+
+                ArrangeDropSlot {
+                    compact: true
+                    active: root.liftIsPage && root.lifted.ci !== -1
+                    onPlaced: root.hidePage()
+                }
+
+                Repeater {
+                    model: SettingsPageRegistry.hiddenPages.length
+                    delegate: ArrangeChip {
+                        id: hiddenChip
+                        required property int index
+                        readonly property int pageIdx: SettingsPageRegistry.hiddenPages[hiddenChip.index] ?? -1
+                        readonly property var page: SettingsPageRegistry.pages[hiddenChip.pageIdx] ?? null
+                        readonly property bool chipLifted: root.liftIsPage
+                            && root.lifted.ci === -1 && root.lifted.pi === hiddenChip.index
+                        icon: hiddenChip.page?.icon ?? "settings"
+                        label: hiddenChip.page?.name ?? "?"
+                        lifted: chipLifted
+                        dimmed: root.liftActive && !chipLifted
+                        onTapped: {
+                            root.lifted = hiddenChip.chipLifted ? null
+                                : ({ type: "page", ci: -1, pi: hiddenChip.index, pageIdx: hiddenChip.pageIdx })
+                        }
+                    }
+                }
+
+                StyledText {
+                    visible: SettingsPageRegistry.hiddenPages.length === 0 && !root.liftActive
+                    text: Translation.tr("Nothing hidden")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
                 }
             }
         }

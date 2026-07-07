@@ -1238,9 +1238,6 @@
         "That's called percussion maintenance."
       ]
     },
-    "bonk_extra_poses": [
-      "jab-punch"
-    ],
     "chase": {
       "invite": [
         "follow-me",
@@ -1280,6 +1277,51 @@
       "Poke me again. See what happens.",
       "Rude. I'm mid-crime."
     ],
+    "steal": {
+      "pose": "heavy-lift",
+      "carry": "carry-crate",
+      "after": "tiptoe-sneak",
+      "lines": [
+        "Mine now.",
+        "Confiscated. For reasons.",
+        "This is a tax.",
+        "I'm rehoming it. To nowhere.",
+        "Evidence. I'm taking evidence."
+      ]
+    },
+    "inspect": {
+      "pose": [
+        "alert-look",
+        "crouch-inspect",
+        "detective-glass"
+      ],
+      "after": [
+        "lean-peek",
+        "chibi-shrug",
+        "dust-hands"
+      ],
+      "lines": [
+        "Hmm. Suspicious.",
+        "Just checking. Don't move.",
+        "Routine inspection. Act natural.",
+        "Something's off about this one.",
+        "...huh. Carry on."
+      ]
+    },
+    "parkour": {
+      "hop": "side-hop",
+      "after": [
+        "dust-hands",
+        "peace-wink",
+        "stomp-victory"
+      ],
+      "lines": [
+        "Parkour.",
+        "Free running. Free desktop.",
+        "Obstacle course accepted.",
+        "Your widgets make decent hurdles."
+      ]
+    },
     "wreck": {
       "pose": [
         "mallet-swing",
@@ -1333,6 +1375,28 @@
         "Everything back. Like nothing happened.",
         "You saw nothing.",
         "Order restored. Temporarily."
+      ]
+    },
+    "cleanup": {
+      "pose": [
+        "checklist-steps",
+        "doctor-checkup",
+        "salute-ready",
+        "speech-bubble-calm"
+      ],
+      "after": [
+        "dust-hands",
+        "peace-wink",
+        "chibi-thumbsup",
+        "stomp-victory"
+      ],
+      "lines": [
+        "Cleanup crew. Party of one.",
+        "I break it, I fix it. Circle of life.",
+        "Restoration services. Invoice waived.",
+        "Everything back before anyone notices.",
+        "Damage report: handled.",
+        "The chaos was a demo. This is the product."
       ]
     }
   },

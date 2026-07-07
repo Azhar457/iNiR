@@ -175,22 +175,28 @@ Singleton {
         { label: Translation.tr("Reference"), pages: [9, 13] }
     ]
 
-    // User-arranged nav (Settings › Arrange). Sanitized so every page stays
-    // reachable: invalid indices drop, pages missing from the saved layout
-    // land in a trailing "More" group. Empty/broken config = defaults.
-    readonly property var categories: {
+    // User-arranged nav (Settings › Arrange). Saved value is either the v1
+    // array of groups or the v2 object { groups, hidden }. Sanitized so
+    // every non-hidden page stays reachable: invalid indices drop, pages
+    // missing from the saved layout land in a trailing "More" group.
+    // Hidden pages leave the nav but search still reaches them.
+    readonly property var _arrangement: {
+        const fallback = ({ groups: defaultCategories, hidden: [] })
         const raw = Config.options?.settingsUi?.categories ?? ""
-        if (!raw || raw.length === 0) return defaultCategories
+        if (!raw || raw.length === 0) return fallback
         let saved
         try {
             saved = JSON.parse(raw)
         } catch (e) {
-            return defaultCategories
+            return fallback
         }
-        if (!Array.isArray(saved) || saved.length === 0) return defaultCategories
-        const seen = new Set()
+        const groupsIn = Array.isArray(saved) ? saved : (Array.isArray(saved?.groups) ? saved.groups : null)
+        if (!groupsIn || groupsIn.length === 0) return fallback
+        const hidden = (Array.isArray(saved?.hidden) ? saved.hidden : [])
+            .filter(i => Number.isInteger(i) && i >= 0 && i < pages.length)
+        const seen = new Set(hidden)
         const out = []
-        for (const c of saved) {
+        for (const c of groupsIn) {
             if (!c || typeof c.label !== "string") continue
             const pageIdxs = (Array.isArray(c.pages) ? c.pages : [])
                 .filter(i => Number.isInteger(i) && i >= 0 && i < pages.length && !seen.has(i))
@@ -202,8 +208,10 @@ Singleton {
         for (let i = 0; i < pages.length; i++)
             if (!seen.has(i)) missing.push(i)
         if (missing.length > 0) out.push({ label: Translation.tr("More"), pages: missing })
-        return out.length > 0 ? out : defaultCategories
+        return out.length > 0 ? ({ groups: out, hidden: hidden }) : fallback
     }
+    readonly property var categories: _arrangement.groups
+    readonly property var hiddenPages: _arrangement.hidden
 
     function iconForPage(idx) {
         return (idx >= 0 && idx < pages.length) ? (pages[idx].icon || "settings") : "settings";
