@@ -155,18 +155,55 @@ Singleton {
             desc: Translation.tr("Companion behavior, reactions, poses"),
             essential: false,
             component: "modules/settings/MascotConfig.qml"
+        },
+        {
+            name: Translation.tr("Arrange"),
+            icon: "swap_vert",
+            desc: Translation.tr("Reorder settings groups and pages"),
+            essential: false,
+            component: "modules/settings/ArrangeConfig.qml"
         }
     ]
 
     // Sidebar grouping shared by both modes. Page indices reference the
     // pages array above — order here defines the visual nav order.
-    readonly property var categories: [
+    readonly property var defaultCategories: [
         { label: Translation.tr("Essentials"), pages: [0] },
         { label: Translation.tr("Appearance"), pages: [4, 3, 14] },
-        { label: Translation.tr("Shell"), pages: [2, 5, 16, 10, 11, 18, 19] },
+        { label: Translation.tr("Shell"), pages: [2, 5, 16, 10, 11, 18, 19, 20] },
         { label: Translation.tr("System"), pages: [1, 7, 6, 12, 15, 8, 17] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
     ]
+
+    // User-arranged nav (Settings › Arrange). Sanitized so every page stays
+    // reachable: invalid indices drop, pages missing from the saved layout
+    // land in a trailing "More" group. Empty/broken config = defaults.
+    readonly property var categories: {
+        const raw = Config.options?.settingsUi?.categories ?? ""
+        if (!raw || raw.length === 0) return defaultCategories
+        let saved
+        try {
+            saved = JSON.parse(raw)
+        } catch (e) {
+            return defaultCategories
+        }
+        if (!Array.isArray(saved) || saved.length === 0) return defaultCategories
+        const seen = new Set()
+        const out = []
+        for (const c of saved) {
+            if (!c || typeof c.label !== "string") continue
+            const pageIdxs = (Array.isArray(c.pages) ? c.pages : [])
+                .filter(i => Number.isInteger(i) && i >= 0 && i < pages.length && !seen.has(i))
+            pageIdxs.forEach(i => seen.add(i))
+            // empty groups survive so the editor can move pages into them
+            out.push({ label: c.label, pages: pageIdxs })
+        }
+        const missing = []
+        for (let i = 0; i < pages.length; i++)
+            if (!seen.has(i)) missing.push(i)
+        if (missing.length > 0) out.push({ label: Translation.tr("More"), pages: missing })
+        return out.length > 0 ? out : defaultCategories
+    }
 
     function iconForPage(idx) {
         return (idx >= 0 && idx < pages.length) ? (pages[idx].icon || "settings") : "settings";
@@ -210,6 +247,13 @@ Singleton {
             label: Translation.tr("Chaos mode"),
             description: Translation.tr("She runs across the desktop, bonks widgets and rattles the bar"),
             keywords: ["mascot", "chaos", "romp", "kick", "bonk", "widgets", "rearrange", "tidy", "physics"]
+        },
+        {
+            pageIndex: 20, pageName: root.pages[20].name,
+            section: Translation.tr("Arrange"),
+            label: Translation.tr("Arrange settings"),
+            description: Translation.tr("Reorder groups, rename them, move pages between them"),
+            keywords: ["arrange", "reorder", "categories", "groups", "nav", "sidebar", "customize", "layout", "settings"]
         },
 
         // =====================================================================

@@ -64,6 +64,11 @@ For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by categor
 > - `socat` for YTMusic IPC fallback control
 > - `fprintd` for fingerprint lockscreen support
 >
+> **Optional content packs** (`./setup` → Extras): the iNiR-Walls wallpaper
+> pack, the ii-pixel-sddm login theme, YAMIS icons, and the Kira mascot art
+> pack (~20 MiB — the mascot feature ships disabled and does nothing until
+> you install the pack and enable her in Settings › Mascot).
+>
 > **Important for minimal installs (Arch base / netinstall):**
 > If shell startup fails with `module "org.kde.syntaxhighlighting" is not installed`, install:
 > `syntax-highlighting kirigami kdialog`

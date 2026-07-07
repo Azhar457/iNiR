@@ -952,6 +952,7 @@
     "settingsUi": {
         "overlayMode": true,
         "easyMode": false,
+        "categories": "",
         "overlayAppearance": {
             "scrimDim": 35,
             "backgroundOpacity": 1.0,
