@@ -249,6 +249,16 @@ PanelWindow {
         }
     }
     Timer { id: phaseTimer; onTriggered: romp._phaseDone() }
+    Timer {
+        id: aftershockTimer
+        interval: 1300
+        onTriggered: {
+            romp._sfx("bell")
+            MascotChaos.panelShake(1.5)
+            for (const t of MascotChaos.targets())
+                MascotChaos.impact(t.key, (Math.random() - 0.5) * 60, 0, "bounce")
+        }
+    }
 
     // Mid-run beat: on long runs she sometimes stops halfway, looks at
     // YOU for a moment, then carries on — tiny pauses read as intent
@@ -448,10 +458,13 @@ PanelWindow {
             }
             // the hit lands
             if (stop.kind === "quake") {
+                // no two quakes alike: variable magnitude, and sometimes
+                // an aftershock rolls through a beat later
                 romp._sfx("dialog-warning")
-                MascotChaos.panelShake(1)
+                MascotChaos.panelShake(1 + Math.random() * 1.4)
                 for (const t of MascotChaos.targets())
-                    MascotChaos.impact(t.key, (Math.random() - 0.5) * 90, 0, "bounce")
+                    MascotChaos.impact(t.key, (Math.random() - 0.5) * (90 + Math.random() * 130), 0, "bounce")
+                if (Math.random() < 0.35) aftershockTimer.restart()
             } else if (stop.kind === "punt") {
                 romp._sfx("dialog-warning")
                 MascotChaos.panelShake(2.4)
