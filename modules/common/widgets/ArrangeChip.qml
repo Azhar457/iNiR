@@ -48,6 +48,7 @@ Rectangle {
             color: root.lifted ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
         }
         StyledText {
+            visible: root.label.length > 0
             text: root.label
             font.pixelSize: Appearance.font.pixelSize.small
             color: root.lifted ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2

@@ -30,6 +30,8 @@ ContentPage {
 
     // lifted: null | { type: "page", ci, pi, pageIdx } | { type: "group", index }
     property var lifted: null
+    // which group's name is being edited inline (-1 = none)
+    property int editingGroup: -1
     readonly property bool liftActive: lifted !== null
     readonly property bool liftIsPage: liftActive && lifted.type === "page"
     readonly property bool liftIsGroup: liftActive && lifted.type === "group"
@@ -179,25 +181,66 @@ ContentPage {
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 8
+                        readonly property bool editing: root.editingGroup === slotCol.index
 
                         // The group's grab handle — tap to lift the whole group
                         ArrangeChip {
                             icon: "drag_indicator"
-                            label: catGroup.cat.pages.length.toString()
                             lifted: catGroup.groupLifted
                             dimmed: root.liftActive && !catGroup.groupLifted
                             onTapped: {
                                 root.lifted = catGroup.groupLifted ? null : ({ type: "group", index: slotCol.index })
                             }
                         }
-                        MaterialTextField {
-                            Layout.fillWidth: true
+
+                        // Display mode: plain title + subtle count; pencil to edit
+                        StyledText {
+                            visible: !parent.editing
                             text: catGroup.cat.label
-                            onEditingFinished: if (text !== catGroup.cat.label) root.renameCategory(slotCol.index, text)
+                            font.pixelSize: Appearance.font.pixelSize.normal
+                            font.weight: Font.DemiBold
+                            color: Appearance.colors.colOnLayer1
+                            elide: Text.ElideRight
+                        }
+                        StyledText {
+                            visible: !parent.editing
+                            text: catGroup.cat.pages.length === 1
+                                ? Translation.tr("1 page")
+                                : Translation.tr("%1 pages").arg(catGroup.cat.pages.length)
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colSubtext
+                        }
+
+                        // Edit mode: compact field, confirmed with Enter or the check
+                        MaterialTextField {
+                            id: renameField
+                            visible: parent.editing
+                            Layout.preferredWidth: 240
+                            text: catGroup.cat.label
+                            onVisibleChanged: if (visible) { text = catGroup.cat.label; forceActiveFocus() }
+                            onAccepted: {
+                                root.renameCategory(slotCol.index, text)
+                                root.editingGroup = -1
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        RippleButtonWithIcon {
+                            materialIcon: parent.editing ? "check" : "edit"
+                            visible: !root.liftActive
+                            onClicked: {
+                                if (parent.editing) {
+                                    root.renameCategory(slotCol.index, renameField.text)
+                                    root.editingGroup = -1
+                                } else {
+                                    root.editingGroup = slotCol.index
+                                }
+                            }
                         }
                         RippleButtonWithIcon {
                             materialIcon: "delete"
-                            visible: catGroup.cat.pages.length === 0 && !root.liftActive
+                            visible: catGroup.cat.pages.length === 0 && !root.liftActive && !parent.editing
                             onClicked: root.removeCategory(slotCol.index)
                         }
                     }
