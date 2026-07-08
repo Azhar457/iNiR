@@ -134,7 +134,8 @@ DashCard {
         Layout.fillWidth: true
         spacing: 4
         StyledText {
-            Layout.alignment: Qt.AlignHCenter
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
             text: Translation.tr("No upcoming events")
             font.pixelSize: Appearance.font.pixelSize.small
             color: card.colSubtext
@@ -142,7 +143,7 @@ DashCard {
     }
 
     RippleButton {
-        Layout.alignment: Qt.AlignRight
+        Layout.alignment: Qt.AlignHCenter
         implicitHeight: 30
         implicitWidth: addRowContent.implicitWidth + 24
         buttonRadius: Appearance.rounding.full
