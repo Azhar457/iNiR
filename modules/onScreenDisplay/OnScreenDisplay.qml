@@ -29,7 +29,7 @@ Scope {
 
     property string currentIndicator: "volume"
     property bool _syncingOpenStates: false
-    readonly property bool osdActive: GlobalStates.osdVolumeOpen || GlobalStates.osdBrightnessOpen || GlobalStates.osdMediaOpen || GlobalStates.osdKeyboardLayoutOpen
+    readonly property bool osdActive: GlobalStates.osdVolumeOpen || GlobalStates.osdBrightnessOpen || GlobalStates.osdMicOpen || GlobalStates.osdMediaOpen || GlobalStates.osdKeyboardLayoutOpen
     property var indicators: [
         {
             id: "volume",
@@ -38,6 +38,10 @@ Scope {
         {
             id: "brightness",
             sourceUrl: "indicators/BrightnessIndicator.qml"
+        },
+        {
+            id: "mic",
+            sourceUrl: "indicators/MicIndicator.qml"
         },
         {
             id: "media",
@@ -53,10 +57,11 @@ Scope {
         },
     ]
 
-    function setOpenStates(volume, brightness, media, keyboardLayout) {
+    function setOpenStates(volume, brightness, mic, media, keyboardLayout) {
         root._syncingOpenStates = true;
         GlobalStates.osdVolumeOpen = volume;
         GlobalStates.osdBrightnessOpen = brightness;
+        GlobalStates.osdMicOpen = mic;
         GlobalStates.osdMediaOpen = media;
         GlobalStates.osdKeyboardLayoutOpen = keyboardLayout;
         root._syncingOpenStates = false;
@@ -64,7 +69,7 @@ Scope {
 
     function hideOsd() {
         osdTimeout.stop();
-        root.setOpenStates(false, false, false, false);
+        root.setOpenStates(false, false, false, false, false);
         root.protectionMessage = "";
     }
 
@@ -74,6 +79,7 @@ Scope {
         root.setOpenStates(
             indicator === "volume" || indicator === "voiceSearch",
             indicator === "brightness",
+            indicator === "mic",
             indicator === "media",
             indicator === "keyboardLayout"
         );
@@ -148,6 +154,21 @@ Scope {
     }
 
     Connections {
+        // Listen to mic volume/mute changes
+        target: Audio
+        function onMicVolumeChanged() {
+            if (!root.initialized) return;
+            root.currentIndicator = "mic";
+            root.triggerOsd();
+        }
+        function onMicMutedChanged() {
+            if (!root.initialized) return;
+            root.currentIndicator = "mic";
+            root.triggerOsd();
+        }
+    }
+
+    Connections {
         target: GlobalStates
         function onOsdVolumeOpenChanged() {
             if (root._syncingOpenStates || !GlobalStates.osdVolumeOpen)
@@ -159,6 +180,12 @@ Scope {
             if (root._syncingOpenStates || !GlobalStates.osdBrightnessOpen)
                 return;
             root.currentIndicator = "brightness";
+            osdTimeout.restart();
+        }
+        function onOsdMicOpenChanged() {
+            if (root._syncingOpenStates || !GlobalStates.osdMicOpen)
+                return;
+            root.currentIndicator = "mic";
             osdTimeout.restart();
         }
         function onOsdMediaOpenChanged() {
