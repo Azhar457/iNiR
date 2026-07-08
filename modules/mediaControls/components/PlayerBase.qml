@@ -34,9 +34,9 @@ QtObject {
     readonly property string effectiveArtist: isYtMusicPlayer 
         ? YtMusic.currentArtist 
         : (player?.trackArtist ?? "")
-    readonly property string effectiveArtUrl: isYtMusicPlayer 
-        ? YtMusic.currentThumbnail 
-        : (player?.trackArtUrl ?? "")
+    readonly property string effectiveArtUrl: isYtMusicPlayer
+        ? YtMusic.currentThumbnail
+        : MprisController.effectiveArtUrl(player)
     // Artwork motion is keyed only by real art identity. Metadata-only updates
     // must not move the cover, or one track change animates twice.
     readonly property string mediaTransitionKey: (root.effectiveArtUrl ?? "").split("?")[0].split("#")[0]

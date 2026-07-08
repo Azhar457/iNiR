@@ -211,7 +211,11 @@ Singleton {
      * @returns { string }
      */
     function friendlyTimeForSeconds(seconds) {
-        if (isNaN(seconds) || seconds < 0)
+        // MPRIS players with no real duration (live streams/TV) sometimes report
+        // a garbage mpris:length instead of omitting it — treat anything past a
+        // sane real-world media ceiling (24h) as unknown rather than rendering
+        // a multi-day/year timestamp.
+        if (isNaN(seconds) || seconds < 0 || seconds > 86400)
             return "0:00";
         seconds = Math.floor(seconds);
         const h = Math.floor(seconds / 3600);

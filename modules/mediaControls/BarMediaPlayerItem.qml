@@ -20,7 +20,7 @@ Item { // Player instance - Old style design
     property int visualizerSmoothing: 2
     property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.rounding.normal
 
-    property var artUrl: player?.trackArtUrl
+    property var artUrl: MprisController.effectiveArtUrl(player)
     property string artDownloadLocation: Directories.coverArt
     property color artDominantColor: ColorUtils.mix((colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary), Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
     readonly property bool downloaded: artworkResolver.ready

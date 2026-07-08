@@ -8,6 +8,7 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 import qs
 import qs.modules.common
+import qs.modules.common.functions
 
 Singleton {
 	id: root;
@@ -303,8 +304,11 @@ Singleton {
 				if (_isStreamingSite(trackUrl)) return true;
 				// Accept any browser media with sufficient length (> 30s = real content)
 				if ((player.length ?? 0) >= 30) return true;
-				// Accept if actively playing with progress
-				if (player.isPlaying && hasProgress) return true;
+				// Accept if actively playing — live streams/TV (Twitch, etc.) never
+				// report position/length, so isPlaying alone is the reliable signal.
+				// The guard above already dropped the true noise case (not playing
+				// and no progress), so this can't let hover-preview junk through.
+				if (player.isPlaying) return true;
 				// Otherwise filter (likely noise)
 				return false;
 			}
@@ -316,7 +320,9 @@ Singleton {
 			if (!player.isPlaying && !hasProgress) return false;
 			if (_isStreamingSite(trackUrl)) return true;
 			if ((player.length ?? 0) >= 30) return true;
-			if (player.isPlaying && hasProgress) return true;
+			// Live streams/TV never report position/length — isPlaying is enough
+			// once the noise guard above has already run.
+			if (player.isPlaying) return true;
 			return false;
 		}
 		
@@ -588,15 +594,22 @@ Singleton {
 				if (!p2) continue;
 				
 				// Title similarity check
-				const titleMatch = p1.trackTitle && p2.trackTitle && 
+				const titleMatch = p1.trackTitle && p2.trackTitle &&
 					(p1.trackTitle.includes(p2.trackTitle) || p2.trackTitle.includes(p1.trackTitle));
-				
+
 				// Position/length similarity (same content, different players)
 				const posMatch = p1.length > 0 && p2.length > 0 &&
-					Math.abs(p1.position - p2.position) <= 3 && 
+					Math.abs(p1.position - p2.position) <= 3 &&
 					Math.abs(p1.length - p2.length) <= 3;
-				
-				if (titleMatch || posMatch) {
+
+				// Same source URL (e.g. a browser's native MPRIS player and
+				// plasma-browser-integration both registering the same Twitch/
+				// live-TV tab under different titles and no shared duration).
+				const url1 = p1.metadata?.["xesam:url"] ?? "";
+				const url2 = p2.metadata?.["xesam:url"] ?? "";
+				const urlMatch = url1.length > 0 && url1 === url2;
+
+				if (titleMatch || posMatch || urlMatch) {
 					group.push(j);
 				}
 			}
@@ -812,6 +825,25 @@ Singleton {
 		// Filter out data URIs that are too large (can cause crashes)
 		if (urlStr.startsWith("data:") && urlStr.length > 100000) return "";
 		return urlStr;
+	}
+
+	// Streaming sites (Twitch, live TV, etc.) rarely publish mpris:artUrl —
+	// fall back to the site's favicon, same fetch-and-cache service already
+	// used for AI chat source chips (Favicon.qml).
+	function faviconArtUrl(player): string {
+		const trackUrl = player?.metadata?.["xesam:url"] ?? "";
+		if (!trackUrl) return "";
+		const domain = StringUtils.getDomain(trackUrl);
+		if (!domain) return "";
+		return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+	}
+
+	// Preferred art source for a player: real MPRIS art if present, else a
+	// favicon fallback derived from the track's site URL.
+	function effectiveArtUrl(player): string {
+		const direct = player?.trackArtUrl ?? "";
+		if (direct.length > 0) return direct;
+		return root.faviconArtUrl(player);
 	}
 
 	IpcHandler {
