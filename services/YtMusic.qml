@@ -1232,9 +1232,13 @@ Singleton {
         root.userName = ""
         root.userAvatar = ""
         root.userChannelUrl = ""
-        Config.setNestedValue('sidebar.ytmusic.connected', false)
-        Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', "")
-        Config.setNestedValue('sidebar.ytmusic.profile', { name: "", avatar: "", url: "" })
+        Config.setNestedValues({
+            'sidebar.ytmusic.connected': false,
+            'sidebar.ytmusic.resolvedBrowserArg': "",
+            'sidebar.ytmusic.profile.name': "",
+            'sidebar.ytmusic.profile.avatar': "",
+            'sidebar.ytmusic.profile.url': ""
+        })
         // Delete stale cookie file
         _deleteCookiesProc.running = true
     }
@@ -1408,10 +1412,10 @@ print("")
     }
     
     function _persistProfile(): void {
-        Config.setNestedValue('sidebar.ytmusic.profile', {
-            name: root.userName,
-            avatar: root.userAvatar,
-            url: root.userChannelUrl
+        Config.setNestedValues({
+            'sidebar.ytmusic.profile.name': root.userName,
+            'sidebar.ytmusic.profile.avatar': root.userAvatar,
+            'sidebar.ytmusic.profile.url': root.userChannelUrl
         })
     }
     
