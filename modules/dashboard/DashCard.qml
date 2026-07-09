@@ -149,7 +149,7 @@ Rectangle {
             Component.onCompleted: {
                 for (let i = 0; i < inner.children.length; i++) {
                     const c = inner.children[i]
-                    if (c.Layout && c.Layout.fillWidth !== true && c.Layout.fillHeight !== true)
+                    if (c.Layout && c.Layout.fillWidth !== true && c.Layout.fillHeight !== true && c.Layout.alignment === 0)
                         c.Layout.alignment = Qt.AlignHCenter | Qt.AlignVCenter
                 }
             }

@@ -50,64 +50,62 @@ DashCard {
         }
     }
 
-    // Current conditions
-    RowLayout {
+    // Current conditions — vertical centered stack (same as welcome/github).
+    ColumnLayout {
         visible: root.hasData
-        Layout.alignment: Qt.AlignHCenter
-        spacing: 12
+        Layout.fillWidth: true
+        spacing: 2
 
         MaterialSymbol {
+            Layout.alignment: Qt.AlignHCenter
             text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
             iconSize: 44
             color: root.colAccent
         }
-
-        ColumnLayout {
+        StyledText {
             Layout.fillWidth: true
-            spacing: 0
-
-            StyledText {
-                Layout.fillWidth: true
-                visible: Weather.showVisibleCity
-                text: Weather.visibleCity
-                font.pixelSize: Appearance.font.pixelSize.small
-                font.weight: Font.Medium
-                color: root.colText
-                elide: Text.ElideRight
-            }
-            StyledText {
-                text: Weather.data?.temp ?? "--°"
-                font.pixelSize: Appearance.font.pixelSize.huge
-                font.family: Appearance.font.family.numbers
-                font.weight: root.zzzEverywhere ? Font.Black : Font.Medium
-                font.italic: root.zzzEverywhere
-                color: root.colText
-            }
-            StyledText {
-                Layout.fillWidth: true
-                text: Weather.describeWeather(Weather.data?.wCode ?? "113")
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: root.colSubtext
-                elide: Text.ElideRight
-            }
+            horizontalAlignment: Text.AlignHCenter
+            visible: Weather.showVisibleCity
+            text: Weather.visibleCity
+            font.pixelSize: Appearance.font.pixelSize.small
+            font.weight: Font.Medium
+            color: root.colText
+            elide: Text.ElideRight
+        }
+        StyledText {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            text: Weather.data?.temp ?? "--°"
+            font.pixelSize: Appearance.font.pixelSize.huge
+            font.family: Appearance.font.family.numbers
+            font.weight: root.zzzEverywhere ? Font.Black : Font.Medium
+            font.italic: root.zzzEverywhere
+            color: root.colText
+        }
+        StyledText {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            text: Weather.describeWeather(Weather.data?.wCode ?? "113")
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            color: root.colSubtext
+            elide: Text.ElideRight
         }
     }
 
-    // Daily forecast
+    // Daily forecast — a compact 3-day group. No fillWidth: like the rest of the
+    // card, we let DashCard's auto-center place this row (AlignHCenter). fillWidth
+    // made the row keep its full width while the days bunched at the left edge.
     RowLayout {
         visible: root.hasData && root.forecast.length > 0
-        Layout.fillWidth: true
-        spacing: 4
+        // Explicit, not relying on DashCard's one-shot auto-center: this row
+        // starts invisible (no data yet) so the auto-center loop skips it.
+        Layout.alignment: Qt.AlignHCenter
+        spacing: 18
 
         Repeater {
             model: root.forecast
             delegate: ColumnLayout {
                 required property var modelData
-                Layout.fillWidth: true
-                // Equal preferredWidth forces a true even split across the card
-                // width (each day gets exactly 1/N) so the row never bunches left
-                // when the card is wide — robust across column position + resize.
-                Layout.preferredWidth: 1
                 spacing: 2
 
                 StyledText {
