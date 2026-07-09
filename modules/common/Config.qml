@@ -16,6 +16,12 @@ Singleton {
     // Custom widget data stored outside JsonAdapter to avoid VME crash on property var
     property var customWidgetData: ({})
     property bool customWidgetDataSynced: false
+    // Extra mascot desktop-widget instances (dynamic id keys), same VME-crash
+    // workaround as customWidgetData above — kept as an independent parallel
+    // bucket rather than folded into customWidgetData's control flow, so the
+    // proven custom-widget path stays untouched.
+    property var mascotInstances: ({})
+    property bool mascotInstancesSynced: false
 
     signal configChanged
 
@@ -89,6 +95,34 @@ Singleton {
             return;
         }
 
+        // Route extra mascot widget instances the same way as custom widgets
+        if (keys.length >= 3 && keys[0] === "background" && keys[1] === "widgets" && keys[2] === "mascotInstances") {
+            const subKeys = keys.slice(3);
+            if (subKeys.length === 0) {
+                root.mascotInstances = (typeof convertedValue === "object" && convertedValue !== null) ? convertedValue : {};
+                root._mascotSnapshotForInject = root._cloneObject(root.mascotInstances);
+                root._pendingMascotInject = root._hasObjectKeys(root._mascotSnapshotForInject);
+                return;
+            }
+            let data = {};
+            try {
+                data = JSON.parse(JSON.stringify(root.mascotInstances ?? {}));
+            } catch (e) {
+                data = {};
+            }
+            let obj = data;
+            for (let i = 0; i < subKeys.length - 1; ++i) {
+                if (!obj[subKeys[i]] || typeof obj[subKeys[i]] !== "object")
+                    obj[subKeys[i]] = {};
+                obj = obj[subKeys[i]];
+            }
+            obj[subKeys[subKeys.length - 1]] = convertedValue;
+            root.mascotInstances = data;
+            root._mascotSnapshotForInject = root._cloneObject(data);
+            root._pendingMascotInject = root._hasObjectKeys(root._mascotSnapshotForInject);
+            return;
+        }
+
         let obj = root.options;
 
         // Traverse to parent object
@@ -127,11 +161,41 @@ Singleton {
         }
     }
 
+    // Extra mascot desktop-widget instances live outside the typed schema
+    // (see mascotInstances above) — dedicated add/remove helpers so callers
+    // never hand-roll delete-vs-set-undefined semantics on that bucket.
+    function addMascotInstance(initial): string {
+        const id = Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36);
+        const data = root._cloneObject(root.mascotInstances);
+        data[id] = Object.assign({ enable: true }, initial ?? {});
+        root.mascotInstances = data;
+        root._mascotSnapshotForInject = root._cloneObject(data);
+        root._pendingMascotInject = true;
+        fileWriteTimer.restart();
+        root._bumpRevision();
+        root.configChanged();
+        return id;
+    }
+
+    function removeMascotInstance(id: string): void {
+        if (!id || !root.mascotInstances || !(id in root.mascotInstances)) return;
+        const data = root._cloneObject(root.mascotInstances);
+        delete data[id];
+        root.mascotInstances = data;
+        root._mascotSnapshotForInject = data;
+        root._pendingMascotInject = true;
+        fileWriteTimer.restart();
+        root._bumpRevision();
+        root.configChanged();
+    }
+
     function _applyToMirror(nestedKey, value): void {
         let keys = Array.isArray(nestedKey) ? nestedKey : String(nestedKey).split(".");
         if (keys.length === 0) return;
         // Skip custom widget paths — those are handled separately
         if (keys.length >= 3 && keys[0] === "background" && keys[1] === "widgets" && keys[2] === "custom") return;
+        // Skip extra mascot instance paths — same reason
+        if (keys.length >= 3 && keys[0] === "background" && keys[1] === "widgets" && keys[2] === "mascotInstances") return;
         let obj = root._jsonMirror;
         for (let i = 0; i < keys.length - 1; i++) {
             if (!obj[keys[i]] || typeof obj[keys[i]] !== "object")
@@ -160,6 +224,9 @@ Singleton {
         if (keys.length >= 3 && keys[0] === "background" && keys[1] === "widgets" && keys[2] === "custom") {
             obj = root.customWidgetData;
             startIndex = 3;
+        } else if (keys.length >= 3 && keys[0] === "background" && keys[1] === "widgets" && keys[2] === "mascotInstances") {
+            obj = root.mascotInstances;
+            startIndex = 3;
         }
 
         for (let i = startIndex; i < keys.length; ++i) {
@@ -187,8 +254,11 @@ Singleton {
             const raw = JSON.parse(text);
             root.customWidgetData = raw?.background?.widgets?.custom ?? {};
             root.customWidgetDataSynced = true;
+            root.mascotInstances = raw?.background?.widgets?.mascotInstances ?? {};
+            root.mascotInstancesSynced = true;
         } catch (e) {
             root.customWidgetDataSynced = false;
+            root.mascotInstancesSynced = false;
         }
     }
 
@@ -197,8 +267,10 @@ Singleton {
     property bool _writeInFlight: false
     property bool _pendingWrite: false
     property bool _pendingCustomInject: false
+    property bool _pendingMascotInject: false
     property bool _pendingReload: false
     property var _customSnapshotForInject: ({})
+    property var _mascotSnapshotForInject: ({})
     // In-memory mirror of the disk JSON. Updated synchronously on every
     // setNestedValue call. This is the authoritative source for writes —
     // never read back from FileView.text() or the adapter for serialization.
@@ -235,11 +307,38 @@ Singleton {
         return {};
     }
 
+    function _mascotInstancesDataForWrite(): var {
+        // Once synced from disk this session, in-memory is authoritative —
+        // an intentionally-emptied bucket (user deleted their last instance)
+        // must NOT be resurrected from a stale on-disk snapshot below.
+        if (root._hasObjectKeys(root.mascotInstances) || root.mascotInstancesSynced)
+            return root._cloneObject(root.mascotInstances);
+        try {
+            const current = JSON.parse(configFileView.text());
+            const currentMascot = current?.background?.widgets?.mascotInstances ?? {};
+            if (root._hasObjectKeys(currentMascot))
+                return root._cloneObject(currentMascot);
+        } catch (e) {}
+        try {
+            rawConfigReader.reload();
+            const raw = JSON.parse(rawConfigReader.text());
+            const diskMascot = raw?.background?.widgets?.mascotInstances ?? {};
+            if (root._hasObjectKeys(diskMascot))
+                return root._cloneObject(diskMascot);
+        } catch (e) {}
+        return {};
+    }
+
     function _prepareCustomInject(): void {
         root._customSnapshotForInject = root._customDataForWrite();
         root._pendingCustomInject = root._hasObjectKeys(root._customSnapshotForInject);
         if (root._pendingCustomInject && !root._hasObjectKeys(root.customWidgetData))
             root.customWidgetData = root._cloneObject(root._customSnapshotForInject);
+
+        root._mascotSnapshotForInject = root._mascotInstancesDataForWrite();
+        root._pendingMascotInject = root._hasObjectKeys(root._mascotSnapshotForInject);
+        if (root._pendingMascotInject && !root._hasObjectKeys(root.mascotInstances))
+            root.mascotInstances = root._cloneObject(root._mascotSnapshotForInject);
     }
 
     // Fallback: write the mirror directly when writeAdapter() doesn't emit onSaved.
@@ -252,6 +351,11 @@ Singleton {
                 if (!obj.background.widgets) obj.background.widgets = {};
                 obj.background.widgets.custom = root.customWidgetData;
             }
+            if (root._hasObjectKeys(root.mascotInstances)) {
+                if (!obj.background) obj.background = {};
+                if (!obj.background.widgets) obj.background.widgets = {};
+                obj.background.widgets.mascotInstances = root.mascotInstances;
+            }
             configFileView.setText(JSON.stringify(obj, null, 4));
         } catch (e) {
             console.warn("[Config] mirror write failed:", e.message);
@@ -261,13 +365,24 @@ Singleton {
     function _injectCustomDataSync(): void {
         const customData = root._hasObjectKeys(root._customSnapshotForInject)
             ? root._customSnapshotForInject : root.customWidgetData;
-        if (!root._hasObjectKeys(customData)) return;
+        const mascotData = root._hasObjectKeys(root._mascotSnapshotForInject)
+            ? root._mascotSnapshotForInject : root.mascotInstances;
+        const hasCustom = root._hasObjectKeys(customData);
+        const hasMascot = root._hasObjectKeys(mascotData);
+        if (!hasCustom && !hasMascot) return;
         try {
             if (!root._jsonMirror.background) root._jsonMirror.background = {};
             if (!root._jsonMirror.background.widgets) root._jsonMirror.background.widgets = {};
-            root._jsonMirror.background.widgets.custom = customData;
-            root.customWidgetData = root._cloneObject(customData);
-            root._customSnapshotForInject = ({});
+            if (hasCustom) {
+                root._jsonMirror.background.widgets.custom = customData;
+                root.customWidgetData = root._cloneObject(customData);
+                root._customSnapshotForInject = ({});
+            }
+            if (hasMascot) {
+                root._jsonMirror.background.widgets.mascotInstances = mascotData;
+                root.mascotInstances = root._cloneObject(mascotData);
+                root._mascotSnapshotForInject = ({});
+            }
             root._writeInFlight = true;
             configFileView.setText(JSON.stringify(root._jsonMirror, null, 4));
         } catch (e) { root._writeInFlight = false; }
@@ -348,8 +463,9 @@ Singleton {
         onSaved: {
             writeFlightGuard.stop();
             root._writeInFlight = false;
-            if (root._pendingCustomInject) {
+            if (root._pendingCustomInject || root._pendingMascotInject) {
                 root._pendingCustomInject = false;
+                root._pendingMascotInject = false;
                 customInjectTimer.restart();
                 return;
             }
@@ -384,6 +500,8 @@ Singleton {
                 Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir]);
                 root.customWidgetData = {};
                 root.customWidgetDataSynced = true;
+                root.mascotInstances = {};
+                root.mascotInstancesSynced = true;
                 writeAdapter();
             }
             // Set ready even on failure so UI doesn't stay blank
@@ -1197,6 +1315,7 @@ Singleton {
                         property int dim: 0
                         property string pose: "reading"
                         property string customPath: "" // any user image/GIF replaces the catalog pose
+                        property string anchorWidget: "" // configEntryName of another widget she perches on top of; "" = free
                         property real x: 120
                         property real y: 320
                     }

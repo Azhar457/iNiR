@@ -81,39 +81,62 @@ ContentPage {
         readonly property bool isZone: root._zoneNames.indexOf(currentStrategy) >= 0
         visible: isZone
 
-        Grid {
-            Layout.alignment: Qt.AlignHCenter
-            columns: 3
-            spacing: 3
+        // Centered via anchors, not Layout.alignment: this ColumnLayout starts
+        // invisible (visible: isZone defaults false for most widgets) and Qt
+        // Quick Layouts can skip realigning a Grid child that was never part
+        // of an initial visible pass — anchors don't have that timing gap.
+        // Wrapped in a plate so the picker reads as one grouped control
+        // instead of nine arrows floating in empty card space.
+        Item {
+            Layout.fillWidth: true
+            Layout.topMargin: 6
+            Layout.bottomMargin: 2
+            implicitHeight: zonePlate.implicitHeight
 
-            Repeater {
-                model: [
-                    { zone: "topLeft", icon: "north_west" },
-                    { zone: "topCenter", icon: "north" },
-                    { zone: "topRight", icon: "north_east" },
-                    { zone: "centerLeft", icon: "west" },
-                    { zone: "center", icon: "filter_center_focus" },
-                    { zone: "centerRight", icon: "east" },
-                    { zone: "bottomLeft", icon: "south_west" },
-                    { zone: "bottomCenter", icon: "south" },
-                    { zone: "bottomRight", icon: "south_east" }
-                ]
-                delegate: RippleButton {
-                    required property var modelData
-                    width: 36; height: 36
-                    buttonRadius: Appearance.rounding.small
-                    toggled: wzp.currentStrategy === modelData.zone
-                    colBackground: "transparent"
-                    colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.06)
-                    colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
-                    colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
-                    colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
-                    downAction: () => Config.setNestedValue(wzp.configPath + ".placementStrategy", modelData.zone)
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: modelData.icon
-                        iconSize: 18
-                        color: parent.toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+            Rectangle {
+                id: zonePlate
+                anchors.horizontalCenter: parent.horizontalCenter
+                implicitWidth: zoneGrid.implicitWidth + 16
+                implicitHeight: zoneGrid.implicitHeight + 16
+                radius: Appearance.rounding.small
+                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.05)
+
+                Grid {
+                    id: zoneGrid
+                    anchors.centerIn: parent
+                    columns: 3
+                    spacing: 2
+
+                    Repeater {
+                        model: [
+                            { zone: "topLeft", icon: "north_west" },
+                            { zone: "topCenter", icon: "north" },
+                            { zone: "topRight", icon: "north_east" },
+                            { zone: "centerLeft", icon: "west" },
+                            { zone: "center", icon: "filter_center_focus" },
+                            { zone: "centerRight", icon: "east" },
+                            { zone: "bottomLeft", icon: "south_west" },
+                            { zone: "bottomCenter", icon: "south" },
+                            { zone: "bottomRight", icon: "south_east" }
+                        ]
+                        delegate: RippleButton {
+                            required property var modelData
+                            width: 30; height: 30
+                            buttonRadius: Appearance.rounding.small
+                            toggled: wzp.currentStrategy === modelData.zone
+                            colBackground: "transparent"
+                            colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.06)
+                            colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
+                            colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
+                            colRipple: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
+                            downAction: () => Config.setNestedValue(wzp.configPath + ".placementStrategy", modelData.zone)
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: modelData.icon
+                                iconSize: 18
+                                color: parent.toggled ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
+                            }
+                        }
                     }
                 }
             }
@@ -145,40 +168,33 @@ ContentPage {
         default property alias controlData: controlRow.data
 
         Layout.fillWidth: true
-        spacing: 12
+        spacing: 10
 
-        RowLayout {
-            Layout.preferredWidth: 180
-            Layout.maximumWidth: 220
+        MaterialSymbol {
+            visible: wsr.icon.length > 0
+            text: wsr.icon
+            iconSize: Appearance.font.pixelSize.normal
+            color: Appearance.colors.colSubtext
             Layout.alignment: Qt.AlignVCenter
-            spacing: 8
+        }
 
-            MaterialSymbol {
-                visible: wsr.icon.length > 0
-                text: wsr.icon
-                iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.colors.colSubtext
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                text: wsr.label
-                color: Appearance.colors.colOnLayer1
-                font.pixelSize: Appearance.font.pixelSize.small
-                wrapMode: Text.WordWrap
-            }
+        // Label fills the row so a right-aligned control hugs the edge with no
+        // dead gap (mascot-page density). When the control itself should stretch
+        // (trailing:false, e.g. a selection array), the label hugs instead.
+        StyledText {
+            text: wsr.label
+            color: Appearance.colors.colOnLayer1
+            font.pixelSize: Appearance.font.pixelSize.small
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: wsr.trailing
+            Layout.alignment: Qt.AlignVCenter
         }
 
         RowLayout {
             id: controlRow
-            Layout.fillWidth: true
+            Layout.fillWidth: !wsr.trailing
             Layout.alignment: Qt.AlignVCenter
             spacing: 8
-
-            Item {
-                visible: wsr.trailing
-                Layout.fillWidth: wsr.trailing
-            }
         }
     }
 
@@ -661,8 +677,9 @@ ContentPage {
             }
 
             // Style selector
-            ContentSubsection {
-                title: Translation.tr("Clock style")
+            WidgetSettingRow {
+                label: Translation.tr("Clock style")
+                trailing: false
 
                 ConfigSelectionArray {
                     currentValue: Config.getNestedValue("background.widgets.clock.style", "cookie")
@@ -675,9 +692,10 @@ ContentPage {
             }
 
             // ── Digital clock settings ──
-            ContentSubsection {
+            WidgetSettingRow {
                 visible: clockSection._clockStyle === "digital"
-                title: Translation.tr("Time format")
+                label: Translation.tr("Time format")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -691,9 +709,10 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
+            WidgetSettingRow {
                 visible: clockSection._clockStyle === "digital"
-                title: Translation.tr("Date style")
+                label: Translation.tr("Date style")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -708,9 +727,10 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
+            WidgetSettingRow {
                 visible: clockSection._clockStyle === "digital"
-                title: Translation.tr("Digital preset")
+                label: Translation.tr("Digital preset")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -787,39 +807,45 @@ ContentPage {
                     }
                 }
 
-                WidgetSettingRow {
-                    label: Translation.tr("Font weight")
-                    StyledSpinBox {
-                        from: 100; to: 900; stepSize: 100
-                        value: Config.getNestedValue("background.widgets.clock.digital.fontWeight", 600)
-                        onValueModified: Config.setNestedValue("background.widgets.clock.digital.fontWeight", value)
-                    }
-                }
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
 
-                WidgetSettingRow {
-                    label: Translation.tr("Spacing")
-                    StyledSpinBox {
-                        from: 0; to: 20; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.clock.digital.spacing", 6)
-                        onValueModified: Config.setNestedValue("background.widgets.clock.digital.spacing", value)
+                    WidgetSettingRow {
+                        label: Translation.tr("Font weight")
+                        StyledSpinBox {
+                            from: 100; to: 900; stepSize: 100
+                            value: Config.getNestedValue("background.widgets.clock.digital.fontWeight", 600)
+                            onValueModified: Config.setNestedValue("background.widgets.clock.digital.fontWeight", value)
+                        }
                     }
-                }
 
-                WidgetSettingRow {
-                    label: Translation.tr("Time scale")
-                    StyledSpinBox {
-                        from: 50; to: 200; stepSize: 5
-                        value: Config.getNestedValue("background.widgets.clock.timeScale", 100)
-                        onValueModified: Config.setNestedValue("background.widgets.clock.timeScale", value)
+                    WidgetSettingRow {
+                        label: Translation.tr("Spacing")
+                        StyledSpinBox {
+                            from: 0; to: 20; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.clock.digital.spacing", 6)
+                            onValueModified: Config.setNestedValue("background.widgets.clock.digital.spacing", value)
+                        }
                     }
-                }
 
-                WidgetSettingRow {
-                    label: Translation.tr("Date scale")
-                    StyledSpinBox {
-                        from: 50; to: 200; stepSize: 5
-                        value: Config.getNestedValue("background.widgets.clock.dateScale", 100)
-                        onValueModified: Config.setNestedValue("background.widgets.clock.dateScale", value)
+                    WidgetSettingRow {
+                        label: Translation.tr("Time scale")
+                        StyledSpinBox {
+                            from: 50; to: 200; stepSize: 5
+                            value: Config.getNestedValue("background.widgets.clock.timeScale", 100)
+                            onValueModified: Config.setNestedValue("background.widgets.clock.timeScale", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Date scale")
+                        StyledSpinBox {
+                            from: 50; to: 200; stepSize: 5
+                            value: Config.getNestedValue("background.widgets.clock.dateScale", 100)
+                            onValueModified: Config.setNestedValue("background.widgets.clock.dateScale", value)
+                        }
                     }
                 }
 
@@ -863,9 +889,10 @@ ContentPage {
             }
 
             // ── Cookie clock settings ──
-            ContentSubsection {
+            WidgetSettingRow {
                 visible: clockSection._clockStyle === "cookie"
-                title: Translation.tr("Cookie preset")
+                label: Translation.tr("Cookie preset")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -945,9 +972,10 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
+            WidgetSettingRow {
                 visible: clockSection._clockStyle === "cookie"
-                title: Translation.tr("Dial style")
+                label: Translation.tr("Dial style")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -1037,9 +1065,10 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
+            WidgetSettingRow {
                 visible: clockSection._clockStyle === "cookie"
-                title: Translation.tr("Cookie date indicator")
+                label: Translation.tr("Cookie date indicator")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -1215,8 +1244,9 @@ ContentPage {
                 configEntry: Config.getNestedValue("background.widgets.weather", ({}))
             }
 
-            ContentSubsection {
-                title: Translation.tr("Preset")
+            WidgetSettingRow {
+                label: Translation.tr("Preset")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -1258,8 +1288,9 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Style")
+            WidgetSettingRow {
+                label: Translation.tr("Style")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -1330,46 +1361,53 @@ ContentPage {
             ContentSubsection {
                 title: Translation.tr("Sizing")
 
-                WidgetSettingRow {
-                    label: Translation.tr("Widget size")
-                    StyledSpinBox {
-                        from: 80; to: 400; stepSize: 10
-                        value: Config.getNestedValue("background.widgets.weather.size", 200)
-                        onValueModified: Config.setNestedValue("background.widgets.weather.size", value)
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Widget size")
+                        StyledSpinBox {
+                            from: 80; to: 400; stepSize: 10
+                            value: Config.getNestedValue("background.widgets.weather.size", 200)
+                            onValueModified: Config.setNestedValue("background.widgets.weather.size", value)
+                        }
+                    }
+                    WidgetSettingRow {
+                        label: Translation.tr("Temp size")
+                        StyledSpinBox {
+                            from: 20; to: 200; stepSize: 5
+                            value: Config.getNestedValue("background.widgets.weather.tempSize", 80)
+                            onValueModified: Config.setNestedValue("background.widgets.weather.tempSize", value)
+                        }
+                    }
+                    WidgetSettingRow {
+                        label: Translation.tr("Icon size")
+                        StyledSpinBox {
+                            from: 20; to: 200; stepSize: 5
+                            value: Config.getNestedValue("background.widgets.weather.iconSize", 80)
+                            onValueModified: Config.setNestedValue("background.widgets.weather.iconSize", value)
+                        }
+                    }
+                    WidgetSettingRow {
+                        label: Translation.tr("Padding")
+                        StyledSpinBox {
+                            from: 0; to: 60; stepSize: 2
+                            value: Config.getNestedValue("background.widgets.weather.padding", 20)
+                            onValueModified: Config.setNestedValue("background.widgets.weather.padding", value)
+                        }
+                    }
+                    WidgetSettingRow {
+                        label: Translation.tr("Temp font weight")
+                        StyledSpinBox {
+                            from: 100; to: 900; stepSize: 100
+                            value: Config.getNestedValue("background.widgets.weather.tempFontWeight", 500)
+                            onValueModified: Config.setNestedValue("background.widgets.weather.tempFontWeight", value)
+                        }
                     }
                 }
-                WidgetSettingRow {
-                    label: Translation.tr("Temp size")
-                    StyledSpinBox {
-                        from: 20; to: 200; stepSize: 5
-                        value: Config.getNestedValue("background.widgets.weather.tempSize", 80)
-                        onValueModified: Config.setNestedValue("background.widgets.weather.tempSize", value)
-                    }
-                }
-                WidgetSettingRow {
-                    label: Translation.tr("Icon size")
-                    StyledSpinBox {
-                        from: 20; to: 200; stepSize: 5
-                        value: Config.getNestedValue("background.widgets.weather.iconSize", 80)
-                        onValueModified: Config.setNestedValue("background.widgets.weather.iconSize", value)
-                    }
-                }
-                WidgetSettingRow {
-                    label: Translation.tr("Padding")
-                    StyledSpinBox {
-                        from: 0; to: 60; stepSize: 2
-                        value: Config.getNestedValue("background.widgets.weather.padding", 20)
-                        onValueModified: Config.setNestedValue("background.widgets.weather.padding", value)
-                    }
-                }
-                WidgetSettingRow {
-                    label: Translation.tr("Temp font weight")
-                    StyledSpinBox {
-                        from: 100; to: 900; stepSize: 100
-                        value: Config.getNestedValue("background.widgets.weather.tempFontWeight", 500)
-                        onValueModified: Config.setNestedValue("background.widgets.weather.tempFontWeight", value)
-                    }
-                }
+
                 WidgetSettingRow {
                     visible: Config.getNestedValue("background.widgets.weather.showCondition", false)
                     label: Translation.tr("Condition opacity")
@@ -1489,8 +1527,9 @@ ContentPage {
                 configEntry: Config.getNestedValue("background.widgets.mediaControls", ({}))
             }
 
-            ContentSubsection {
-                title: Translation.tr("Player style")
+            WidgetSettingRow {
+                label: Translation.tr("Player style")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -1616,8 +1655,9 @@ ContentPage {
                 configEntry: Config.getNestedValue("background.widgets.visualizer", ({}))
             }
 
-            ContentSubsection {
-                title: Translation.tr("Preset")
+            WidgetSettingRow {
+                label: Translation.tr("Preset")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -1666,39 +1706,45 @@ ContentPage {
             ContentSubsection {
                 title: Translation.tr("Bars")
 
-                WidgetSettingRow {
-                    label: Translation.tr("Bar count")
-                    StyledSpinBox {
-                        from: 8; to: 128; stepSize: 4
-                        value: Config.getNestedValue("background.widgets.visualizer.barCount", 48)
-                        onValueModified: Config.setNestedValue("background.widgets.visualizer.barCount", value)
-                    }
-                }
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
 
-                WidgetSettingRow {
-                    label: Translation.tr("Bar spacing")
-                    StyledSpinBox {
-                        from: 0; to: 8; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.visualizer.barSpacing", 2)
-                        onValueModified: Config.setNestedValue("background.widgets.visualizer.barSpacing", value)
+                    WidgetSettingRow {
+                        label: Translation.tr("Bar count")
+                        StyledSpinBox {
+                            from: 8; to: 128; stepSize: 4
+                            value: Config.getNestedValue("background.widgets.visualizer.barCount", 48)
+                            onValueModified: Config.setNestedValue("background.widgets.visualizer.barCount", value)
+                        }
                     }
-                }
 
-                WidgetSettingRow {
-                    label: Translation.tr("Bar radius")
-                    StyledSpinBox {
-                        from: 0; to: 16; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.visualizer.barRadius", 2)
-                        onValueModified: Config.setNestedValue("background.widgets.visualizer.barRadius", value)
+                    WidgetSettingRow {
+                        label: Translation.tr("Bar spacing")
+                        StyledSpinBox {
+                            from: 0; to: 8; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.visualizer.barSpacing", 2)
+                            onValueModified: Config.setNestedValue("background.widgets.visualizer.barSpacing", value)
+                        }
                     }
-                }
 
-                WidgetSettingRow {
-                    label: Translation.tr("Min height")
-                    StyledSpinBox {
-                        from: 0; to: 16; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.visualizer.barMinHeight", 1)
-                        onValueModified: Config.setNestedValue("background.widgets.visualizer.barMinHeight", value)
+                    WidgetSettingRow {
+                        label: Translation.tr("Bar radius")
+                        StyledSpinBox {
+                            from: 0; to: 16; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.visualizer.barRadius", 2)
+                            onValueModified: Config.setNestedValue("background.widgets.visualizer.barRadius", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Min height")
+                        StyledSpinBox {
+                            from: 0; to: 16; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.visualizer.barMinHeight", 1)
+                            onValueModified: Config.setNestedValue("background.widgets.visualizer.barMinHeight", value)
+                        }
                     }
                 }
             }
@@ -1820,8 +1866,9 @@ ContentPage {
                 configEntry: Config.getNestedValue("background.widgets.systemMonitor", ({}))
             }
 
-            ContentSubsection {
-                title: Translation.tr("Preset")
+            WidgetSettingRow {
+                label: Translation.tr("Preset")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -1851,8 +1898,9 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Display mode")
+            WidgetSettingRow {
+                label: Translation.tr("Display mode")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -2076,8 +2124,9 @@ ContentPage {
                 configEntry: Config.getNestedValue("background.widgets.battery", ({}))
             }
 
-            ContentSubsection {
-                title: Translation.tr("Preset")
+            WidgetSettingRow {
+                label: Translation.tr("Preset")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -2111,8 +2160,9 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Display")
+            WidgetSettingRow {
+                label: Translation.tr("Display")
+                trailing: false
 
                 ConfigSelectionArray {
                     Layout.fillWidth: true
@@ -2125,51 +2175,63 @@ ContentPage {
                     ]
                 }
 
-                WidgetSettingRow {
-                    visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "ring"
-                    label: Translation.tr("Ring size")
-                    StyledSpinBox {
-                        from: 40; to: 120; stepSize: 4
-                        value: Config.getNestedValue("background.widgets.battery.ringSize", 72)
-                        onValueModified: Config.setNestedValue("background.widgets.battery.ringSize", value)
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
+
+                    WidgetSettingRow {
+                        visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "ring"
+                        label: Translation.tr("Ring size")
+                        StyledSpinBox {
+                            from: 40; to: 120; stepSize: 4
+                            value: Config.getNestedValue("background.widgets.battery.ringSize", 72)
+                            onValueModified: Config.setNestedValue("background.widgets.battery.ringSize", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "ring"
+                        label: Translation.tr("Line width")
+                        StyledSpinBox {
+                            from: 1; to: 16; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.battery.ringLineWidth", 6)
+                            onValueModified: Config.setNestedValue("background.widgets.battery.ringLineWidth", value)
+                        }
                     }
                 }
 
-                WidgetSettingRow {
-                    visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "ring"
-                    label: Translation.tr("Line width")
-                    StyledSpinBox {
-                        from: 1; to: 16; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.battery.ringLineWidth", 6)
-                        onValueModified: Config.setNestedValue("background.widgets.battery.ringLineWidth", value)
-                    }
-                }
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
 
-                WidgetSettingRow {
-                    visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
-                    label: Translation.tr("Bar count")
-                    StyledSpinBox {
-                        from: 4; to: 48; stepSize: 2
-                        value: Config.getNestedValue("background.widgets.battery.barCount", 20)
-                        onValueModified: Config.setNestedValue("background.widgets.battery.barCount", value)
+                    WidgetSettingRow {
+                        visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
+                        label: Translation.tr("Bar count")
+                        StyledSpinBox {
+                            from: 4; to: 48; stepSize: 2
+                            value: Config.getNestedValue("background.widgets.battery.barCount", 20)
+                            onValueModified: Config.setNestedValue("background.widgets.battery.barCount", value)
+                        }
                     }
-                }
-                WidgetSettingRow {
-                    visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
-                    label: Translation.tr("Bar spacing")
-                    StyledSpinBox {
-                        from: 0; to: 8; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.battery.barSpacing", 2)
-                        onValueModified: Config.setNestedValue("background.widgets.battery.barSpacing", value)
+                    WidgetSettingRow {
+                        visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
+                        label: Translation.tr("Bar spacing")
+                        StyledSpinBox {
+                            from: 0; to: 8; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.battery.barSpacing", 2)
+                            onValueModified: Config.setNestedValue("background.widgets.battery.barSpacing", value)
+                        }
                     }
-                }
-                WidgetSettingRow {
-                    visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
-                    label: Translation.tr("Bar radius")
-                    StyledSpinBox {
-                        from: 0; to: 12; stepSize: 1
-                        value: Config.getNestedValue("background.widgets.battery.barRadius", 2)
-                        onValueModified: Config.setNestedValue("background.widgets.battery.barRadius", value)
+                    WidgetSettingRow {
+                        visible: (Config.getNestedValue("background.widgets.battery.displayMode", "ring")) === "bars"
+                        label: Translation.tr("Bar radius")
+                        StyledSpinBox {
+                            from: 0; to: 12; stepSize: 1
+                            value: Config.getNestedValue("background.widgets.battery.barRadius", 2)
+                            onValueModified: Config.setNestedValue("background.widgets.battery.barRadius", value)
+                        }
                     }
                 }
 

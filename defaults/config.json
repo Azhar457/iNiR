@@ -689,6 +689,7 @@
                 "colorMode": "auto",
                 "pose": "reading",
                 "customPath": "",
+                "anchorWidget": "",
                 "x": 120,
                 "y": 320
             },

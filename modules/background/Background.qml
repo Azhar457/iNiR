@@ -130,6 +130,17 @@ Scope {
                 if (zones.indexOf(strat) >= 0)
                     occ[strat].push({ name: w.key, icon: w.icon, locked: Boolean(bgRoot._widgetConfigValue(w.key, "locked", false)) });
             }
+            // Extra mascot instances
+            {
+                const extraMascots = Config.getNestedValue("background.widgets.mascotInstances", {}) ?? {};
+                for (const id of Object.keys(extraMascots)) {
+                    const prefix = "background.widgets.mascotInstances." + id;
+                    if (!Config.getNestedValue(prefix + ".enable", false)) continue;
+                    const strat = Config.getNestedValue(prefix + ".placementStrategy", "free");
+                    if (zones.indexOf(strat) >= 0)
+                        occ[strat].push({ name: "mascot #" + id, icon: "pets", locked: Boolean(Config.getNestedValue(prefix + ".locked", false)) });
+                }
+            }
             // Custom widgets
             if (typeof CustomWidgets !== "undefined" && CustomWidgets.ready) {
                 const list = CustomWidgets.widgets;
@@ -1841,6 +1852,73 @@ Scope {
                         scaledScreenWidth: bgRoot.screen.width
                         scaledScreenHeight: bgRoot.screen.height
                         wallpaperScale: 1
+                    }
+                }
+
+                // Extra mascot instances (Settings › Widgets › Mascot › "+"),
+                // one MascotWidget per id under background.widgets.mascotInstances.
+                Repeater {
+                    model: {
+                        void Config.revision;
+                        const obj = Config.getNestedValue("background.widgets.mascotInstances", {});
+                        return Object.keys(obj ?? {}).sort();
+                    }
+
+                    Loader {
+                        id: mascotInstanceLoader
+                        required property string modelData
+                        required property int index
+                        containmentMask: GlobalStates.widgetEditMode ? _hitMaskInst : null
+                        Item { id: _hitMaskInst; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+
+                        active: false
+
+                        function _configEnabled(): bool {
+                            return Boolean(Config.getNestedValue("background.widgets.mascotInstances." + modelData + ".enable", false));
+                        }
+                        function _load(): void {
+                            active = true;
+                            setSource(Quickshell.shellPath("modules/background/widgets/mascot/MascotWidget.qml"), {
+                                configEntryName: "mascotInstances." + modelData,
+                                widgetIndex: 20 + index,
+                                screenWidth: bgRoot.screen.width,
+                                screenHeight: bgRoot.screen.height,
+                                scaledScreenWidth: bgRoot.screen.width,
+                                scaledScreenHeight: bgRoot.screen.height,
+                                wallpaperScale: 1
+                            });
+                        }
+                        function _unload(): void {
+                            active = false;
+                            source = "";
+                        }
+                        function _syncLoaded(): void {
+                            if (_configEnabled()) {
+                                if (!item) _load();
+                            } else if (item || active) {
+                                _unload();
+                            }
+                        }
+
+                        Component.onCompleted: Qt.callLater(_syncLoaded)
+
+                        Connections {
+                            target: Config
+                            function onConfigChanged() { Qt.callLater(mascotInstanceLoader._syncLoaded) }
+                        }
+                        Connections {
+                            target: bgRoot.screen
+                            function onWidthChanged() {
+                                if (!mascotInstanceLoader.item) return;
+                                mascotInstanceLoader.item.screenWidth = bgRoot.screen.width;
+                                mascotInstanceLoader.item.scaledScreenWidth = bgRoot.screen.width;
+                            }
+                            function onHeightChanged() {
+                                if (!mascotInstanceLoader.item) return;
+                                mascotInstanceLoader.item.screenHeight = bgRoot.screen.height;
+                                mascotInstanceLoader.item.scaledScreenHeight = bgRoot.screen.height;
+                            }
+                        }
                     }
                 }
 
