@@ -282,7 +282,7 @@ Singleton {
             "--hint=int:transient:1",
         ])
 
-        if (root.soundEnabled) Audio.playSystemSound("dialog-warning");
+        if (root.soundEnabled) Audio.playEvent("batteryLow");
     }
 
     onIsCriticalAndNotChargingChanged: {
@@ -296,7 +296,7 @@ Singleton {
             "--hint=int:transient:1",
         ]);
 
-        if (root.soundEnabled) Audio.playSystemSound("suspend-error");
+        if (root.soundEnabled) Audio.playEvent("batteryCritical");
     }
 
     onIsSuspendingAndNotChargingChanged: {
@@ -315,15 +315,15 @@ Singleton {
             "--hint=int:transient:1",
         ]);
 
-        if (root.soundEnabled) Audio.playSystemSound("complete");
+        if (root.soundEnabled) Audio.playEvent("batteryFull");
     }
 
     onIsPluggedInChanged: {
         if (!root.available || !root.soundEnabled) return;
         if (isPluggedIn) {
-            Audio.playSystemSound("power-plug")
+            Audio.playEvent("powerPlug")
         } else {
-            Audio.playSystemSound("power-unplug")
+            Audio.playEvent("powerUnplug")
         }
     }
 }

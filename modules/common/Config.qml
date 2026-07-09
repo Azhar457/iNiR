@@ -2174,6 +2174,20 @@ Singleton {
                 property string theme: "freedesktop"
                 property bool notifications: false
                 property real volume: 0.5
+                property JsonObject events: JsonObject {
+                    // Per-event override: "" = theme default; a bare name
+                    // plays that sound from the current theme; an absolute
+                    // path (or file://) plays the file directly
+                    property string notification: ""
+                    property string notificationCritical: ""
+                    property string batteryLow: ""
+                    property string batteryCritical: ""
+                    property string batteryFull: ""
+                    property string powerPlug: ""
+                    property string powerUnplug: ""
+                    property string pomodoroDone: ""
+                    property string timerDone: ""
+                }
             }
 
             property JsonObject time: JsonObject {

@@ -1498,7 +1498,20 @@
         "battery": false,
         "notifications": true,
         "pomodoro": false,
-        "theme": "freedesktop"
+        "theme": "freedesktop",
+        "timer": false,
+        "volume": 0.5,
+        "events": {
+            "notification": "",
+            "notificationCritical": "",
+            "batteryLow": "",
+            "batteryCritical": "",
+            "batteryFull": "",
+            "powerPlug": "",
+            "powerUnplug": "",
+            "pomodoroDone": "",
+            "timerDone": ""
+        }
     },
     "time": {
         "dateFormat": "ddd, dd/MM",

@@ -326,13 +326,10 @@ Singleton {
             });
 			root.list = [...root.list, newNotifObject];
 
-            // Sonido de notificación opcional
+            // Optional notification sound
             if ((Config.options?.sounds?.notifications ?? true) && !root.silent) {
-                var soundName = "message-new-instant";
-                if (notification.urgency === NotificationUrgency.Critical) {
-                    soundName = "dialog-warning";
-                }
-                Audio.playSystemSound(soundName);
+                Audio.playEvent(notification.urgency === NotificationUrgency.Critical
+                    ? "notificationCritical" : "notification");
             }
 
             // Popup
