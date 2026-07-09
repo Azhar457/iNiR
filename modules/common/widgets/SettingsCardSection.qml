@@ -293,6 +293,11 @@ Item {
                 Layout.fillWidth: true
                 implicitHeight: root.expanded ? sectionContent.implicitHeight : 0
                 clip: true
+                // clip only hides rendering — descendants outside the clipped
+                // area still receive input. Without this, every collapsed
+                // card leaves its full set of switches/sliders live and
+                // clickable, stacked invisibly under whatever renders next.
+                enabled: root.expanded
 
                 Behavior on implicitHeight {
                     animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
