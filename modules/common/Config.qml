@@ -661,6 +661,15 @@ Singleton {
                 property JsonObject zzz: JsonObject {
                     property string shape: "square" // "square" | "round"
                     property bool glass: true // subtle wallpaper-blur behind the grid (gated by effectsEnabled)
+                    // Master switches for the ZZZ panel backdrop layers. Each ANDs with
+                    // the per-panel intent, so turning one off hides that layer shell-wide.
+                    property JsonObject backdrop: JsonObject {
+                        property bool burst: true      // diagonal accent slashes (dashboard triad, etc.)
+                        property bool ghost: true      // large ghost wordmark behind content (panel name)
+                        property bool grid: true       // faint technical engineering grid
+                        property bool ticks: true      // scan ticks (used on the session screen)
+                        property real burstSize: 1.0   // size multiplier for the diagonal burst
+                    }
                 }
                 property JsonObject angel: JsonObject {
                     property JsonObject blur: JsonObject {

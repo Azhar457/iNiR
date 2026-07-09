@@ -80,7 +80,13 @@ Rectangle {
         property real targetY: root.height / 2 - root.backgroundHeight / 2
         y: root.show ? targetY : (targetY - root.backgroundAnimationMovementDistance)
         implicitWidth: root.backgroundWidth
-        implicitHeight: contentColumn.implicitHeight + dialogBackground.radius * 2
+        // Same effective padding as contentColumn's margins — in zzz square
+        // panelRadius is 0, so deriving height from radius alone clipped the
+        // dialog's bottom (buttons half-visible)
+        readonly property real contentPad: Appearance.zzzEverywhere
+            ? Math.max(radius, Appearance.zzz.markerLength + Appearance.zzz.borderThick * 5)
+            : radius
+        implicitHeight: contentColumn.implicitHeight + dialogBackground.contentPad * 2
         Behavior on implicitHeight {
             NumberAnimation {
                 id: dialogBackgroundHeightAnimation
@@ -122,9 +128,7 @@ Rectangle {
             id: contentColumn
             anchors {
                 fill: parent
-                margins: Appearance.zzzEverywhere
-                    ? Math.max(dialogBackground.radius, Appearance.zzz.markerLength + Appearance.zzz.borderThick * 5)
-                    : dialogBackground.radius
+                margins: dialogBackground.contentPad
             }
             spacing: 16
             opacity: root.show ? 1 : 0

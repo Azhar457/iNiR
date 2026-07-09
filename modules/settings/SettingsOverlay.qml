@@ -1131,8 +1131,25 @@ Scope {
                                              : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
                                              : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                                              : Appearance.colors.colPrimaryContainer
-                                        strokeColor: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
-                                        strokeWidth: Appearance.zzzEverywhere ? Appearance.zzz.hairlineThick : 0
+                                        // No hairline in zzz: the plate carried a stroke on every
+                                        // edge which, next to the accent bar below, read as two
+                                        // stacked vertical lines. Fill + accent bar only (zzz doctrine:
+                                        // separate by fill, not outline).
+                                        strokeColor: "transparent"
+                                        strokeWidth: 0
+
+                                        // ZZZ: solid vertical accent edge — the sticker fill alone
+                                        // read as a hairline; the active item needs a real marker
+                                        Rectangle {
+                                            visible: Appearance.zzzEverywhere
+                                            anchors.left: parent.left
+                                            anchors.leftMargin: Appearance.zzz.borderThick
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            height: Math.max(0, parent.height * 0.62)
+                                            width: Appearance.zzz.borderThick * 3
+                                            color: Appearance.zzz.accent
+                                        }
+
                                         Behavior on radius {
                                             enabled: Appearance.animationsEnabled
                                             NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot }

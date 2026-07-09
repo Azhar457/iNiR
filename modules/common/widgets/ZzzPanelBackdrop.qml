@@ -22,10 +22,22 @@ Item {
     property bool burstTriad: false
     property bool showGrid: true
     property bool showTicks: false
+    property bool showGhost: true
     property real ghostWidthFactor: 0.74
     property real ghostStrength: 1.0
     property real horizontalBias: 0.12
     property real verticalBias: 0.04
+
+    // Global ZZZ backdrop switches (appearance.zzz.backdrop, edited from the
+    // ZZZ style editor). Each layer's visibility is (consumer intent) AND
+    // (global master), so a panel that never wanted a layer stays off and the
+    // master can hide a layer shell-wide. Defaults true → no behaviour change.
+    readonly property var _backdrop: Config.options?.appearance?.zzz?.backdrop
+    readonly property bool _burstOn: _backdrop?.burst ?? true
+    readonly property bool _ghostOn: _backdrop?.ghost ?? true
+    readonly property bool _gridOn: _backdrop?.grid ?? true
+    readonly property bool _ticksOn: _backdrop?.ticks ?? true
+    readonly property real _burstSizeMult: _backdrop?.burstSize ?? 1.0
 
     // Optional subtle wallpaper-glass: a blurred wallpaper wash behind the grid so
     // ZZZ's carbon console plate picks up a faint hue of the desktop. Opt-in via
@@ -38,9 +50,13 @@ Item {
         Appearance.zzz.markerLength + Appearance.zzz.borderThick * 3,
         Appearance.zzz.panelRadius + Appearance.zzz.borderThick
     )
+    // Fraction of the panel's short side the corner burst spans; panels
+    // with room to spare (dashboard) raise it so the triad reads as part
+    // of the plate instead of three floating slashes
+    property real burstScale: 0.24
     readonly property real burstSize: Math.max(
         Appearance.zzz.markerLength * 4,
-        Math.min(width, height) * 0.24
+        Math.min(width, height) * burstScale * _burstSizeMult
     )
 
     visible: opacity > 0
@@ -123,7 +139,7 @@ Item {
     }
 
     ZzzGhostMark {
-        visible: root.active
+        visible: root.active && root.showGhost && root._ghostOn
         anchors.centerIn: parent
         anchors.horizontalCenterOffset: Math.round(root.width * root.horizontalBias)
         anchors.verticalCenterOffset: Math.round(root.height * root.verticalBias)
@@ -134,7 +150,7 @@ Item {
     }
 
     ZzzBurst {
-        visible: root.active && root.showBurst
+        visible: root.active && root.showBurst && root._burstOn
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         // Round: el burst roza la esquina redondeada (margén = panelRadius) para
@@ -159,7 +175,7 @@ Item {
         // marcas técnicas son vocabulario "console" (square). En round chocan
         // con la esquina suave y se leen como líneas feas (la línea vertical
         // izquierda en x=0 y las horizontales "medias"), así que se suprimen.
-        showGrid: root.showGrid && !Appearance.zzz.round
-        showTicks: root.showTicks && !Appearance.zzz.round
+        showGrid: root.showGrid && root._gridOn && !Appearance.zzz.round
+        showTicks: root.showTicks && root._ticksOn && !Appearance.zzz.round
     }
 }

@@ -78,7 +78,14 @@
         "angelSubStyle": "frost",
         "zzz": {
             "shape": "square",
-            "glass": true
+            "glass": true,
+            "backdrop": {
+                "burst": true,
+                "ghost": true,
+                "grid": true,
+                "ticks": true,
+                "burstSize": 1.0
+            }
         },
         "extraBackgroundTint": true,
         "softenColors": true,

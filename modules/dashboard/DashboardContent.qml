@@ -365,6 +365,7 @@ Item {
             ghostText: "DASH"
             accentColor: Appearance.zzz.accent
             burstTriad: true
+            burstScale: 0.52
             showTicks: false
             showGrid: false
             horizontalBias: 0.1
