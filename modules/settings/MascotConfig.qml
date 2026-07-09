@@ -262,6 +262,16 @@ ContentPage {
                     text: Translation.tr("Displaced widgets keep their new position; otherwise everything bounces back home")
                 }
             }
+            SettingsSwitch {
+                buttonIcon: "bolt"
+                text: Translation.tr("React to system events")
+                checked: Config.options?.mascot?.chaos?.systemEvents ?? true
+                enabled: Config.options?.mascot?.chaos?.enable ?? false
+                onCheckedChanged: Config.setNestedValue("mascot.chaos.systemEvents", checked)
+                StyledToolTip {
+                    text: Translation.tr("Rare, reason-flavored romps for low battery, a notification pileup, or very late hours")
+                }
+            }
             Flow {
                 Layout.fillWidth: true
                 spacing: 5
@@ -458,7 +468,16 @@ ContentPage {
             }
             Repeater {
                 model: [
-                    { key: "emptyStates", label: Translation.tr("Empty states (notifications, clipboard, todo…)") },
+                    { key: "notifications", label: Translation.tr("Notifications") },
+                    { key: "clipboard", label: Translation.tr("Clipboard") },
+                    { key: "mediaControls", label: Translation.tr("Media controls") },
+                    { key: "todo", label: Translation.tr("Todo list") },
+                    { key: "calendar", label: Translation.tr("Calendar") },
+                    { key: "wifi", label: Translation.tr("Wi-Fi dialog") },
+                    { key: "startMenu", label: Translation.tr("Start menu") },
+                    { key: "wallpaperSelector", label: Translation.tr("Wallpaper selector") },
+                    { key: "bootGreeting", label: Translation.tr("Boot greeting") },
+                    { key: "emptyStates", label: Translation.tr("Other empty states") },
                     { key: "about", label: Translation.tr("About pages") },
                     { key: "session", label: Translation.tr("Session screen") },
                     { key: "aiChat", label: Translation.tr("AI chat") },

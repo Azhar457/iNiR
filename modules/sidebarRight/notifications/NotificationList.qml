@@ -77,7 +77,8 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: 128
                 Layout.preferredHeight: 128
-                surface: "emptyStates"
+                surface: "notifications"
+                fallbackSurface: "emptyStates"
                 pose: "notifications-clear"
             }
 

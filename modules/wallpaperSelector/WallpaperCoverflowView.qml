@@ -827,7 +827,8 @@ Item {
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: 96
                         Layout.preferredHeight: 96
-                        surface: "emptyStates"
+                        surface: "wallpaperSelector"
+                        fallbackSurface: "emptyStates"
                         pose: "theme-artist"
                     }
 

@@ -83,7 +83,8 @@ WindowDialog {
                 Layout.preferredWidth: 100
                 Layout.preferredHeight: 100
                 pose: "network-offline"
-                surface: "emptyStates"
+                surface: "wifi"
+                fallbackSurface: "emptyStates"
             }
             StyledText {
                 Layout.alignment: Qt.AlignHCenter

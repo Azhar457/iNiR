@@ -240,7 +240,8 @@ Scope {
                                         Layout.alignment: Qt.AlignHCenter
                                         Layout.preferredWidth: 100
                                         Layout.preferredHeight: 100
-                                        surface: "emptyStates"
+                                        surface: "mediaControls"
+                                        fallbackSurface: "emptyStates"
                                         pose: "music-vibe"
                                     }
 

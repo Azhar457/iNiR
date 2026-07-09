@@ -6,6 +6,7 @@ import qs.modules.common
  * The iNiR mascot, rendered per branding rules (crisp pixel-art scaling).
  * Set `pose` to a catalog name from assets/images/mascot/PROMPTS.md,
  * e.g. "notifications-clear", "about-confident", "goodbye-wave".
+ * Names listed in the manifest's animatedPoses render as looping GIFs.
  * Visibility is gated by the global mascot.enable switch; keep the
  * surface's original icon/placeholder as the switched-off fallback.
  */
@@ -16,12 +17,16 @@ Image {
     // Placement group for the per-surface toggles in Settings › Mascot.
     // Empty = only gated by the master switch.
     property string surface: ""
+    // Coarse group this spot belonged to before finer keys existed; old
+    // configs (visibility and pose overrides) keep applying through it.
+    property string fallbackSurface: ""
     readonly property bool active: (Config.options?.mascot?.enable ?? false) && surfaceEnabled
     readonly property bool surfaceEnabled: {
         if (surface.length === 0) return true
         const s = Config.options?.mascot?.surfaces
         if (!s) return true
-        const v = s[surface]
+        let v = s[surface]
+        if (v === undefined && fallbackSurface.length > 0) v = s[fallbackSurface]
         return v === undefined ? true : v
     }
     // Per-surface pose override (Settings › Mascot › Surface poses):
@@ -29,15 +34,29 @@ Image {
     readonly property string effectivePose: {
         if (surface.length > 0) {
             const o = Config.options?.mascot?.surfacePoses
-            const v = o ? (o[surface] ?? "") : ""
-            if (v.length > 0) return v
+            if (o) {
+                const v = o[surface] ?? ""
+                if (v.length > 0) return v
+                const legacy = fallbackSurface.length > 0 ? (o[fallbackSurface] ?? "") : ""
+                if (legacy.length > 0) return legacy
+            }
         }
         return pose
     }
+    readonly property bool animatedPose: MascotCatalog.isAnimated(effectivePose)
+    // Corrects apparent size so a close-up pose doesn't read "bigger" than
+    // a full-body pose inside the same fixed box (see MascotCatalog).
+    readonly property real frameScale: MascotCatalog.scaleFor(effectivePose)
+    transform: Scale {
+        origin.x: root.width / 2
+        origin.y: root.height / 2
+        xScale: root.frameScale
+        yScale: root.frameScale
+    }
 
     visible: active
-    source: (active && effectivePose.length > 0)
-        ? Quickshell.shellPath(`assets/images/mascot/inir-mascot-${effectivePose}.png`)
+    source: (active && effectivePose.length > 0 && !animatedPose)
+        ? MascotCatalog.sourceFor(effectivePose)
         : ""
     sourceSize.width: 256
     sourceSize.height: 256
@@ -46,4 +65,18 @@ Image {
     cache: true
     smooth: false
     mipmap: false
+
+    // Animated overrides: AnimatedImage can't be the root (sourceSize is
+    // read-only there), so it fills the statically-sized Image instead.
+    AnimatedImage {
+        anchors.fill: parent
+        visible: root.active && root.animatedPose
+        playing: visible
+        source: visible ? MascotCatalog.sourceFor(root.effectivePose) : ""
+        fillMode: Image.PreserveAspectFit
+        asynchronous: true
+        cache: true
+        smooth: false
+        mipmap: false
+    }
 }

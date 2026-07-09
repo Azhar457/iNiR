@@ -275,7 +275,8 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.preferredWidth: 88
                 Layout.preferredHeight: 88
-                surface: "emptyStates"
+                surface: "calendar"
+                fallbackSurface: "emptyStates"
                 pose: "sleep-dnd"
             }
 

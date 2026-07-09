@@ -706,7 +706,8 @@ Scope {
                                 Layout.alignment: Qt.AlignHCenter
                                 Layout.preferredWidth: 96
                                 Layout.preferredHeight: 96
-                                surface: "emptyStates"
+                                surface: "clipboard"
+                                fallbackSurface: "emptyStates"
                                 pose: "box-hideout"
                             }
 

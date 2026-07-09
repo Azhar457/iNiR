@@ -17,16 +17,8 @@
       "top"
     ],
     [
-      "hanging-claws",
-      "top"
-    ],
-    [
       "fisheye-inspect",
       "right"
-    ],
-    [
-      "box-hideout",
-      "left"
     ],
     [
       "bottom-rise",
@@ -53,14 +45,6 @@
       "left"
     ],
     [
-      "reading",
-      "right"
-    ],
-    [
-      "upside-down-hang",
-      "top"
-    ],
-    [
       "shrug-annoyed",
       "left"
     ],
@@ -73,14 +57,6 @@
       "right"
     ],
     [
-      "arms-crossed-confident",
-      "left"
-    ],
-    [
-      "arms-crossed-confident",
-      "right"
-    ],
-    [
       "fisheye-reach",
       "right"
     ],
@@ -89,20 +65,8 @@
       "left"
     ],
     [
-      "point-at-viewer",
-      "right"
-    ],
-    [
       "waving-hi",
       "left"
-    ],
-    [
-      "panel-sitter",
-      "top"
-    ],
-    [
-      "dock-hang",
-      "bottom"
     ],
     [
       "mate-break",
@@ -111,14 +75,6 @@
     [
       "gossip-phone",
       "right"
-    ],
-    [
-      "stretching-break",
-      "left"
-    ],
-    [
-      "welcoming",
-      "left"
     ],
     [
       "bug-net",
@@ -130,22 +86,6 @@
     ],
     [
       "popcorn-watch",
-      "right"
-    ],
-    [
-      "hand-on-hip",
-      "left"
-    ],
-    [
-      "standing-unimpressed",
-      "right"
-    ],
-    [
-      "stand-pout",
-      "left"
-    ],
-    [
-      "low-angle-guard",
       "right"
     ],
     [
@@ -169,14 +109,6 @@
       "bottom"
     ],
     [
-      "sit-peace-wink",
-      "bottom"
-    ],
-    [
-      "punk-reach",
-      "right"
-    ],
-    [
       "map-explorer",
       "left"
     ],
@@ -185,48 +117,12 @@
       "right"
     ],
     [
-      "waffle-snack",
-      "left"
-    ],
-    [
       "todo-done",
       "right"
     ],
     [
       "salute-ready",
       "left"
-    ],
-    [
-      "mood-shuffle",
-      "left"
-    ],
-    [
-      "mood-shuffle",
-      "right"
-    ],
-    [
-      "alert-look",
-      "right"
-    ],
-    [
-      "lean-peek",
-      "left"
-    ],
-    [
-      "cheer-ready",
-      "right"
-    ],
-    [
-      "yawn-stretch",
-      "left"
-    ],
-    [
-      "lying-lazy",
-      "bottom"
-    ],
-    [
-      "sit-laptop",
-      "right"
     ]
   ],
   "linesByPose": {
@@ -1121,7 +1017,6 @@
         "annoyed-poked",
         "shy-flustered",
         "error-annoyed",
-        "chibi-frustrated",
         "fisheye-inspect"
       ],
       "lines": [
@@ -1138,13 +1033,10 @@
     },
     "tier2": {
       "poses": [
-        "purr-content",
         "heart-eyes-pat",
         "shy-flustered",
-        "chibi-love",
         "peace-wink",
-        "community-highfive",
-        "chibi-thumbsup"
+        "community-highfive"
       ],
       "lines": [
         "...okay. Pats are acceptable.",
@@ -1161,8 +1053,6 @@
     "tier4": {
       "poses": [
         "chibi-rage",
-        "laughing-roast",
-        "facepalm",
         "chibi-cry",
         "chibi-mallet",
         "chibi-roast-bubble"
@@ -1196,16 +1086,8 @@
       "line": "Are you okay? Genuinely."
     },
     {
-      "pose": "chibi-shrug",
-      "line": "What. Do you need something?"
-    },
-    {
       "pose": "smug-hand-raised",
       "line": "Enjoying the view? Understandable."
-    },
-    {
-      "pose": "point-at-viewer",
-      "line": "I stare back. Harder."
     },
     {
       "pose": "bored-chin-rest",
@@ -1216,7 +1098,6 @@
     "fisheye-inspect",
     "detective-glass",
     "popcorn-watch",
-    "chibi-pointing-laugh",
     "edge-peek"
   ],
   "chaos": {
@@ -1224,28 +1105,22 @@
       "run-cycle",
       "run-cycle",
       "dash-loop",
-      "dash-loop",
-      "heroic-run",
-      "heroic-run",
-      "tiptoe-sneak"
+      "dash-loop"
     ],
     "dodge_pose": [
       "spin-dodge",
-      "chibi-rage",
       "shocked-jump"
     ],
     "bonk": {
       "pose": [
         "mallet-swing",
         "side-kick",
-        "jab-punch",
-        "chibi-mallet"
+        "jab-punch"
       ],
       "after": [
-        "chibi-pointing-laugh",
-        "laughing-roast",
-        "dust-hands",
-        "peace-wink"
+        "stomp-victory",
+        "stand-pout",
+        "standing-unimpressed"
       ],
       "lines": [
         "Bonk. Physics included.",
@@ -1262,9 +1137,8 @@
         "hurl-throw"
       ],
       "after": [
-        "peace-wink",
-        "chibi-thumbsup",
-        "dust-hands"
+        "stomp-victory",
+        "standing-unimpressed"
       ],
       "lines": [
         "Redecorating. You're welcome.",
@@ -1277,9 +1151,9 @@
     "quake": {
       "pose": "ground-slam",
       "after": [
-        "laughing-roast",
-        "success-celebrate",
-        "dust-hands"
+        "stomp-victory",
+        "standing-unimpressed",
+        "cheer-ready"
       ],
       "lines": [
         "Structural integrity test.",
@@ -1296,10 +1170,7 @@
         "spin-attack"
       ],
       "after": [
-        "guide-point-up",
-        "guide-point-down",
-        "stomp-victory",
-        "point-up-shout"
+        "stomp-victory"
       ],
       "lines": [
         "FIELD GOAL.",
@@ -1362,14 +1233,10 @@
     },
     "inspect": {
       "pose": [
-        "alert-look",
-        "crouch-inspect",
-        "detective-glass"
+        "alert-look"
       ],
       "after": [
-        "lean-peek",
-        "chibi-shrug",
-        "dust-hands"
+        "lean-peek"
       ],
       "lines": [
         "Hmm. Suspicious.",
@@ -1382,8 +1249,6 @@
     "parkour": {
       "hop": "jump-bounce",
       "after": [
-        "dust-hands",
-        "peace-wink",
         "stomp-victory"
       ],
       "lines": [
@@ -1400,9 +1265,7 @@
         "spin-attack"
       ],
       "after": [
-        "stomp-victory",
-        "laughing-roast",
-        "dust-hands"
+        "stomp-victory"
       ],
       "lines": [
         "DEMOLITION TIME.",
@@ -1451,15 +1314,10 @@
     },
     "cleanup": {
       "pose": [
-        "checklist-steps",
-        "doctor-checkup",
-        "salute-ready",
-        "speech-bubble-calm"
+        "battle-point",
+        "hand-on-hip"
       ],
       "after": [
-        "dust-hands",
-        "peace-wink",
-        "chibi-thumbsup",
         "stomp-victory"
       ],
       "lines": [
@@ -1473,13 +1331,11 @@
     },
     "startle_pose": [
       "tail-flick",
-      "shocked-jump",
-      "annoyed-poked"
+      "shocked-jump"
     ],
     "beat": {
       "pose": [
         "alert-look",
-        "point-at-viewer",
         "tail-flick",
         "mood-shuffle"
       ],
@@ -1489,13 +1345,68 @@
         "Mid-errand. Yes?",
         "Keep up."
       ]
+    },
+    "occupy": {
+      "pose": [
+        "panel-sitter",
+        "dock-hang"
+      ],
+      "lines": [
+        "Mine now. Squatter's rights.",
+        "Just going to sit here. Forever, maybe.",
+        "This is prime real estate.",
+        "Relocating my office to your widget.",
+        "Don't mind me. I live here now."
+      ],
+      "after": [
+        "stomp-victory"
+      ]
+    },
+    "sightsee": {
+      "pose": [
+        "cheer-ready",
+        "sport-ready",
+        "skater-trick",
+        "stretching-break"
+      ],
+      "lines": [
+        "Just admiring the view.",
+        "Nice desktop. 10/10, would chaos again.",
+        "Taking the scenic route.",
+        "No damage today. You're welcome.",
+        "Sightseeing. It's a whole thing now."
+      ],
+      "after": [
+        "standing-unimpressed",
+        "welcoming"
+      ]
+    },
+    "hide": {
+      "hidePose": "box-hideout",
+      "invite": [
+        "Bet you can't find me.",
+        "Hide and seek. I already won.",
+        "Somewhere on this desktop. Good luck.",
+        "Try to spot me. I dare you."
+      ],
+      "found": [
+        "FOUND. Fine. You win this round.",
+        "Damn. Good eyes.",
+        "Okay okay, you got me.",
+        "Impressive. Truly."
+      ],
+      "notFound": [
+        "Too slow. I win by default.",
+        "Still hidden. Still winning.",
+        "You gave up, didn't you.",
+        "Amateur hour. I'm right here. Was."
+      ]
     }
   },
   "reactions": {
     "battery": {
       "poses": [
-        "battery-low",
-        "quota-empty"
+        "battery-low"
       ],
       "edge": "left",
       "source": "battery"
@@ -1504,7 +1415,6 @@
       "poses": [
         "update-ready",
         "gift-giving",
-        "chef-flambe",
         "guide-point-up"
       ],
       "edge": "top",
@@ -1512,8 +1422,8 @@
     },
     "network": {
       "poses": [
-        "cable-defeat",
-        "shrug-annoyed"
+        "shrug-annoyed",
+        "network-offline"
       ],
       "edge": "left",
       "source": "network"
@@ -1541,7 +1451,6 @@
       "poses": [
         "theme-artist",
         "paint-roller",
-        "arms-crossed-confident",
         "fisheye-inspect"
       ],
       "edge": "right",
@@ -1560,11 +1469,8 @@
       "poses": [
         "gaming-focus",
         "fist-pump",
-        "battle-point",
-        "handheld-gaming",
         "salute-ready",
-        "success-celebrate",
-        "point-up-shout"
+        "success-celebrate"
       ],
       "edge": "right",
       "source": ""
@@ -1574,7 +1480,6 @@
         "marshaller-windows",
         "workspace-juggle",
         "facepalm",
-        "heavy-lift",
         "map-explorer",
         "guide-point-side"
       ],
@@ -1584,8 +1489,7 @@
     "music": {
       "poses": [
         "music-vibe",
-        "music-conductor",
-        "visualizer-surf"
+        "music-conductor"
       ],
       "edge": "right",
       "source": "media"
@@ -1594,7 +1498,6 @@
       "poses": [
         "key-offer",
         "waving-hi",
-        "welcoming",
         "privacy-lock"
       ],
       "edge": "right",
@@ -1761,5 +1664,64 @@
       "I counted %1 windows. Then I stopped counting.",
       "%1 windows open and you're still looking for the right one."
     ]
+  },
+  "frameScale": {
+    "annoyed-poked": 0.88,
+    "bug-net": 0.95,
+    "checklist-steps": 0.95,
+    "detective-glass": 0.88,
+    "doctor-checkup": 0.95,
+    "facepalm": 0.88,
+    "follow-me": 1.08,
+    "gaming-focus": 0.95,
+    "gossip-phone": 0.88,
+    "guide-point-down": 0.95,
+    "guide-point-up": 0.95,
+    "hanging-claws": 1.08,
+    "heart-eyes-pat": 0.88,
+    "late-night": 0.88,
+    "laughing-roast": 0.88,
+    "map-explorer": 0.95,
+    "marshaller-windows": 0.95,
+    "mate-break": 0.88,
+    "popcorn-watch": 0.88,
+    "rocket-ride": 1.08,
+    "salute-ready": 0.88,
+    "tea-break": 1.08,
+    "terminal-demo": 0.95,
+    "todo-done": 0.95,
+    "waffle-snack": 0.95,
+    "weather-umbrella": 0.95,
+    "wizard-complete": 0.95
+  },
+  "chaosTriggers": {
+    "batteryCritical": {
+      "lines": [
+        "Power's dying. So is your desktop's peace.",
+        "Low battery. High chaos. Fitting, really.",
+        "One last mess before the lights go out."
+      ]
+    },
+    "notificationPileup": {
+      "lines": [
+        "Too many notifications. Redirecting my rage.",
+        "Your notification tray is a crime scene. So is this.",
+        "I read zero of those. Chaos instead."
+      ]
+    },
+    "bedtime": {
+      "lines": [
+        "It's late. Neither of us should be awake for this.",
+        "3 AM chaos hits different.",
+        "You should be asleep. So should I. Anyway."
+      ]
+    },
+    "cpuHigh": {
+      "lines": [
+        "Your CPU is suffering. Let me add to it.",
+        "100% load and I'm still finding time for this.",
+        "Something's compiling. Something's about to fall over too."
+      ]
+    }
   }
 }

@@ -1098,7 +1098,16 @@
             "dashboard": "",
             "cheatsheet": "",
             "updates": "",
-            "dialogs": ""
+            "dialogs": "",
+            "notifications": "",
+            "clipboard": "",
+            "mediaControls": "",
+            "todo": "",
+            "calendar": "",
+            "wifi": "",
+            "startMenu": "",
+            "wallpaperSelector": "",
+            "bootGreeting": ""
         },
         "personality": {
             "enabled": true,

@@ -488,8 +488,9 @@ Singleton {
                     property string monitor: "primary" // "primary" | "focused" — which screen she appears on
                 }
                 property JsonObject surfacePoses: JsonObject {
-                    // Per-surface pose override for static placements ("" = each
-                    // spot's curated default). Animated placements keep their loop.
+                    // Per-surface pose override ("" = each spot's curated
+                    // default). GIF catalog names animate. Fine keys win over
+                    // the coarse emptyStates group they were split from.
                     property string emptyStates: ""
                     property string about: ""
                     property string session: ""
@@ -498,6 +499,15 @@ Singleton {
                     property string cheatsheet: ""
                     property string updates: ""
                     property string dialogs: ""
+                    property string notifications: ""
+                    property string clipboard: ""
+                    property string mediaControls: ""
+                    property string todo: ""
+                    property string calendar: ""
+                    property string wifi: ""
+                    property string startMenu: ""
+                    property string wallpaperSelector: ""
+                    property string bootGreeting: ""
                 }
                 property JsonObject personality: JsonObject {
                     property bool enabled: true // Session-long mood flavor (sleepy/hyper/snarky/contemplative)
