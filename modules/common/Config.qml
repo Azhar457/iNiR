@@ -636,6 +636,7 @@ Singleton {
                     property bool enable: false // Chaos mode: she may run across the desktop and mess with widgets/panels
                     property bool allowRearrange: false // Let her actually relocate widgets (otherwise everything bounces back)
                     property bool sfx: true // Impact foley from the freedesktop sound theme during chaos
+                    property bool systemEvents: true // Rare romps reacting to low battery, notification pileup, or late-night hours
                 }
             }
 

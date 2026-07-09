@@ -1118,7 +1118,8 @@
         "chaos": {
             "enable": false,
             "allowRearrange": false,
-            "sfx": true
+            "sfx": true,
+            "systemEvents": true
         }
     },
     "media": {

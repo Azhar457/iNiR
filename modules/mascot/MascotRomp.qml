@@ -134,9 +134,9 @@ PanelWindow {
             return true
         }
 
-        const options = ["quake", "punt"]
+        const options = ["quake", "punt", "sightsee"]
         if (targets.length > 0) {
-            options.push("bonk", "bonk", "wreck", "steal", "inspect")
+            options.push("bonk", "bonk", "wreck", "steal", "inspect", "occupy", "occupy")
             if (targets.length >= 2) options.push("rampage", "rampage", "parkour")
             if (rearrange) options.push("toss")
         }
@@ -169,6 +169,15 @@ PanelWindow {
         } else if (romp.planType === "inspect") {
             const t = victim
             stops.push({ kind: "inspect", key: t.key, actX: romp._actXFor(t) })
+        } else if (romp.planType === "occupy") {
+            // she plants herself on top of it — zero physics, pure squatting
+            const t = victim
+            stops.push({ kind: "occupy", key: t.key, actX: romp._actXFor(t) })
+        } else if (romp.planType === "sightsee") {
+            // ambient: a couple of pose stops at random spots, nothing touched
+            const n = 2 + Math.floor(Math.random() * 2)
+            for (let i = 0; i < n; i++)
+                stops.push({ kind: "sightsee", actX: romp.width * (0.12 + Math.random() * 0.76) })
         } else if (romp.planType === "parkour") {
             // hurdle every widget across the screen, no casualties
             const sorted = targets.slice().sort((a, b) => a.x - b.x)
@@ -232,8 +241,13 @@ PanelWindow {
     property string phase: "idle" // enter | act | aftermath | leave
     property bool _enterFromLeft: Math.random() < 0.5
     property real spriteX: 0
-    // Run style picked once per outing (usually the run cycle, sometimes tiptoes)
-    property string _runPose: "heroic-run"
+    // Run style picked once per outing — always a real running-gait GIF
+    // (run-cycle/dash-loop). heroic-run/tiptoe-sneak used to be in this
+    // pool by name-match alone; neither is a running pose (heroic-run is a
+    // static braced-stance action pose, tiptoe-sneak a static sneak pose) —
+    // dragging a static frame across the screen with a fake bob looked
+    // wrong. Fixed 2026-07-08, see PROMPTS.md's own descriptions.
+    property string _runPose: "run-cycle"
     property string pose: _runPose
     property string line: ""
     readonly property bool running: phase === "enter" || phase === "leave"
@@ -283,7 +297,7 @@ PanelWindow {
 
     function _begin(): void {
         if (romp.suppressed || !MascotChaos.enabled) { romp._abort(); return }
-        romp._runPose = romp._pickActPose(romp._chaosCfg.run, "heroic-run")
+        romp._runPose = romp._pickActPose(romp._chaosCfg.run, "run-cycle")
         romp.runSpeed = Math.random() < 0.15 ? 0.95 : (0.40 + Math.random() * 0.35)
         if (romp.startMode === "cleanup") {
             // the encore: she comes back, fixes her own mess, leaves proud
@@ -309,6 +323,20 @@ PanelWindow {
             romp.planType = "chase"
             console.log("[MascotRomp] chase mode")
             romp._runTo(romp.width * 0.45)
+            return
+        }
+        if (romp.startMode === "hide") {
+            // run to a spot, then go quiet — a click before the timeout wins
+            romp._enterFromLeft = Math.random() < 0.5
+            romp.spriteX = romp._enterFromLeft ? -romp.spriteSize : romp.width + romp.spriteSize
+            romp.pose = romp._runPose
+            romp.phase = "enter"
+            const hideX = romp.width * (0.12 + Math.random() * 0.76)
+            romp.planStops = [{ kind: "hideSpot", actX: hideX }]
+            romp.planIndex = 0
+            romp.planType = "hide"
+            console.log("[MascotRomp] hide mode")
+            romp._runTo(hideX)
             return
         }
         if (!romp._makePlan()) { romp._abort(); return }
@@ -362,14 +390,19 @@ PanelWindow {
 
     function _phaseDone(): void {
         if (romp.phase === "chase") { romp._chaseTimeout(); return }
+        if (romp.phase === "hide") { romp._endHide("notFound"); return }
         const stop = romp.planStops[romp.planIndex]
         if (romp.phase === "enter" && stop.kind === "chase") {
             romp._startChase()
             return
         }
+        if (romp.phase === "enter" && stop.kind === "hideSpot") {
+            romp._startHide()
+            return
+        }
         if (romp.phase === "enter" && stop.kind === "cleanup") {
             const act = romp._chaosCfg.cleanup ?? romp._chaosCfg.tidy ?? ({})
-            romp.pose = romp._pickActPose(act.pose, "checklist-steps")
+            romp.pose = romp._pickActPose(act.pose, "battle-point")
             romp.line = romp._pickLine(act.lines)
             romp.phase = "act"
             phaseTimer.interval = 900
@@ -380,7 +413,7 @@ PanelWindow {
             MascotChaos.tidy()
             romp._sfx("complete")
             const act = romp._chaosCfg.cleanup ?? ({})
-            romp.pose = romp._pickActPose(act.after, "dust-hands")
+            romp.pose = romp._pickActPose(act.after, "stomp-victory")
             romp.line = ""
             romp.phase = "aftermath"
             phaseTimer.interval = 1400
@@ -404,9 +437,39 @@ PanelWindow {
             romp.pose = romp._pickActPose(act.pose, stop.kind === "trip" ? "dead-crash" : "chibi-mallet")
             romp.line = romp._pickLine(act.lines)
             romp.phase = "act"
-            phaseTimer.interval = stop.kind === "trip" ? 2000 : 620
+            phaseTimer.interval = stop.kind === "trip" ? 2000
+                : stop.kind === "occupy" ? 1800
+                : stop.kind === "sightsee" ? 700
+                : 620
             phaseTimer.restart()
         } else if (romp.phase === "act") {
+            if (stop.kind === "occupy") {
+                // she just sits there — no impact, no domino, pure vibes
+                const act = romp._chaosCfg.occupy ?? ({})
+                romp.pose = romp._pickActPose(act.after, "stomp-victory")
+                romp.line = ""
+                romp.phase = "aftermath"
+                phaseTimer.interval = 1400
+                phaseTimer.restart()
+                return
+            }
+            if (stop.kind === "sightsee") {
+                // ambient multi-stop — cycle to the next pose, or wrap up
+                romp.planIndex++
+                romp.line = ""
+                if (romp.planIndex < romp.planStops.length) {
+                    romp.pose = romp._runPose
+                    romp.phase = "enter"
+                    romp._runTo(romp.planStops[romp.planIndex].actX)
+                } else {
+                    const act = romp._chaosCfg.sightsee ?? ({})
+                    romp.pose = romp._pickActPose(act.after, "standing-unimpressed")
+                    romp.phase = "aftermath"
+                    phaseTimer.interval = 1300
+                    phaseTimer.restart()
+                }
+                return
+            }
             if (stop.kind === "trip") {
                 // she just lies there; then gets up, pretends it didn't happen
                 romp.pose = "annoyed-poked"
@@ -426,7 +489,7 @@ PanelWindow {
                     romp._runTo(romp.planStops[romp.planIndex].actX)
                 } else {
                     const act = romp._chaosCfg.parkour ?? ({})
-                    romp.pose = romp._pickActPose(act.after, "dust-hands")
+                    romp.pose = romp._pickActPose(act.after, "stomp-victory")
                     romp.phase = "aftermath"
                     phaseTimer.interval = 1300
                     phaseTimer.restart()
@@ -437,7 +500,7 @@ PanelWindow {
                 // fake-out: a tiny nudge, a second look, and she's gone
                 MascotChaos.impact(stop.key, (Math.random() < 0.5 ? -1 : 1) * 30, 0, "bounce")
                 const act = romp._chaosCfg.inspect ?? ({})
-                romp.pose = romp._pickActPose(act.after, "chibi-shrug")
+                romp.pose = romp._pickActPose(act.after, "lean-peek")
                 romp.line = ""
                 romp.planIndex++
                 romp.phase = "aftermath"
@@ -449,7 +512,7 @@ PanelWindow {
                 // the widget saw it coming — quick sidestep, she whiffs
                 romp._dodged = true
                 MascotChaos.impact(stop.key, (Math.random() < 0.5 ? -1 : 1) * 70, 0, "bounce")
-                romp.pose = romp._pickActPose(romp._chaosCfg.dodge_pose, "chibi-rage")
+                romp.pose = romp._pickActPose(romp._chaosCfg.dodge_pose, "spin-dodge")
                 romp.line = romp._pickLine(romp._chaosCfg.dodge ?? ["Oh, it DODGED. Cute."])
                 romp.phase = "act"
                 phaseTimer.interval = 900
@@ -484,7 +547,7 @@ PanelWindow {
             }
             const cfgKey = stop.kind === "hit" ? romp._hitCfgKey(stop) : stop.kind
             const act = romp._chaosCfg[cfgKey] ?? ({})
-            romp.pose = romp._pickActPose(act.after, "chibi-pointing-laugh")
+            romp.pose = romp._pickActPose(act.after, "stomp-victory")
             romp.phase = "aftermath"
             phaseTimer.interval = 1500
             phaseTimer.restart()
@@ -582,6 +645,31 @@ PanelWindow {
         phaseTimer.restart()
     }
 
+    // ── Hide-and-seek: she tucks into a spot; a click before the timeout
+    // catches her, otherwise she wins by default ─────────────────────────
+    function _startHide(): void {
+        const h = romp._chaosCfg.hide ?? ({})
+        romp.pose = h.hidePose ?? "box-hideout"
+        romp.line = romp._pickLine(h.invite ?? ["Bet you can't find me."])
+        romp.phase = "hide"
+        phaseTimer.interval = 20000
+        phaseTimer.restart()
+    }
+    function _endHide(how: string): void {
+        phaseTimer.stop()
+        const h = romp._chaosCfg.hide ?? ({})
+        if (how === "found") {
+            romp.pose = "purr-content"
+            romp.line = romp._pickLine(h.found ?? ["FOUND. Fine. You win this round."])
+        } else {
+            romp.pose = "chibi-thumbsup"
+            romp.line = romp._pickLine(h.notFound ?? ["Too slow. I win by default."])
+        }
+        romp.phase = "aftermath"
+        phaseTimer.interval = 1600
+        phaseTimer.restart()
+    }
+
     // ── Visuals ─────────────────────────────────────────────────────────
     // Chase mode: the whole screen becomes her playground. She HUNTS the
     // live cursor — stalking toward it, lunging when close — clicks are
@@ -651,8 +739,9 @@ PanelWindow {
 
         // Poked mid-romp: she startles — and might turn it into a game
         TapHandler {
-            enabled: romp.phase === "act" || romp.phase === "aftermath"
+            enabled: romp.phase === "act" || romp.phase === "aftermath" || romp.phase === "hide"
             onTapped: {
+                if (romp.phase === "hide") { romp._endHide("found"); return }
                 if (Math.random() < 0.45) {
                     romp._startChase()
                 } else {
@@ -679,10 +768,20 @@ PanelWindow {
 
         AnimatedImage {
             anchors.fill: parent
-            source: Quickshell.shellPath(`assets/images/mascot/inir-mascot-${romp.pose}.${(romp._manifest.animatedPoses ?? []).includes(romp.pose) ? "gif" : "png"}`)
+            // Blank until _begin() runs (manifest loaded, phase leaves "idle") —
+            // resolving the extension against an empty _manifest.animatedPoses
+            // guessed .png for a real GIF default before the file finished
+            // loading (harmless self-correcting warn, but a real race).
+            source: romp.phase === "idle" ? "" : Quickshell.shellPath(`assets/images/mascot/inir-mascot-${romp.pose}.${(romp._manifest.animatedPoses ?? []).includes(romp.pose) ? "gif" : "png"}`)
             playing: true
             fillMode: Image.PreserveAspectFit
             asynchronous: true
+            // Every other pose source in this file switches back to
+            // _runPose on "leave" (or a fresh romp reuses the same run
+            // GIF) — without caching, each switch is an uncached async
+            // decode that can lag behind the tween already moving,
+            // reading as "she leaves without the run animation."
+            cache: true
             smooth: false
             mipmap: false
             // run art faces left unless listed in manifest facesRight;

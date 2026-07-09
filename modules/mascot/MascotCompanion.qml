@@ -303,7 +303,8 @@ Scope {
         if (chaosEnabled && !rompActive
             && Date.now() - _lastRompAt > 30 * 60 * 1000
             && Math.random() < 0.12) {
-            return startRomp(Math.random() < 0.2 ? "chase" : "romp")
+            const r = Math.random()
+            return startRomp(r < 0.15 ? "chase" : (r < 0.30 ? "hide" : "romp"))
         }
         const ctxs = _smartCandidates()
         const ctxLines = _manifest.contextLines ?? ({})
@@ -364,7 +365,7 @@ Scope {
         const fallback = ({
             "battery": { poses: ["battery-low"], edge: "left", source: "battery" },
             "update": { poses: ["update-ready"], edge: "top", source: "update" },
-            "network": { poses: ["cable-defeat"], edge: "left", source: "network" },
+            "network": { poses: ["network-offline"], edge: "left", source: "network" },
             "dnd": { poses: ["sleep-dnd"], edge: "right", source: "dnd" },
             "notification": { poses: ["detective-glass"], edge: "right", source: "" },
             "wallpaper": { poses: ["theme-artist"], edge: "right", source: "" },
@@ -632,6 +633,49 @@ Scope {
         onTriggered: if (root.chaosEnabled && !root.suppressed && !root.rompActive) root.startRomp("cleanup")
     }
 
+    // ── System-event chaos: rare, reason-flavored romps instead of pure
+    // idle rolls — a quick peek naming the trigger, then a real romp follows.
+    // One shared cooldown across all four signals so she doesn't nag.
+    property double _lastSystemChaosAt: 0
+    function _checkSystemChaos(): void {
+        if (!chaosEnabled || rompActive || suppressed) return
+        if (!(Config.options?.mascot?.chaos?.systemEvents ?? true)) return
+        if (Date.now() - _lastSystemChaosAt < 45 * 60 * 1000) return
+
+        const triggers = _manifest.chaosTriggers ?? ({})
+        let key = "", pose = ""
+        if (Battery.percentage <= 0.15 && !Battery.isPluggedIn) {
+            key = "batteryCritical"; pose = "battery-low"
+        } else if (Notifications.list.length >= 8) {
+            key = "notificationPileup"; pose = "facepalm"
+        } else {
+            const hour = new Date().getHours()
+            if (hour >= 1 && hour < 5) { key = "bedtime"; pose = "late-night" }
+        }
+        if (key.length === 0) return
+        const lines = triggers[key]?.lines ?? []
+        if (lines.length === 0) return
+        // Organic, not naggy — only a fraction of eligible checks actually fire
+        if (Math.random() > 0.25) return
+
+        _lastSystemChaosAt = Date.now()
+        if (_showWithLine(pose, panelEdge, Translation.tr(_pickFrom(lines))))
+            _remember(_recentPoses, pose, 10)
+        systemChaosFollowup.restart()
+    }
+    // The peek needs a beat on screen before the romp window steals focus
+    Timer {
+        id: systemChaosFollowup
+        interval: 2600
+        onTriggered: if (root.chaosEnabled && !root.rompActive && !root.suppressed) root.startRomp("romp")
+    }
+    Timer {
+        interval: 5 * 60 * 1000
+        running: true
+        repeat: true
+        onTriggered: root._checkSystemChaos()
+    }
+
     IpcHandler {
         target: "mascot"
 
@@ -640,6 +684,9 @@ Scope {
         function romp(): void { root.startRomp("romp") }
         // Chase game: she hunts your mouse clicks — click her to catch her
         function chase(): void { root.startRomp("chase") }
+        // Hide-and-seek: she tucks into a spot — click her before the
+        // timeout to find her, otherwise she wins by default
+        function hideSeek(): void { root.startRomp("hide") }
         // Undo the chaos: every displaced widget returns home
         function tidy(): void {
             MascotChaos.tidy()
