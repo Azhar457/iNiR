@@ -31,6 +31,7 @@ DashCard {
         const xhr = new XMLHttpRequest()
         xhr.onreadystatechange = () => {
             if (xhr.readyState !== XMLHttpRequest.DONE) return
+            if (!root) return  // dashboard closed mid-fetch
             root.fetching = false
             if (xhr.status !== 200) return
             try {
@@ -126,7 +127,7 @@ DashCard {
                         const level = week[r]
                         ctx.fillStyle = level === 0
                             ? emptyColor
-                            : Qt.alpha(cellColor, 0.25 + 0.25 * level)
+                            : Qt.alpha(cellColor, 0.25 + 0.75 * Math.min(level, 4) / 4)
                         ctx.beginPath()
                         ctx.roundedRect(xOff + c * pitch, r * pitch, cell, cell, 2, 2)
                         ctx.fill()
