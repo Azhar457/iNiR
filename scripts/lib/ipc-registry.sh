@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: af6ab796fa047b7b
+# IPC.md hash: fab6806e44de2299
 # Targets: 56
 
 declare -gA IPC_TARGET_DESC=(
@@ -127,7 +127,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [ai]="ensureInitialized diagnose run runGet"
   [altSwitcher]="open close toggle next previous"
   [appCatalog]="refresh search install list"
-  [audio]="volumeUp volumeDown mute micMute"
+  [audio]="volumeUp volumeDown mute playEvent micMute"
   [autostart]="status addCommand addApp removeLast reload"
   [background]="toggleEditMode setWidgetEnabled"
   [bar]="toggle close open"
@@ -144,7 +144,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [globalActions]="run runWithArgs list search open"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate deactivate status focus"
-  [mascot]="poke romp chase tidy appear appearContextual appearWithLine hide"
+  [mascot]="poke romp chase hideSeek tidy appear appearContextual appearWithLine hide"
   [mascotMood]="set current"
   [mediaControls]="toggle close open"
   [memory]="collect stats restart dismiss reset"
@@ -199,6 +199,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["audio:volumeUp"]="Increase volume"
   ["audio:volumeDown"]="Decrease volume"
   ["audio:mute"]="Toggle speaker mute"
+  ["audio:playEvent"]="Play a shell event sound (e.g. \`notification\`, \`batteryLow\`, \`timerDone\`), honoring the user's per-event override"
   ["audio:micMute"]="Toggle microphone mute"
   ["autostart:status"]="Return \`niri\\"
   ["autostart:addCommand"]="Append a managed \`spawn-sh-at-startup\` shell line"
@@ -252,8 +253,9 @@ declare -gA IPC_FUNCTION_DESC=(
   ["lock:status"]="Return lock state (\`locked\`, \`activating\`, or \`unlocked\`)"
   ["lock:focus"]="Refocus the lock screen input"
   ["mascot:poke"]="Ask her to peek from a random edge with a random pose"
-  ["mascot:romp"]="Chaos mode: she runs across the desktop and bonks a widget, hurls one to a new spot, or ground-slams so the bar rattles. Needs \`mascot.chaos.enable\`; widgets only keep new positions with \`mascot.chaos.allowRearrange\`"
-  ["mascot:chase"]=""
+  ["mascot:romp"]="Chaos mode: she runs across the desktop and bonks a widget, wrecks one onto the floor, hurls one to a new spot, rampages through several, kicks the bar/dock, or ground-slams so everything rattles. Needs \`mascot.chaos.enable\`; widgets only keep new positions with \`mascot.chaos.allowRearrange\`"
+  ["mascot:chase"]="Chase game: she hunts your mouse — every click is a spot she pounces on; click *her* to catch her and win"
+  ["mascot:hideSeek"]="Hide-and-seek: she tucks into a spot on the desktop — click her before the 20s timeout to find her, otherwise she wins by default"
   ["mascot:tidy"]="Undo the chaos — every displaced widget returns to its pre-chaos position"
   ["mascot:appear"]="Show a specific catalog pose from \`left\`, \`right\`, \`top\` or \`bottom\`"
   ["mascot:appearContextual"]="Show near the triggering widget (\`battery\`, \`media\`, \`update\`, \`network\`, \`dnd\`). Requires \`mascot.companion.contextualPlacement\` to be enabled for event reactions; this IPC call bypasses that check for testing."
@@ -381,6 +383,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["ai:runGet"]="<inputText>"
   ["appCatalog:search"]="<query>"
   ["appCatalog:install"]="<id>"
+  ["audio:playEvent"]="<event>"
   ["autostart:addCommand"]="<cmd>"
   ["autostart:addApp"]="<desktopId>"
   ["background:setWidgetEnabled"]="<widgetName> <enabled>"
