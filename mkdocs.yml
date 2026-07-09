@@ -1,8 +1,8 @@
 site_name: iNiR Wiki
 site_description: Documentation for the iNiR Wayland desktop shell
-site_url: https://snowarch.github.io/inir/
-repo_url: https://github.com/snowarch/inir
-repo_name: snowarch/inir
+site_url: https://snowarch.github.io/iNiR/
+repo_url: https://github.com/snowarch/iNiR
+repo_name: snowarch/iNiR
 edit_uri: edit/main/docs/
 
 docs_dir: docs

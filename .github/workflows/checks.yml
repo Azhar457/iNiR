@@ -1,0 +1,26 @@
+name: Checks
+
+on:
+  push:
+    branches:
+      - main
+      - prerelease
+  pull_request:
+    branches:
+      - main
+      - prerelease
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  distribution:
+    name: Distribution guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Shell syntax, payload manifests, leak guard
+        run: bash scripts/test-local-distribution.sh
