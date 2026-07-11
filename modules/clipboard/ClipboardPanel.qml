@@ -54,6 +54,16 @@ Scope {
         const hasSearch = trimmedSearch.length > 0
         let matches = 0
 
+        // Pinned entries always lead the list, in both filter and navigate mode.
+        const pins = Cliphist.pinned
+        for (let i = 0; i < pins.length; i++) {
+            const preview = Cliphist.pinPreview(pins[i])
+            const hit = !hasSearch || preview.toLowerCase().includes(trimmedSearch)
+            if (hasSearch && hit) matches++
+            if (hit || navigateMode)
+                filteredClipboardModel.append({ "rawEntry": "", "pinText": pins[i], "isPin": true, "isMatch": hit })
+        }
+
         if (hasSearch && navigateMode) {
             // Navigate mode: show ALL entries, mark which ones match
             for (let i = 0; i < entryCount; i++) {
@@ -61,18 +71,18 @@ Scope {
                 const content = formatCliphistName(entry).toLowerCase()
                 const hit = content.includes(trimmedSearch)
                 if (hit) matches++
-                filteredClipboardModel.append({ "rawEntry": entry, "isMatch": hit })
+                filteredClipboardModel.append({ "rawEntry": entry, "pinText": "", "isPin": false, "isMatch": hit })
             }
         } else {
             // Filter mode: only include matching entries
             for (let i = 0; i < entryCount; i++) {
                 const entry = entries[i]
                 if (!hasSearch) {
-                    filteredClipboardModel.append({ "rawEntry": entry, "isMatch": true })
+                    filteredClipboardModel.append({ "rawEntry": entry, "pinText": "", "isPin": false, "isMatch": true })
                 } else {
                     const content = formatCliphistName(entry).toLowerCase()
                     if (content.includes(trimmedSearch)) {
-                        filteredClipboardModel.append({ "rawEntry": entry, "isMatch": true })
+                        filteredClipboardModel.append({ "rawEntry": entry, "pinText": "", "isPin": false, "isMatch": true })
                         matches++
                     }
                 }
@@ -144,6 +154,12 @@ Scope {
         GlobalStates.clipboardOpen = false
     }
 
+    function copyPinnedText(text) {
+        _lastPanelCopyTime = Date.now()
+        Quickshell.clipboardText = text
+        GlobalStates.clipboardOpen = false
+    }
+
     function deleteEntry(entry) {
         Cliphist.deleteEntry(entry)
     }
@@ -180,6 +196,11 @@ Scope {
         target: Cliphist
         function onEntriesChanged() {
             // Only update model if clipboard panel is open to avoid lag
+            if (GlobalStates.clipboardOpen) {
+                root.updateFilteredModel()
+            }
+        }
+        function onPinnedChanged() {
             if (GlobalStates.clipboardOpen) {
                 root.updateFilteredModel()
             }
@@ -265,12 +286,17 @@ Scope {
                 if (!GlobalStates.clipboardOpen)
                     return
 
-                // Helper to get current entry from filtered model
-                function currentEntry() {
+                // Helper to get current row from filtered model
+                function currentRow() {
                     const idx = listView.currentIndex
                     if (idx < 0 || idx >= filteredClipboardModel.count)
                         return null
-                    return filteredClipboardModel.get(idx).rawEntry
+                    return filteredClipboardModel.get(idx)
+                }
+
+                function currentEntry() {
+                    const row = currentRow()
+                    return (row === null || row.isPin) ? null : row.rawEntry
                 }
 
                 if (event.key === Qt.Key_Escape) {
@@ -291,17 +317,27 @@ Scope {
                     root.clearAll()
                     event.accepted = true
                 } else if (event.key === Qt.Key_Delete && event.modifiers === Qt.NoModifier) {
-                    // Delete current entry
-                    const entry = currentEntry()
-                    if (entry !== null) {
-                        root.deleteEntry(entry)
+                    // Delete current entry, or unpin a pinned one
+                    const row = currentRow()
+                    if (row !== null) {
+                        if (row.isPin) Cliphist.unpin(row.pinText)
+                        else root.deleteEntry(row.rawEntry)
                         event.accepted = true
                     }
                 } else if (event.key === Qt.Key_C && (event.modifiers & Qt.ControlModifier)) {
                     // Copy current entry to clipboard
-                    const entry = currentEntry()
-                    if (entry !== null) {
-                        root.copyEntry(entry)
+                    const row = currentRow()
+                    if (row !== null) {
+                        if (row.isPin) root.copyPinnedText(row.pinText)
+                        else root.copyEntry(row.rawEntry)
+                        event.accepted = true
+                    }
+                } else if (event.key === Qt.Key_P && (event.modifiers & Qt.ControlModifier)) {
+                    // Toggle pin on the current entry
+                    const row = currentRow()
+                    if (row !== null) {
+                        if (row.isPin) Cliphist.unpin(row.pinText)
+                        else if (Cliphist.isPinnable(row.rawEntry)) Cliphist.pinEntry(row.rawEntry)
                         event.accepted = true
                     }
                 } else if (event.key === Qt.Key_Tab && root.navigateMode && root.searchText.length > 0) {
@@ -633,17 +669,68 @@ Scope {
 
                         delegate: ClipboardItem {
                             required property string rawEntry
+                            required property string pinText
+                            required property bool isPin
                             required property bool isMatch
                             required property int index
                             anchors.left: parent?.left
                             anchors.right: parent?.right
                             isSelected: ListView.isCurrentItem
                             isSearchMatch: isMatch
-                            copiedFromPanel: rawEntry === lastCopiedEntry
+                            copiedFromPanel: !isPin && rawEntry === lastCopiedEntry
                             entry: {
+                                if (isPin) {
+                                    const text = pinText
+                                    return {
+                                        key: text,
+                                        cliphistRawString: "",
+                                        name: Cliphist.pinPreview(text),
+                                        clickActionName: Translation.tr("Copy"),
+                                        type: Translation.tr("Pinned"),
+                                        materialSymbol: "keep",
+                                        execute: () => root.copyPinnedText(text),
+                                        actions: [
+                                            {
+                                                name: "Copy",
+                                                label: Translation.tr("Copy"),
+                                                materialIcon: "content_copy",
+                                                execute: () => root.copyPinnedText(text),
+                                            },
+                                            {
+                                                name: "Unpin",
+                                                label: Translation.tr("Unpin"),
+                                                materialIcon: "keep_off",
+                                                execute: () => Cliphist.unpin(text),
+                                            },
+                                        ],
+                                        compactClipboardPreview: true,
+                                    }
+                                }
                                 const raw = rawEntry
                                 const type = `#${raw.match(/^[\s]*(\S+)/)?.[1] || ""}`
                                 const name = formatCliphistName(raw)
+                                const actions = [
+                                    {
+                                        name: "Copy",
+                                        label: Translation.tr("Copy"),
+                                        materialIcon: "content_copy",
+                                        execute: () => root.copyEntry(raw),
+                                    },
+                                    {
+                                        name: "Delete",
+                                        label: Translation.tr("Delete"),
+                                        materialIcon: "delete",
+                                        execute: () => root.deleteEntry(raw),
+                                    },
+                                ]
+                                if (Cliphist.isPinnable(raw)) {
+                                    actions.splice(1, 0, {
+                                        name: "Pin",
+                                        label: Translation.tr("Pin"),
+                                        materialIcon: "keep",
+                                        execute: () => Cliphist.pinEntry(raw),
+                                    })
+                                }
                                 return {
                                     key: type,
                                     cliphistRawString: raw,
@@ -653,18 +740,7 @@ Scope {
                                     execute: () => {
                                         root.copyEntry(raw)
                                     },
-                                    actions: [
-                                        {
-                                            name: "Copy",
-                                            materialIcon: "content_copy",
-                                            execute: () => root.copyEntry(raw),
-                                        },
-                                        {
-                                            name: "Delete",
-                                            materialIcon: "delete",
-                                            execute: () => root.deleteEntry(raw),
-                                        },
-                                    ],
+                                    actions: actions,
                                     blurImage: false,
                                     blurImageText: Translation.tr("Work safety"),
                                     compactClipboardPreview: true,
@@ -693,8 +769,9 @@ Scope {
 
                         function activateCurrent() {
                             if (currentIndex < 0 || currentIndex >= count) return
-                            const rawEntry = filteredClipboardModel.get(currentIndex).rawEntry
-                            root.copyEntry(rawEntry)
+                            const row = filteredClipboardModel.get(currentIndex)
+                            if (row.isPin) root.copyPinnedText(row.pinText)
+                            else root.copyEntry(row.rawEntry)
                         }
 
                         ColumnLayout {
@@ -770,7 +847,7 @@ Scope {
 
                             StyledText {
                                 Layout.fillWidth: true
-                                text: Translation.tr("Ctrl+C: Copy • Del: Delete • Shift+Del: Clear all • Esc: Close")
+                                text: Translation.tr("Ctrl+C: Copy • Ctrl+P: Pin • Del: Delete • Shift+Del: Clear all • Esc: Close")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
                                     : Appearance.inirEverywhere ? Appearance.inir.colText 

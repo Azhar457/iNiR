@@ -141,6 +141,45 @@ Singleton {
         wipeProc.running = true;
     }
 
+    // Pins store the decoded text, not the cliphist id: ids are recycled and
+    // entries fall out of the store once maxEntries rotates past them.
+    readonly property var pinned: Config.options?.clipboard?.pinned ?? []
+    property int maxPinLength: 8000
+
+    function isPinnable(entry): bool {
+        return String(entry ?? "").length > 0 && !root.entryIsImage(entry)
+    }
+
+    function pinPreview(text): string {
+        const firstLine = String(text ?? "").split("\n").find(l => l.trim().length > 0) ?? ""
+        return firstLine.trim()
+    }
+
+    function isPinned(text): bool {
+        return root.pinned.indexOf(text) !== -1
+    }
+
+    function unpin(text): void {
+        Config.setNestedValue("clipboard.pinned", root.pinned.filter(p => p !== text))
+    }
+
+    function pinEntry(entry): void {
+        if (!root.isPinnable(entry)) return
+        pinProc.command = ["/usr/bin/bash", "-c", root.decodeCommand(entry)]
+        pinProc.running = true
+    }
+
+    Process {
+        id: pinProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const decoded = text.slice(0, root.maxPinLength)
+                if (decoded.length === 0 || root.isPinned(decoded)) return
+                Config.setNestedValue("clipboard.pinned", [decoded, ...root.pinned])
+            }
+        }
+    }
+
     Connections {
         target: Quickshell
         function onClipboardTextChanged() {
