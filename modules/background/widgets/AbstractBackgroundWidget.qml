@@ -842,10 +842,16 @@ AbstractWidget {
 
             onReleased: {
                 root._isResizing = false;
-                if (root._isZonePlacement)
+                if (root._isZonePlacement) {
                     root.snapToZone(root.placementStrategy);
-                else if (root._isAutoPlacement)
+                    if (root.needsColText) _placementDebounce.restart();
+                } else if (root._isAutoPlacement) {
                     root.refreshPlacementIfNeeded();
+                } else if (root.needsColText) {
+                    // Free mode: the region under the widget changed size —
+                    // re-run the colour analysis at the new geometry.
+                    _placementDebounce.restart();
+                }
             }
         }
     }
@@ -1041,9 +1047,10 @@ AbstractWidget {
     }
 
     // ── Centralized desktop-widget colour identity ──────────────────────────────
-    // Keep these roles tied directly to the generated palette. The asynchronous
-    // region analysis may adjust text/halo contrast, but must not replace or
-    // re-tone widget accents after the palette has appeared on screen.
+    // Keep these roles tied directly to the generated palette — they are the
+    // widget family's identity and never re-tone. Content that needs the accent
+    // to stay legible over the plate/region uses the widgetAccent*Visible
+    // display variants below, which only move when the raw accent doesn't read.
     // Style-dispatched material roles, in [primary, secondary, tertiary] order.
     readonly property var _accentRoles: Appearance.zzzEverywhere
         ? [Appearance.zzz.accent, Appearance.zzz.secondary, Appearance.zzz.tertiary]
@@ -1071,17 +1078,25 @@ AbstractWidget {
         const p = Qt.color(Appearance.colors.colPrimary);
         return Qt.hsla(p.hslHue, Math.min(0.22, p.hslSaturation), 0.11, 1.0);
     }
-    // Solid plates are ALWAYS the near-black derivative: a light theme plate
-    // over a bright (e.g. yellow) wallpaper read as a white card — maintainer
-    // call: black plate on every wallpaper, like the media player.
+    readonly property color _plateLight: {
+        const p = Qt.color(Appearance.colors.colPrimary);
+        return Qt.hsla(p.hslHue, Math.min(0.20, p.hslSaturation), 0.93, 1.0);
+    }
+    // The plate answers to BOTH the theme and the wallpaper. Dark theme keeps the
+    // near-black derivative everywhere. Light theme gets a hue-tinted paper plate,
+    // EXCEPT over a bright wallpaper region, where a light card reads as glare (the
+    // original reason plates were pinned to black) — there it falls back to black.
+    readonly property bool widgetPlateIsDark: Appearance.m3colors.darkmode || root.regionIsBright
+    readonly property color _plateAuto: root.widgetPlateIsDark ? root._plateDark : root._plateLight
     readonly property color widgetPlateColor: Appearance.zzzEverywhere ? Appearance.zzz.chrome
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : root._plateDark
+        : root._plateAuto
 
+    // Ink opposes the plate it sits on, not the theme.
     readonly property color widgetSurfaceInk: Appearance.zzzEverywhere
         ? Appearance.zzz.onBg
         : !Appearance.angelEverywhere
-        ? root._inkLight
+        ? (root.widgetPlateIsDark ? root._inkLight : root._inkDark)
         : Appearance.colors.colOnLayer1
     readonly property color widgetInk: root.widgetHasSurface ? root.widgetSurfaceInk : root.colText
     readonly property color widgetInkMuted: ColorUtils.applyAlpha(root.widgetInk, 0.66)
@@ -1090,10 +1105,22 @@ AbstractWidget {
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
-    // Legacy aliases retained for existing consumers.
-    readonly property color widgetAccentVisible: root.widgetAccent
-    readonly property color widgetAccent2Visible: root.widgetAccent2
-    readonly property color widgetAccent3Visible: root.widgetAccent3
+    // ── Region-legible accent DISPLAY variants ──────────────────────────────
+    // Where free-standing accent ink actually lands: the shared plate when the
+    // widget draws one, the analyzed wallpaper region otherwise. Falls back to
+    // the theme surface until the analysis lands, so nothing re-tones on first
+    // paint. Widgets that force a minimum plate opacity (uptime, news ticker,
+    // weather card) override this with the plate directly.
+    property color accentBackdrop: root.widgetHasSurface ? root.widgetPlateColor
+        : root._hasBrightness ? root._regionBg
+        : Appearance.colors.colLayer0
+    // The identity roles above stay raw palette; these are how that identity is
+    // DISPLAYED over the backdrop. adaptAccent is a clamp (early-out when the
+    // raw accent already reads), so the usual dark-theme case is byte-identical
+    // and a re-tone can only happen in the same repaint that flips the plate.
+    readonly property color widgetAccentVisible: ColorUtils.adaptAccent(root.widgetAccent, root.accentBackdrop)
+    readonly property color widgetAccent2Visible: ColorUtils.adaptAccent(root.widgetAccent2, root.accentBackdrop)
+    readonly property color widgetAccent3Visible: ColorUtils.adaptAccent(root.widgetAccent3, root.accentBackdrop)
 
     // Legibility shadow placed BEHIND text and plate-less elements so they
     // detach from any wallpaper without a visible card. Always dark (a true
@@ -1122,6 +1149,9 @@ AbstractWidget {
         if (root.wallpaperPath.length > 0)
             _placementDebounce.restart()
     }
+    // Widgets may gate needsColText on runtime state (e.g. mascot only when its
+    // card is on) — kick the analysis when it turns on after load.
+    onNeedsColTextChanged: if (needsColText) _placementDebounce.restart()
     onPlacementStrategyChanged: Qt.callLater(root.applyPlacementFromConfig)
     // Re-snap zone positions when screen size changes
     onScaledScreenWidthChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()

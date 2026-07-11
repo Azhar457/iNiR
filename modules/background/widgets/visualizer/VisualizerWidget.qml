@@ -153,8 +153,8 @@ AbstractBackgroundWidget {
         barRadius: Config.getNestedValue("background.widgets.visualizer.barRadius", 2)
         colorLow: Appearance.zzzEverywhere ? Appearance.zzz.chrome
             : Appearance.colors.colSecondaryContainer
-        colorMed: root.widgetAccent
-        colorHigh: root.widgetAccent3
+        colorMed: root.widgetAccentVisible
+        colorHigh: root.widgetAccent3Visible
         opacity: 1.0 - dimFactor * 0.6
     }
 
@@ -165,7 +165,7 @@ AbstractBackgroundWidget {
         points: cavaProcess.points
         live: root._active
         fillOpacity: (root.waveOpacity >= 0 ? root.waveOpacity : (Config.options?.appearance?.cava?.waveOpacity ?? 30)) / 100
-        color: root.widgetAccent
+        color: root.widgetAccentVisible
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

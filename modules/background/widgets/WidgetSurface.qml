@@ -57,9 +57,16 @@ Rectangle {
         const p = Qt.color(Appearance.colors.colPrimary);
         return Qt.hsla(p.hslHue, Math.min(0.22, p.hslSaturation), 0.11, 1.0);
     }
-    // Always the near-black plate: theme-light fills read as white cards on
-    // bright wallpapers (maintainer call — black plate everywhere).
-    readonly property color _flatFill: ColorUtils.applyAlpha(_plateDark, Math.min(0.96, 0.72 + surfaceOpacity * 0.24))
+    readonly property color _plateLight: {
+        const p = Qt.color(Appearance.colors.colPrimary);
+        return Qt.hsla(p.hslHue, Math.min(0.20, p.hslSaturation), 0.93, 1.0);
+    }
+    // Mirrors AbstractBackgroundWidget.widgetPlateIsDark — dark theme stays black
+    // everywhere; light theme gets a paper plate except over a bright wallpaper
+    // region, where a light card would read as glare.
+    readonly property bool _plateIsDark: Appearance.m3colors.darkmode || root._regionBright
+    readonly property color _plate: root._plateIsDark ? root._plateDark : root._plateLight
+    readonly property color _flatFill: ColorUtils.applyAlpha(_plate, Math.min(0.96, 0.72 + surfaceOpacity * 0.24))
 
     radius: surfaceRadius
     color: _glass ? "transparent"
@@ -196,6 +203,6 @@ Rectangle {
         anchors.fill: parent
         visible: root._inir && root.surfaceOpacity > 0
         radius: root.radius
-        color: ColorUtils.applyAlpha(root._plateDark, Math.min(0.96, 0.72 + root.surfaceOpacity * 0.24))
+        color: ColorUtils.applyAlpha(root._plate, Math.min(0.96, 0.72 + root.surfaceOpacity * 0.24))
     }
 }

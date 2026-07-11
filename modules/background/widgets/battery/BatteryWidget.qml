@@ -85,9 +85,14 @@ AbstractBackgroundWidget {
 
     // Shared desktop-widget identity (AbstractBackgroundWidget): low = signal,
     // charging = tertiary accent, normal = primary accent. Same family everywhere.
-    readonly property color accentColor: Battery.isLow ? root.widgetSignal
+    // The fill always renders ON the track (ring arc, bar fill, pill fill), so
+    // clamp against it — a light theme's deep accents vanish when a bright
+    // wallpaper region flips the track to the near-black plate.
+    readonly property color accentColor: ColorUtils.adaptAccent(
+        Battery.isLow ? root.widgetSignal
         : Battery.isCharging ? root.widgetAccent3
-        : root.widgetAccent
+        : root.widgetAccent,
+        root.trackColor)
 
     // Region-aware shared plate (dark on bright wallpaper regions).
     readonly property color trackColor: root.regionIsBright && !Appearance.zzzEverywhere && !Appearance.angelEverywhere

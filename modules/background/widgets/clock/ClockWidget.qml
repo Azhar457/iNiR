@@ -106,10 +106,14 @@ AbstractBackgroundWidget {
     readonly property color accentTertiary: root.widgetAccent3
     // Region-aware shared plate (dark on bright wallpaper regions).
     readonly property color accentPrimaryContainer: root.widgetPlateColor
-    // The cookie face is a plate filled with the container colour; on a same-tone
-    // wallpaper it can vanish. ensureVisible() walks its lightness until it reads
-    // against the region behind it, keeping the hue (so it stays wallpaper-themed).
+    // The cookie face plate (compat alias — ensureVisible is identity now; the
+    // plate itself is already region-aware via widgetPlateColor).
     readonly property color accentPrimaryContainerVisible: root.ensureVisible(root.accentPrimaryContainer)
+    // Hands sit on the cookie FACE, not on the wallpaper — clamp against it, so
+    // e.g. a light theme's deep accents stay visible when a bright wallpaper
+    // region flips the face to the near-black plate.
+    readonly property color handPrimary: ColorUtils.adaptAccent(root.accentPrimary, root.accentPrimaryContainerVisible)
+    readonly property color handTertiary: ColorUtils.adaptAccent(root.accentTertiary, root.accentPrimaryContainerVisible)
     readonly property color cookieInk: ColorUtils.ensureReadable(
         ColorUtils.mix(
             Appearance.colors.colOnPrimaryContainer,
@@ -189,15 +193,35 @@ AbstractBackgroundWidget {
         return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
     }
 
-    // Effective text color for clock based on palette + dim.
-    // Dim toward the wallpaper region's luminance opposite (not pure black) so
-    // the text keeps its hue character while becoming less prominent.
-    function dimmed(base: color): color {
-        if (dimFactor <= 0) return base;
-        const target = ColorUtils.contrastColor(root._regionBg);
-        return ColorUtils.mix(base, target, dimFactor * 0.7);
+    // What the digital text actually sits on: the card plate when one renders,
+    // the analyzed wallpaper region otherwise (theme surface until the analysis
+    // lands, so nothing re-tones on first paint).
+    readonly property bool _digitalCard: root.clockStyle === "digital" && root.widgetHasSurface
+    readonly property color _inkBackdrop: root._digitalCard ? root.widgetPlateColor
+        : root._hasBrightness ? root._regionBg
+        : Appearance.colors.colLayer0
+    // Accent as displayed over that backdrop — identity clamp, see adaptAccent.
+    function displayAccent(base: color): color {
+        return ColorUtils.adaptAccent(base, root._inkBackdrop);
     }
-    property color clockTextColor: root.dimmed(root.colText)
+
+    // Effective text color for clock based on palette + dim.
+    // Dim toward the luminance opposite of the ACTUAL backdrop (card plate or
+    // wallpaper region — dimming away from the region while sitting on a plate
+    // that opposes the region walked text INTO the plate's tone) so the text
+    // keeps its hue character while becoming less prominent. That mix also
+    // drains chroma, which left the clock reading grey next to the other
+    // widgets' accents — restore the base's saturation so dim only costs
+    // lightness. No-op for achromatic bases (the colText path).
+    function dimmed(base, backdrop) {
+        if (dimFactor <= 0) return base;
+        const target = ColorUtils.contrastColor(backdrop ?? root._inkBackdrop);
+        const faded = ColorUtils.mix(base, target, dimFactor * 0.7);
+        return ColorUtils.boostInkSaturation(faded, base, Qt.color(base).hslSaturation);
+    }
+    // On the digital card the ink opposes the plate (widgetInk); bare on the
+    // wallpaper it opposes the region (colText).
+    property color clockTextColor: root.dimmed(root._digitalCard ? root.widgetInk : root.colText)
 
     // Card background (mainly for digital mode)
     WidgetSurface {
@@ -234,8 +258,8 @@ AbstractBackgroundWidget {
                     colBackground: root.accentPrimaryContainerVisible
                     colOnBackground: root.cookieInk
                     colBackgroundInfo: root.cookieInkMuted
-                    colHourHand: root.accentPrimary
-                    colMinuteHand: root.accentTertiary
+                    colHourHand: root.handPrimary
+                    colMinuteHand: root.handTertiary
                     colSecondHand: root.cookieInk
                 }
                 FadeLoader {
@@ -257,14 +281,16 @@ AbstractBackgroundWidget {
 
                 ClockText {
                     // Material accents (same source the desktop player themes from)
-                    // instead of neutral ink: time = primary, date = secondary.
-                    color: root.dimmed(root.accentPrimary)
+                    // instead of neutral ink: time = primary, date = secondary —
+                    // displayed through the region/plate clamp so a theme accent
+                    // tuned for the shell's surfaces stays legible on any wallpaper.
+                    color: root.dimmed(root.displayAccent(root.accentPrimary))
                     font.pixelSize: Math.round(90 * Appearance.fontSizeScale * root.timeScale / 100 * root.scaleFactor)
                     text: root.timeText
                 }
                 ClockText {
                     visible: root.showDate
-                    color: root.dimmed(root.accentSecondary)
+                    color: root.dimmed(root.displayAccent(root.accentSecondary))
                     Layout.topMargin: Math.round(-5 * root.scaleFactor)
                     font.pixelSize: Math.round(20 * root.dateScale / 100 * root.scaleFactor)
                     text: root.dateText
@@ -364,7 +390,11 @@ AbstractBackgroundWidget {
         property alias statusIcon: statusIconWidget.text
         property alias statusText: statusTextWidget.text
         property bool shown: true
-        property color textColor: root.dimmed(root.clockStyle === "cookie" ? root.accentPrimary : root.colText)
+        // Cookie style renders the status on the container plate — clamp the
+        // accent against it and dim toward ITS opposite, not the region's.
+        property color textColor: root.clockStyle === "cookie"
+            ? root.dimmed(ColorUtils.adaptAccent(root.accentPrimary, root.accentPrimaryContainer), root.accentPrimaryContainer)
+            : root.clockTextColor
         opacity: shown ? 1 : 0
         visible: opacity > 0
         Behavior on opacity {

@@ -357,6 +357,11 @@ Singleton {
             return accentColor;
         var fg = Qt.color(accentColor);
         var bg = Qt.color(bgColor);
+        // Clamp, not normalizer: an accent that already reads keeps its exact
+        // palette identity, so themes whose accents oppose their surfaces (the
+        // common dark-theme case) render byte-identical with or without this.
+        if (contrastRatio(fg, bg) >= target)
+            return fg;
         var hue = fg.hslHue;
         var sat = Math.max(minSat, fg.hslSaturation);
         var bgLum = relativeLuminance(bg);

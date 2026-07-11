@@ -26,6 +26,9 @@ AbstractBackgroundWidget {
     resizeMinWidth: 190
     resizeMinHeight: 76
     needsColText: true
+    // The surface below forces a minimum plate opacity, so accents always sit
+    // on the plate even when the user's background toggle is off.
+    accentBackdrop: widgetPlateColor
 
     readonly property color surfaceInk: root.widgetSurfaceInk
 
@@ -53,7 +56,7 @@ AbstractBackgroundWidget {
         MaterialSymbol {
             text: "avg_pace"
             iconSize: Math.round(38 * root.scaleFactor)
-            color: root.widgetAccent3
+            color: root.widgetAccent3Visible
         }
 
         ColumnLayout {

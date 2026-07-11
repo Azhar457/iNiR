@@ -144,9 +144,10 @@ AbstractBackgroundWidget {
 
     // Shared desktop-widget identity (AbstractBackgroundWidget) so every metric reads
     // as the same wallpaper-generated family across all widgets.
-    readonly property color cpuColor: root.widgetAccent
-    readonly property color memColor: root.widgetAccent2
-    readonly property color gpuColor: root.widgetAccent3
+    // Display variants: clamped against the plate/region actually behind them.
+    readonly property color cpuColor: root.widgetAccentVisible
+    readonly property color memColor: root.widgetAccent2Visible
+    readonly property color gpuColor: root.widgetAccent3Visible
     readonly property color tempColor: root.widgetSignal
     readonly property color diskColor: Appearance.zzzEverywhere ? Appearance.zzz.sticker
         : Appearance.colors.colTertiaryContainer
@@ -502,7 +503,7 @@ AbstractBackgroundWidget {
                 anchors.centerIn: parent
                 text: "monitor_heart"
                 iconSize: Math.round(24 * root.scaleFactor)
-                color: root.widgetAccent
+                color: root.widgetAccentVisible
             }
         }
 

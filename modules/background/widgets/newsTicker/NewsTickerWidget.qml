@@ -31,6 +31,9 @@ AbstractBackgroundWidget {
     resizeMinWidth: 220
     resizeMinHeight: 72
     needsColText: true
+    // The surface below forces a minimum plate opacity, so accents always sit
+    // on the plate even when the user's background toggle is off.
+    accentBackdrop: widgetPlateColor
 
     property int headlineIndex: 0
     readonly property var article: (NewsService.articles.length > 0)
@@ -80,7 +83,7 @@ AbstractBackgroundWidget {
             Layout.alignment: Qt.AlignTop
             text: "newspaper"
             iconSize: Math.round(26 * root.scaleFactor)
-            color: root.widgetAccent
+            color: root.widgetAccentVisible
         }
 
         ColumnLayout {

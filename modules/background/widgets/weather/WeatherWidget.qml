@@ -44,6 +44,8 @@ AbstractBackgroundWidget {
     // it so ensureVisible() and the region-aware halo can make the shape read on any
     // wallpaper instead of dissolving into a same-tone background.
     needsColText: true
+    // Card mode forces a minimum plate opacity — accents sit on the plate.
+    accentBackdrop: widgetPlateColor
 
     // ── Shape name → enum mapping ──
     readonly property var _shapeMap: ({
@@ -67,7 +69,10 @@ AbstractBackgroundWidget {
         : Appearance.colors.colOnPrimaryContainer
     readonly property color shapeFill: root.accentPrimaryContainer
     readonly property color shapeInk: ColorUtils.ensureReadable(root.accentOnPrimaryContainer, root.shapeFill, 4.5)
-    readonly property color cardInk: ColorUtils.ensureReadable(root.colText, Appearance.colors.colLayer1, 4.5)
+    // Card text sits on the region-aware plate (the surface below forces a
+    // minimum opacity) — widgetSurfaceInk already opposes that plate; checking
+    // against the theme layer let dark ink land on the dark plate.
+    readonly property color cardInk: root.widgetSurfaceInk
 
     // ── Style tokens ──
     readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
@@ -181,13 +186,15 @@ AbstractBackgroundWidget {
         return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
     }
 
-    // Derived colors per style mode. Dim toward region luminance opposite, not black.
-    readonly property color _dimTarget: ColorUtils.contrastColor(root._regionBg)
+    // Derived colors per style mode. Dim toward the luminance opposite of what
+    // the ink actually sits on — the card plate (dimming away from the REGION
+    // walked text into the plate's own tone). Pill ink is shapeInk, no dim.
+    readonly property color _cardDimTarget: ColorUtils.contrastColor(root.widgetPlateColor)
     readonly property color weatherIconColor: weatherStyle === "pill"
-        ? root.shapeInk : ColorUtils.mix(root.widgetAccent, root._dimTarget, dimFactor * 0.35)
+        ? root.shapeInk : ColorUtils.mix(root.widgetAccentVisible, root._cardDimTarget, dimFactor * 0.35)
     readonly property color weatherConditionColor: weatherStyle === "pill"
         ? ColorUtils.applyAlpha(root.shapeInk, root.conditionOpacity)
-        : ColorUtils.applyAlpha(ColorUtils.mix(root.cardInk, root._dimTarget, dimFactor * 0.5), root.conditionOpacity)
+        : ColorUtils.applyAlpha(ColorUtils.mix(root.cardInk, root._cardDimTarget, dimFactor * 0.5), root.conditionOpacity)
 
     // ── Pill/shape mode ──
     // Soft contact shadow detaches the pill from the wallpaper (shell shadow

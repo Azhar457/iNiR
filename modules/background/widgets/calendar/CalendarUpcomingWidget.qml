@@ -230,7 +230,7 @@ AbstractBackgroundWidget {
                 StyledText {
                     visible: eventDelegate.modelData?._showDayHeader ?? false
                     text: root._dayHeading(eventDelegate.modelData)
-                    color: root.widgetAccent
+                    color: root.widgetAccentVisible
                     font {
                         pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                         weight: Font.DemiBold
@@ -247,7 +247,7 @@ AbstractBackgroundWidget {
                         width: Math.max(3, Math.round(3 * root.scaleFactor))
                         height: Math.round(16 * root.scaleFactor)
                         radius: width / 2
-                        color: eventDelegate.modelData?.color || root.widgetAccent
+                        color: eventDelegate.modelData?.color || root.widgetAccentVisible
                     }
 
                     ColumnLayout {
@@ -307,7 +307,7 @@ AbstractBackgroundWidget {
                     anchors.centerIn: parent
                     text: "event_available"
                     iconSize: Math.round(26 * root.scaleFactor)
-                    color: root.widgetAccent
+                    color: root.widgetAccentVisible
                 }
             }
 

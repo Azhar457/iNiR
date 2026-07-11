@@ -32,6 +32,9 @@ AbstractBackgroundWidget {
 
     implicitWidth: Math.round((root._readConfigKey("contentWidth") ?? 200) * scaleFactor)
     implicitHeight: implicitWidth
+    // She's an image — no ink to adapt — but her optional card is the shared
+    // region-aware plate, so run the analysis only while the card is on.
+    needsColText: widgetHasSurface
     resizableAxes: ({ uniform: "contentWidth" })
     resizeMinWidth: 96
     resizeMinHeight: 96
@@ -42,7 +45,30 @@ AbstractBackgroundWidget {
 
     // ── Perching: sit on top of another widget instead of a free-floating spot ──
     readonly property string anchorWidget: root._readConfigKey("anchorWidget") ?? ""
-    readonly property string _anchorConfigPath: root.anchorWidget.length > 0 ? ("background.widgets." + root.anchorWidget) : ""
+    readonly property bool perched: root.anchorWidget.length > 0
+    // Live sibling instead of its stored x/y: auto-placed widgets ("leastBusy")
+    // never write the coordinates they actually render at, and a dragged anchor
+    // only writes on release. Every widget is `Loader { WidgetX {} }` inside the
+    // canvas, and the loaders sit at 0,0 — so the item's x/y are canvas coords.
+    // Resolved imperatively: a binding over `canvas.children[i].item` re-runs
+    // whenever any sibling loader re-sizes, which Qt reports as a binding loop.
+    property Item _anchorItem: null
+    function _resolveAnchorItem(): void {
+        const canvas = root.perched ? (root.parent?.parent ?? null) : null
+        if (!canvas) {
+            root._anchorItem = null
+            return
+        }
+        for (let i = 0; i < canvas.children.length; ++i) {
+            const child = canvas.children[i]
+            const item = child?.item ?? child
+            if (item && item !== root && item.configEntryName === root.anchorWidget) {
+                root._anchorItem = item
+                return
+            }
+        }
+        root._anchorItem = null
+    }
     // Other enabled widgets she could perch on (built-ins + other mascot instances, excluding herself)
     readonly property var _anchorCandidates: {
         Config.revision
@@ -64,32 +90,38 @@ AbstractBackgroundWidget {
         return list
     }
     function _cycleAnchor(dir: int): void {
-        const options = [""].concat(root._anchorCandidates)
+        const options = root._anchorCandidates
+        if (options.length === 0) return
         const cur = options.indexOf(root.anchorWidget)
         const next = options[((cur === -1 ? 0 : cur) + dir + options.length) % options.length]
         Config.setNestedValue(root._configPath + ".anchorWidget", next)
     }
-    // Perches at the anchor's top edge, slightly overlapping it so she reads
-    // as standing/sitting on it rather than floating above. Re-runs on every
-    // config change (cheap: two reads + a no-op guard) so she follows the
-    // anchor if the user drags it, and self-heals if the anchor is removed.
-    // Re-entrancy guard: Config.setNestedValues() emits the GLOBAL
-    // configChanged signal synchronously, which re-enters this function via
-    // the Connections below BEFORE this call frame returns. Without this
-    // flag that's unbounded synchronous recursion (hit live: stack overflow
-    // across the whole shell, every Config consumer, not just this widget).
+    function _toggleSeat(): void {
+        Config.setNestedValue(root._configPath + ".anchorWidget",
+            root.perched ? "" : (root._anchorCandidates[0] ?? ""))
+    }
+
+    // How deep her bounding box sinks into the anchor's. Her sprite is letterboxed
+    // (PreserveAspectFit + margins) and every widget's box is padded past its ink —
+    // the clock's box top sits a whole line-box above the digits. Without the sink
+    // she lands on those invisible edges and reads as floating.
+    readonly property real _perchSink: 0.24
+    // Re-entrancy guard: Config.setNestedValues() emits the GLOBAL configChanged
+    // signal synchronously, which re-enters this function via the Connections
+    // below BEFORE this call frame returns. Without this flag that's unbounded
+    // synchronous recursion (hit live: stack overflow across the whole shell,
+    // every Config consumer, not just this widget).
     property bool _syncingAnchor: false
     function _syncToAnchor(): void {
         if (root._syncingAnchor) return
-        if (root._anchorConfigPath.length === 0) return
-        const ax = Number(Config.getNestedValue(root._anchorConfigPath + ".x", NaN))
-        const ay = Number(Config.getNestedValue(root._anchorConfigPath + ".y", NaN))
-        if (!Number.isFinite(ax) || !Number.isFinite(ay)) return
-        // Perch above the anchor; if that would push her off the top of the
-        // screen (anchor sits near the top edge), sit below it instead.
-        const above = ay - root.height * 0.82
-        const nx = Math.round(root._clampX(ax))
-        const ny = Math.round(root._clampY(above >= 0 ? above : ay + root.height * 0.18))
+        const anchor = root._anchorItem
+        if (!anchor || anchor.width <= 0 || anchor.height <= 0) return
+        const sink = Math.round(root.height * root._perchSink)
+        // Perch on the anchor's top edge; if that would push her off the top of
+        // the screen (anchor sits near the top edge), sit on its bottom instead.
+        const above = anchor.y + sink - root.height
+        const nx = Math.round(root._clampX(anchor.x + (anchor.width - root.width) / 2))
+        const ny = Math.round(root._clampY(above >= 0 ? above : anchor.y + anchor.height - sink))
         if (Math.round(root.x) === nx && Math.round(root.y) === ny) return
         root._syncingAnchor = true
         const updates = {}
@@ -103,26 +135,47 @@ AbstractBackgroundWidget {
         root.syncFreePositionFromConfig()
         root._syncingAnchor = false
     }
+    // Connections, not `onHeightChanged:` — AbstractBackgroundWidget already
+    // declares those handlers and a redeclaration here would shadow them.
+    Connections {
+        target: root
+        function on_AnchorItemChanged() { root._syncToAnchor() }
+        function onWidthChanged() { root._syncToAnchor() }
+        function onHeightChanged() { root._syncToAnchor() }
+    }
+    Connections {
+        target: root._anchorItem
+        enabled: root._anchorItem !== null
+        function onXChanged() { root._syncToAnchor() }
+        function onYChanged() { root._syncToAnchor() }
+        function onWidthChanged() { root._syncToAnchor() }
+        function onHeightChanged() { root._syncToAnchor() }
+    }
+    // Anchor identity lives in config; the sibling it points at may only appear
+    // later (its loader activates on the next revision), so re-resolve on both.
     Connections {
         target: Config
-        function onConfigChanged() { root._syncToAnchor() }
+        function onConfigChanged() {
+            root._resolveAnchorItem()
+            root._syncToAnchor()
+        }
     }
     // Deferred: the FadeLoader's `shown` binding tracks Config.revision, so a
     // synchronous Config write during instantiation re-enters that binding
     // mid-evaluation (logged as a binding loop on `shown`).
-    Component.onCompleted: Qt.callLater(root._syncToAnchor)
+    Component.onCompleted: Qt.callLater(() => {
+        root._resolveAnchorItem()
+        root._syncToAnchor()
+    })
 
     // Quick controls: cycle/shuffle the catalog pose right from the desktop.
     // Picking from the catalog clears a custom image on purpose.
     readonly property var _poseList: {
-        const m = root._manifest
-        const set = new Set()
-        Object.keys(m.linesByPose ?? {}).forEach(p => set.add(p))
-        ;(m.idlePicks ?? []).forEach(p => set.add(p[0]))
-        Object.values(m.reactions ?? {}).forEach(r => (r.poses ?? []).forEach(p => set.add(p)))
-        ;(m.animatedPoses ?? []).forEach(p => set.add(p))
-        return Array.from(set).sort()
+        return root._manifest.desktopWidgetPoses ?? []
     }
+    readonly property string _effectivePose: root._poseList.includes(root.pose)
+        ? root.pose
+        : (root._poseList[0] ?? "presence-idle-loop")
     function _setPose(next: string): void {
         const updates = {}
         updates[root._configPath + ".pose"] = next
@@ -179,19 +232,24 @@ AbstractBackgroundWidget {
                 columnSpacing: 4
                 Layout.alignment: Qt.AlignHCenter
                 visible: root._anchorCandidates.length > 0
+                // The chevrons pick WHICH widget she sits on, so they only mean
+                // something while seated; the middle button owns the mode.
                 SelectionGroupButton {
                     leftmost: true; rightmost: true
+                    enabled: root.perched
                     buttonIcon: "chevron_left"
                     onClicked: root._cycleAnchor(-1)
                 }
                 SelectionGroupButton {
                     leftmost: true; rightmost: true
+                    toggled: root.perched
                     buttonIcon: "chair"
-                    buttonText: Translation.tr("Sit on")
-                    onClicked: root._cycleAnchor(1)
+                    buttonText: root.perched ? Translation.tr("Seated") : Translation.tr("Free")
+                    onClicked: root._toggleSeat()
                 }
                 SelectionGroupButton {
                     leftmost: true; rightmost: true
+                    enabled: root.perched
                     buttonIcon: "chevron_right"
                     onClicked: root._cycleAnchor(1)
                 }
@@ -202,7 +260,7 @@ AbstractBackgroundWidget {
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 visible: root._anchorCandidates.length > 0
-                text: root.anchorWidget.length > 0
+                text: root.perched
                     ? (Translation.tr("Perched on") + " " + root.anchorWidget.split(".").pop())
                     : Translation.tr("Free-floating")
                 font.pixelSize: Appearance.font.pixelSize.smaller
@@ -216,7 +274,9 @@ AbstractBackgroundWidget {
     property var _manifest: ({})
     readonly property var _animatedPoses: _manifest.animatedPoses ?? []
     FileView {
+        id: manifestFile
         path: Quickshell.shellPath("assets/images/mascot/manifest.json")
+        watchChanges: true
         onLoadedChanged: {
             if (!loaded) return
             try {
@@ -240,7 +300,7 @@ AbstractBackgroundWidget {
         _clickReset.restart()
         const tiers = root._manifest.clickTiers ?? ({})
         const tier = root._clicks >= 4 ? tiers.tier4 : (root._clicks >= 2 ? tiers.tier2 : tiers.tier1)
-        const pool = tier?.poses ?? ["annoyed-poked"]
+        const pool = tier?.poses ?? ["hand-on-hip"]
         root._reactPose = pool[Math.floor(Math.random() * pool.length)]
         _reactRevert.restart()
     }
@@ -270,10 +330,11 @@ AbstractBackgroundWidget {
         source: {
             if (root.customPath.length > 0)
                 return root.customPath.startsWith("file://") ? root.customPath : "file://" + root.customPath
-            const p = root._reactPose.length > 0 ? root._reactPose : root.pose
+            if (!manifestFile.loaded) return ""
+            const p = root._reactPose.length > 0 ? root._reactPose : root._effectivePose
             return Quickshell.shellPath(`assets/images/mascot/inir-mascot-${p}.${root._animatedPoses.includes(p) ? "gif" : "png"}`)
         }
-        playing: root.powerActive
+        playing: root.powerActive && Appearance.animationsEnabled
         fillMode: Image.PreserveAspectFit
         asynchronous: true
         // custom images aren't pixel art — smooth them; catalog stays crisp
