@@ -12,6 +12,7 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
+import qs.modules.pill
 
 // Edge-hover workspace navigator with window thumbnails and a now-playing
 // media flyout.
@@ -83,6 +84,14 @@ Scope {
             readonly property bool showMetadata: Config.options?.workspaceStrip?.showMetadata ?? true
             readonly property bool showPreviews: Config.options?.workspaceStrip?.showPreviews ?? true
             readonly property bool showMediaPlayer: Config.options?.workspaceStrip?.showMediaPlayer ?? true
+            // Chrome dialect. The Ricelin island look is opt-in so every global
+            // style keeps its own surface design: "auto" follows the bar (island
+            // only while the pill bar is active), "island"/"stock" force it.
+            readonly property string chromeStyle: Config.options?.workspaceStrip?.style ?? "auto"
+            readonly property bool islandChrome: !Appearance.zzzEverywhere
+                && (chromeStyle === "island"
+                    || (chromeStyle === "auto"
+                        && (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"))
             readonly property bool perMonitor: (Config.options?.workspaceStrip?.perMonitor ?? true) && CompositorService.isNiri
             readonly property bool scrollNavigation: Config.options?.workspaceStrip?.scrollNavigation ?? false
             readonly property bool scrollNavigationSwitchWorkspace: Config.options?.workspaceStrip?.scrollNavigationSwitchWorkspace ?? true
@@ -379,12 +388,15 @@ Scope {
                 // detector and input mask, any overshoot past the target (the ZZZ
                 // elementMoveEnter curve overshoots to 1.56) momentarily pushes the
                 // panel back out of the pointer, dropping hover and oscillating the
-                // strip open/closed. Use a decelerating, non-overshoot curve in
-                // every style — snappy under zzz, emphasized elsewhere.
-                readonly property int _slideDuration: Appearance.animation.elementMoveEnter.duration
+                // strip open/closed. zzz keeps its snap; everything else rides the
+                // Ricelin liquid-morph curve — front-loaded with a long settle,
+                // and strictly non-overshoot, so the anti-flicker contract holds.
+                readonly property int _slideDuration: Appearance.zzzEverywhere
+                    ? Appearance.animation.elementMoveEnter.duration
+                    : PillMotion.glide
                 readonly property var _slideCurve: Appearance.zzzEverywhere
                     ? Appearance.animationCurves.zzzSnap
-                    : Appearance.animationCurves.emphasizedDecel
+                    : PillMotion.morphCurve
 
                 Behavior on anchors.rightMargin {
                     enabled: Appearance.animationsEnabled
@@ -440,6 +452,20 @@ Scope {
 
                     visible: stripWindow.shown && stripWindow.showMetadata
                         && sel !== null && !stripWindow.selIsMedia
+                    islandChrome: stripWindow.islandChrome
+
+                    // Live screen position for the glass/backdrop crop — tracks the
+                    // flyout as it follows the selection and as the panel slides.
+                    readonly property point _screenPos: {
+                        void x; void y; void stripContent.x;
+                        return mapToItem(null, 0, 0)
+                    }
+                    backdropScreenX: (stripWindow.isRight
+                        ? (stripWindow.modelData?.width ?? stripWindow.width) - stripWindow.width
+                        : 0) + _screenPos.x
+                    backdropScreenY: _screenPos.y
+                    backdropScreenWidth: stripWindow.modelData?.width ?? 1920
+                    backdropScreenHeight: stripWindow.modelData?.height ?? 1080
                     showAppIcons: stripWindow.showAppIcons
                     showPreviews: stripWindow.showPreviews
                     dragProxy: windowDragProxy
@@ -459,6 +485,9 @@ Scope {
                         : stripWindow.railWidth + stripWindow.edgeMargin - 14
                     y: Math.max(8, Math.min(stripContent.height - height - 8, selCenterY - height / 2))
                     opacity: visible ? 1 : 0
+                    // Morph, don't pop: the flyout settles in from the rail side.
+                    scale: visible ? 1 : 0.96
+                    transformOrigin: stripWindow.isRight ? Item.Right : Item.Left
 
                     // Snappy follow: short, non-elastic slide so the flyout tracks
                     // the hovered card almost immediately instead of lagging behind.
@@ -469,6 +498,14 @@ Scope {
                     Behavior on opacity {
                         enabled: Appearance.animationsEnabled
                         NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
+                    Behavior on scale {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: PillMotion.morph
+                            easing.type: PillMotion.easeMorph
+                            easing.bezierCurve: PillMotion.morphCurve
+                        }
                     }
                 }
 
@@ -482,12 +519,27 @@ Scope {
                         : stripContent.height / 2
 
                     visible: stripWindow.shown && stripWindow.selIsMedia && stripWindow.hasPlayer
+                    islandChrome: stripWindow.islandChrome
+
+                    readonly property point _screenPos: {
+                        void x; void y; void stripContent.x;
+                        return mapToItem(null, 0, 0)
+                    }
+                    backdropScreenX: (stripWindow.isRight
+                        ? (stripWindow.modelData?.width ?? stripWindow.width) - stripWindow.width
+                        : 0) + _screenPos.x
+                    backdropScreenY: _screenPos.y
+                    backdropScreenWidth: stripWindow.modelData?.width ?? 1920
+                    backdropScreenHeight: stripWindow.modelData?.height ?? 1080
+
                     width: stripWindow.detailWidth
                     x: stripWindow.isRight
                         ? stripWindow.railInset + 14 - width
                         : stripWindow.railWidth + stripWindow.edgeMargin - 14
                     y: Math.max(8, Math.min(stripContent.height - height - 8, selCenterY - height / 2))
                     opacity: visible ? 1 : 0
+                    scale: visible ? 1 : 0.96
+                    transformOrigin: stripWindow.isRight ? Item.Right : Item.Left
 
                     Behavior on y {
                         enabled: Appearance.animationsEnabled
@@ -496,6 +548,14 @@ Scope {
                     Behavior on opacity {
                         enabled: Appearance.animationsEnabled
                         NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
+                    Behavior on scale {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: PillMotion.morph
+                            easing.type: PillMotion.easeMorph
+                            easing.bezierCurve: PillMotion.morphCurve
+                        }
                     }
                 }
 
@@ -600,16 +660,20 @@ Scope {
                             id: mediaSlot
                             visible: stripWindow.hasPlayer
                             width: stripWindow.railWidth
-                            height: visible
-                                ? (isSelected ? stripWindow.cardSelW : stripWindow.cardBaseW) : 0
+                            // Constant slot height: selection growth never reflows
+                            // the rail — a moving list under the pointer is what made
+                            // hover selection jump between slots. The card overflows
+                            // its slot instead (z-stacked, clip off).
+                            height: visible ? stripWindow.cardBaseW : 0
+                            z: isSelected ? 10 : 1
 
                             readonly property bool isSelected: stripWindow.selIsMedia
 
                             Behavior on height {
                                 enabled: Appearance.animationsEnabled
                                 NumberAnimation {
-                                    duration: Appearance.animation.elementMoveFast.duration
-                                    easing.type: Easing.OutCubic
+                                    duration: PillMotion.fast
+                                    easing.type: PillMotion.easeStandard
                                 }
                             }
 
@@ -619,6 +683,7 @@ Scope {
                                 selected: mediaSlot.isSelected
                                 shown: stripWindow.shown
                                 isRight: stripWindow.isRight
+                                islandChrome: stripWindow.islandChrome
                                 width: mediaSlot.isSelected ? stripWindow.cardSelW : stripWindow.cardBaseW
                                 height: width
                                 anchors.verticalCenter: parent.verticalCenter
@@ -627,17 +692,18 @@ Scope {
                                 Behavior on width {
                                     enabled: Appearance.animationsEnabled
                                     NumberAnimation {
-                                        duration: Appearance.animation.elementMoveFast.duration
-                                        easing.type: Easing.OutCubic
+                                        duration: PillMotion.fast
+                                        easing.type: PillMotion.easeStandard
                                     }
                                 }
 
                                 onActivated: stripWindow._hoveredKey = stripWindow.mediaKey
+                            }
 
-                                HoverHandler {
-                                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                                    onHoveredChanged: if (hovered) stripWindow._hoveredKey = stripWindow.mediaKey
-                                }
+                            // Full-row hover, same reasoning as the workspace slots.
+                            HoverHandler {
+                                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                onHoveredChanged: if (hovered) stripWindow._hoveredKey = stripWindow.mediaKey
                             }
                         }
 
@@ -670,15 +736,10 @@ Scope {
                                 property alias cardIsActiveWs: wsCard.isActiveWs
 
                                 width: stripWindow.railWidth
-                                height: isSelected ? stripWindow.cardSelH : stripWindow.cardBaseH
-
-                                Behavior on height {
-                                    enabled: Appearance.animationsEnabled
-                                    NumberAnimation {
-                                        duration: Appearance.animation.elementMoveFast.duration
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
+                                // Constant slot height — see mediaSlot note: growth
+                                // must never reflow the rail under the pointer.
+                                height: stripWindow.cardBaseH
+                                z: isSelected ? 10 : 1
 
                                 onIsSelectedChanged: if (isSelected) stripWindow._selDelegate = slot
                                 Component.onCompleted: if (isSelected) stripWindow._selDelegate = slot
@@ -690,6 +751,7 @@ Scope {
                                     selected: slot.isSelected
                                     shown: stripWindow.shown
                                     isRight: stripWindow.isRight
+                                    islandChrome: stripWindow.islandChrome
                                     showPreviews: stripWindow.showPreviews
                                     showAppIcons: stripWindow.showAppIcons
                                     injectedWindows: CompositorService.isNiri
@@ -697,26 +759,26 @@ Scope {
                                         : null
 
                                     width: slot.isSelected ? stripWindow.cardSelW : stripWindow.cardBaseW
-                                    height: parent.height
+                                    height: slot.isSelected ? stripWindow.cardSelH : stripWindow.cardBaseH
                                     anchors.verticalCenter: parent.verticalCenter
                                     x: stripWindow.isRight ? stripWindow.railWidth - width : 0
 
                                     Behavior on width {
                                         enabled: Appearance.animationsEnabled
                                         NumberAnimation {
-                                            duration: Appearance.animation.elementMoveFast.duration
-                                            easing.type: Easing.OutCubic
+                                            duration: PillMotion.fast
+                                            easing.type: PillMotion.easeStandard
+                                        }
+                                    }
+                                    Behavior on height {
+                                        enabled: Appearance.animationsEnabled
+                                        NumberAnimation {
+                                            duration: PillMotion.fast
+                                            easing.type: PillMotion.easeStandard
                                         }
                                     }
 
                                     onActivated: stripWindow.switchWorkspace(slot.modelData, slot.index)
-
-                                    // Selection follows hover and PERSISTS on hover-out
-                                    // so the side flyout (and its controls) stay reachable.
-                                    HoverHandler {
-                                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                                        onHoveredChanged: if (hovered) stripWindow._hoveredKey = slot.wsKey
-                                    }
 
                                     // Drop target: dropping a dragged window here
                                     // moves it onto this workspace.
@@ -731,6 +793,17 @@ Scope {
                                             drop.accept()
                                         }
                                     }
+                                }
+
+                                // Selection follows hover and PERSISTS on hover-out
+                                // so the side flyout (and its controls) stay reachable.
+                                // On the SLOT (full rail width), not the card: the
+                                // unselected card is narrower than the rail row, and
+                                // hover dead-zones next to small cards made vertical
+                                // travel feel imprecise.
+                                HoverHandler {
+                                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                    onHoveredChanged: if (hovered) stripWindow._hoveredKey = slot.wsKey
                                 }
                             }
                         }
@@ -766,18 +839,23 @@ Scope {
                                 readonly property color _accent: _zzz
                                     ? Appearance.zzz.accent : Appearance.colors.colPrimary
 
-                                // Non-zzz: dashed-feel plate with accent ring on hover.
+                                // Non-zzz plate; the Ricelin frame treatment is
+                                // island-chrome only, stock keeps its accent ring.
                                 Rectangle {
                                     anchors.fill: parent
                                     visible: !newWsZone._zzz
                                     radius: Appearance.rounding.normal
                                     color: newWsZone._hot
-                                        ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.78)
-                                        : "transparent"
-                                    border.width: newWsZone._hot ? 2 : 1.5
+                                        ? (stripWindow.islandChrome
+                                            ? Qt.alpha(PillTheme.verm, 0.2)
+                                            : ColorUtils.transparentize(Appearance.colors.colPrimary, 0.78))
+                                        : (stripWindow.islandChrome ? PillTheme.frameBg : "transparent")
+                                    border.width: newWsZone._hot ? 2 : (stripWindow.islandChrome ? 1 : 1.5)
                                     border.color: newWsZone._hot
-                                        ? Appearance.colors.colPrimary
-                                        : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.2)
+                                        ? (stripWindow.islandChrome ? PillTheme.vermLit : Appearance.colors.colPrimary)
+                                        : (stripWindow.islandChrome
+                                            ? PillTheme.border
+                                            : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.2))
                                     Behavior on color {
                                         enabled: Appearance.animationsEnabled
                                         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
@@ -804,9 +882,10 @@ Scope {
                                     chamferBottomLeft: !stripWindow.isRight && !Appearance.zzz.round
                                 }
 
+                                // Kanji 新 (new) in island chrome, plus icon otherwise.
                                 MaterialSymbol {
                                     anchors.centerIn: parent
-                                    text: "add"
+                                    text: (stripWindow.islandChrome && PillTheme.showGlyphs) ? "jp:新" : "add"
                                     iconSize: 24
                                     color: newWsZone._hot
                                         ? newWsZone._accent : Appearance.colors.colSubtext

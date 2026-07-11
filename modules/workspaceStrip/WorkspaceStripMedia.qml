@@ -7,25 +7,100 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
+import qs.modules.pill
 
 // "Now playing" media flyout — the music-player analog of the reference.
 // Shown when the media thumbnail is selected; reuses MprisController so it
 // drives whatever player the rest of the shell tracks.
+// Chrome matches WorkspaceStripDetail: Ricelin island card everywhere but zzz —
+// filament seek thread, kanji play seal (奏/休) flanked by 前/次 skips.
 PanelSurface {
     id: media
 
+    // Ricelin island dialect opt-in (owned by the strip); false = the global
+    // style's own PanelSurface card with the stock slider + transport.
+    property bool islandChrome: false
+
     readonly property MprisPlayer player: MprisController.activePlayer
+    readonly property bool isPlaying: player?.isPlaying ?? false
     readonly property bool _zzz: Appearance.zzzEverywhere
     readonly property real _progress: (player?.length ?? 0) > 0
         ? Math.max(0, Math.min(1, (player?.position ?? 0) / player.length)) : 0
 
     elevation: 2
     cardStyle: true
+    borderless: islandChrome
+    // Aurora stock dialect: frosted wallpaper behind the translucent card.
+    wallpaperBackdrop: true
     implicitHeight: column.implicitHeight + 32
+
+    function mix(a, b, t) {
+        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1)
+    }
+
+    // Kanji skip control with icon fallback; hover warms it dim → cream.
+    component KanjiSkip: Item {
+        id: skip
+
+        property bool can: false
+        property string kanjiText: ""
+        property string icon: ""
+        signal activated()
+
+        anchors.verticalCenter: parent.verticalCenter
+        width: 26
+        height: 26
+        opacity: can ? 1 : 0.4
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: PillMotion.fast }
+        }
+
+        Text {
+            visible: PillTheme.showGlyphs
+            anchors.centerIn: parent
+            text: skip.kanjiText
+            font.family: PillTheme.fontJp
+            font.pixelSize: 15
+            color: skipArea.containsMouse ? PillTheme.cream : PillTheme.dim
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation { duration: PillMotion.fast }
+            }
+        }
+        MaterialSymbol {
+            visible: !PillTheme.showGlyphs
+            anchors.centerIn: parent
+            text: skip.icon
+            iconSize: 18
+            color: skipArea.containsMouse ? PillTheme.cream : PillTheme.dim
+        }
+
+        MouseArea {
+            id: skipArea
+            anchors.fill: parent
+            anchors.margins: -6
+            hoverEnabled: true
+            enabled: skip.can
+            cursorShape: Qt.PointingHandCursor
+            onClicked: skip.activated()
+        }
+    }
+
+    IslandPanel {
+        anchors.fill: parent
+        visible: media.islandChrome
+        z: -1
+        glassEnabled: true
+        glassScreenX: media.backdropScreenX
+        glassScreenY: media.backdropScreenY
+        glassScreenWidth: media.backdropScreenWidth
+        glassScreenHeight: media.backdropScreenHeight
+    }
 
     // Keep position fresh while playing (MPRIS doesn't push position ticks).
     Timer {
-        running: media.visible && (media.player?.isPlaying ?? false) && !seek.pressed
+        running: media.visible && media.isPlaying && !seek.pressed && !seekArea.pressed
         interval: 1000
         repeat: true
         onTriggered: media.player?.positionChanged()
@@ -104,14 +179,35 @@ PanelSurface {
                 width: parent.width - 72
                 spacing: 1
 
-                StyledText {
+                // Kicker + right-aligned playback state in dim tracked caps.
+                Item {
                     width: parent.width
-                    text: Translation.tr("Now playing").toUpperCase()
-                    elide: Text.ElideRight
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.weight: Font.Bold
-                    font.letterSpacing: 1.2
-                    color: media._zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                    height: kicker.implicitHeight
+
+                    StyledText {
+                        id: kicker
+                        anchors.left: parent.left
+                        anchors.right: playState.left
+                        anchors.rightMargin: 8
+                        text: Translation.tr("Now playing").toUpperCase()
+                        elide: Text.ElideRight
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.weight: Font.DemiBold
+                        font.letterSpacing: 1.6
+                        color: media._zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                    }
+                    StyledText {
+                        id: playState
+                        anchors.right: parent.right
+                        anchors.baseline: kicker.baseline
+                        text: (media.isPlaying
+                            ? Translation.tr("Playing") : Translation.tr("Paused")).toUpperCase()
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.weight: Font.Bold
+                        font.letterSpacing: 1.0
+                        color: media._zzz ? Appearance.zzz.onColor : PillTheme.dim
+                        opacity: 0.85
+                    }
                 }
                 StyledText {
                     width: parent.width
@@ -133,13 +229,23 @@ PanelSurface {
             }
         }
 
-        // Seek bar + times.
+        // Internal structure by hairline, never outline — island signature.
+        Rectangle {
+            visible: media.islandChrome
+            width: parent.width
+            height: 1
+            color: PillTheme.hairSoft
+        }
+
+        // Seek + times. Non-zzz gets the Ricelin filament: thread track, warm
+        // gradient fill and a lit cap at the playhead; zzz keeps the stock slider.
         Column {
             width: parent.width
             spacing: 3
 
             StyledSlider {
                 id: seek
+                visible: !media.islandChrome
                 width: parent.width
                 enabled: media.player?.canSeek ?? false
                 value: media._progress
@@ -148,26 +254,160 @@ PanelSurface {
             }
 
             Item {
+                id: filamentSeek
+                visible: media.islandChrome
+                width: parent.width
+                height: 14
+
+                readonly property real frac: seekArea.pressed ? seekArea.dragFrac : media._progress
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width
+                    height: 4
+                    radius: height / 2
+                    color: PillTheme.threadBg
+
+                    Item {
+                        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                        width: parent.width * filamentSeek.frac
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: height / 2
+                            gradient: Gradient {
+                                orientation: Gradient.Horizontal
+                                GradientStop { position: 0.0; color: PillTheme.vermDim }
+                                GradientStop { position: 1.0; color: PillTheme.vermLit }
+                            }
+                        }
+                        Rectangle {
+                            anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+                            width: 2.5
+                            radius: width / 2
+                            color: PillTheme.flameCore
+                        }
+                    }
+                }
+
+                MouseArea {
+                    id: seekArea
+                    anchors.fill: parent
+                    anchors.margins: -6
+                    enabled: media.player?.canSeek ?? false
+                    cursorShape: Qt.PointingHandCursor
+                    property real dragFrac: 0
+                    function fracAt(mx: real): real {
+                        return Math.max(0, Math.min(1, (mx - 6) / Math.max(1, filamentSeek.width)))
+                    }
+                    onPressed: mouse => dragFrac = fracAt(mouse.x)
+                    onPositionChanged: mouse => { if (pressed) dragFrac = fracAt(mouse.x) }
+                    onReleased: if (media.player)
+                        media.player.position = dragFrac * (media.player.length ?? 0)
+                }
+            }
+
+            Item {
                 width: parent.width
                 height: elapsed.implicitHeight
                 StyledText {
                     id: elapsed
                     anchors.left: parent.left
-                    text: StringUtils.friendlyTimeForSeconds(media.player?.position ?? 0)
+                    text: StringUtils.friendlyTimeForSeconds(seekArea.pressed
+                        ? seekArea.dragFrac * (media.player?.length ?? 0)
+                        : (media.player?.position ?? 0))
                     font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.features: { "tnum": 1 }
                     color: Appearance.colors.colSubtext
                 }
                 StyledText {
                     anchors.right: parent.right
                     text: StringUtils.friendlyTimeForSeconds(media.player?.length ?? 0)
                     font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.features: { "tnum": 1 }
                     color: Appearance.colors.colSubtext
                 }
             }
         }
 
-        // Transport controls.
+        // Ricelin transport: 前 / play seal / 次. The seal is the hanko-style
+        // stamp from the pill's media surface — warm gradient that saturates
+        // while playing, kanji 奏/休 gated on the glyph switch.
         Row {
+            visible: media.islandChrome
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 24
+
+            KanjiSkip {
+                kanjiText: "前"
+                icon: "skip_previous"
+                can: MprisController.canGoPreviousForPlayer(media.player)
+                onActivated: MprisController.previousForPlayer(media.player)
+            }
+
+            Rectangle {
+                id: seal
+                anchors.verticalCenter: parent.verticalCenter
+                width: 44
+                height: 44
+                radius: PillMotion.rSmall
+                rotation: -1.5
+
+                property real sat: media.isPlaying ? 1 : 0
+                Behavior on sat {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: PillMotion.fast; easing.type: PillMotion.easeStandard }
+                }
+
+                opacity: (sealArea.enabled ? 1 : 0.4) * (0.75 + 0.25 * sat)
+                border.width: 1
+                border.color: Qt.alpha(PillTheme.vermLit, 0.4 + 0.3 * sat)
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: media.mix(PillTheme.verm, PillTheme.tileBg, 0.55 - 0.27 * seal.sat) }
+                    GradientStop { position: 1.0; color: media.mix(PillTheme.vermDeep, PillTheme.tileBg, 0.55 - 0.27 * seal.sat) }
+                }
+
+                Text {
+                    visible: PillTheme.showGlyphs
+                    anchors.centerIn: parent
+                    text: media.isPlaying ? PillTheme.glyph("media") : PillTheme.glyph("mediaPaused")
+                    color: PillTheme.bright
+                    font.family: PillTheme.fontJp
+                    font.pixelSize: 20
+                    font.weight: Font.DemiBold
+                }
+                MaterialSymbol {
+                    visible: !PillTheme.showGlyphs
+                    anchors.centerIn: parent
+                    fill: 1
+                    text: media.isPlaying ? "pause" : "play_arrow"
+                    iconSize: 22
+                    color: PillTheme.bright
+                }
+
+                MouseArea {
+                    id: sealArea
+                    anchors.fill: parent
+                    anchors.margins: -4
+                    hoverEnabled: true
+                    enabled: media.player !== null
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: media.player?.togglePlaying()
+                }
+            }
+
+            KanjiSkip {
+                kanjiText: "次"
+                icon: "skip_next"
+                can: MprisController.canGoNextForPlayer(media.player)
+                onActivated: MprisController.nextForPlayer(media.player)
+            }
+        }
+
+        // Stock transport (every non-island dialect): round buttons on each
+        // global style's own tokens.
+        Row {
+            visible: !media.islandChrome
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 14
 
@@ -185,7 +425,7 @@ PanelSurface {
                     implicitWidth: size
                     implicitHeight: size
                     buttonRadius: isPlay
-                        ? ((media.player?.isPlaying ?? false) ? Appearance.rounding.normal : size / 2)
+                        ? (media.isPlaying ? Appearance.rounding.normal : size / 2)
                         : size / 2
                     enabled: isPlay ? (media.player !== null)
                         : (modelData.icon === "skip_next"
@@ -208,7 +448,7 @@ PanelSurface {
                         fill: 1
                         iconSize: parent.isPlay ? Appearance.font.pixelSize.huge : Appearance.font.pixelSize.larger
                         text: parent.isPlay
-                            ? ((media.player?.isPlaying ?? false) ? "pause" : "play_arrow")
+                            ? (media.isPlaying ? "pause" : "play_arrow")
                             : modelData.icon
                         color: parent.isPlay
                             ? (media._zzz ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary)

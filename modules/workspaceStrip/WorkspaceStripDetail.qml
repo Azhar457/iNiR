@@ -9,15 +9,22 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
+import qs.modules.pill
 
 // Detached "now playing"-style flyout shown to the side of the selected card.
 // Carries the selected workspace's identity and a live, interactive list of its
 // open windows: click a row to focus, hover to reveal a close (×) control, and
 // drag a row onto any rail card to move that window to another workspace.
 //
-// Surface skin (every global style, incl. zzz chamfer) comes from PanelSurface.
+// Chrome: the Ricelin island card (gradient + hairline + sheen, themed through
+// PillTheme onto the generated palette) in every style except zzz, which keeps
+// its chamfered PanelSurface identity.
 PanelSurface {
     id: detail
+
+    // Ricelin island dialect opt-in (owned by the strip); false = the global
+    // style's own PanelSurface card.
+    property bool islandChrome: false
 
     property string wsName: ""
     property int wsIndex: 0
@@ -38,6 +45,24 @@ PanelSurface {
     readonly property bool _zzz: Appearance.zzzEverywhere
     readonly property bool _isNiri: CompositorService.isNiri
 
+    // Stable row identity. NiriService reassigns `windows` on every real event
+    // (title change — media players retitle constantly —, focus, layout), and
+    // each reassignment rebuilds the filtered array this flyout receives. A
+    // Repeater bound to that raw array tears down and recreates every row each
+    // time, resetting hover state and fill animations mid-pointer — the
+    // reported hover flicker. Key the rows by window id instead and let row
+    // content rebind reactively; delegates only rebuild when the id sequence
+    // actually changes.
+    property var _rowKeys: []
+    onWsWindowsChanged: {
+        const next = (wsWindows ?? []).map((w, i) => _isNiri ? (w?.id ?? -(i + 1)) : i)
+        if (next.join(",") !== _rowKeys.join(","))
+            _rowKeys = next
+    }
+    // Accent used by the hold-to-close heat gesture in every dialect.
+    readonly property color _heat: _zzz ? Appearance.zzz.accent
+        : islandChrome ? PillTheme.vermLit : Appearance.colors.colPrimary
+
     // Compact, capped window list — scroll when a workspace is busy.
     readonly property int rowHeight: 38
     readonly property int rowSpacing: 4
@@ -45,8 +70,23 @@ PanelSurface {
 
     elevation: 2
     cardStyle: true
+    borderless: islandChrome
+    // Aurora stock dialect: frosted wallpaper behind the translucent card
+    // (inert in every other style; PanelSurface gates it).
+    wallpaperBackdrop: true
 
     implicitHeight: column.implicitHeight + 32
+
+    IslandPanel {
+        anchors.fill: parent
+        visible: detail.islandChrome
+        z: -1
+        glassEnabled: true
+        glassScreenX: detail.backdropScreenX
+        glassScreenY: detail.backdropScreenY
+        glassScreenWidth: detail.backdropScreenWidth
+        glassScreenHeight: detail.backdropScreenHeight
+    }
 
     MouseArea {
         anchors.fill: parent
@@ -84,16 +124,56 @@ PanelSurface {
                 width: parent.width - (appIcon.visible ? appIcon.implicitSize + 10 : 0)
                 spacing: 1
 
-                StyledText {
+                Item {
                     width: parent.width
-                    text: detail.isActiveWs
-                        ? Translation.tr("Now active").toUpperCase()
-                        : Translation.tr("Workspace").toUpperCase()
-                    elide: Text.ElideRight
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    font.weight: Font.Bold
-                    font.letterSpacing: 1.2
-                    color: detail._zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                    height: kicker.implicitHeight
+
+                    // Kanji furniture — the workspace seal, swappable like every
+                    // other pill glyph (bar.pill.glyphs.workspaces).
+                    Text {
+                        id: wsGlyph
+                        anchors.left: parent.left
+                        anchors.baseline: kicker.baseline
+                        visible: detail.islandChrome && PillTheme.showGlyphs
+                        text: PillTheme.glyph("workspaces")
+                        font.family: PillTheme.fontJp
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.Medium
+                        color: Appearance.colors.colPrimary
+                    }
+
+                    StyledText {
+                        id: kicker
+                        anchors.left: wsGlyph.visible ? wsGlyph.right : parent.left
+                        anchors.leftMargin: wsGlyph.visible ? 6 : 0
+                        anchors.right: winCount.left
+                        anchors.rightMargin: 8
+                        text: detail.isActiveWs
+                            ? Translation.tr("Now active").toUpperCase()
+                            : Translation.tr("Workspace").toUpperCase()
+                        elide: Text.ElideRight
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.weight: Font.DemiBold
+                        font.letterSpacing: 1.6
+                        color: detail._zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                    }
+
+                    // Right-aligned status in dim tracked caps — window count.
+                    StyledText {
+                        id: winCount
+                        anchors.right: parent.right
+                        anchors.baseline: kicker.baseline
+                        visible: detail.wsWindows.length > 0
+                        text: detail.wsWindows.length === 1
+                            ? Translation.tr("1 window").toUpperCase()
+                            : Translation.tr("%1 windows").arg(detail.wsWindows.length).toUpperCase()
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.weight: Font.Bold
+                        font.letterSpacing: 1.0
+                        font.features: { "tnum": 1 }
+                        color: detail._zzz ? Appearance.zzz.onColor : PillTheme.dim
+                        opacity: 0.85
+                    }
                 }
 
                 StyledText {
@@ -167,14 +247,19 @@ PanelSurface {
                 }
 
                 Repeater {
-                    model: detail.wsWindows
+                    model: detail._rowKeys
 
                     Item {
                         id: row
                         required property var modelData
                         required property int index
 
-                        readonly property var win: modelData
+                        // Live lookup by id so title/focus updates flow into the
+                        // existing delegate instead of recreating it.
+                        readonly property var win: detail._isNiri
+                            ? (detail.wsWindows.find(w => (w?.id ?? -1) === row.modelData)
+                                ?? detail.wsWindows[row.index] ?? null)
+                            : (detail.wsWindows[row.index] ?? null)
                         readonly property int winId: detail._isNiri ? (win?.id ?? 0) : 0
                         readonly property string winAppId: detail._isNiri
                             ? (win?.app_id ?? "")
@@ -186,7 +271,8 @@ PanelSurface {
                             : (win?.activated ?? false)
                         readonly property bool dragging: detail.dragProxy
                             && detail.dragProxy.dragging
-                            && detail.dragProxy.win === win
+                            && (detail.dragProxy.win === win
+                                || (detail._isNiri && (detail.dragProxy.win?.id ?? -2) === row.winId))
 
                         width: listColumn.width
                         height: detail.rowHeight
@@ -199,21 +285,43 @@ PanelSurface {
                         Rectangle {
                             id: rowBg
                             anchors.fill: parent
-                            radius: detail._zzz ? Appearance.zzz.controlRadius
-                                : Appearance.rounding.small
-                            color: row.winFocused
-                                ? (detail._zzz
-                                    ? Appearance.zzz.bg3
-                                    : ColorUtils.transparentize(Appearance.colors.colPrimary, 0.85))
-                                : rowHover.hovered
-                                    ? (detail._zzz ? Appearance.zzz.bg2 : Appearance.colors.colLayer2Hover)
-                                    : "transparent"
+                            radius: detail._zzz ? Appearance.zzz.controlRadius : 9
+                            // The × is a hover-enabled MouseArea ON TOP of the row:
+                            // it takes hover exclusively, so the row highlight must
+                            // also count the button's own hover or the fill blinks
+                            // off while crossing it (reported flicker).
+                            readonly property bool rowLit: rowHover.hovered
+                                || closeArea.containsMouse || closeHeat.holding
+                            color: detail._zzz
+                                ? (row.winFocused ? Appearance.zzz.bg3
+                                    : rowLit ? Appearance.zzz.bg2 : "transparent")
+                                : (row.winFocused || rowLit)
+                                ? (detail.islandChrome ? PillTheme.frameBg
+                                    : ColorUtils.transparentize(Appearance.colors.colLayer2, 0.25))
+                                : "transparent"
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
-                                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                ColorAnimation { duration: PillMotion.fast }
                             }
                             border.width: row.winFocused && !detail._zzz ? 1 : 0
-                            border.color: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.6)
+                            border.color: detail.islandChrome
+                                ? PillTheme.frameBorder : Appearance.colors.colOutlineVariant
+                        }
+
+                        // Hairline divider under every row but the last —
+                        // internal structure by 1px hairlines, never outlines.
+                        Rectangle {
+                            visible: !detail._zzz && row.index < detail.wsWindows.length - 1
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                bottom: parent.bottom
+                                leftMargin: 6
+                                rightMargin: 6
+                                bottomMargin: -Math.ceil(detail.rowSpacing / 2)
+                            }
+                            height: 1
+                            color: PillTheme.hairSoft
                         }
 
                         Row {
@@ -247,7 +355,17 @@ PanelSurface {
                                     source: (detail.showPreviews && detail._isNiri && row.winId > 0)
                                         ? WindowPreviewService.getPreviewUrl(row.winId) : ""
                                     asynchronous: true
-                                    cache: false
+                                    // Preview URLs carry a capture timestamp, so a new
+                                    // frame is a new cache entry: caching is safe and
+                                    // makes re-hovering a workspace instant instead of
+                                    // re-decoding every screenshot from disk.
+                                    cache: true
+                                    // Decode at thumb size (2x for hidpi), not at the
+                                    // window's full capture resolution — full-size
+                                    // decodes were the visible lag when moving hover
+                                    // across workspaces.
+                                    sourceSize.width: 84
+                                    sourceSize.height: 52
                                     fillMode: Image.PreserveAspectCrop
                                     smooth: true
                                     mipmap: true
@@ -305,31 +423,87 @@ PanelSurface {
                             }
                         }
 
-                        // Close (×) — revealed on hover.
-                        RippleButton {
+                        // Close (×) — revealed on hover. Destructive gesture, so it
+                        // follows the Ricelin doctrine: hold to commit, release early
+                        // and the heat drains. No confirm dialog.
+                        Item {
                             id: closeBtn
                             anchors {
                                 right: parent.right
                                 verticalCenter: parent.verticalCenter
                                 rightMargin: 6
                             }
-                            implicitWidth: 24
-                            implicitHeight: 24
-                            buttonRadius: detail._zzz ? Appearance.zzz.controlRadius : width / 2
-                            visible: (rowHover.hovered || closeHover.hovered) && !row.dragging
-                            colBackground: "transparent"
-                            colBackgroundHover: detail._zzz
-                                ? Appearance.zzz.bg4
-                                : ColorUtils.transparentize(Appearance.colors.colLayer3, 0.2)
-                            downAction: () => detail.windowCloseRequested(row.win)
+                            width: 24
+                            height: 24
+                            visible: (rowHover.hovered || closeArea.containsMouse
+                                || closeHeat.holding) && !row.dragging
 
-                            HoverHandler { id: closeHover }
+                            HeatHold {
+                                id: closeHeat
+                                onConfirmed: detail.windowCloseRequested(row.win)
+                            }
 
-                            contentItem: MaterialSymbol {
-                                horizontalAlignment: Text.AlignHCenter
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: detail._zzz ? Appearance.zzz.controlRadius : width / 2
+                                color: closeHeat.holding
+                                    ? Qt.alpha(detail._heat, 0.12 + 0.24 * closeHeat.hold)
+                                    : closeArea.containsMouse
+                                    ? (detail._zzz ? Appearance.zzz.bg4
+                                        : ColorUtils.transparentize(Appearance.colors.colLayer3, 0.2))
+                                    : "transparent"
+                            }
+
+                            MaterialSymbol {
+                                anchors.centerIn: parent
                                 text: "close"
                                 iconSize: 16
-                                color: Appearance.colors.colOnLayer1
+                                color: closeHeat.holding ? detail._heat : Appearance.colors.colOnLayer1
+                            }
+
+                            MouseArea {
+                                id: closeArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onPressed: closeHeat.press()
+                                onReleased: closeHeat.release()
+                                onCanceled: closeHeat.cancel()
+                            }
+                        }
+
+                        // Heat sweep: while the × is held, a flame line sweeps from
+                        // the button across the row's bottom edge; full sweep closes.
+                        Item {
+                            visible: closeHeat.holding
+                            anchors {
+                                right: parent.right
+                                bottom: parent.bottom
+                                rightMargin: 6
+                                bottomMargin: 1
+                            }
+                            height: 2
+                            width: (row.width - 12) * closeHeat.hold
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: height / 2
+                                gradient: Gradient {
+                                    orientation: Gradient.Horizontal
+                                    GradientStop { position: 0.0; color: detail._heat }
+                                    GradientStop {
+                                        position: 1.0
+                                        color: detail.islandChrome ? PillTheme.vermDim : detail._heat
+                                    }
+                                }
+                            }
+                            // Lit head at the leading (left) edge — island flame.
+                            Rectangle {
+                                visible: detail.islandChrome
+                                anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                                width: 2.5
+                                radius: width / 2
+                                color: PillTheme.flameCore
                             }
                         }
 
@@ -385,30 +559,54 @@ PanelSurface {
             }
         }
 
-        // ── Active-state accent rail ──
+        // ── Active-state filament: thread track, warm gradient fill and a lit
+        // cap at the leading edge (zzz keeps its flat hairline treatment).
         Rectangle {
             width: parent.width
             height: 3
             radius: detail._zzz ? 0 : Appearance.rounding.full
-            color: detail._zzz ? Appearance.zzz.hairlineStrong
-                : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.3)
+            color: detail._zzz ? Appearance.zzz.hairlineStrong : PillTheme.threadBg
 
-            Rectangle {
+            Item {
+                id: filamentFill
                 anchors {
                     left: parent.left
                     top: parent.top
                     bottom: parent.bottom
                 }
                 width: parent.width * (detail.isActiveWs ? 1 : 0.34)
-                radius: parent.radius
-                color: detail._zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary
                 Behavior on width {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation {
-                        duration: Appearance.animation.elementMove.duration
-                        easing.type: Appearance.animation.elementMove.type
-                        easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+                        duration: PillMotion.morph
+                        easing.type: PillMotion.easeMorph
+                        easing.bezierCurve: PillMotion.morphCurve
                     }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: detail._zzz ? 0 : Appearance.rounding.full
+                    visible: !detail.islandChrome
+                    color: detail._zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Appearance.rounding.full
+                    visible: detail.islandChrome
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0.0; color: PillTheme.vermDim }
+                        GradientStop { position: 1.0; color: PillTheme.vermLit }
+                    }
+                }
+                // Lit cap on the leading edge — island flame.
+                Rectangle {
+                    visible: detail.islandChrome
+                    anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+                    width: 2.5
+                    radius: width / 2
+                    color: PillTheme.flameCore
                 }
             }
         }

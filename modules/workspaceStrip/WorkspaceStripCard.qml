@@ -8,6 +8,7 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
+import qs.modules.pill
 
 // One workspace thumbnail in the rail.
 //
@@ -24,6 +25,9 @@ Item {
     property bool selected: false
     property bool shown: false
     property bool isRight: true
+    // Ricelin island dialect opt-in (owned by the strip); false = each global
+    // style's own stock look.
+    property bool islandChrome: false
     property bool showPreviews: true
     property bool showAppIcons: true
     // Niri-only: windows for this workspace, pre-bucketed by the parent strip so
@@ -69,6 +73,7 @@ Item {
         ? (isActiveWs ? Appearance.zzz.accent : Appearance.zzz.hairlineStrong)
         : isActiveWs ? Appearance.colors.colPrimary
         : selected ? Appearance.colors.colOutline
+        : islandChrome ? PillTheme.border
         : Appearance.colors.colOutlineVariant
 
     z: selected ? 10 : 1
@@ -141,6 +146,10 @@ Item {
             source: card.shown ? url : ""
             asynchronous: true
             cache: true
+            // Decode at card size (~2x the largest selected card), never at the
+            // window's full capture resolution — keeps hover-selection instant.
+            sourceSize.width: 384
+            sourceSize.height: 240
             fillMode: Image.PreserveAspectCrop
             smooth: true
             mipmap: true
@@ -197,6 +206,22 @@ Item {
                 GradientStop { position: 1; color: ColorUtils.transparentize(Appearance.colors.colScrim, 0.5) }
             }
         }
+
+        // Top sheen on the selected card — the lit inner edge every Ricelin
+        // surface carries; reads as the card catching light when it grows.
+        Rectangle {
+            visible: card.islandChrome && card.selected
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+                topMargin: 1
+                leftMargin: card._radius * 0.6
+                rightMargin: card._radius * 0.6
+            }
+            height: 1
+            color: PillTheme.sheen
+        }
     }
 
     // Workspace number badge.
@@ -209,18 +234,26 @@ Item {
         }
         width: wsNum.implicitWidth + 12
         height: wsNum.implicitHeight + 5
-        radius: card._zzz ? Appearance.zzz.controlRadius : Appearance.rounding.full
+        radius: card._zzz ? Appearance.zzz.controlRadius
+            : card.islandChrome ? PillMotion.rSmall : Appearance.rounding.small
         color: card._zzz
             ? (card.isActiveWs ? Appearance.zzz.sticker : Appearance.zzz.bg4)
-            : card.isActiveWs ? Appearance.colors.colPrimary
+            : (card.isActiveWs && !card.islandChrome) ? Appearance.colors.colPrimary
             : ColorUtils.transparentize(Appearance.colors.colLayer3, 0.15)
+        // Island chrome: the active workspace burns — lit-top vermilion ramp.
+        property Gradient _lit: Gradient {
+            GradientStop { position: 0.0; color: PillTheme.vermLit }
+            GradientStop { position: 1.0; color: PillTheme.verm }
+        }
+        gradient: (card.islandChrome && card.isActiveWs) ? _lit : null
 
         StyledText {
             id: wsNum
             anchors.centerIn: parent
-            text: String(card.wsIndex).padStart(2, "0")
+            text: String(card.wsIndex)
             font.pixelSize: Appearance.font.pixelSize.smaller
             font.weight: Font.Bold
+            font.features: { "tnum": 1 }
             color: card._zzz
                 ? (card.isActiveWs ? Appearance.zzz.onSticker : Appearance.zzz.onColor)
                 : card.isActiveWs ? Appearance.colors.colOnPrimary

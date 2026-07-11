@@ -6,6 +6,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
+import qs.modules.pill
 
 // Square album-art thumbnail at the head of the rail — the now-playing entry.
 // Selecting it swaps the side flyout to the media player.
@@ -15,6 +16,8 @@ Item {
     property bool selected: false
     property bool shown: false
     property bool isRight: true
+    // Ricelin island dialect opt-in (owned by the strip).
+    property bool islandChrome: false
 
     signal activated()
 
@@ -34,7 +37,20 @@ Item {
         ? (isPlaying ? Appearance.zzz.accent : Appearance.zzz.hairlineStrong)
         : isPlaying ? Appearance.colors.colPrimary
         : selected ? Appearance.colors.colOutline
+        : islandChrome ? PillTheme.border
         : Appearance.colors.colOutlineVariant
+
+    readonly property real _progress: (player?.length ?? 0) > 0
+        ? Math.max(0, Math.min(1, (player?.position ?? 0) / player.length)) : 0
+
+    // Coarse position tick so the burn line crawls while the rail is open
+    // (MPRIS doesn't push position changes on its own).
+    Timer {
+        running: card.shown && card.isPlaying
+        interval: 2000
+        repeat: true
+        onTriggered: card.player?.positionChanged()
+    }
 
     z: selected ? 10 : 1
     opacity: selected || isPlaying ? 1 : 0.85
@@ -132,6 +148,60 @@ Item {
                 GradientStop { position: 0.5; color: "transparent" }
                 GradientStop { position: 1; color: ColorUtils.transparentize(Appearance.colors.colScrim, 0.45) }
             }
+        }
+
+        // Track-progress filament burning along the bottom edge while playing —
+        // the card whispers where the song is without opening the flyout.
+        Rectangle {
+            visible: card.isPlaying
+            anchors {
+                left: parent.left
+                right: parent.right
+                bottom: parent.bottom
+            }
+            height: 2.5
+            color: card._zzz ? Appearance.zzz.hairlineStrong : PillTheme.threadBg
+
+            Item {
+                anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                width: parent.width * card._progress
+
+                Rectangle {
+                    anchors.fill: parent
+                    visible: !card.islandChrome
+                    color: card._zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    visible: card.islandChrome
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0.0; color: PillTheme.vermDim }
+                        GradientStop { position: 1.0; color: PillTheme.vermLit }
+                    }
+                }
+                Rectangle {
+                    visible: card.islandChrome
+                    anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+                    width: 2
+                    color: PillTheme.flameCore
+                }
+            }
+        }
+
+        // Top sheen on the selected card — parity with the workspace cards.
+        Rectangle {
+            visible: card.islandChrome && card.selected
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+                topMargin: 1
+                leftMargin: card._radius * 0.6
+                rightMargin: card._radius * 0.6
+            }
+            height: 1
+            color: PillTheme.sheen
         }
 
         // Play-state pip so the card reads as media even with art loaded.
