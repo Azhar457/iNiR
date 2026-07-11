@@ -1055,6 +1055,8 @@ Singleton {
 
             property JsonObject background: JsonObject {
                 property JsonObject widgets: JsonObject {
+                    // "panel" (stock per-style plate) | "island" (Ricelin card)
+                    property string style: "panel"
                     property int dynamicOpacity: 0 // 0-100: reduce widget opacity when windows are on current workspace
                     property JsonObject powerSaving: JsonObject {
                         property bool enable: true
@@ -1513,6 +1515,7 @@ Singleton {
                         property string calendar: ""
                         property string mixer: ""
                         property string launcher: ""
+                        property string workspaces: ""
                     }
                     // Hover-row furniture: every module in the expanded row can be
                     // switched off (surface-bound icons follow surfaces.* instead).
@@ -1784,6 +1787,8 @@ Singleton {
             }
 
             property JsonObject controlPanel: JsonObject {
+                // "panel" (stock per-style card) | "island" (Ricelin card)
+                property string style: "panel"
                 property bool keepLoaded: false
                 property bool compactMode: true
                 property bool showMediaSection: true
@@ -2554,6 +2559,9 @@ Singleton {
             }
 
             property JsonObject workspaceStrip: JsonObject {
+                // Chrome dialect: "auto" follows the bar (island look only when
+                // the pill bar is active), "island"/"stock" force it.
+                property string style: "auto"
                 property string side: "right"
                 property int panelWidth: 480
                 property int previewSize: 150

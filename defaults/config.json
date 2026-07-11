@@ -712,7 +712,8 @@
                 "size": 32,
                 "snap": true
             },
-            "custom": {}
+            "custom": {},
+            "style": "panel"
         },
         "multiMonitor": {
             "enable": false
@@ -776,7 +777,8 @@
                 "battery": "",
                 "calendar": "",
                 "mixer": "",
-                "launcher": ""
+                "launcher": "",
+                "workspaces": ""
             }
         },
         "activeWindow": {
@@ -994,7 +996,8 @@
         "showSystemSection": true,
         "showSlidersSection": true,
         "showQuickActionsSection": true,
-        "showWallpaperSchemeChips": false
+        "showWallpaperSchemeChips": false,
+        "style": "panel"
     },
     "dashboard": {
         "enable": true,
@@ -2020,6 +2023,7 @@
         "iiMascotCompanion"
     ],
     "workspaceStrip": {
+        "style": "auto",
         "side": "right",
         "panelWidth": 480,
         "previewSize": 150,
