@@ -620,14 +620,10 @@ Item { // Bar content region
             }
             return 0
         }
-        Behavior on radius {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation {
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-            }
-        }
+        // No Behavior on the base radius: all four corners below are always
+        // bound (radius only feeds them), and stacking a radius interceptor on
+        // top of the per-corner ones triggers Qt's "another interceptor on
+        // property radius - unsupported" warning.
 
         // ZZZ corner semantics:
         // - Round mode keeps the same capsule language at the screen ends.

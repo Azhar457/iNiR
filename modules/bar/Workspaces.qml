@@ -285,9 +285,9 @@ Item {
                 z: 1
                 implicitWidth: workspaceButtonWidth
                 implicitHeight: workspaceButtonWidth
-                radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius
-                    : Appearance.angelEverywhere ? Appearance.angel.roundingSmall : (width / 2)
-                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
+                // No plain radius here: all four corners are per-corner bound, and
+                // a Behavior on radius alongside them is the known "another
+                // interceptor on property radius" warning (Qt supports one).
                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                 property bool previousOccupied: (workspaceOccupied[index-1] ?? false) && !(!activeWindow?.activated && currentWorkspaceNumber === index)
                 property bool rightOccupied: (workspaceOccupied[index+1] ?? false) && !(!activeWindow?.activated && currentWorkspaceNumber === index+2)
@@ -564,8 +564,8 @@ Item {
                 z: 1
                 implicitWidth: workspaceButtonWidth
                 implicitHeight: workspaceButtonWidth
-                radius: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : (width / 2)
-                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
+                // Per-corner radii below own every corner; see note on the
+                // occupied-cell Rectangle above about the interceptor warning.
                 property bool previousExists: index > 0
                 property bool nextExists: index < root.currentWorkspaceWindows.length - 1
                 property real radiusPrev: Appearance.zzzEverywhere ? Appearance.zzz.cornerRadius : (previousExists ? 0 : (width / 2))

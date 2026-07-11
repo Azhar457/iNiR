@@ -142,10 +142,8 @@ Item { // Bar content region
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : root.inirEverywhere ? Appearance.inir.roundingNormal
             : floatingStyle ? ((Config.options?.bar?.cornerStyle ?? 0) === 3 ? Appearance.rounding.normal : Appearance.rounding.windowRounding) : 0
-        Behavior on radius {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
+        // No Behavior on the base radius — the per-corner radii below own the
+        // corners, and a second interceptor on radius is unsupported (Qt warn).
 
         // ZZZ round mode: a FLUSH vertical bar softens only its INNER edge (facing
         // into the screen); a FLOATING bar rounds all four. bar.bottom doubles as the
