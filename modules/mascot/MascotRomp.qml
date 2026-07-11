@@ -60,6 +60,8 @@ PanelWindow {
 
     property var _manifest: ({})
     readonly property var _chaosCfg: _manifest.chaos ?? ({})
+    readonly property var _fullBodyPoses: _manifest.fullBodyPoses ?? []
+    readonly property var _contextualOcclusionPoses: _manifest.contextualOcclusionPoses ?? []
     FileView {
         id: manifestFile
         path: Quickshell.shellPath("assets/images/mascot/manifest.json")
@@ -106,11 +108,22 @@ PanelWindow {
 
     // Chaos poses can be a single name or a pool; pools rotate with memory
     property var _recentActPoses: []
+    function _isFullBodyPose(candidate): bool {
+        return typeof candidate === "string" && romp._fullBodyPoses.includes(candidate)
+    }
+
+    function _safeFullBodyPose(candidate, fallback): string {
+        return romp._isFullBodyPose(candidate) ? candidate
+             : (romp._isFullBodyPose(fallback) ? fallback : "hand-on-hip")
+    }
+
     function _pickActPose(p, fallback): string {
-        if (!p) return fallback
-        if (typeof p === "string") return p
-        const fresh = p.filter(x => !romp._recentActPoses.includes(x))
-        const src = fresh.length ? fresh : p
+        const candidates = !p ? [] : (typeof p === "string" ? [p] : p)
+        const fullBody = candidates.filter(x => romp._isFullBodyPose(x))
+        const safeFallback = romp._safeFullBodyPose(fallback, "hand-on-hip")
+        const pool = fullBody.length ? fullBody : [safeFallback]
+        const fresh = pool.filter(x => !romp._recentActPoses.includes(x))
+        const src = fresh.length ? fresh : pool
         const pick = src[Math.floor(Math.random() * src.length)]
         romp._recentActPoses.push(pick)
         while (romp._recentActPoses.length > 3) romp._recentActPoses.shift()
@@ -434,7 +447,10 @@ PanelWindow {
         if (romp.phase === "enter") {
             const cfgKey = stop.kind === "hit" ? romp._hitCfgKey(stop) : stop.kind
             const act = romp._chaosCfg[cfgKey] ?? ({})
-            romp.pose = romp._pickActPose(act.pose, stop.kind === "trip" ? "dead-crash" : "chibi-mallet")
+            // Fallbacks stay in the romp's full-body domain; chibi art belongs
+            // to the tier-4 click ladder, not to a character moving through
+            // desktop space next to full-body art.
+            romp.pose = romp._pickActPose(act.pose, stop.kind === "trip" ? "dead-crash" : "mallet-swing")
             romp.line = romp._pickLine(act.lines)
             romp.phase = "act"
             phaseTimer.interval = stop.kind === "trip" ? 2000
@@ -472,7 +488,8 @@ PanelWindow {
             }
             if (stop.kind === "trip") {
                 // she just lies there; then gets up, pretends it didn't happen
-                romp.pose = "annoyed-poked"
+                const act = romp._chaosCfg.trip ?? ({})
+                romp.pose = romp._pickActPose(act.after, "stand-pout")
                 romp.line = romp._pickLine(romp._chaosCfg.trip?.after_lines ?? ["You saw NOTHING."])
                 romp.phase = "aftermath"
                 phaseTimer.interval = 1200
@@ -556,7 +573,9 @@ PanelWindow {
         } else if (romp.phase === "aftermath") {
             // stolen goods leave with her, at a burdened waddle
             const stealing = romp.planType === "steal"
-            romp.pose = stealing ? (romp._chaosCfg.steal?.carry ?? "carry-crate") : romp._runPose
+            romp.pose = stealing
+                ? romp._safeFullBodyPose(romp._chaosCfg.steal?.carry, "carry-crate")
+                : romp._runPose
             romp.line = ""
             romp.phase = "leave"
             // keep going in the same direction, out the far side
@@ -597,7 +616,8 @@ PanelWindow {
         property: "spriteY"
         duration: 320
         easing.type: Easing.OutQuad
-        onStopped: if (romp.phase === "chase") romp.pose = romp._chaosCfg.chase?.wait ?? "crouch-ready"
+        onStopped: if (romp.phase === "chase")
+            romp.pose = romp._safeFullBodyPose(romp._chaosCfg.chase?.wait, "crouch-ready")
     }
 
     function _startChase(): void {
@@ -614,7 +634,7 @@ PanelWindow {
     function _chasePounce(cx: real, cy: real): void {
         romp._chaseClicks++
         if (romp._chaseClicks > 14) { romp._endChase("bored"); return }
-        romp.pose = romp._chaosCfg.chase?.pounce ?? "pounce-point"
+        romp.pose = romp._safeFullBodyPose(romp._chaosCfg.chase?.pounce, "pounce-point")
         romp.line = ""
         chaseXTween.stop(); chaseYTween.stop()
         chaseXTween.to = Math.max(0, Math.min(cx - romp.spriteSize / 2, romp.width - romp.spriteSize))
@@ -629,13 +649,13 @@ PanelWindow {
         chaseXTween.stop(); chaseYTween.stop()
         const c = romp._chaosCfg.chase ?? ({})
         if (how === "caught") {
-            romp.pose = "purr-content"
+            romp.pose = romp._pickActPose(c.caughtPose, "sit-peace-wink")
             romp.line = romp._pickLine(c.caught ?? ["Okay. You win. This once."])
         } else if (how === "bored") {
-            romp.pose = "facepalm"
+            romp.pose = romp._pickActPose(c.boredPose, "hand-on-hip")
             romp.line = romp._pickLine(c.bored ?? ["I have things to wreck. Bye."])
         } else {
-            romp.pose = "shrug-annoyed"
+            romp.pose = romp._pickActPose(c.timeoutPose, "stand-pout")
             romp.line = romp._pickLine(c.timeout ?? ["Too slow. Noted."])
         }
         // settle to the ground, brag a moment, then leave
@@ -649,7 +669,8 @@ PanelWindow {
     // catches her, otherwise she wins by default ─────────────────────────
     function _startHide(): void {
         const h = romp._chaosCfg.hide ?? ({})
-        romp.pose = h.hidePose ?? "box-hideout"
+        const hiddenPose = h.hidePose ?? "box-hideout"
+        romp.pose = romp._contextualOcclusionPoses.includes(hiddenPose) ? hiddenPose : "box-hideout"
         romp.line = romp._pickLine(h.invite ?? ["Bet you can't find me."])
         romp.phase = "hide"
         phaseTimer.interval = 20000
@@ -659,10 +680,10 @@ PanelWindow {
         phaseTimer.stop()
         const h = romp._chaosCfg.hide ?? ({})
         if (how === "found") {
-            romp.pose = "purr-content"
+            romp.pose = romp._pickActPose(h.foundPose, "sit-peace-wink")
             romp.line = romp._pickLine(h.found ?? ["FOUND. Fine. You win this round."])
         } else {
-            romp.pose = "chibi-thumbsup"
+            romp.pose = romp._pickActPose(h.notFoundPose, "stomp-victory")
             romp.line = romp._pickLine(h.notFound ?? ["Too slow. I win by default."])
         }
         romp.phase = "aftermath"
@@ -714,8 +735,9 @@ PanelWindow {
                 // occasional full lunge, otherwise a stalking step
                 const lunge = dist < romp.spriteSize * 2.4 && Math.random() < 0.30
                 const step = lunge ? 1.0 : Math.min(1.0, (110 + Math.random() * 60) / dist)
-                romp.pose = lunge ? (romp._chaosCfg.chase?.pounce ?? "pounce-point")
-                                  : (romp._chaosCfg.chase?.stalk ?? "prowl-low")
+                romp.pose = lunge
+                    ? romp._safeFullBodyPose(romp._chaosCfg.chase?.pounce, "pounce-point")
+                    : romp._safeFullBodyPose(romp._chaosCfg.chase?.stalk, "prowl-low")
                 chaseXTween.duration = lunge ? 260 : 340
                 chaseYTween.duration = chaseXTween.duration
                 chaseXTween.to = Math.max(0, Math.min(romp.spriteX + dx * step, romp.width - romp.spriteSize))
@@ -745,7 +767,7 @@ PanelWindow {
                 if (Math.random() < 0.45) {
                     romp._startChase()
                 } else {
-                    romp.pose = "annoyed-poked"
+                    romp.pose = romp._pickActPose(romp._chaosCfg.startle_pose, "stand-pout")
                     romp.line = romp._pickLine(romp._chaosCfg.startle ?? ["HEY. Working here."])
                 }
             }
@@ -766,32 +788,89 @@ PanelWindow {
             NumberAnimation { target: sprite; property: "bob"; to: 0; duration: 140; easing.type: Easing.InQuad }
         }
 
-        AnimatedImage {
+        // Two stacked sprites, cross-faded. A single Image swapping `source`
+        // replaces the pixels the instant the new file decodes, so entering and
+        // leaving a run read as a hard cut. The incoming layer only starts its
+        // fade once it is Ready, otherwise the fade begins on an empty frame
+        // and she blinks out of existence for a beat.
+        Item {
+            id: spriteStack
             anchors.fill: parent
-            // Blank until _begin() runs (manifest loaded, phase leaves "idle") —
-            // resolving the extension against an empty _manifest.animatedPoses
-            // guessed .png for a real GIF default before the file finished
-            // loading (harmless self-correcting warn, but a real race).
-            source: romp.phase === "idle" ? "" : Quickshell.shellPath(`assets/images/mascot/inir-mascot-${romp.pose}.${(romp._manifest.animatedPoses ?? []).includes(romp.pose) ? "gif" : "png"}`)
-            playing: true
-            fillMode: Image.PreserveAspectFit
-            asynchronous: true
-            // Every other pose source in this file switches back to
-            // _runPose on "leave" (or a fresh romp reuses the same run
-            // GIF) — without caching, each switch is an uncached async
-            // decode that can lag behind the tween already moving,
-            // reading as "she leaves without the run animation."
-            cache: true
-            smooth: false
-            mipmap: false
-            // run art faces left unless listed in manifest facesRight;
-            // mirror whenever art facing and travel direction disagree
-            mirror: romp.running && (romp.movingRight !== (romp._manifest.facesRight ?? []).includes(romp.pose))
+
+            readonly property string source: romp.phase === "idle"
+                ? ""
+                : Quickshell.shellPath(`assets/images/mascot/inir-mascot-${romp.pose}.${(romp._manifest.animatedPoses ?? []).includes(romp.pose) ? "gif" : "png"}`)
+            readonly property bool mirrored: romp.running
+                && (romp.movingRight !== (romp._manifest.facesRight ?? []).includes(romp.pose))
+            readonly property int fadeDuration: Appearance.calcEffectiveDuration(130)
+
+            // Which layer currently owns the visible pose.
+            property bool frontIsA: true
+
+            onSourceChanged: {
+                if (source === "") { layerA.source = ""; layerB.source = ""; return }
+                _load(frontIsA ? layerB : layerA, source)
+            }
+
+            function _load(layer, src) {
+                // Re-assigning a source a layer already holds emits no
+                // statusChanged, so a Ready-gated reveal would never fire and the
+                // outgoing pose would stay on screen. This is the exact path
+                // "leave" takes: it returns to the run GIF the layer used on
+                // "enter", which is why she left the screen frozen mid-stride.
+                if (layer.source == src && layer.status === Image.Ready) {
+                    _reveal(layer)
+                    return
+                }
+                layer.source = src
+            }
+
+            function _reveal(layer) {
+                // Restart the loop so a run always begins on its contact frame
+                // instead of wherever the cached movie happened to stop.
+                if (layer.playing) layer.currentFrame = 0
+                // Ignore a late Ready from a layer that is already the front one.
+                if (layer === layerA && !frontIsA) frontIsA = true
+                else if (layer === layerB && frontIsA) frontIsA = false
+            }
+
+            component RompSprite: AnimatedImage {
+                anchors.fill: parent
+                playing: true
+                fillMode: Image.PreserveAspectFit
+                asynchronous: true
+                // Switching back to _runPose on "leave" would otherwise be an
+                // uncached async decode lagging behind the tween already moving,
+                // reading as "she leaves without the run animation."
+                cache: true
+                smooth: false
+                mipmap: false
+                mirror: spriteStack.mirrored
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: spriteStack.fadeDuration; easing.type: Easing.InOutQuad }
+                }
+            }
+
+            RompSprite {
+                id: layerA
+                opacity: spriteStack.frontIsA ? 1 : 0
+                onStatusChanged: if (status === Image.Ready) spriteStack._reveal(layerA)
+            }
+
+            RompSprite {
+                id: layerB
+                opacity: spriteStack.frontIsA ? 0 : 1
+                onStatusChanged: if (status === Image.Ready) spriteStack._reveal(layerB)
+            }
+
+            Component.onCompleted: if (source !== "") _load(layerA, source)
         }
     }
 
     // Speech bubble, same tooltip token dispatch as the companion
     Rectangle {
+        id: rompBubble
         readonly property int pad: 10
         visible: opacity > 0
         opacity: romp.line.length > 0 && romp.phase !== "leave" ? 1 : 0
@@ -815,6 +894,19 @@ PanelWindow {
                     : Appearance.colors.colLayer3Hover
         x: Math.max(12, Math.min(sprite.x + sprite.width / 2 - width / 2, romp.width - width - 12))
         y: sprite.y - height - 8
+
+        Rectangle {
+            width: 10
+            height: 10
+            x: Math.max(12, Math.min(sprite.x + sprite.width * 0.5 - rompBubble.x - width / 2,
+                                     rompBubble.width - width - 12))
+            y: rompBubble.height - height / 2
+            rotation: 45
+            z: -1
+            color: rompBubble.color
+            border.width: rompBubble.border.width
+            border.color: rompBubble.border.color
+        }
 
         StyledText {
             id: rompBubbleText

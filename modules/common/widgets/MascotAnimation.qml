@@ -24,7 +24,7 @@ AnimatedImage {
         return v === undefined ? true : v
     }
     // Per-surface override; a static override name renders as a still PNG
-    readonly property string effectivePose: {
+    readonly property string requestedPose: {
         if (surface.length > 0) {
             const o = Config.options?.mascot?.surfacePoses
             if (o) {
@@ -36,11 +36,7 @@ AnimatedImage {
         }
         return pose
     }
-
-    // Curated pose keeps the hardcoded .gif path: it must render before
-    // MascotCatalog's manifest loads at boot. Overrides resolve via the
-    // catalog (user picks happen long after it's loaded).
-    readonly property bool overridden: effectivePose !== pose
+    readonly property string effectivePose: MascotCatalog.resolvePose(requestedPose, surface, fallbackSurface)
     // Same apparent-size correction as MascotImage — see MascotCatalog.
     readonly property real frameScale: MascotCatalog.scaleFor(effectivePose)
     transform: Scale {
@@ -50,12 +46,10 @@ AnimatedImage {
         yScale: root.frameScale
     }
 
-    visible: active
-    playing: active && visible
-    source: (active && effectivePose.length > 0)
-        ? (overridden
-            ? MascotCatalog.sourceFor(effectivePose)
-            : Quickshell.shellPath(`assets/images/mascot/inir-mascot-${pose}.gif`))
+    visible: active && MascotCatalog.ready
+    playing: active && visible && Appearance.animationsEnabled
+    source: (active && MascotCatalog.ready && effectivePose.length > 0)
+        ? MascotCatalog.sourceFor(effectivePose)
         : ""
     fillMode: Image.PreserveAspectFit
     asynchronous: true

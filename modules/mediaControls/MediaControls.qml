@@ -238,11 +238,11 @@ Scope {
 
                                     MascotImage {
                                         Layout.alignment: Qt.AlignHCenter
-                                        Layout.preferredWidth: 100
-                                        Layout.preferredHeight: 100
+                                        Layout.preferredWidth: 112
+                                        Layout.preferredHeight: 132
                                         surface: "mediaControls"
                                         fallbackSurface: "emptyStates"
-                                        pose: "music-vibe"
+                                        pose: "headphone-groove-full-loop"
                                     }
 
                                     StyledText {

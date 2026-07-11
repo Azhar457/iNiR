@@ -27,8 +27,8 @@ import qs.modules.common.functions
  *   eventPoses.<key>, "" = rotate the manifest pool).
  * - MascotPoseGallery (modules/common/widgets) is the visual thumbnail
  *   picker; its options are built here by a FileView over
- *   assets/images/mascot/manifest.json (linesByPose + idlePicks +
- *   reactions + animatedPoses keys, each mapped to its asset path).
+ *   assets/images/mascot/manifest.json (curated pickerPoses plus
+ *   animatedPoses, each mapped to its asset path).
  * - Adding a new event = manifest reactions entry + Config.qml/defaults
  *   events/eventPoses keys + one eventDescriptors row here and in the
  *   waffle mirror. The companion reads everything through reactEvent().
@@ -378,18 +378,14 @@ ContentPage {
 
             FileView {
                 path: Quickshell.shellPath("assets/images/mascot/manifest.json")
+                watchChanges: true
                 onLoadedChanged: {
                     if (!loaded) return
                     try {
                         const m = JSON.parse(text())
-                        const set = new Set()
-                        Object.keys(m.linesByPose ?? {}).forEach(p => set.add(p))
-                        ;(m.idlePicks ?? []).forEach(p => set.add(p[0]))
-                        Object.values(m.reactions ?? {}).forEach(r => (r.poses ?? []).forEach(p => set.add(p)))
-                        ;(m.animatedPoses ?? []).forEach(p => set.add(p))
                         const anim = m.animatedPoses ?? []
                         mascotReactionsGroup.poseOptions = [{ displayName: Translation.tr("Auto (rotate pool)"), value: "", image: "" }]
-                            .concat(Array.from(set).sort().map(p => ({
+                            .concat((m.pickerPoses ?? []).map(p => ({
                                 displayName: p,
                                 value: p,
                                 image: Quickshell.shellPath(`assets/images/mascot/inir-mascot-${p}.${anim.includes(p) ? "gif" : "png"}`)
@@ -582,6 +578,26 @@ ContentPage {
                             text.split("\n").map(l => l.trim()).filter(l => l.length > 0))
                     });
                 }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        icon: "photo_library"
+        title: Translation.tr("Kira collection")
+        expanded: false
+
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Every shipped illustration has a role here. Full-body poses power the live companion; portraits, chibis and key art stay available as a curated character archive.")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
+
+            MascotCollection {
+                Layout.fillWidth: true
             }
         }
     }

@@ -1,128 +1,76 @@
 {
   "idlePicks": [
     [
-      "edge-peek",
+      "presence-idle-loop",
       "left"
     ],
     [
-      "right-edge-peek",
+      "presence-idle-loop",
       "right"
     ],
     [
-      "top-peek",
+      "tail-sway",
+      "right"
+    ],
+    [
+      "hand-on-hip",
+      "left"
+    ],
+    [
+      "low-angle-guard",
+      "right"
+    ],
+    [
+      "reading",
+      "bottom"
+    ],
+    [
+      "sit-laptop",
+      "bottom"
+    ],
+    [
+      "tea-break",
+      "bottom"
+    ],
+    [
+      "tiptoe-sneak",
+      "right"
+    ],
+    [
+      "yawn-stretch",
+      "left"
+    ],
+    [
+      "panel-sitter",
       "top"
     ],
     [
-      "upside-down-peek",
+      "dock-hang",
+      "bottom"
+    ],
+    [
+      "hanging-claws",
       "top"
     ],
     [
-      "fisheye-inspect",
+      "upside-down-hang",
+      "top"
+    ],
+    [
+      "follow-me",
+      "left"
+    ],
+    [
+      "stretching-break",
       "right"
     ],
     [
-      "bottom-rise",
+      "package-lifter",
+      "left"
+    ],
+    [
+      "network-signal-fishing",
       "bottom"
-    ],
-    [
-      "bottom-corner-lean",
-      "bottom"
-    ],
-    [
-      "bored-chin-rest",
-      "left"
-    ],
-    [
-      "bored-chin-rest",
-      "right"
-    ],
-    [
-      "seated-thinking",
-      "bottom"
-    ],
-    [
-      "tired-dev",
-      "left"
-    ],
-    [
-      "shrug-annoyed",
-      "left"
-    ],
-    [
-      "sit-pointing",
-      "bottom"
-    ],
-    [
-      "thinking-pose",
-      "right"
-    ],
-    [
-      "fisheye-reach",
-      "right"
-    ],
-    [
-      "smug-hand-raised",
-      "left"
-    ],
-    [
-      "waving-hi",
-      "left"
-    ],
-    [
-      "mate-break",
-      "right"
-    ],
-    [
-      "gossip-phone",
-      "right"
-    ],
-    [
-      "bug-net",
-      "right"
-    ],
-    [
-      "doctor-checkup",
-      "left"
-    ],
-    [
-      "popcorn-watch",
-      "right"
-    ],
-    [
-      "plant-care",
-      "left"
-    ],
-    [
-      "spyglass-search",
-      "right"
-    ],
-    [
-      "sticky-notes",
-      "left"
-    ],
-    [
-      "magic-hat",
-      "right"
-    ],
-    [
-      "crouch-inspect",
-      "bottom"
-    ],
-    [
-      "map-explorer",
-      "left"
-    ],
-    [
-      "speech-bubble-calm",
-      "right"
-    ],
-    [
-      "todo-done",
-      "right"
-    ],
-    [
-      "salute-ready",
-      "left"
     ]
   ],
   "linesByPose": {
@@ -137,7 +85,11 @@
       "Feed the battery. Now.",
       "I'm running on fumes here.",
       "Plug me in. Or don't. See what happens.",
-      "Your battery is as low as my patience."
+      "Your battery is as low as my patience.",
+      "%1 left. I've seen worse. Not recently.",
+      "%1. That's it. That's the whole battery.",
+      "%1 and counting down. Bold of you to keep scrolling.",
+      "%1 left. The cable is right there."
     ],
     "update-ready": [
       "Update's ready. I read the changelog so you don't have to.",
@@ -152,6 +104,16 @@
       "The wifi went to get milk.",
       "I blame the router. Always.",
       "Have you tried turning it off and on again?"
+    ],
+    "network-signal-fishing": [
+      "Signal acquired. Eventually.",
+      "Patience. The Wi-Fi is biting.",
+      "Caught one. Don't scare it."
+    ],
+    "bluetooth-magnet-pair": [
+      "They found each other. Miracles happen.",
+      "Paired on the first try. Mark the calendar.",
+      "Look at that. Cooperation."
     ],
     "sleep-dnd": [
       "Shh. Do-not-disturb includes me. Rude.",
@@ -897,6 +859,150 @@
       "Revolution! Literally.",
       "That was 720 degrees of style.",
       "Dizzy? Never heard of her."
+    ],
+    "telescope-scan": [
+      "I see it. The bug. It sees me too.",
+      "Scanning the horizon. Nothing but tech debt.",
+      "Land ho. It's another config file."
+    ],
+    "gardener-sprout": [
+      "I'm growing something. Unlike your side project.",
+      "It needs water. Your repo needs commits.",
+      "Small. Green. Already more alive than that branch."
+    ],
+    "magician-hat": [
+      "Nothing up my sleeve. Everything in your cache.",
+      "Behold: the file you swore you deleted.",
+      "Magic. Or a symlink. I'll never tell."
+    ],
+    "mic-stage-check": [
+      "Check, check. Is this thing muted? It was.",
+      "Testing. One, two. Nobody heard you either.",
+      "Sound check. The meeting starts in four minutes."
+    ],
+    "plugin-alchemist": [
+      "Two plugins, one config. This is fine.",
+      "Brewing. Mostly dependencies.",
+      "It compiles. I didn't say it works."
+    ],
+    "docs-guide": [
+      "The answer is in the docs. It always was.",
+      "Page one. You've never been there.",
+      "I read it so you don't have to. You should anyway."
+    ],
+    "brightness-sunshield": [
+      "Too bright. My eyes. Your theme.",
+      "That's a lot of lumens for this hour.",
+      "Dim it. For both of us."
+    ],
+    "keyhole-guardian": [
+      "Nothing gets in. Except that one script.",
+      "I hold the key. You forgot the passphrase.",
+      "Locked. Guarded. Slightly bored."
+    ],
+    "cpu-overheat": [
+      "Your CPU is crying. I brought a fan.",
+      "It's warm in here. That's your fault.",
+      "Thermal throttling. Very fashionable."
+    ],
+    "clipboard-paperstorm": [
+      "Everything you ever copied. Right here. Somewhere.",
+      "Four hundred entries. One of them mattered.",
+      "It's a filing system. Technically."
+    ],
+    "dust-hands": [
+      "Done. Don't ask what I did.",
+      "Clean. Ish.",
+      "Handled it. You're welcome."
+    ],
+    "notification-avalanche": [
+      "They're multiplying. I counted. Then I stopped.",
+      "A monument to every app you said yes to.",
+      "Somewhere in there is the one you needed."
+    ],
+    "color-prism": [
+      "New palette. Bold. Debatable.",
+      "Light in. Opinions out.",
+      "The whole spectrum, and you picked that one."
+    ],
+    "capture-frame": [
+      "Framed. Cropped. Immortal.",
+      "Say nothing. It's a screenshot.",
+      "That's going in the bug report, isn't it."
+    ],
+    "conductor-baton": [
+      "The tempo is off. Not mine. Yours.",
+      "I conduct. The playlist obeys.",
+      "Four minutes of this. Bold choice."
+    ],
+    "ai-oracle": [
+      "I see your future. It's a merge conflict.",
+      "The orb says: read the error message.",
+      "Ask it anything. It answers in tokens."
+    ],
+    "trip-splat": [
+      "...ow.",
+      "I meant to do that.",
+      "The floor started it."
+    ],
+    "presence-idle-loop": [
+      "You keep working. I'll keep the pixels company.",
+      "I was nearby. Suspiciously nearby.",
+      "No crisis. I just wanted screen time.",
+      "Carry on. Your supervisor has arrived."
+    ],
+    "tiptoe-sneak": [
+      "Quiet. I'm sneaking past the TODO list.",
+      "If nobody saw it, it wasn't procrastination.",
+      "Stealth mode. The bell was a design flaw.",
+      "I am being subtle. Appreciate the effort."
+    ],
+    "package-lifter": [
+      "Update package secured. Lift with your knees.",
+      "I brought the update. You bring the courage.",
+      "Dependencies: heavier than they look.",
+      "New version overhead. Literally."
+    ],
+    "headphone-groove-full-loop": [
+      "This one stays. Don't ruin the queue.",
+      "Good bass. Questionable timestamp.",
+      "I heard that transition. Acceptable.",
+      "One more track. Then we pretend to focus."
+    ],
+    "cleanup-sweep-loop": [
+      "Inbox clear. Suspiciously peaceful.",
+      "I swept the evidence into the archive.",
+      "Zero notifications. Hold still; it's rare.",
+      "Clean enough to hear yourself think."
+    ],
+    "power-cord-yank": [
+      "%1 left. I brought the cable; you bring survival instinct.",
+      "%1. We're negotiating with physics now.",
+      "%1 left. Plug in before I start rationing pixels."
+    ],
+    "workspace-portal": [
+      "Another workspace. Same plot, better lighting.",
+      "Portal open. Try not to bring all twelve windows.",
+      "I found your missing window. It was hiding from you.",
+      "New workspace, clean slate. For six seconds."
+    ],
+    "polkit-bouncer": [
+      "Access granted. I judged the password silently.",
+      "You're back. I guarded the pixels.",
+      "The lock behaved. I trained it.",
+      "Authenticated. Try to look trustworthy."
+    ],
+    "snapshot-director-loop": [
+      "Hold that pose. The bug report needs evidence.",
+      "Framing good. Wallpaper dramatic. You may proceed.",
+      "Captured. I made your desktop look intentional.",
+      "One screenshot. Zero suspicious tabs. Impressive."
+    ],
+    "wallpaper-color-sweep-loop": [
+      "New wallpaper. I tuned the drama personally.",
+      "Color pass complete. Try not to change it for ten minutes.",
+      "Purple fixes everything. This is peer-reviewed.",
+      "Fresh palette. Same impeccable supervisor."
     ]
   },
   "idleLines": [
@@ -931,7 +1037,15 @@
     "You again. Statistically inevitable.",
     "This shell has 800 QML files. I live in the nice one.",
     "I read the man page so you didn't. Again.",
-    "Nothing is broken right now. Enjoy it. It won't last."
+    "Nothing is broken right now. Enjoy it. It won't last.",
+    "I saved you a seat. It's the one with fewer warnings.",
+    "Need a second opinion? Mine comes with ears.",
+    "I can explain it, but watching you debug has narrative value.",
+    "That was clever. Don't look so surprised.",
+    "Your desktop has a pulse. I checked.",
+    "You handle the keyboard; I'll handle dramatic timing.",
+    "I came for the pixels. Stayed for the plot.",
+    "I was going to help. Then you fixed it. Suspicious."
   ],
   "animatedPoses": [
     "tail-sway",
@@ -948,11 +1062,415 @@
     "dash-loop",
     "jump-bounce",
     "tail-flick",
-    "spin-attack"
+    "spin-attack",
+    "carry-run",
+    "cleanup-sweep-loop",
+    "headphone-groove-loop",
+    "inbox-clear-loop",
+    "presence-idle-loop",
+    "headphone-groove-full-loop",
+    "snapshot-director-loop",
+    "wallpaper-color-sweep-loop"
   ],
-  "facesRight": [
-    "dash-loop"
+  "collectionPoses": [
+    "about-confident",
+    "ai-oracle",
+    "alert-look",
+    "annoyed-poked",
+    "arms-crossed-confident",
+    "back-turned",
+    "bar-tightrope",
+    "base",
+    "battery-low",
+    "battle-point",
+    "bluetooth-magnet-pair",
+    "bored-chin-rest",
+    "bottom-corner-lean",
+    "bottom-rise",
+    "box-hideout",
+    "brightness-sunshield",
+    "bug-net",
+    "cable-defeat",
+    "calendar-star-mark",
+    "calendar-timewarp",
+    "camera-boop",
+    "capture-frame",
+    "carry-crate",
+    "carry-run",
+    "cheatsheet-sensei",
+    "checklist-steps",
+    "cheer-ready",
+    "cheer-wink",
+    "chef-flambe",
+    "chibi-arms-crossed",
+    "chibi-bounce",
+    "chibi-cry",
+    "chibi-frustrated",
+    "chibi-happy",
+    "chibi-love",
+    "chibi-mallet",
+    "chibi-pointing-laugh",
+    "chibi-rage",
+    "chibi-roast-bubble",
+    "chibi-shrug",
+    "chibi-sleepy",
+    "chibi-thumbsup",
+    "cleanup-sweep-loop",
+    "clipboard-paperstorm",
+    "color-prism",
+    "community-highfive",
+    "conductor-baton",
+    "cpu-overheat",
+    "crash-pancake",
+    "crouch-inspect",
+    "crouch-ready",
+    "dash-loop",
+    "dash-twist",
+    "dead-crash",
+    "detective-glass",
+    "dock-hang",
+    "dock-skater",
+    "docs-guide",
+    "doctor-checkup",
+    "dust-hands",
+    "ear-twitch",
+    "edge-peek",
+    "energy-drink",
+    "error-annoyed",
+    "expression-sheet",
+    "facepalm",
+    "fight-guard",
+    "fisheye-inspect",
+    "fisheye-reach",
+    "fist-pump",
+    "flee-back",
+    "follow-me",
+    "gaming-focus",
+    "gardener-sprout",
+    "gift-giving",
+    "goodbye-wave",
+    "gossip-phone",
+    "ground-slam",
+    "guide-point-down",
+    "guide-point-side",
+    "guide-point-up",
+    "hand-on-hip",
+    "handheld-gaming",
+    "hanging-claws",
+    "headphone-groove-full-loop",
+    "headphone-groove-loop",
+    "heart-eyes-pat",
+    "heavy-lift",
+    "hero-banner",
+    "heroic-run",
+    "high-kick",
+    "hurl-throw",
+    "idle-blink",
+    "idle-breathe",
+    "inbox-clear-loop",
+    "jab-punch",
+    "jump-bounce",
+    "key-offer",
+    "keyhole-guardian",
+    "late-night",
+    "laughing-roast",
+    "lean-peek",
+    "low-angle-guard",
+    "lying-lazy",
+    "magic-hat",
+    "magician-hat",
+    "mallet-swing",
+    "map-explorer",
+    "marshaller-windows",
+    "mate-break",
+    "mic-stage-check",
+    "mood-shuffle",
+    "morning-coffee",
+    "music-conductor",
+    "music-vibe",
+    "network-offline",
+    "network-signal-fishing",
+    "notification-avalanche",
+    "notifications-clear",
+    "overview-orbit",
+    "package-lifter",
+    "paint-roller",
+    "panel-sitter",
+    "peace-wink",
+    "plant-care",
+    "plugin-alchemist",
+    "point-at-viewer",
+    "point-up-shout",
+    "polkit-bouncer",
+    "popcorn-watch",
+    "pounce-point",
+    "power-cord-yank",
+    "presence-idle-loop",
+    "presenting",
+    "presenting-warm",
+    "privacy-lock",
+    "prowl-low",
+    "punk-reach",
+    "purr-content",
+    "quota-empty",
+    "reading",
+    "recording-director",
+    "right-edge-peek",
+    "rocket-ride",
+    "run-cycle",
+    "salute-ready",
+    "seated-thinking",
+    "settings-judging",
+    "shh-finger",
+    "shocked-jump",
+    "shrug-annoyed",
+    "shy-flustered",
+    "side-hop",
+    "side-kick",
+    "sit-laptop",
+    "sit-peace-wink",
+    "sit-pointing",
+    "skater-trick",
+    "sleep-dnd",
+    "sleepy-nod",
+    "smug-hand-raised",
+    "snapshot-director-loop",
+    "speech-bubble-calm",
+    "spin-attack",
+    "spin-dodge",
+    "sport-ready",
+    "spyglass-search",
+    "stand-pout",
+    "standing-unimpressed",
+    "sticky-notes",
+    "stomp-victory",
+    "stretching-break",
+    "success-celebrate",
+    "tail-flick",
+    "tail-sway",
+    "tea-break",
+    "telescope-scan",
+    "terminal-demo",
+    "theme-artist",
+    "thinking",
+    "thinking-pose",
+    "tiling-tetris",
+    "tiptoe-sneak",
+    "tired-dev",
+    "todo-done",
+    "top-peek",
+    "trip-fall",
+    "trip-splat",
+    "typing-loop",
+    "update-ready",
+    "upside-down-hang",
+    "upside-down-peek",
+    "vertical-bar-climber",
+    "visualizer-surf",
+    "volume-wave-rider",
+    "waffle-snack",
+    "wallpaper-color-sweep-loop",
+    "warning-concerned",
+    "wave-loop",
+    "waving-hi",
+    "weather-umbrella",
+    "weather-windswept",
+    "welcome-wave",
+    "welcoming",
+    "wizard-complete",
+    "workspace-juggle",
+    "workspace-portal",
+    "yawn-stretch"
   ],
+  "chibiPoses": [
+    "chibi-arms-crossed",
+    "chibi-bounce",
+    "chibi-cry",
+    "chibi-frustrated",
+    "chibi-happy",
+    "chibi-love",
+    "chibi-mallet",
+    "chibi-pointing-laugh",
+    "chibi-rage",
+    "chibi-roast-bubble",
+    "chibi-shrug",
+    "chibi-sleepy",
+    "chibi-thumbsup"
+  ],
+  "editorialPoses": [
+    "base",
+    "expression-sheet",
+    "hero-banner"
+  ],
+  "collectionSpecial": {
+    "base": { "category": "editorial", "role": "identity" },
+    "expression-sheet": { "category": "editorial", "role": "expression-study" },
+    "hero-banner": { "category": "editorial", "role": "brand-key-art" },
+    "crash-pancake": { "category": "fullbody", "role": "chaos-fail" },
+    "recording-director": { "category": "fullbody", "role": "recording-director" }
+  },
+  "fullBodyPoses": [
+    "alert-look",
+    "bar-tightrope",
+    "calendar-timewarp",
+    "carry-crate",
+    "carry-run",
+    "cheer-ready",
+    "crouch-ready",
+    "crash-pancake",
+    "dash-loop",
+    "dead-crash",
+    "dock-skater",
+    "heavy-lift",
+    "hurl-throw",
+    "jump-bounce",
+    "lean-peek",
+    "mallet-swing",
+    "mood-shuffle",
+    "overview-orbit",
+    "pounce-point",
+    "prowl-low",
+    "run-cycle",
+    "rocket-ride",
+    "shocked-jump",
+    "side-kick",
+    "spin-attack",
+    "spin-dodge",
+    "sport-ready",
+    "standing-unimpressed",
+    "stomp-victory",
+    "tiling-tetris",
+    "trip-fall",
+    "trip-splat",
+    "vertical-bar-climber",
+    "volume-wave-rider",
+    "welcoming",
+    "presence-idle-loop",
+    "tail-sway",
+    "hand-on-hip",
+    "low-angle-guard",
+    "reading",
+    "recording-director",
+    "sit-laptop",
+    "tea-break",
+    "tiptoe-sneak",
+    "yawn-stretch",
+    "panel-sitter",
+    "dock-hang",
+    "hanging-claws",
+    "upside-down-hang",
+    "follow-me",
+    "stretching-break",
+    "power-cord-yank",
+    "package-lifter",
+    "network-signal-fishing",
+    "handheld-gaming",
+    "workspace-portal",
+    "polkit-bouncer",
+    "cleanup-sweep-loop",
+    "headphone-groove-full-loop",
+    "snapshot-director-loop",
+    "wallpaper-color-sweep-loop",
+    "stand-pout",
+    "sit-peace-wink",
+    "battle-point",
+    "fight-guard",
+    "jab-punch",
+    "high-kick",
+    "ground-slam",
+    "point-up-shout",
+    "weather-windswept"
+  ],
+  "contextualOcclusionPoses": [
+    "box-hideout"
+  ],
+  "pickerPoses": [
+    "presence-idle-loop",
+    "headphone-groove-full-loop",
+    "snapshot-director-loop",
+    "wallpaper-color-sweep-loop",
+    "cleanup-sweep-loop",
+    "hand-on-hip",
+    "reading",
+    "sit-laptop",
+    "tea-break",
+    "tiptoe-sneak",
+    "yawn-stretch",
+    "panel-sitter",
+    "dock-hang",
+    "follow-me",
+    "stretching-break",
+    "power-cord-yank",
+    "package-lifter",
+    "network-signal-fishing",
+    "handheld-gaming",
+    "workspace-portal",
+    "polkit-bouncer",
+    "stand-pout",
+    "sit-peace-wink",
+    "battle-point",
+    "fight-guard",
+    "high-kick",
+    "ground-slam",
+    "weather-windswept"
+  ],
+  "desktopWidgetPoses": [
+    "presence-idle-loop",
+    "headphone-groove-full-loop",
+    "cleanup-sweep-loop",
+    "snapshot-director-loop",
+    "wallpaper-color-sweep-loop",
+    "hand-on-hip",
+    "reading",
+    "sit-laptop",
+    "tea-break",
+    "tiptoe-sneak",
+    "yawn-stretch",
+    "panel-sitter",
+    "dock-hang",
+    "sit-peace-wink",
+    "stretching-break",
+    "handheld-gaming",
+    "weather-windswept"
+  ],
+  "fullBodyReplacements": {
+    "about-confident": "presence-idle-loop",
+    "ai-oracle": "sit-laptop",
+    "calendar-star-mark": "reading",
+    "cheatsheet-sensei": "reading",
+    "doctor-checkup": "polkit-bouncer",
+    "fisheye-inspect": "alert-look",
+    "goodbye-wave": "follow-me",
+    "network-offline": "network-signal-fishing",
+    "settings-judging": "hand-on-hip",
+    "success-celebrate": "stomp-victory",
+    "theme-artist": "wallpaper-color-sweep-loop",
+    "update-ready": "package-lifter",
+    "warning-concerned": "low-angle-guard",
+    "wave-loop": "presence-idle-loop",
+    "weather-umbrella": "weather-windswept",
+    "welcome-wave": "follow-me"
+  },
+  "surfaceDefaults": {
+    "notifications": "cleanup-sweep-loop",
+    "clipboard": "box-hideout",
+    "mediaControls": "headphone-groove-full-loop",
+    "todo": "reading",
+    "calendar": "reading",
+    "wifi": "network-signal-fishing",
+    "startMenu": "follow-me",
+    "wallpaperSelector": "wallpaper-color-sweep-loop",
+    "bootGreeting": "presence-idle-loop",
+    "emptyStates": "hand-on-hip",
+    "about": "presence-idle-loop",
+    "session": "follow-me",
+    "aiChat": "sit-laptop",
+    "dashboard": "presence-idle-loop",
+    "cheatsheet": "reading",
+    "updates": "package-lifter",
+    "dialogs": "low-angle-guard"
+  },
+  "facesRight": [],
   "mirrorOnRight": [
     "edge-peek"
   ],
@@ -1009,15 +1527,36 @@
     ],
     "lying-lazy": [
       "bottom"
+    ],
+    "presence-idle-loop": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "tail-sway": [
+      "left",
+      "right",
+      "bottom"
+    ],
+    "reading": [
+      "bottom"
+    ],
+    "sit-laptop": [
+      "bottom"
+    ],
+    "tea-break": [
+      "bottom"
+    ],
+    "network-signal-fishing": [
+      "bottom"
     ]
   },
   "clickTiers": {
     "tier1": {
       "poses": [
-        "annoyed-poked",
-        "shy-flustered",
-        "error-annoyed",
-        "fisheye-inspect"
+        "hand-on-hip",
+        "stand-pout",
+        "low-angle-guard"
       ],
       "lines": [
         "Do I look clickable to you?",
@@ -1033,10 +1572,10 @@
     },
     "tier2": {
       "poses": [
-        "heart-eyes-pat",
-        "shy-flustered",
-        "peace-wink",
-        "community-highfive"
+        "sit-peace-wink",
+        "tea-break",
+        "follow-me",
+        "reading"
       ],
       "lines": [
         "...okay. Pats are acceptable.",
@@ -1052,10 +1591,12 @@
     },
     "tier4": {
       "poses": [
-        "chibi-rage",
-        "chibi-cry",
-        "chibi-mallet",
-        "chibi-roast-bubble"
+        "battle-point",
+        "fight-guard",
+        "jab-punch",
+        "high-kick",
+        "ground-slam",
+        "point-up-shout"
       ],
       "lines": [
         "THAT'S IT. I'm out.",
@@ -1070,41 +1611,40 @@
   },
   "stareReactions": [
     {
-      "pose": "shy-flustered",
+      "pose": "hand-on-hip",
       "line": "...What."
     },
     {
-      "pose": "fisheye-inspect",
+      "pose": "low-angle-guard",
       "line": "Take a picture. It lasts longer."
     },
     {
-      "pose": "annoyed-poked",
+      "pose": "follow-me",
       "line": "Creeping is still creeping."
     },
     {
-      "pose": "thinking",
+      "pose": "reading",
       "line": "Are you okay? Genuinely."
     },
     {
-      "pose": "smug-hand-raised",
+      "pose": "tea-break",
       "line": "Enjoying the view? Understandable."
     },
     {
-      "pose": "bored-chin-rest",
+      "pose": "presence-idle-loop",
       "line": "Still staring? I charge by the minute."
     }
   ],
   "prankPoses": [
-    "fisheye-inspect",
-    "detective-glass",
-    "popcorn-watch",
-    "edge-peek"
+    "tiptoe-sneak",
+    "follow-me",
+    "snapshot-director-loop",
+    "low-angle-guard"
   ],
   "chaos": {
     "run": [
       "run-cycle",
       "run-cycle",
-      "dash-loop",
       "dash-loop"
     ],
     "dodge_pose": [
@@ -1189,7 +1729,19 @@
       "pounce": "pounce-point",
       "wait": "crouch-ready",
       "stalk": "prowl-low",
-      "flee": "flee-back",
+      "flee": "dash-loop",
+      "caughtPose": [
+        "sit-peace-wink",
+        "follow-me"
+      ],
+      "boredPose": [
+        "hand-on-hip",
+        "standing-unimpressed"
+      ],
+      "timeoutPose": [
+        "stand-pout",
+        "stomp-victory"
+      ],
       "lines": [
         "Catch me if you can.",
         "Your mouse. My game.",
@@ -1221,7 +1773,7 @@
     ],
     "steal": {
       "pose": "heavy-lift",
-      "carry": "carry-crate",
+      "carry": "carry-run",
       "after": "tiptoe-sneak",
       "lines": [
         "Mine now.",
@@ -1276,7 +1828,11 @@
       ]
     },
     "trip": {
-      "pose": "trip-fall",
+      "pose": [
+        "trip-fall",
+        "trip-splat",
+        "crash-pancake"
+      ],
       "lines": [
         "...ow.",
         "The floor attacked me.",
@@ -1288,6 +1844,10 @@
         "Not a word.",
         "The floor started it.",
         "I'm fine. FINE."
+      ],
+      "after": [
+        "stand-pout",
+        "standing-unimpressed"
       ]
     },
     "dodge": [
@@ -1304,7 +1864,7 @@
       "inir mascot tidy — if you're boring."
     ],
     "tidy": {
-      "pose": "checklist-steps",
+      "pose": "cleanup-sweep-loop",
       "lines": [
         "Fine. Cleaning up my own chaos.",
         "Everything back. Like nothing happened.",
@@ -1314,6 +1874,7 @@
     },
     "cleanup": {
       "pose": [
+        "cleanup-sweep-loop",
         "battle-point",
         "hand-on-hip"
       ],
@@ -1330,14 +1891,14 @@
       ]
     },
     "startle_pose": [
-      "tail-flick",
-      "shocked-jump"
+      "shocked-jump",
+      "stand-pout"
     ],
     "beat": {
       "pose": [
         "alert-look",
-        "tail-flick",
-        "mood-shuffle"
+        "mood-shuffle",
+        "presence-idle-loop"
       ],
       "lines": [
         "What.",
@@ -1366,8 +1927,20 @@
       "pose": [
         "cheer-ready",
         "sport-ready",
-        "skater-trick",
-        "stretching-break"
+        "stretching-break",
+        "dock-skater",
+        "bar-tightrope",
+        "vertical-bar-climber",
+        "tiling-tetris",
+        "workspace-portal",
+        "overview-orbit",
+        "volume-wave-rider",
+        "weather-windswept",
+        "snapshot-director-loop",
+        "calendar-timewarp",
+        "package-lifter",
+        "polkit-bouncer",
+        "power-cord-yank"
       ],
       "lines": [
         "Just admiring the view.",
@@ -1383,6 +1956,14 @@
     },
     "hide": {
       "hidePose": "box-hideout",
+      "foundPose": [
+        "sit-peace-wink",
+        "follow-me"
+      ],
+      "notFoundPose": [
+        "stomp-victory",
+        "standing-unimpressed"
+      ],
       "invite": [
         "Bet you can't find me.",
         "Hide and seek. I already won.",
@@ -1406,99 +1987,81 @@
   "reactions": {
     "battery": {
       "poses": [
-        "battery-low"
+        "power-cord-yank"
       ],
       "edge": "left",
       "source": "battery"
     },
     "update": {
       "poses": [
-        "update-ready",
-        "gift-giving",
-        "guide-point-up"
+        "package-lifter"
       ],
       "edge": "top",
       "source": "update"
     },
     "network": {
       "poses": [
-        "shrug-annoyed",
-        "network-offline"
+        "network-signal-fishing"
       ],
       "edge": "left",
       "source": "network"
     },
     "dnd": {
       "poses": [
-        "sleep-dnd",
-        "shh-finger"
+        "tea-break",
+        "reading"
       ],
       "edge": "right",
       "source": "dnd"
     },
     "notification": {
       "poses": [
-        "detective-glass",
-        "gossip-phone",
-        "popcorn-watch",
-        "fisheye-inspect",
-        "sticky-notes"
+        "cleanup-sweep-loop"
       ],
       "edge": "right",
       "source": ""
     },
     "wallpaper": {
       "poses": [
-        "theme-artist",
-        "paint-roller",
-        "fisheye-inspect"
+        "wallpaper-color-sweep-loop"
       ],
       "edge": "right",
       "source": ""
     },
     "screenshot": {
       "poses": [
-        "camera-boop",
-        "peace-wink",
-        "presenting"
+        "snapshot-director-loop",
+        "recording-director"
       ],
       "edge": "right",
       "source": ""
     },
     "gaming": {
       "poses": [
-        "gaming-focus",
-        "fist-pump",
-        "salute-ready",
-        "success-celebrate"
+        "handheld-gaming",
+        "low-angle-guard"
       ],
       "edge": "right",
       "source": ""
     },
     "workspace": {
       "poses": [
-        "marshaller-windows",
-        "workspace-juggle",
-        "facepalm",
-        "map-explorer",
-        "guide-point-side"
+        "workspace-portal",
+        "follow-me"
       ],
       "edge": "top",
       "source": ""
     },
     "music": {
       "poses": [
-        "music-vibe",
-        "music-conductor"
+        "headphone-groove-full-loop"
       ],
       "edge": "right",
       "source": "media"
     },
     "unlock": {
       "poses": [
-        "key-offer",
-        "waving-hi",
-        "privacy-lock"
+        "polkit-bouncer"
       ],
       "edge": "right",
       "source": ""
@@ -1524,6 +2087,11 @@
       "Internet left. Not your fault. Mostly.",
       "Lost signal. Found patience.",
       "Wi-Fi gone. Touch grass."
+    ],
+    "calendar-star-mark": [
+      "A free day. I made it look organized.",
+      "One star. No meetings. Perfection.",
+      "Schedule: suspiciously peaceful."
     ],
     "sleep-dnd": [
       "DND on. World quiet. Mostly.",
@@ -1723,5 +2291,12 @@
         "Something's compiling. Something's about to fall over too."
       ]
     }
+  },
+  "poseRegions": {
+    "mate-break": [
+      "ar",
+      "uy",
+      "py"
+    ]
   }
 }

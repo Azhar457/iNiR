@@ -277,7 +277,7 @@ Item {
                 Layout.preferredHeight: 88
                 surface: "calendar"
                 fallbackSurface: "emptyStates"
-                pose: "sleep-dnd"
+                pose: "calendar-star-mark"
             }
 
             MaterialSymbol {

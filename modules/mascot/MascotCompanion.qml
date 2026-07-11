@@ -146,14 +146,26 @@ Scope {
         return pick
     }
 
+    // A line carrying %1 is only sayable when a value was handed in. With a
+    // value we prefer those lines (the number is the joke); without one we must
+    // exclude them or she says the literal token.
+    function _poolForArg(pool, hasArg) {
+        if (!pool || !pool.length) return pool
+        const withSlot = pool.filter(l => l.includes("%1"))
+        const withoutSlot = pool.filter(l => !l.includes("%1"))
+        if (hasArg) return withSlot.length ? withSlot : withoutSlot
+        return withoutSlot.length ? withoutSlot : []
+    }
+
     function _lineFor(poseName) {
+        const hasArg = root._pendingLineArg.length > 0
         // Contextual mode: try source-specific lines first
         if (root._contextualSource.length > 0
             && (Config.options?.mascot?.companion?.contextualPlacement ?? false)) {
-            const sourcePool = _linesByPoseSource[poseName]
+            const sourcePool = _poolForArg(_linesByPoseSource[poseName], hasArg)
             if (sourcePool && sourcePool.length) return Translation.tr(_pickFrom(sourcePool))
         }
-        const pool = _linesByPose[poseName]
+        const pool = _poolForArg(_linesByPose[poseName], hasArg)
         if (pool && pool.length) return Translation.tr(_pickFrom(pool))
         // Idle peeks only talk sometimes; silence is also personality
         if (Math.random() < 0.55) {
@@ -187,13 +199,31 @@ Scope {
     readonly property var animatedPoses: _manifest.animatedPoses?.length
         ? _manifest.animatedPoses
         : ["tail-sway", "ear-twitch", "sleepy-nod", "wave-loop", "idle-blink", "idle-breathe"]
+    readonly property var _fullBodyPoses: _manifest.fullBodyPoses ?? []
+
+    // Some art is culturally specific (the mate gourd reads as a prop nobody
+    // outside the Southern Cone owns). manifest.poseRegions maps such a pose to
+    // the ISO country codes where it makes sense; unlisted poses show anywhere.
+    // Without a resolved Weather location we cannot know, so we stay silent.
+    readonly property var _poseRegions: _manifest.poseRegions ?? ({})
+
+    function _poseAllowedHere(pose: string): bool {
+        const allowed = _poseRegions[pose]
+        if (!allowed || allowed.length === 0) return true
+        const country = Weather.countryCode
+        return country.length > 0 && allowed.indexOf(country) !== -1
+    }
+
+    // Poses gated to this user's country, ready to be mixed into the idle bag.
+    readonly property var _regionalPoses: Object.keys(_poseRegions)
+        .filter(p => _poseAllowedHere(p) && _fullBodyPoses.includes(p))
 
     readonly property var _idlePicks: _manifest.idlePicks?.length
-        ? _manifest.idlePicks
+        ? _manifest.idlePicks.filter(p => _fullBodyPoses.length === 0 || _fullBodyPoses.includes(p[0]))
         : [
-            ["edge-peek", "left"], ["right-edge-peek", "right"], ["top-peek", "top"],
-            ["upside-down-peek", "top"], ["hanging-claws", "top"],
-            ["fisheye-inspect", "right"], ["box-hideout", "left"]
+            ["presence-idle-loop", "left"], ["presence-idle-loop", "right"],
+            ["tail-sway", "right"], ["tea-break", "bottom"],
+            ["hanging-claws", "top"]
         ]
 
     // Idle pick = the whole catalog + a few time/mood-flavored duplicates.
@@ -204,21 +234,30 @@ Scope {
         const moodEnabled = Config.options?.mascot?.personality?.enabled ?? true
         const mood = moodEnabled ? (MascotMood.currentMood ?? "neutral") : "neutral"
         let bag = _idlePicks.slice()
-        const add = (pose, edge, n) => { for (let i = 0; i < n; i++) bag.push([pose, edge]) }
-        if (mood === "sleepy") { add("sleepy-nod", "left", 3); add("chibi-sleepy", "left", 2) }
-        if (mood === "hyper") { add("chibi-bounce", "right", 2); add("chibi-happy", "right", 1); add("energy-drink", "right", 2); add("skater-trick", "right", 1) }
-        if (commentaryOn && hour >= 1 && hour < 6) { add("late-night", "right", 4); add("sleepy-nod", "left", 2) }
-        if (commentaryOn && hour >= 6 && hour < 11) add("morning-coffee", "left", 4)
-        add(Math.random() < 0.5 ? "mate-break" : "tea-break", "right", 2)
-        add("tail-sway", "right", 2); add("ear-twitch", "left", 1); add("idle-breathe", "right", 2)
+        const add = (pose, edge, n) => {
+            if (_fullBodyPoses.length > 0 && !_fullBodyPoses.includes(pose)) return
+            for (let i = 0; i < n; i++) bag.push([pose, edge])
+        }
+        if (mood === "sleepy") { add("yawn-stretch", "left", 3); add("tea-break", "bottom", 2) }
+        if (mood === "hyper") { add("stretching-break", "right", 2); add("low-angle-guard", "right", 2); add("tiptoe-sneak", "left", 1) }
+        if (commentaryOn && hour >= 1 && hour < 6) { add("yawn-stretch", "left", 3); add("reading", "bottom", 2) }
+        if (commentaryOn && hour >= 6 && hour < 11) add("presence-idle-loop", "left", 3)
+        add("tea-break", "bottom", 2)
+        _regionalPoses.forEach(pose => add(pose, "right", 2))
+        add("presence-idle-loop", "right", 2); add("tail-sway", "left", 1)
         const fresh = bag.filter(p => !_recentPoses.includes(p[0]))
         const src = fresh.length ? fresh : bag
         return src[Math.floor(Math.random() * src.length)]
     }
 
+    // Value spliced into the next peek line's %1 slot; cleared on every exit
+    // path so a swallowed reaction can never leak its number into a later peek.
+    property string _pendingLineArg: ""
+
     function show(poseName: string, edgeName: string): bool {
         if (!companionEnabled || suppressed || showing) {
             console.log(`[MascotCompanion] peek denied (enabled=${companionEnabled} suppressed=${suppressed} showing=${showing})`)
+            _pendingLineArg = ""
             return false
         }
         edgeName = _fixEdge(edgeName)
@@ -236,7 +275,11 @@ Scope {
         console.log(`[MascotCompanion] peek: ${poseName} from ${edgeName}`)
         pose = poseName
         edge = edgeName
-        line = _lineFor(poseName)
+        // A reaction may hand us a value to splice into its %1 slot (e.g. the
+        // actual battery percentage). Consumed once, never leaks to the next peek.
+        const picked = _lineFor(poseName)
+        line = _pendingLineArg.length > 0 ? picked.arg(_pendingLineArg) : picked
+        _pendingLineArg = ""
         _clickCount = 0
         _lastShownAt = Date.now()
         showing = true
@@ -258,36 +301,42 @@ Scope {
         const hour = now.getHours()
         if (_eventEnabled("music") && _looksLikeMusic()) {
             const t = MprisController.activePlayer?.trackTitle ?? ""
-            out.push({ key: "media-playing", pose: "music-vibe", edge: "right", arg: t.length > 40 ? t.substring(0, 37) + "..." : t })
+            // An untitled track would render the line as an empty quote.
+            if (t.length > 0)
+                out.push({ key: "media-playing", pose: "headphone-groove-full-loop", edge: "right", arg: t.length > 40 ? t.substring(0, 37) + "..." : t })
         }
         const notifCount = Notifications.list?.length ?? 0
         if (commentaryOn && notifCount >= 10)
-            out.push({ key: "notif-pileup", pose: "detective-glass", edge: "right", arg: notifCount })
+            out.push({ key: "notif-pileup", pose: "package-lifter", edge: "right", arg: notifCount })
         const upDays = parseInt((DateTime.uptime.match(/(\d+)\s*d/) ?? [])[1] ?? "0")
         if (commentaryOn && upDays >= 2)
-            out.push({ key: "uptime-days", pose: "tired-dev", edge: "left", arg: upDays })
+            out.push({ key: "uptime-days", pose: "yawn-stretch", edge: "left", arg: upDays })
         if (day === 1 && hour >= 6 && hour < 12)
-            out.push({ key: "monday", pose: "morning-coffee", edge: "left" })
+            out.push({ key: "monday", pose: "tea-break", edge: "bottom" })
         if (day === 5 && hour >= 20)
-            out.push({ key: "friday-night", pose: "popcorn-watch", edge: "right" })
+            out.push({ key: "friday-night", pose: "handheld-gaming", edge: "right" })
         if ((day === 0 || day === 6) && hour >= 12 && hour < 20)
-            out.push({ key: "weekend", pose: "reading", edge: "right" })
-        if (Battery.isPluggedIn && Battery.percentage >= 0.97)
-            out.push({ key: "battery-full", pose: "peace-wink", edge: "left" })
+            out.push({ key: "weekend", pose: "reading", edge: "bottom" })
+        // Battery.percentage is 0 on a machine with no battery, so every battery
+        // check needs Battery.available or it reads a desktop as a dead laptop.
+        if (Battery.available && Battery.isPluggedIn && Battery.percentage >= 0.97)
+            out.push({ key: "battery-full", pose: "presence-idle-loop", edge: "left" })
         if (commentaryOn && root._focusApp.length > 0 && Date.now() - root._focusSince > 45 * 60 * 1000)
-            out.push({ key: "app-marathon", pose: "typing-loop", edge: "right", arg: root._prettyAppName(root._focusApp) })
+            out.push({ key: "app-marathon", pose: "sit-laptop", edge: "bottom", arg: root._prettyAppName(root._focusApp) })
         // Wet weather outside → umbrella commentary (wttr WWO rain/sleet/thunder codes)
         if (Weather.enabled) {
             const wet = ["176", "179", "182", "185", "200", "263", "266", "281", "284", "293", "296", "299", "302", "305", "308", "311", "314", "317", "320", "353", "356", "359", "386", "389", "392", "395"]
-            if (wet.includes(String(Weather.data?.wCode ?? "113")))
-                out.push({ key: "weather-wet", pose: "weather-umbrella", edge: "top", arg: Weather.data?.description ?? "" })
+            const description = Weather.data?.description ?? ""
+            if (description.length > 0 && wet.includes(String(Weather.data?.wCode ?? "113")))
+                out.push({ key: "weather-wet", pose: "weather-windswept", edge: "right", arg: description })
         }
         // Music "playing" into a muted sink deserves a call-out
         if (commentaryOn && _eventEnabled("music") && MprisController.isPlaying && (Audio.sink?.audio?.muted ?? false))
-            out.push({ key: "muted-media", pose: "facepalm", edge: "right" })
+            out.push({ key: "muted-media", pose: "headphone-groove-full-loop", edge: "right" })
         const winCount = NiriService.windows?.length ?? 0
+        // heavy-lift is full-body art and read wrong from a bust-crop peek.
         if (commentaryOn && winCount >= 12)
-            out.push({ key: "window-pileup", pose: Math.random() < 0.5 ? "marshaller-windows" : "heavy-lift", edge: "top", arg: winCount })
+            out.push({ key: "window-pileup", pose: "package-lifter", edge: "left", arg: winCount })
         // Never the same commentary twice in a row
         return out.filter(c => c.key !== root._lastContext)
     }
@@ -332,6 +381,7 @@ Scope {
     function _showReaction(poseName, edgeName, sourceWidget) {
         if (Date.now() - _lastShownAt < 120 * 1000) {
             console.log(`[MascotCompanion] reaction '${poseName}' swallowed by cooldown`)
+            root._pendingLineArg = ""
             return false
         }
         const contextualOn = Config.options?.mascot?.companion?.contextualPlacement ?? false
@@ -363,16 +413,16 @@ Scope {
     function reactEvent(key) {
         if (!_eventEnabled(key)) return
         const fallback = ({
-            "battery": { poses: ["battery-low"], edge: "left", source: "battery" },
-            "update": { poses: ["update-ready"], edge: "top", source: "update" },
-            "network": { poses: ["network-offline"], edge: "left", source: "network" },
-            "dnd": { poses: ["sleep-dnd"], edge: "right", source: "dnd" },
-            "notification": { poses: ["detective-glass"], edge: "right", source: "" },
-            "wallpaper": { poses: ["theme-artist"], edge: "right", source: "" },
-            "screenshot": { poses: ["camera-boop"], edge: "right", source: "" },
-            "gaming": { poses: ["gaming-focus"], edge: "right", source: "" },
-            "workspace": { poses: ["workspace-juggle"], edge: "top", source: "" },
-            "unlock": { poses: ["waving-hi"], edge: "right", source: "" }
+            "battery": { poses: ["power-cord-yank"], edge: "left", source: "battery" },
+            "update": { poses: ["package-lifter"], edge: "top", source: "update" },
+            "network": { poses: ["network-signal-fishing"], edge: "bottom", source: "network" },
+            "dnd": { poses: ["tea-break"], edge: "bottom", source: "dnd" },
+            "notification": { poses: ["cleanup-sweep-loop"], edge: "right", source: "" },
+            "wallpaper": { poses: ["wallpaper-color-sweep-loop"], edge: "right", source: "" },
+            "screenshot": { poses: ["snapshot-director-loop"], edge: "right", source: "" },
+            "gaming": { poses: ["handheld-gaming"], edge: "right", source: "" },
+            "workspace": { poses: ["workspace-portal"], edge: "right", source: "" },
+            "unlock": { poses: ["polkit-bouncer"], edge: "right", source: "" }
         })
         const r = _reactionMap[key] ?? fallback[key]
         if (!r) return
@@ -465,7 +515,11 @@ Scope {
     Connections {
         target: Battery
         function onIsLowAndNotChargingChanged() {
-            if (Battery.isLowAndNotCharging) root.reactEvent("battery")
+            // Battery.isLow already requires Battery.available, so this cannot
+            // fire on a desktop. The line names the real charge left.
+            if (!Battery.isLowAndNotCharging) return
+            root._pendingLineArg = Math.round(Battery.percentage * 100) + "%"
+            root.reactEvent("battery")
         }
     }
 
@@ -644,7 +698,9 @@ Scope {
 
         const triggers = _manifest.chaosTriggers ?? ({})
         let key = "", pose = ""
-        if (Battery.percentage <= 0.15 && !Battery.isPluggedIn) {
+        // Without Battery.available this reads a desktop (percentage 0, never
+        // "plugged in") as a laptop at 0% and romps about a battery it lacks.
+        if (Battery.available && Battery.percentage <= 0.15 && !Battery.isPluggedIn) {
             key = "batteryCritical"; pose = "battery-low"
         } else if (Notifications.list.length >= 8) {
             key = "notificationPileup"; pose = "facepalm"
@@ -691,7 +747,7 @@ Scope {
         function tidy(): void {
             MascotChaos.tidy()
             const t = root._manifest.chaos?.tidy ?? ({})
-            if (root.show(t.pose ?? "checklist-steps", "right"))
+            if (root.show(t.pose ?? "cleanup-sweep-loop", "right"))
                 root.line = Translation.tr(root._pickFrom(t.lines ?? ["You saw nothing."]))
         }
         // Named "appear" because "show" collides with the `qs ipc show` subcommand
@@ -712,6 +768,7 @@ Scope {
     FileView {
         id: manifestFile
         path: Quickshell.shellPath("assets/images/mascot/manifest.json")
+        watchChanges: true
         onLoadedChanged: {
             if (!manifestFile.loaded) return
             try {
@@ -881,6 +938,22 @@ Scope {
                 id: bubble
 
                 readonly property int pad: 10
+                readonly property int gap: 4
+                readonly property bool fullBody: root._fullBodyPoses.includes(root.pose)
+                // Full-body art is letterboxed horizontally inside its square
+                // stage. Anchor to the visible shoulder/head area, not the far
+                // edge of that transparent box.
+                readonly property real sideAnchor: fullBody ? 0.74 : 1.0
+                readonly property real desiredX: mascotItem.vertical
+                    ? mascotItem.x + mascotItem.width / 2 - width / 2
+                    : mascotItem.fromLeft
+                        ? mascotItem.x + mascotItem.width * sideAnchor + gap
+                        : mascotItem.x + mascotItem.width * (1 - sideAnchor) - width - gap
+                readonly property real desiredY: mascotItem.fromTop
+                    ? mascotItem.y + mascotItem.height + gap
+                    : mascotItem.fromBottom
+                        ? mascotItem.y - height - gap
+                        : mascotItem.y + mascotItem.height * 0.22 - height / 2
 
                 visible: opacity > 0
                 opacity: root.showing && root.line.length > 0 ? 1 : 0
@@ -906,13 +979,25 @@ Scope {
                             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder
                             : Appearance.colors.colLayer3Hover
 
-                x: mascotItem.vertical
-                    ? Math.max(12, Math.min(mascotItem.x + mascotItem.width / 2 - width / 2, companionWindow.width - width - 12))
-                    : mascotItem.fromLeft ? mascotItem.x + mascotItem.width + 6
-                    : mascotItem.x - width - 6
-                y: mascotItem.fromTop ? mascotItem.y + mascotItem.height + 6
-                    : mascotItem.fromBottom ? mascotItem.y - height - 6
-                    : mascotItem.y + mascotItem.height * 0.25 - height / 2
+                x: Math.max(12, Math.min(desiredX, companionWindow.width - width - 12))
+                y: Math.max(12, Math.min(desiredY, companionWindow.height - height - 12))
+
+                // Small themed pointer keeps the copy visually attached to her
+                // instead of reading as an unrelated tooltip.
+                Rectangle {
+                    z: -1
+                    width: 10
+                    height: 10
+                    rotation: 45
+                    color: bubble.color
+                    border.width: bubble.border.width
+                    border.color: bubble.border.color
+                    x: mascotItem.vertical ? bubble.width / 2 - width / 2
+                        : mascotItem.fromLeft ? -width / 2 : bubble.width - width / 2
+                    y: mascotItem.fromTop ? -height / 2
+                        : mascotItem.fromBottom ? bubble.height - height / 2
+                        : bubble.height / 2 - height / 2
+                }
 
                 StyledText {
                     id: bubbleText

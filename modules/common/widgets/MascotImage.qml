@@ -14,13 +14,18 @@ Image {
     id: root
 
     property string pose
+    // Settings/archive previews deliberately show the exact requested asset,
+    // including legacy portraits and editorial sheets, without enabling the
+    // mascot globally or routing it through full-body runtime replacements.
+    property bool previewMode: false
+    property bool playAnimation: true
     // Placement group for the per-surface toggles in Settings › Mascot.
     // Empty = only gated by the master switch.
     property string surface: ""
     // Coarse group this spot belonged to before finer keys existed; old
     // configs (visibility and pose overrides) keep applying through it.
     property string fallbackSurface: ""
-    readonly property bool active: (Config.options?.mascot?.enable ?? false) && surfaceEnabled
+    readonly property bool active: previewMode || ((Config.options?.mascot?.enable ?? false) && surfaceEnabled)
     readonly property bool surfaceEnabled: {
         if (surface.length === 0) return true
         const s = Config.options?.mascot?.surfaces
@@ -31,7 +36,7 @@ Image {
     }
     // Per-surface pose override (Settings › Mascot › Surface poses):
     // users pick their own image for each placement group
-    readonly property string effectivePose: {
+    readonly property string requestedPose: {
         if (surface.length > 0) {
             const o = Config.options?.mascot?.surfacePoses
             if (o) {
@@ -43,6 +48,9 @@ Image {
         }
         return pose
     }
+    readonly property string effectivePose: previewMode
+        ? requestedPose
+        : MascotCatalog.resolvePose(requestedPose, surface, fallbackSurface)
     readonly property bool animatedPose: MascotCatalog.isAnimated(effectivePose)
     // Corrects apparent size so a close-up pose doesn't read "bigger" than
     // a full-body pose inside the same fixed box (see MascotCatalog).
@@ -55,7 +63,7 @@ Image {
     }
 
     visible: active
-    source: (active && effectivePose.length > 0 && !animatedPose)
+    source: (active && MascotCatalog.ready && effectivePose.length > 0 && !animatedPose)
         ? MascotCatalog.sourceFor(effectivePose)
         : ""
     sourceSize.width: 256
@@ -70,8 +78,8 @@ Image {
     // read-only there), so it fills the statically-sized Image instead.
     AnimatedImage {
         anchors.fill: parent
-        visible: root.active && root.animatedPose
-        playing: visible
+        visible: root.active && MascotCatalog.ready && root.animatedPose
+        playing: visible && root.playAnimation && Appearance.animationsEnabled
         source: visible ? MascotCatalog.sourceFor(root.effectivePose) : ""
         fillMode: Image.PreserveAspectFit
         asynchronous: true

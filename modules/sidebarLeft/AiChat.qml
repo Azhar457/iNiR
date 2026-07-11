@@ -435,7 +435,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     Layout.preferredWidth: 120
                     Layout.preferredHeight: 120
                     surface: "aiChat"
-                    pose: "welcome-wave"
+                    pose: "ai-oracle"
                 }
 
                 StyledText {

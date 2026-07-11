@@ -61,13 +61,14 @@ ColumnLayout {
                 radius: Appearance.rounding.verysmall
                 color: Appearance.colors.colLayer3
 
-                Image {
+                AnimatedImage {
                     anchors.fill: parent
                     anchors.margins: 3
                     visible: root._current.image?.length > 0
                     source: root._current.image ?? ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
+                    playing: Appearance.animationsEnabled && visible
                     smooth: false
                     mipmap: false
                 }
@@ -159,12 +160,13 @@ ColumnLayout {
                         Item {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            Image {
+                            AnimatedImage {
                                 anchors.fill: parent
                                 visible: cell.modelData.image?.length > 0
                                 source: cell.modelData.image ?? ""
                                 fillMode: Image.PreserveAspectFit
                                 asynchronous: true
+                                playing: Appearance.animationsEnabled && visible
                                 smooth: false
                                 mipmap: false
                                 sourceSize.width: 128

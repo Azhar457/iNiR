@@ -53,6 +53,7 @@ MascotAnimation 1.0 MascotAnimation.qml
 ArrangeChip 1.0 ArrangeChip.qml
 ArrangeDropSlot 1.0 ArrangeDropSlot.qml
 MascotImage 1.0 MascotImage.qml
+MascotCollection 1.0 MascotCollection.qml
 MascotPoseGallery 1.0 MascotPoseGallery.qml
 MaterialCookie 1.0 MaterialCookie.qml
 MaterialLoadingIndicator 1.0 MaterialLoadingIndicator.qml
