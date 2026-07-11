@@ -10,6 +10,7 @@ import qs.modules.mascot
 import qs.modules.mediaControls
 import qs.modules.notificationPopup
 import qs.modules.onScreenDisplay
+import qs.modules.pill
 import qs.modules.onScreenKeyboard
 import qs.modules.recordingOsd
 import qs.modules.overview
@@ -58,13 +59,24 @@ Item {
     }
 
     // === Immediate panels (first frame + early event capture) ===
-    PanelLoader { identifier: "iiBar"; extraCondition: !(Config.options?.bar?.vertical ?? false); component: Bar {} }
-    PanelLoader { identifier: "iiVerticalBar"; extraCondition: Config.options?.bar?.vertical ?? false; component: VerticalBar {} }
+    // bar.appearanceStyle picks the horizontal bar's look. classic/islands/scenic/
+    // frame are variants of Bar.qml itself; "pill" swaps in a different bar
+    // entirely, so it is resolved here rather than inside Bar.qml.
+    readonly property bool barVertical: Config.options?.bar?.vertical ?? false
+    readonly property bool barPill: (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"
+
+    PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && !panelsRoot.barPill; component: Bar {} }
+    PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && panelsRoot.barPill; component: PillBar {} }
+    PanelLoader { identifier: "iiVerticalBar"; extraCondition: panelsRoot.barVertical; component: VerticalBar {} }
     PanelLoader { identifier: "iiBackground"; component: Background {} }
     PanelLoader { identifier: "iiBackdrop"; extraCondition: Config.options?.background?.backdrop?.enable ?? false; component: Backdrop {} }
     PanelLoader { identifier: "iiDock"; extraCondition: Config.options?.dock?.enable ?? true; component: Dock {} }
-    PanelLoader { identifier: "iiNotificationPopup"; component: NotificationPopup {} }
-    PanelLoader { identifier: "iiOnScreenDisplay"; component: OnScreenDisplay {} }
+    // The pill bar hosts its own toast and OSD faces, so the standalone popup and
+    // OSD panels would double every notification and every volume flash. Turning
+    // the pill's faces off (bar.pill.toasts / bar.pill.osd) hands each duty back
+    // to the standalone panel instead of silencing it.
+    PanelLoader { identifier: "iiNotificationPopup"; extraCondition: !panelsRoot.barPill || !(Config.options?.bar?.pill?.toasts ?? true); component: NotificationPopup {} }
+    PanelLoader { identifier: "iiOnScreenDisplay"; extraCondition: !panelsRoot.barPill || !(Config.options?.bar?.pill?.osd ?? true); component: OnScreenDisplay {} }
 
     // === Deferred panels (user-triggered or non-critical at boot) ===
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }

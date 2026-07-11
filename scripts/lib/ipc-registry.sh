@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: fab6806e44de2299
-# Targets: 56
+# IPC.md hash: 40306281dd2b7386
+# Targets: 57
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="AI chat service. Multi-provider (Gemini, OpenAI, Mistral) with tool support."
@@ -40,6 +40,7 @@ declare -gA IPC_TARGET_DESC=(
   [overview]="Toggle the workspace overview panel. The one with all your windows looking tiny and organized."
   [packageSearch]="Package search service. Searches pacman repos and installed packages."
   [panelFamily]="Switch between panel styles. ii supports two visual styles: Material ii (default) and Waffle (Windows 11-like)."
+  [pill]="The pill bar's morphing surfaces (only registered while Bar appearance is set to Pill). Valid surface names: \`power\`, \`media\`, \`battery\`, \`calendar\`, \`link\`, \`mixer\`, \`sysmon\`, \`clipboard\`, \`glance\`, \`launcher\`, \`recorder\`."
   [recordingOsd]="Screen recording floating pill OSD. Shows elapsed time and stop button during active recording."
   [region]="Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done."
   [search]="Waffle start menu / search."
@@ -53,7 +54,7 @@ declare -gA IPC_TARGET_DESC=(
   [tiling]="Tiling layout overlay. Pick or cycle through tiling presets for the current workspace."
   [voiceSearch]="Voice search using Gemini API. Records from microphone, transcribes with Gemini, opens Google search."
   [wactionCenter]="Waffle action center (quick settings)."
-  [waffleAltSwitcher]="Waffle Alt+Tab window switcher. Separate from the ii \`altSwitcher\` — supports quick-switch (first tab switches instantly, second opens UI) and no-visual-UI mode."
+  [waffleAltSwitcher]="Waffle Alt+Tab window switcher. Separate from the ii \`altSwitcher\`, supports quick-switch (first tab switches instantly, second opens UI) and no-visual-UI mode."
   [wallpaperSelector]="Wallpaper picker grid."
   [wbar]="Waffle taskbar visibility."
   [widgetpower]="Desktop-widget power management (pauses widget rendering on game mode, fullscreen, present windows, or edit mode). Service: \`services/WidgetPowerManager.qml\`."
@@ -99,6 +100,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [overview]="shared"
   [packageSearch]="shared"
   [panelFamily]="shared"
+  [pill]="shared"
   [recordingOsd]="waffle"
   [region]="shared"
   [search]="waffle"
@@ -158,6 +160,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [overview]="toggle close open toggleReleaseInterrupt clipboardToggle actionOpen"
   [packageSearch]="search results"
   [panelFamily]="cycle set"
+  [pill]="open close toggle state"
   [recordingOsd]="toggle show hide"
   [region]="screenshot search googleLens ocr record recordWithSound menu"
   [search]="toggle close open"
@@ -254,9 +257,9 @@ declare -gA IPC_FUNCTION_DESC=(
   ["lock:focus"]="Refocus the lock screen input"
   ["mascot:poke"]="Ask her to peek from a random edge with a random pose"
   ["mascot:romp"]="Chaos mode: she runs across the desktop and bonks a widget, wrecks one onto the floor, hurls one to a new spot, rampages through several, kicks the bar/dock, or ground-slams so everything rattles. Needs \`mascot.chaos.enable\`; widgets only keep new positions with \`mascot.chaos.allowRearrange\`"
-  ["mascot:chase"]="Chase game: she hunts your mouse — every click is a spot she pounces on; click *her* to catch her and win"
-  ["mascot:hideSeek"]="Hide-and-seek: she tucks into a spot on the desktop — click her before the 20s timeout to find her, otherwise she wins by default"
-  ["mascot:tidy"]="Undo the chaos — every displaced widget returns to its pre-chaos position"
+  ["mascot:chase"]="Chase game: she hunts your mouse, every click is a spot she pounces on; click *her* to catch her and win"
+  ["mascot:hideSeek"]="Hide-and-seek: she tucks into a spot on the desktop. Click her before the 20s timeout to find her, otherwise she wins by default"
+  ["mascot:tidy"]="Undo the chaos: every displaced widget returns to its pre-chaos position"
   ["mascot:appear"]="Show a specific catalog pose from \`left\`, \`right\`, \`top\` or \`bottom\`"
   ["mascot:appearContextual"]="Show near the triggering widget (\`battery\`, \`media\`, \`update\`, \`network\`, \`dnd\`). Requires \`mascot.companion.contextualPlacement\` to be enabled for event reactions; this IPC call bypasses that check for testing."
   ["mascot:appearWithLine"]="Show a specific pose saying an exact line (used by the bar widget easter eggs)"
@@ -298,6 +301,10 @@ declare -gA IPC_FUNCTION_DESC=(
   ["packageSearch:results"]="Print current search results"
   ["panelFamily:cycle"]="Cycle to next panel family (ii → waffle → ii)"
   ["panelFamily:set"]="Set specific family (\"ii\" or \"waffle\")"
+  ["pill:open"]="Open a surface by name on the focused monitor"
+  ["pill:close"]="Close the open surface"
+  ["pill:toggle"]="Open a surface, or close it if already open"
+  ["pill:state"]="Print the open surface name, or \`closed\`"
   ["recordingOsd:toggle"]="Stop the current recording (if active)"
   ["recordingOsd:show"]="Reveal the recording OSD pill"
   ["recordingOsd:hide"]="Collapse/hide the recording OSD pill"
@@ -400,6 +407,8 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["minimize:restore"]="<windowId>"
   ["packageSearch:search"]="<query>"
   ["panelFamily:set"]="<family>"
+  ["pill:open"]="<surface>"
+  ["pill:toggle"]="<surface>"
   ["settingsNav:page"]="<index>"
   ["wallpaperSelector:toggleOnMonitor"]="<monitorName>"
 )
@@ -422,6 +431,7 @@ bind "Mod+Alt+P" { spawn "inir" "mpris" "previous"; }'
   [overlay]='bind "Super+G" { spawn "inir" "overlay" "toggle"; }'
   [overview]='bind "Mod+Space" { spawn "inir" "overview" "toggle"; }'
   [panelFamily]='bind "Mod+Shift+W" { spawn "inir" "panelFamily" "cycle"; }'
+  [pill]='bind "Super+V" { spawn "inir" "pill" "toggle" "clipboard"; }'
   [region]='bind "Super+Shift+S" { spawn "inir" "region" "screenshot"; }
 bind "Super+Shift+X" { spawn "inir" "region" "ocr"; }
 bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
@@ -433,8 +443,8 @@ bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overview packageSearch panelFamily region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overview packageSearch panelFamily pill region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(overlay)
 IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 

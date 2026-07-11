@@ -17,6 +17,7 @@ import qs.modules.common
 import qs.modules.common.models
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.pill
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -739,7 +740,7 @@ Item {
 
     ZzzPlate {
         anchors.fill: bg
-        visible: Appearance.zzzEverywhere && !Appearance.gameModeMinimal
+        visible: Appearance.zzzEverywhere && !Appearance.gameModeMinimal && !bg.islandStyle
         fillColor: Appearance.zzz.chrome
         strokeColor: Appearance.zzz.hairline
         strokeWidth: Appearance.zzz.hairlineThick
@@ -751,6 +752,9 @@ Item {
         anchors.fill: parent
 
         property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
+        // Explicit island opt-in outranks the zzz chrome (same rule as the
+        // islands bar and dock).
+        readonly property bool islandStyle: (Config.options?.sidebar?.style ?? "panel") === "island"
         readonly property bool zzzEverywhere:    Appearance.zzzEverywhere
         readonly property bool angelEverywhere:  Appearance.angelEverywhere
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
@@ -808,13 +812,13 @@ Item {
             )
             : ColorUtils.transparentize(Appearance.colors.colLayer1Active, 0.18)
 
-        color: gameModeMinimal  ? "transparent"
+        color: (gameModeMinimal || islandStyle) ? "transparent"
              : Appearance.zzzEverywhere ? "transparent"
              : inirEverywhere   ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
              : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
 
-        border.width: gameModeMinimal ? 0 : (Appearance.zzzEverywhere ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
+        border.width: (gameModeMinimal || islandStyle) ? 0 : (Appearance.zzzEverywhere ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
         Behavior on border.width {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -844,6 +848,19 @@ Item {
             maskSource: Rectangle {
                 width: bg.width; height: bg.height; radius: bg.radius
             }
+        }
+
+        // Ricelin island face — outer shadow handled by the panel's own shadow.
+        IslandPanel {
+            anchors.fill: parent
+            visible: bg.islandStyle && !bg.gameModeMinimal
+            radius: bg.radius
+            shadow: false
+            glassEnabled: true
+            glassScreenX: root.screenWidth - bg.width - Appearance.sizes.hyprlandGapsOut
+            glassScreenY: Appearance.sizes.hyprlandGapsOut
+            glassScreenWidth: root.screenWidth ?? 1920
+            glassScreenHeight: root.screenHeight ?? 1080
         }
 
         // Aurora blurred wallpaper
@@ -895,6 +912,7 @@ Item {
 
         ZzzPanelBackdrop {
             anchors.fill: parent
+            visible: opacity > 0 && !bg.islandStyle
             label: "SYSTEM"
             index: "RC"
             ghostText: "RIGHT"

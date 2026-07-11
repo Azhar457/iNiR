@@ -1,7 +1,5 @@
 # IPC Reference
 
-![iNiR mascot presenting a terminal](assets/inir-mascot-terminal-demo.png){ align=right width=150 }
-
 iNiR exposes IPC targets you can call from Niri keybinds, scripts, or your terminal.
 
 > **Quick discovery:** `inir help` lists all targets, `inir <target> --help` shows available functions.
@@ -73,6 +71,23 @@ The central overlay. Search, quick actions, widgets. The thing that pops up and 
 
 ```kdl
 bind "Super+G" { spawn "inir" "overlay" "toggle"; }
+```
+
+---
+
+### pill
+
+The pill bar's morphing surfaces (only registered while Bar appearance is set to Pill). Valid surface names: `power`, `media`, `battery`, `calendar`, `link`, `mixer`, `sysmon`, `clipboard`, `glance`, `launcher`, `recorder`.
+
+| Function | Description |
+|----------|-------------|
+| `open` | Open a surface by name on the focused monitor |
+| `close` | Close the open surface |
+| `toggle` | Open a surface, or close it if already open |
+| `state` | Print the open surface name, or `closed` |
+
+```kdl
+bind "Super+V" { spawn "inir" "pill" "toggle" "clipboard"; }
 ```
 
 ---
@@ -301,9 +316,9 @@ Playful mascot companion (needs `mascot.enable` and the companion switch in Sett
 | `appearContextual <pose> <sourceWidget>` | Show near the triggering widget (`battery`, `media`, `update`, `network`, `dnd`). Requires `mascot.companion.contextualPlacement` to be enabled for event reactions; this IPC call bypasses that check for testing. |
 | `appearWithLine <pose> <edge> <line>` | Show a specific pose saying an exact line (used by the bar widget easter eggs) |
 | `romp` | Chaos mode: she runs across the desktop and bonks a widget, wrecks one onto the floor, hurls one to a new spot, rampages through several, kicks the bar/dock, or ground-slams so everything rattles. Needs `mascot.chaos.enable`; widgets only keep new positions with `mascot.chaos.allowRearrange` |
-| `chase` | Chase game: she hunts your mouse — every click is a spot she pounces on; click *her* to catch her and win |
-| `hideSeek` | Hide-and-seek: she tucks into a spot on the desktop — click her before the 20s timeout to find her, otherwise she wins by default |
-| `tidy` | Undo the chaos — every displaced widget returns to its pre-chaos position |
+| `chase` | Chase game: she hunts your mouse, every click is a spot she pounces on; click *her* to catch her and win |
+| `hideSeek` | Hide-and-seek: she tucks into a spot on the desktop. Click her before the 20s timeout to find her, otherwise she wins by default |
+| `tidy` | Undo the chaos: every displaced widget returns to its pre-chaos position |
 | `hide` | Send her away immediately |
 
 ---
@@ -748,7 +763,7 @@ Waffle on-screen display indicator (volume, brightness).
 
 ### waffleAltSwitcher
 
-Waffle Alt+Tab window switcher. Separate from the ii `altSwitcher` — supports quick-switch (first tab switches instantly, second opens UI) and no-visual-UI mode.
+Waffle Alt+Tab window switcher. Separate from the ii `altSwitcher`, supports quick-switch (first tab switches instantly, second opens UI) and no-visual-UI mode.
 
 | Function | Description |
 |----------|-------------|

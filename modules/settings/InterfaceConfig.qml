@@ -357,7 +357,7 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Dock style")
-                tooltip: Translation.tr("Panel: classic unified background. Pill: each icon floats in its own capsule. macOS: frosted glass shelf with magnify effect.")
+                tooltip: Translation.tr("Panel: classic unified background. Pill: each icon floats in its own capsule. macOS: frosted glass shelf with magnify effect. Island: gradient card with a hairline edge, matching the island bar.")
 
                 ConfigSelectionArray {
                     currentValue: Config.options?.dock?.style ?? "panel"
@@ -365,9 +365,10 @@ ContentPage {
                         Config.setNestedValue("dock.style", newValue)
                     }
                     options: [
-                        { displayName: Translation.tr("Panel"), icon: "dock_to_bottom", value: "panel" },
-                        { displayName: Translation.tr("Pill"),  icon: "interests",       value: "pill"  },
-                        { displayName: Translation.tr("macOS"), icon: "desktop_mac",     value: "macos" }
+                        { displayName: Translation.tr("Panel"),  icon: "dock_to_bottom", value: "panel"  },
+                        { displayName: Translation.tr("Pill"),   icon: "interests",      value: "pill"   },
+                        { displayName: Translation.tr("macOS"),  icon: "desktop_mac",    value: "macos"  },
+                        { displayName: Translation.tr("Island"), icon: "blur_on",        value: "island" }
                     ]
                 }
             }
@@ -457,6 +458,16 @@ ContentPage {
                 onCheckedChanged: Config.setNestedValue('dock.separatePinnedFromRunning', checked)
                 StyledToolTip {
                     text: Translation.tr("Show pinned-only apps on the left, running apps on the right with a separator")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "notifications"
+                text: Translation.tr("Notification badges")
+                checked: Config.options?.dock?.notificationBadge ?? true
+                onCheckedChanged: Config.setNestedValue('dock.notificationBadge', checked)
+                StyledToolTip {
+                    text: Translation.tr("Show the number of pending notifications on each app icon")
                 }
             }
 
@@ -663,6 +674,59 @@ ContentPage {
                     text: Translation.tr("Slightly enlarge notifications when the mouse hovers over them")
                 }
             }
+
+            ConfigSwitch {
+                buttonIcon: "bedtime"
+                text: Translation.tr("Quiet hours")
+                checked: Config.options?.notifications?.quietHours?.enable ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("notifications.quietHours.enable", checked)
+                }
+                StyledToolTip {
+                    text: Translation.tr("Hold back notification popups during a daily window. They still reach the notification history.")
+                }
+            }
+
+            RowLayout {
+                spacing: 8
+                enabled: Config.options?.notifications?.quietHours?.enable ?? false
+                opacity: enabled ? 1 : 0.5
+
+                StyledText {
+                    text: Translation.tr("From")
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                }
+                MaterialTextField {
+                    Layout.preferredWidth: 90
+                    placeholderText: "22:00"
+                    text: Config.options?.notifications?.quietHours?.start ?? "22:00"
+                    // Reject anything that isn't HH:MM instead of persisting junk.
+                    onEditingFinished: {
+                        if (/^([01]?\d|2[0-3]):[0-5]\d$/.test(text))
+                            Config.setNestedValue("notifications.quietHours.start", text)
+                        else
+                            text = Config.options?.notifications?.quietHours?.start ?? "22:00"
+                    }
+                }
+                StyledText {
+                    text: Translation.tr("to")
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                }
+                MaterialTextField {
+                    Layout.preferredWidth: 90
+                    placeholderText: "08:00"
+                    text: Config.options?.notifications?.quietHours?.end ?? "08:00"
+                    onEditingFinished: {
+                        if (/^([01]?\d|2[0-3]):[0-5]\d$/.test(text))
+                            Config.setNestedValue("notifications.quietHours.end", text)
+                        else
+                            text = Config.options?.notifications?.quietHours?.end ?? "08:00"
+                    }
+                }
+                Item { Layout.fillWidth: true }
+            }
             ConfigSpinBox {
                 icon: "vertical_align_top"
                 text: Translation.tr("Margin (px)")
@@ -799,6 +863,86 @@ ContentPage {
     }
 
     SettingsCardSection {
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
+        expanded: false
+        icon: "blur_on"
+        title: Translation.tr("Islands")
+
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("One skin for every island surface: the islands bar, island dock, island sidebars and island search.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
+            }
+
+            ConfigRow {
+                uniform: true
+                ConfigSpinBox {
+                    icon: "rounded_corner"
+                    text: Translation.tr("Corner radius (px)")
+                    value: Config.options?.appearance?.island?.radius ?? 18
+                    from: 4
+                    to: 32
+                    stepSize: 2
+                    onValueChanged: Config.setNestedValue("appearance.island.radius", value)
+                }
+                ConfigSpinBox {
+                    icon: "opacity"
+                    text: Translation.tr("Fill opacity (%)")
+                    value: Math.round((Config.options?.appearance?.island?.opacity ?? 1) * 100)
+                    from: 20
+                    to: 100
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("appearance.island.opacity", value / 100)
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+                SettingsSwitch {
+                    buttonIcon: "ev_shadow"
+                    text: Translation.tr("Drop shadow")
+                    checked: Config.options?.appearance?.island?.shadow ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.island.shadow", checked)
+                }
+                SettingsSwitch {
+                    buttonIcon: "flare"
+                    text: Translation.tr("Lit top edge")
+                    checked: Config.options?.appearance?.island?.sheen ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.island.sheen", checked)
+                    StyledToolTip {
+                        text: Translation.tr("The 1px highlight along the card's top edge.")
+                    }
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+                SettingsSwitch {
+                    buttonIcon: "blur_on"
+                    text: Translation.tr("Glass blur")
+                    checked: Config.options?.appearance?.island?.glass ?? true
+                    onCheckedChanged: Config.setNestedValue("appearance.island.glass", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Blurred wallpaper behind translucent islands, so lowering the fill opacity reads as frosted glass. Needs fill opacity below 100% and visual effects enabled.")
+                    }
+                }
+                ConfigSpinBox {
+                    icon: "lens_blur"
+                    text: Translation.tr("Blur strength (%)")
+                    value: Math.round((Config.options?.appearance?.island?.glassBlur ?? 1) * 100)
+                    from: 20
+                    to: 100
+                    stepSize: 10
+                    onValueChanged: Config.setNestedValue("appearance.island.glassBlur", value / 100)
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
         visible: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "side_navigation"
@@ -807,6 +951,26 @@ ContentPage {
         SettingsGroup {
             ContentSubsection {
                 title: Translation.tr("General")
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.sidebar?.style ?? "panel"
+                    onSelected: newValue => {
+                        Config.setNestedValue("sidebar.style", newValue);
+                    }
+                    options: [
+                        { displayName: Translation.tr("Panel"), icon: "side_navigation", value: "panel" },
+                        { displayName: Translation.tr("Island"), icon: "blur_on", value: "island" }
+                    ]
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Island wraps both sidebars in the gradient card look used by the island bar and dock.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+
                 SettingsSwitch {
                     buttonIcon: "branding_watermark"
                     text: Translation.tr("Use Card style")

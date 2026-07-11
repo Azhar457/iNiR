@@ -64,6 +64,14 @@
     "appearance": {
         "globalStyle": "material",
         "colorInvert": false,
+        "island": {
+            "radius": 18,
+            "opacity": 1,
+            "shadow": true,
+            "sheen": true,
+            "glass": true,
+            "glassBlur": 1
+        },
         "iiMotionProfile": "classic",
         "aurora": {
             "transparency": {
@@ -713,6 +721,64 @@
         "hideUpscaleNotification": false
     },
     "bar": {
+        "pill": {
+            "barMode": false,
+            "scale": 1,
+            "opacity": 1,
+            "topGap": 1,
+            "appGap": 1,
+            "showGlyphs": true,
+            "clockSeconds": false,
+            "time12h": false,
+            "musicViz": true,
+            "surfaces": {
+                "sysmon": true,
+                "clipboard": true,
+                "glance": true,
+                "launcher": true,
+                "recorder": false
+            },
+            "toasts": true,
+            "osd": true,
+            "modules": {
+                "workspaces": true,
+                "weather": true,
+                "tray": true,
+                "wifi": true,
+                "battery": true,
+                "inbox": true,
+                "mixer": true,
+                "sidebars": true,
+                "power": true
+            },
+            "rowSpacing": 20,
+            "iconSpacing": 12,
+            "iconSize": 17,
+            "soul": {
+                "enable": true,
+                "size": 1,
+                "style": "orb"
+            },
+            "glyphs": {
+                "clock": "",
+                "media": "",
+                "mediaPaused": "",
+                "link": "",
+                "notify": "",
+                "clear": "",
+                "dnd": "",
+                "sysmon": "",
+                "glance": "",
+                "clipboard": "",
+                "clipboardSearch": "",
+                "recorder": "",
+                "power": "",
+                "battery": "",
+                "calendar": "",
+                "mixer": "",
+                "launcher": ""
+            }
+        },
         "activeWindow": {
             "showTitle": true
         },
@@ -857,6 +923,10 @@
             "showNumberDelay": 300,
             "shown": 5,
             "useNerdFont": false
+        },
+        "islands": {
+            "inset": 4,
+            "padding": 12
         }
     },
     "battery": {
@@ -912,6 +982,7 @@
         "iconSize": 35,
         "separatePinnedFromRunning": true,
         "enableDragReorder": true,
+        "notificationBadge": true,
         "style": "panel"
     },
     "controlPanel": {
@@ -1143,6 +1214,11 @@
     "notifications": {
         "edgeMargin": 4,
         "maxPopupLifetime": 30000,
+        "quietHours": {
+            "enable": false,
+            "start": "22:00",
+            "end": "08:00"
+        },
         "position": "topRight",
         "screenList": [],
         "timeout": 3000,
@@ -1241,6 +1317,9 @@
         "updateInterval": 3000,
         "monitorGpu": true
     },
+    "clipboard": {
+        "pinned": []
+    },
     "search": {
         "engineBaseUrl": "https://www.google.com/search?q=",
         "excludedSites": [
@@ -1253,6 +1332,7 @@
             "fileUploadApiFallback2": "https://catbox.moe/user/api.php",
             "useCircleSelection": false
         },
+        "style": "default",
         "nonAppResultDelay": 30,
         "prefix": {
             "action": "/",
@@ -1303,6 +1383,8 @@
             "valueScroll": true,
             "visualize": true
         },
+        "style": "panel",
+        "cardStyle": false,
         "keepRightSidebarLoaded": true,
         "instantOpen": false,
         "animationType": "slide",
@@ -1603,7 +1685,13 @@
         "screenOffTimeout": 300,
         "lockTimeout": 600,
         "suspendTimeout": 0,
-        "lockBeforeSleep": true
+        "lockBeforeSleep": true,
+        "onBattery": {
+            "enable": false,
+            "screenOffTimeout": 120,
+            "lockTimeout": 300,
+            "suspendTimeout": 600
+        }
     },
     "gameMode": {
         "autoDetect": false,

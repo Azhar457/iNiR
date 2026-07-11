@@ -162,6 +162,13 @@ Singleton {
             desc: Translation.tr("Reorder settings groups and pages"),
             essential: false,
             component: "modules/settings/ArrangeConfig.qml"
+        },
+        {
+            name: Translation.tr("Ricelin"),
+            icon: "jp:リ",
+            desc: Translation.tr("The washi & flame dialect: pill bar, islands, surfaces"),
+            essential: false,
+            component: "modules/settings/RicelinConfig.qml"
         }
     ]
 
@@ -169,7 +176,7 @@ Singleton {
     // pages array above — order here defines the visual nav order.
     readonly property var defaultCategories: [
         { label: Translation.tr("Essentials"), pages: [0] },
-        { label: Translation.tr("Appearance"), pages: [4, 3, 14] },
+        { label: Translation.tr("Appearance"), pages: [4, 3, 14, 21] },
         { label: Translation.tr("Shell"), pages: [2, 5, 16, 10, 11, 18, 19, 20] },
         { label: Translation.tr("System"), pages: [1, 7, 6, 12, 15, 8, 17] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
@@ -252,9 +259,23 @@ Singleton {
         {
             pageIndex: 19, pageName: root.pages[19].name,
             section: Translation.tr("Mascot"),
+            label: Translation.tr("Pose for this event"),
+            description: Translation.tr("Choose from the curated full-body pose collection"),
+            keywords: ["mascot", "pose", "full body", "animation", "event", "override", "picker"]
+        },
+        {
+            pageIndex: 19, pageName: root.pages[19].name,
+            section: Translation.tr("Mascot"),
             label: Translation.tr("Chaos mode"),
             description: Translation.tr("She runs across the desktop, bonks widgets and rattles the bar"),
             keywords: ["mascot", "chaos", "romp", "kick", "bonk", "widgets", "rearrange", "tidy", "physics"]
+        },
+        {
+            pageIndex: 19, pageName: root.pages[19].name,
+            section: Translation.tr("Kira collection"),
+            label: Translation.tr("Kira collection"),
+            description: Translation.tr("Browse every full-body pose, animation, portrait, chibi and editorial illustration"),
+            keywords: ["mascot", "kira", "collection", "gallery", "archive", "pose", "full body", "animated", "portrait", "chibi", "editorial"]
         },
         {
             pageIndex: 20, pageName: root.pages[20].name,
@@ -422,8 +443,50 @@ Singleton {
             pageIndex: 2, pageName: root.pages[2].name,
             section: Translation.tr("Positioning"),
             label: Translation.tr("Bar appearance"),
-            description: Translation.tr("Bar surface style: classic, islands, scenic or frame"),
-            keywords: ["bar", "appearance", "islands", "scenic", "frame", "surface", "floating", "capsule", "gradient", "outline"]
+            description: Translation.tr("Bar surface style: classic, islands, scenic, frame or pill"),
+            keywords: ["bar", "appearance", "islands", "scenic", "frame", "pill", "surface", "floating", "capsule", "gradient", "outline"]
+        },
+        {
+            pageIndex: 2, pageName: root.pages[2].name,
+            section: Translation.tr("Positioning"),
+            label: Translation.tr("Pill options"),
+            description: Translation.tr("Morphing pill bar: bar mode, scale, opacity, gaps, glyphs, surfaces"),
+            keywords: ["pill", "bar", "morph", "island", "kanji", "glyph", "visualizer", "sysmon", "system", "clipboard", "scale", "gap", "expanded", "persistent"]
+        },
+        {
+            pageIndex: 2, pageName: root.pages[2].name,
+            section: Translation.tr("Positioning"),
+            label: Translation.tr("Pill hover row"),
+            description: Translation.tr("Toggle each module of the expanded pill row, plus pill toasts and OSD"),
+            keywords: ["pill", "hover", "row", "modules", "workspaces", "weather", "tray", "wifi", "battery", "inbox", "mixer", "sidebar", "power", "toast", "osd", "notification", "soul", "bead", "icon", "size", "spacing"]
+        },
+        {
+            pageIndex: 21, pageName: root.pages[21].name,
+            section: Translation.tr("Glyphs"),
+            label: Translation.tr("Pill glyphs"),
+            description: Translation.tr("Swap any Japanese character the pill uses for your own"),
+            keywords: ["ricelin", "glyph", "kanji", "japanese", "character", "letter", "custom", "pill"]
+        },
+        {
+            pageIndex: 2, pageName: root.pages[2].name,
+            section: Translation.tr("Positioning"),
+            label: Translation.tr("Islands options"),
+            description: Translation.tr("Islands bar geometry: capsule inset and padding"),
+            keywords: ["islands", "bar", "inset", "padding", "capsule", "geometry", "spacing", "ricelin"]
+        },
+        {
+            pageIndex: 21, pageName: root.pages[21].name,
+            section: Translation.tr("Pill bar"),
+            label: Translation.tr("Ricelin dialect"),
+            description: Translation.tr("Pill bar, bar mode and optional surfaces: glance, launcher, clipboard, sysmon, recorder"),
+            keywords: ["ricelin", "pill", "bar", "mode", "glance", "today", "launcher", "apps", "recorder", "record", "clipboard", "sysmon", "surfaces", "washi", "flame", "toast", "osd"]
+        },
+        {
+            pageIndex: 21, pageName: root.pages[21].name,
+            section: Translation.tr("Island surfaces"),
+            label: Translation.tr("Island styles"),
+            description: Translation.tr("Ricelin island card for dock, sidebars and search, plus the shared skin"),
+            keywords: ["ricelin", "island", "dock", "sidebar", "search", "card", "gradient", "sheen", "radius", "opacity", "shadow", "skin", "glass", "blur", "transparency"]
         },
         {
             pageIndex: 2, pageName: root.pages[2].name,
@@ -974,6 +1037,27 @@ Singleton {
             label: Translation.tr("Sidebars"),
             description: Translation.tr("Sidebar toggles, sliders and corner open"),
             keywords: ["sidebar", "quick", "toggles", "sliders", "corner"]
+        },
+        {
+            pageIndex: 5, pageName: root.pages[5].name,
+            section: Translation.tr("Islands"),
+            label: Translation.tr("Island look"),
+            description: Translation.tr("Radius, opacity, shadow and top sheen of every island surface"),
+            keywords: ["island", "radius", "opacity", "shadow", "sheen", "card", "gradient", "ricelin", "skin", "glass", "blur", "transparency"]
+        },
+        {
+            pageIndex: 5, pageName: root.pages[5].name,
+            section: Translation.tr("Sidebars"),
+            label: Translation.tr("Sidebar style"),
+            description: Translation.tr("Panel or island (gradient card) sidebar surface"),
+            keywords: ["sidebar", "style", "island", "panel", "card", "gradient", "ricelin"]
+        },
+        {
+            pageIndex: 7, pageName: root.pages[7].name,
+            section: Translation.tr("Search"),
+            label: Translation.tr("Search surface style"),
+            description: Translation.tr("Default or island (gradient card) search surface"),
+            keywords: ["search", "style", "island", "card", "gradient", "launcher", "apps", "ricelin"]
         },
         {
             pageIndex: 5, pageName: root.pages[5].name,

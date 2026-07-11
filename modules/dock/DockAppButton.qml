@@ -2,6 +2,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.pill
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Layouts
@@ -65,7 +66,18 @@ DockButton {
     }
     property bool hasWindows: toplevels.length > 0
     property bool pillStyle:  (Config.options?.dock?.style === "pill") && !Appearance.zzzEverywhere
+    // Island opt-in wears the Ricelin dialect in every global style, zzz included.
+    property bool islandStyle: Config.options?.dock?.style === "island"
     property bool macosStyle: (Config.options?.dock?.style === "macos") && !Appearance.zzzEverywhere
+
+    readonly property int notificationCount: {
+        if (root.isSeparator || (Config.options?.dock?.notificationBadge ?? true) === false)
+            return 0
+        return Notifications.countForApp([
+            appToplevel?.originalAppId ?? appToplevel?.appId,
+            root.desktopEntry?.name
+        ])
+    }
 
     // Hover preview signals
     signal hoverPreviewRequested()
@@ -115,8 +127,8 @@ DockButton {
     }
 
     transform: Translate {
-        y: Appearance.zzzEverywhere && !root.macosStyle && !root.pillStyle && root.buttonHovered && !root.vertical ? -3 : 0
-        x: Appearance.zzzEverywhere && !root.macosStyle && !root.pillStyle && root.buttonHovered && root.vertical ? -3 : 0
+        y: (Appearance.zzzEverywhere || root.islandStyle) && !root.macosStyle && !root.pillStyle && root.buttonHovered && !root.vertical ? -3 : 0
+        x: (Appearance.zzzEverywhere || root.islandStyle) && !root.macosStyle && !root.pillStyle && root.buttonHovered && root.vertical ? -3 : 0
         Behavior on y {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutBack; easing.overshoot: 2.2 }
@@ -145,40 +157,33 @@ DockButton {
     background.visible: !isSeparator && !pillStyle && !macosStyle
 
     // Suppress ripple/hover bg in macOS mode so no colored rect appears under icon
-    colBackgroundHover: macosStyle ? "transparent" : (Appearance.zzzEverywhere ? "transparent"
+    // Island mode hovers like a Ricelin row: a faint cream frame fill with a
+    // vermilion-tinted press, instead of the global style's hover chain.
+    colBackgroundHover: macosStyle ? "transparent" : root.islandStyle ? PillTheme.frameBg
+        : (Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0Hover)
-    colRipple: macosStyle ? "transparent" : (Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
+    colRipple: macosStyle ? "transparent" : root.islandStyle ? Qt.alpha(PillTheme.vermLit, 0.18)
+        : (Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer0Active)
 
-    ZzzPlate {
-        anchors.fill: parent
-        visible: Appearance.zzzEverywhere && !root.isSeparator
-        // Dock tiles are small: use the control radius in round mode (a clean
-        // rounded chip), NOT the big panelRadius which over-rounds into a broken
-        // blob. Square mode keeps the signature chamfer.
-        radius: Appearance.zzz.round ? Appearance.zzz.controlRadius : 0
-        // Hover lifts the tile with a fuller cut; active keeps a moderate
-        // chamfer so the pressed read differs from hover.
-        chamfer: root.buttonHovered ? Appearance.zzz.cutCorner * 0.85
-            : root.appIsActive ? Appearance.zzz.cutCorner * 0.6
-            : Appearance.zzz.cutCorner * 0.45
-        // Whisper-thin console lift: a very faint paper tint so the icon stays
-        // the hero, edged with a soft signal stroke instead of a heavy plate.
-        fillColor: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.paper, 0.14)
-            : root.appIsActive ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.08)
-            : "transparent"
-        strokeColor: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.55)
-            : root.appIsActive ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.65)
-            : "transparent"
-        strokeWidth: Appearance.zzz.borderThick
-        z: -1
-    }
+    // Tune the inherited zzz tile (DockButton owns the only ZzzPlate).
+    // Hover lifts the tile with a fuller cut; active keeps a moderate chamfer so
+    // the focused read differs from hover. Whisper-thin console lift: a very
+    // faint paper tint so the icon stays the hero, edged with a soft stroke.
+    zzzPlateVisible: Appearance.zzzEverywhere && !root.isSeparator && !root.islandStyle
+    zzzPlateChamfer: Appearance.zzz.cutCorner * (root.buttonHovered ? 0.85 : root.appIsActive ? 0.6 : 0.45)
+    zzzPlateFill: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.paper, 0.14)
+        : root.appIsActive ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.08)
+        : "transparent"
+    zzzPlateStroke: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.55)
+        : root.appIsActive ? ColorUtils.applyAlpha(Appearance.zzz.sticker, 0.65)
+        : "transparent"
 
     // Pill background (replaces shared panel for this item)
     DockPillItem {
@@ -282,6 +287,30 @@ DockButton {
         return false;
     }
 
+    function focusToplevelAt(index: int): void {
+        const toplevel = toplevels[index]
+        if (CompositorService.isNiri) {
+            if (toplevel?.niriWindowId) {
+                NiriService.focusWindow(toplevel.niriWindowId)
+            } else if (toplevel?.activate) {
+                toplevel.activate()
+            }
+        } else {
+            toplevel?.activate()
+        }
+    }
+
+    // Rotate focus through this app's windows. step +1 forward, -1 backward.
+    function cycleWindows(step: int): void {
+        const total = toplevels.length
+        if (total === 0) return
+        // Start from whatever is focused now, so scrolling continues from what
+        // the user sees rather than from this button's own stale counter.
+        const base = root.appIsActive ? root.focusedWindowIndex : lastFocused
+        lastFocused = ((base + step) % total + total) % total
+        focusToplevelAt(lastFocused)
+    }
+
     onClicked: {
         // Suppress the click that RippleButton fires after a drag-release
         if (appListRoot?._suppressNextClick) {
@@ -298,15 +327,23 @@ DockButton {
         // Con ventanas: rotar foco entre instancias abiertas
         const total = toplevels.length
         lastFocused = (lastFocused + 1) % total
-        const toplevel = toplevels[lastFocused]
-        if (CompositorService.isNiri) {
-            if (toplevel?.niriWindowId) {
-                NiriService.focusWindow(toplevel.niriWindowId)
-            } else if (toplevel?.activate) {
-                toplevel.activate()
+        focusToplevelAt(lastFocused)
+    }
+
+    // Scroll over an icon to walk through that app's windows.
+    WheelHandler {
+        enabled: root.toplevels.length > 1 && !root.isSeparator
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        property real _accumulated: 0
+        onWheel: event => {
+            // Touchpads emit many small deltas; one notch is 120 units.
+            _accumulated += event.angleDelta.y
+            while (Math.abs(_accumulated) >= 120) {
+                const direction = _accumulated > 0 ? 1 : -1
+                _accumulated -= direction * 120
+                // Scrolling up walks backwards through the window list.
+                root.cycleWindows(-direction)
             }
-        } else {
-            toplevel?.activate()
         }
     }
 
@@ -505,6 +542,46 @@ DockButton {
                 }
             }
 
+              // Unread notification badge, anchored to the icon's top-right corner
+              Loader {
+                  active: root.notificationCount > 0
+                  anchors {
+                      right: iconImageLoader.right
+                      top: iconImageLoader.top
+                      rightMargin: -4
+                      topMargin: -2
+                  }
+                  sourceComponent: Rectangle {
+                      implicitWidth: Math.max(16, badgeText.implicitWidth + 8)
+                      implicitHeight: 16
+                      radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : height / 2
+                      color: Appearance.zzzEverywhere ? Appearance.zzz.signal
+                          : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
+                      border.width: 1
+                      border.color: Appearance.zzzEverywhere ? Appearance.zzz.paper
+                          : Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1
+
+                      Behavior on implicitWidth {
+                          enabled: Appearance.animationsEnabled
+                          NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                      }
+                      Behavior on color {
+                          enabled: Appearance.animationsEnabled
+                          ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                      }
+
+                      StyledText {
+                          id: badgeText
+                          anchors.centerIn: parent
+                          text: root.notificationCount > 99 ? "99+" : root.notificationCount
+                          font.pixelSize: Appearance.font.pixelSize.smallest
+                          font.weight: Font.Bold
+                          color: Appearance.zzzEverywhere ? Appearance.zzz.onSignal
+                              : Appearance.inirEverywhere ? Appearance.inir.colOnError : Appearance.colors.colOnError
+                      }
+                  }
+              }
+
               // Smart indicator: shows window count and which is focused
               // Hidden in macOS and pill modes — those render their own indicators
               Loader {
@@ -552,17 +629,22 @@ DockButton {
                             radius: Appearance.zzzEverywhere ? Math.min(width, height) / 2
                                 : Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
                             Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
-                            implicitWidth: Appearance.zzzEverywhere
+                            implicitWidth: (root.islandStyle || Appearance.zzzEverywhere)
                                 ? (isFocusedWindow ? 16 : 5)
                                 : Appearance.angelEverywhere
                                 ? (isFocusedWindow ? 14 : 6)
                                 : (isFocusedWindow ? root.countDotWidth : root.countDotHeight)
-                            implicitHeight: Appearance.zzzEverywhere ? 3
+                            implicitHeight: (root.islandStyle || Appearance.zzzEverywhere) ? 3
                                 : Appearance.angelEverywhere ? 2 : root.countDotHeight
+                            // Island indicators are Ricelin filaments: a lit vermilion
+                            // thread for the focused window, whispered cream siblings.
+                            // Island opt-in outranks the zzz accent chain.
                             color: isFocusedWindow
-                                   ? (Appearance.zzzEverywhere ? Appearance.zzz.accent
+                                   ? (root.islandStyle ? PillTheme.vermLit
+                                   : Appearance.zzzEverywhere ? Appearance.zzz.accent
                                    : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                                    : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                   : root.islandStyle ? Qt.alpha(PillTheme.cream, 0.25)
                                    : ColorUtils.transparentize(Appearance.zzzEverywhere ? Appearance.zzz.ink
                                    : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.65)
@@ -586,11 +668,12 @@ DockButton {
                     Rectangle {
                         opacity: (!root.appIsActive && root.hasWindows && Config.options?.dock?.showAllWindowDots === false) ? 1 : 0
                         visible: opacity > 0
-                        width: Appearance.zzzEverywhere ? 5 : (Appearance.angelEverywhere ? 6 : 5)
-                        height: Appearance.zzzEverywhere ? 3 : (Appearance.angelEverywhere ? 2 : 5)
+                        width: (Appearance.zzzEverywhere || root.islandStyle) ? 5 : (Appearance.angelEverywhere ? 6 : 5)
+                        height: (Appearance.zzzEverywhere || root.islandStyle) ? 3 : (Appearance.angelEverywhere ? 2 : 5)
                         radius: Appearance.zzzEverywhere ? Math.min(width, height) / 2
                             : Appearance.angelEverywhere ? 0 : Math.min(width, height) / 2
-                        color: ColorUtils.transparentize(Appearance.zzzEverywhere ? Appearance.zzz.ink
+                        color: root.islandStyle ? Qt.alpha(PillTheme.cream, 0.25)
+                            : ColorUtils.transparentize(Appearance.zzzEverywhere ? Appearance.zzz.ink
                             : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
                             : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0,
                             Appearance.zzzEverywhere ? 0.65 : 0.5)

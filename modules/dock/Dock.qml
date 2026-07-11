@@ -15,6 +15,7 @@ import Quickshell.Io
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Wayland
+import qs.modules.pill
 
 Scope {
     id: root
@@ -25,6 +26,7 @@ Scope {
     readonly property bool isLeft: root.position === "left"
     readonly property bool isPillStyle:   Config.options?.dock?.style === "pill"
     readonly property bool isMacosStyle:  Config.options?.dock?.style === "macos"
+    readonly property bool isIslandStyle: Config.options?.dock?.style === "island"
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
 
     // Track bar position to force dock recreation when bar changes
@@ -178,7 +180,31 @@ Scope {
 
                             StyledRectangularShadow {
                                 target: dockVisualBackground
-                                visible: (Config.options?.dock?.showBackground ?? true) && !Appearance.gameModeMinimal && !root.zzzEverywhere && !root.isPillStyle && !root.isMacosStyle
+                                visible: (Config.options?.dock?.showBackground ?? true) && !Appearance.gameModeMinimal && !root.zzzEverywhere && !root.isPillStyle && !root.isMacosStyle && !root.isIslandStyle
+                            }
+
+                            // Island style carries its own surface (gradient card,
+                            // hairline, top sheen) and its own shadow, exactly like
+                            // the island bar. It replaces dockVisualBackground.
+                            IslandPanel {
+                                anchors.fill: parent
+                                anchors.topMargin: root.isTop ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? 0 : Appearance.sizes.elevationMargin)
+                                anchors.bottomMargin: root.position === "bottom" ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? 0 : Appearance.sizes.elevationMargin)
+                                anchors.leftMargin: root.isLeft ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? Appearance.sizes.elevationMargin : 0)
+                                anchors.rightMargin: root.position === "right" ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? Appearance.sizes.elevationMargin : 0)
+                                visible: (Config.options?.dock?.showBackground ?? true) && !Appearance.gameModeMinimal && root.isIslandStyle
+                                glassEnabled: true
+                                glassScreenWidth: dockRoot.screen?.width ?? 1920
+                                glassScreenHeight: dockRoot.screen?.height ?? 1080
+                                glassScreenX: root.isVertical
+                                    ? (root.isLeft ? Appearance.sizes.hyprlandGapsOut : glassScreenWidth - width - Appearance.sizes.hyprlandGapsOut)
+                                    : (glassScreenWidth - width) / 2
+                                glassScreenY: root.isVertical
+                                    ? (glassScreenHeight - height) / 2
+                                    : (root.isTop ? Appearance.sizes.hyprlandGapsOut : glassScreenHeight - height - Appearance.sizes.hyprlandGapsOut)
+                                // Docked panels round a touch harder than the bar;
+                                // still follows the shared island skin knob.
+                                radius: (Config.options?.appearance?.island?.radius ?? 18) + 4
                             }
 
                                 Rectangle {
@@ -217,7 +243,10 @@ Scope {
 
                                 // Hide shared background in pill mode — each pill is its own background
                                 // Hide in macOS mode — DockMacBackground is the unified shelf
-                                visible: (Config.options?.dock?.showBackground ?? true) && !gameModeMinimal && (root.zzzEverywhere || (!root.isPillStyle && !root.isMacosStyle))
+                                // Island is an explicit opt-in to the Ricelin dialect,
+                                // so it replaces the zzz surface too (same rule as the
+                                // islands bar).
+                                visible: (Config.options?.dock?.showBackground ?? true) && !gameModeMinimal && ((root.zzzEverywhere && !root.isIslandStyle) || (!root.isPillStyle && !root.isMacosStyle && !root.isIslandStyle))
                                 // ZZZ: the visible shelf is the chamfered ZzzPlate below.
                                 color: root.zzzEverywhere ? "transparent"
                                     : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
@@ -246,8 +275,11 @@ Scope {
                                     chamfer: Appearance.zzz.cutCorner
                                     chamferBottomRight: true
                                     chamferTopRight: false
+                                    // Glass on: the wash below owns the fill (blurred
+                                    // wallpaper + veil). A translucent fill here let the
+                                    // SHARP wallpaper through instead of a blurred one.
                                     fillColor: dockVisualBackground.zzzGlassActive
-                                        ? ColorUtils.applyAlpha(Appearance.zzz.chromeAlt, Appearance.zzz.dark ? 0.82 : 0.76)
+                                        ? "transparent"
                                         : Appearance.zzz.chromeAlt
                                     strokeColor: Appearance.zzz.hairline
                                     strokeWidth: 1
@@ -267,6 +299,11 @@ Scope {
                                     chamferTopRight: false
                                     chamferBottomRight: true
                                     glassEnabled: dockVisualBackground.zzzGlassActive
+                                    selfBacked: true
+                                    // The dock holds icons, not text — it can drink
+                                    // more wallpaper than the bar without costing
+                                    // legibility.
+                                    veilAlpha: Appearance.zzz.dark ? 0.66 : 0.72
                                 }
 
                                 clip: true

@@ -4,6 +4,7 @@ import qs.modules.common
 import qs.modules.common.models
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.pill
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -139,6 +140,10 @@ Item {
         implicitHeight: Math.max(0, parent.height - Appearance.sizes.hyprlandGapsOut * 2)
         implicitWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut * 2
         property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
+        // Island: the panel wears the Ricelin gradient card (IslandPanel) and the
+        // flat fill/border step aside. Explicit island opt-in outranks the zzz
+        // chrome (same rule as the islands bar and dock).
+        readonly property bool islandStyle: (Config.options?.sidebar?.style ?? "panel") === "island"
         readonly property bool angelEverywhere: Appearance.angelEverywhere
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
         readonly property bool inirEverywhere: Appearance.inirEverywhere
@@ -167,12 +172,12 @@ Item {
             color: ColorUtils.mix(sidebarRightBackground.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
         }
 
-        color: gameModeMinimal ? "transparent"
+        color: (gameModeMinimal || islandStyle) ? "transparent"
             : Appearance.zzzEverywhere ? Appearance.zzz.chrome
             : inirEverywhere ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
             : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
             : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-        border.width: gameModeMinimal ? 0 : (Appearance.zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
+        border.width: (gameModeMinimal || islandStyle) ? 0 : (Appearance.zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
             : angelEverywhere ? Appearance.angel.colPanelBorder
             : inirEverywhere ? Appearance.inir.colBorder
@@ -208,6 +213,21 @@ Item {
                 height: sidebarRightBackground.height
                 radius: sidebarRightBackground.radius
             }
+        }
+
+        // Ricelin island face: gradient card + top sheen. Outer shadow already
+        // comes from StyledRectangularShadow; the OpacityMask would clip a
+        // MultiEffect shadow anyway, so IslandPanel's own pass stays off.
+        IslandPanel {
+            anchors.fill: parent
+            visible: sidebarRightBackground.islandStyle && !sidebarRightBackground.gameModeMinimal
+            radius: sidebarRightBackground.radius
+            shadow: false
+            glassEnabled: true
+            glassScreenX: root.screenWidth - sidebarRightBackground.width - Appearance.sizes.hyprlandGapsOut
+            glassScreenY: Appearance.sizes.hyprlandGapsOut
+            glassScreenWidth: root.screenWidth ?? 1920
+            glassScreenHeight: root.screenHeight ?? 1080
         }
 
         Image {
@@ -266,6 +286,7 @@ Item {
 
         ZzzPanelBackdrop {
             anchors.fill: parent
+            visible: opacity > 0 && !sidebarRightBackground.islandStyle
             label: "SYSTEM"
             index: "R"
             ghostText: "RIGHT"
@@ -285,7 +306,7 @@ Item {
         // so chrome + ghost marks still breathe.
         Rectangle {
             anchors.fill: parent
-            visible: Appearance.zzzEverywhere
+            visible: Appearance.zzzEverywhere && !sidebarRightBackground.islandStyle
             color: ColorUtils.applyAlpha(Appearance.zzz.tile, 0.55)
             z: 0
             Behavior on color {

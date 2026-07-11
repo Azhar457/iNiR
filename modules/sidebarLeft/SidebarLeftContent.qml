@@ -4,6 +4,7 @@ import qs.modules.common
 import qs.modules.common.models
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.pill
 import qs.modules.sidebarLeft.animeSchedule
 import qs.modules.sidebarLeft.innertune
 import qs.modules.sidebarLeft.news
@@ -110,6 +111,9 @@ Item {
         implicitHeight: parent.height - Appearance.sizes.hyprlandGapsOut * 2
         implicitWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut * 2
         property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
+        // Explicit island opt-in outranks the zzz chrome (same rule as the
+        // islands bar and dock).
+        readonly property bool islandStyle: (Config.options?.sidebar?.style ?? "panel") === "island"
         readonly property bool angelEverywhere: Appearance.angelEverywhere
         readonly property bool auroraEverywhere: Appearance.auroraEverywhere
         readonly property bool gameModeMinimal: Appearance.gameModeMinimal
@@ -136,11 +140,11 @@ Item {
             color: ColorUtils.mix(sidebarLeftBackground.wallpaperDominantColor, Appearance.colors.colPrimaryContainer, 0.8) || Appearance.colors.colSecondaryContainer
         }
 
-        color: gameModeMinimal ? "transparent"
+        color: (gameModeMinimal || islandStyle) ? "transparent"
              : Appearance.zzzEverywhere ? Appearance.zzz.chrome
              : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-        border.width: gameModeMinimal ? 0 : Appearance.zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
+        border.width: (gameModeMinimal || islandStyle) ? 0 : Appearance.zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1)
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
             : angelEverywhere ? Appearance.angel.colPanelBorder
             : Appearance.inirEverywhere ? Appearance.inir.colBorder
@@ -178,6 +182,19 @@ Item {
                 height: sidebarLeftBackground.height
                 radius: sidebarLeftBackground.radius
             }
+        }
+
+        // Ricelin island face — outer shadow comes from StyledRectangularShadow.
+        IslandPanel {
+            glassEnabled: true
+            glassScreenX: Appearance.sizes.hyprlandGapsOut
+            glassScreenY: Appearance.sizes.hyprlandGapsOut
+            glassScreenWidth: root.screenWidth ?? 1920
+            glassScreenHeight: root.screenHeight ?? 1080
+            anchors.fill: parent
+            visible: sidebarLeftBackground.islandStyle && !sidebarLeftBackground.gameModeMinimal
+            radius: sidebarLeftBackground.radius
+            shadow: false
         }
 
         Image {
@@ -236,6 +253,7 @@ Item {
 
         ZzzPanelBackdrop {
             anchors.fill: parent
+            visible: opacity > 0 && !sidebarLeftBackground.islandStyle
             label: "INTELLIGENCE"
             index: "L"
             ghostText: "LEFT"
@@ -255,7 +273,7 @@ Item {
         // hairlines stay. Kept low-alpha so chrome + ghost marks still breathe.
         Rectangle {
             anchors.fill: parent
-            visible: Appearance.zzzEverywhere
+            visible: Appearance.zzzEverywhere && !sidebarLeftBackground.islandStyle
             color: ColorUtils.applyAlpha(Appearance.zzz.tile, 0.55)
             z: 0
             Behavior on color {

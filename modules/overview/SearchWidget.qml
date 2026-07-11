@@ -4,6 +4,7 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.pill
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
@@ -19,6 +20,12 @@ Item { // Wrapper
     property bool panelVisible: true
     property real availableHeight: root.QsWindow?.window?.height ?? (root.QsWindow?.window?.screen?.height ?? 1080)
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    // Island: the search surface wears the Ricelin gradient card; the glass
+    // fill, wallpaper backdrop and per-style borders step aside. zzz keeps its
+    // own plate doctrine.
+    // Explicit island opt-in outranks the zzz chrome (same rule as the islands
+    // bar, dock and sidebars).
+    readonly property bool islandStyle: (Config.options?.search?.style ?? "default") === "island"
     readonly property bool actionMode: searchingText.startsWith(root.prefixAction)
     readonly property string actionQuery: actionMode ? StringUtils.cleanPrefix(searchingText, root.prefixAction) : ""
     implicitWidth: searchWidgetContent.implicitWidth + Appearance.sizes.elevationMargin * 2
@@ -421,13 +428,15 @@ Item { // Wrapper
         // Collapsed zzz search: let ZzzGraphicPlate own the (chamfered/rounded) fill so
         // the GlassBackground's rounded rect doesn't escape behind it. Results surface
         // still needs the paper fill (its backdrop is decoration only).
-        fallbackColor: root.zzzEverywhere ? (root.showResults ? Appearance.zzz.paper : "transparent") : Appearance.colors.colBackgroundSurfaceContainer
-        inirColor: Appearance.inir.colLayer1
+        fallbackColor: root.islandStyle ? "transparent"
+            : root.zzzEverywhere ? (root.showResults ? Appearance.zzz.paper : "transparent") : Appearance.colors.colBackgroundSurfaceContainer
+        inirColor: root.islandStyle ? "transparent" : Appearance.inir.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
-        wallpaperBackdropEnabled: root.panelVisible && !root.zzzEverywhere
+        wallpaperBackdropEnabled: root.panelVisible && !root.zzzEverywhere && !root.islandStyle
         // Collapsed ZZZ search keeps its integrated plate border, while the
         // expanded results surface uses the shared panel backdrop + real border.
-        border.width: root.zzzEverywhere
+        border.width: root.islandStyle ? 0
+            : root.zzzEverywhere
             ? (root.showResults ? Appearance.zzz.borderThick : 0)
             : auroraEverywhere || inirEverywhere ? 1 : 0
         border.color: root.zzzEverywhere ? Appearance.zzz.hairline
@@ -442,11 +451,35 @@ Item { // Wrapper
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
 
+        // Ricelin island face — outer shadow already comes from
+        // StyledRectangularShadow; content is masked to this same radius.
+        IslandPanel {
+            anchors.fill: parent
+            visible: root.islandStyle
+            radius: searchWidgetContent.radius
+            shadow: false
+            glassEnabled: true
+            // The overview window is fullscreen, so window coords ARE screen
+            // coords; re-map when the search surface moves or resizes.
+            glassScreenX: {
+                void searchWidgetContent.width;
+                void searchWidgetContent.height;
+                return searchWidgetContent.mapToItem(null, 0, 0).x;
+            }
+            glassScreenY: {
+                void searchWidgetContent.width;
+                void searchWidgetContent.height;
+                return searchWidgetContent.mapToItem(null, 0, 0).y;
+            }
+            glassScreenWidth: root.QsWindow?.window?.screen?.width ?? 1920
+            glassScreenHeight: root.QsWindow?.window?.screen?.height ?? 1080
+        }
+
         // Collapsed search: a CLEAN plate (just the left category accent bar). The
         // search field is a small control — no ghost text, tape or frame labels.
         ZzzGraphicPlate {
             anchors.fill: parent
-            visible: root.zzzEverywhere && !root.showResults
+            visible: root.zzzEverywhere && !root.showResults && !root.islandStyle
             accentColor: Appearance.zzz.accent
         }
 
@@ -454,7 +487,7 @@ Item { // Wrapper
         // a faint ghost mark only, no ticks/burst noise.
         ZzzPanelBackdrop {
             anchors.fill: parent
-            visible: root.zzzEverywhere && root.showResults
+            visible: root.zzzEverywhere && root.showResults && !root.islandStyle
             label: "RESULTS"
             index: "RX"
             ghostText: "RESULT"

@@ -643,6 +643,16 @@ Singleton {
             property JsonObject appearance: JsonObject {
                 property string theme: "auto" // Theme preset ID: "auto" for wallpaper-based, or preset name like "gruvbox-dark", "catppuccin-mocha", "custom", etc.
                 property string globalStyle: "material" // "material" | "cards" | "aurora" | "inir" | "angel" | "zzz"
+                // Shared skin for every island surface (islands bar, island dock,
+                // island sidebars, island search). Consumed by IslandPanel.
+                property JsonObject island: JsonObject {
+                property bool glass: true // Blurred wallpaper behind translucent island cards (needs opacity < 100%)
+                property real glassBlur: 1 // Blur intensity of the glass backdrop (0.2–1)
+                    property int radius: 18 // Corner radius where the surface doesn't set its own
+                    property real opacity: 1 // Gradient fill opacity (0–1)
+                    property bool shadow: true // Soft drop shadow behind the card
+                    property bool sheen: true // 1px lit top edge
+                }
                 property bool colorInvert: false // Rotate all m3 colors 180° (complementary palette). Shell-only, does not affect external apps.
                 property JsonObject aurora: JsonObject {
                     property JsonObject transparency: JsonObject {
@@ -960,6 +970,14 @@ Singleton {
                 property int lockTimeout: 600 // seconds, 0 = disabled
                 property int suspendTimeout: 0 // seconds, 0 = disabled
                 property bool lockBeforeSleep: true
+                // Tighter timeouts applied only while running on battery.
+                // Ignored on desktops (no battery present).
+                property JsonObject onBattery: JsonObject {
+                    property bool enable: false
+                    property int screenOffTimeout: 120
+                    property int lockTimeout: 300
+                    property int suspendTimeout: 600
+                }
             }
 
             property JsonObject modules: JsonObject {
@@ -1453,6 +1471,79 @@ Singleton {
             }
 
             property JsonObject bar: JsonObject {
+                // Options for bar.appearanceStyle === "pill": the morphing centre
+                // island that replaces the bar and grows on hover.
+                property JsonObject pill: JsonObject {
+                    property bool barMode: false // Rest expanded: the hover row stays out as a persistent bar
+                    property real scale: 1 // UI scale multiplier on top of the screen-height ratio
+                    property real opacity: 1 // Pill body fill opacity
+                    property real topGap: 1 // Distance from the top edge, in 8px units
+                    property real appGap: 1 // How much reserved band the pill keeps below itself
+                    property bool showGlyphs: true // 時 kanji instead of a clock icon at rest
+                    property bool clockSeconds: false
+                    property bool time12h: false
+                    property bool musicViz: true // Swap the rest glyph for a live cava spectrum
+                    property bool toasts: true // Notification toasts take over the resting pill
+                    property bool osd: true // Volume/brightness/mic/workspace changes flash on the pill
+                    property real rowSpacing: 20 // Air between the hover row's groups (workspaces | clock | status), px
+                    property real iconSpacing: 12 // Air between the status icons, px
+                    property real iconSize: 17 // Icon size of the pill's furniture, px
+                    // The soul bead that glides between hover targets.
+                    property JsonObject soul: JsonObject {
+                        property bool enable: true
+                        property real size: 1 // Bead size multiplier
+                        property string style: "orb" // "orb" (living swirl) | "ember" (plain dot) | "ring" (hollow outline)
+                    }
+                    // Per-surface glyph overrides; empty string = stock kanji.
+                    property JsonObject glyphs: JsonObject {
+                        property string clock: ""
+                        property string media: ""
+                        property string mediaPaused: ""
+                        property string link: ""
+                        property string notify: ""
+                        property string clear: ""
+                        property string dnd: ""
+                        property string sysmon: ""
+                        property string glance: ""
+                        property string clipboard: ""
+                        property string clipboardSearch: ""
+                        property string recorder: ""
+                        property string power: ""
+                        property string battery: ""
+                        property string calendar: ""
+                        property string mixer: ""
+                        property string launcher: ""
+                    }
+                    // Hover-row furniture: every module in the expanded row can be
+                    // switched off (surface-bound icons follow surfaces.* instead).
+                    property JsonObject modules: JsonObject {
+                        property bool workspaces: true
+                        property bool weather: true
+                        property bool tray: true
+                        property bool wifi: true
+                        property bool battery: true
+                        property bool inbox: true
+                        property bool mixer: true
+                        property bool sidebars: true // The two shortcuts into iNiR's own sidebars
+                        property bool power: true
+                    }
+                    // Optional hover-row surfaces; the stock ones are always available.
+                    property JsonObject surfaces: JsonObject {
+                        property bool sysmon: true // 系 SYSTEM vitals surface + its monitor icon
+                        property bool clipboard: true // 控 clipboard history surface + its icon
+                        property bool glance: true // 今 TODAY surface (weather + agenda + tasks) + its icon
+                        property bool launcher: true // 探 app launcher surface + its icon
+                        property bool recorder: false // 録 screen recorder surface + its icon (surface stays reachable over IPC)
+                    }
+                }
+
+                // Options for bar.appearanceStyle === "islands": floating Ricelin
+                // capsules per bar section.
+                property JsonObject islands: JsonObject {
+                    property int inset: 4 // Vertical breathing room around each island, px
+                    property int padding: 12 // Horizontal capsule padding around edge-section content, px
+                }
+
                 property JsonObject activeWindow: JsonObject {
                     property bool showTitle: true // Show window title under the app name in the bar's active window indicator
                 }
@@ -1469,7 +1560,7 @@ Singleton {
                 property int height: 40 // Bar content height in px (pre-scale). 0 keeps the theme default (40). Range: 24–80.
                 property real opacity: 1.0 // Background opacity (0–1). Lets you make the bar translucent without changing global style.
                 property int cornerStyle: 0 // 0: Hug | 1: Float | 2: Plain rectangle
-                property string appearanceStyle: "classic" // "classic" | "islands" (separate floating groups) | "scenic" (gradient scrim) | "frame" (outlined floating frame). Horizontal bar only.
+                property string appearanceStyle: "classic" // "classic" | "islands" (separate floating groups) | "scenic" (gradient scrim) | "frame" (outlined floating frame) | "pill" (morphing centre island, see bar.pill). Horizontal bar only.
                 property int customRounding: -1 // -1: use global theme rounding | 0+: override bar rounding (px)
                 property bool floatStyleShadow: true // Show shadow behind bar when cornerStyle == 1 (Float)
                 property bool borderless: false // true for no grouping of items
@@ -1660,7 +1751,7 @@ Singleton {
             }
 
             property JsonObject dock: JsonObject {
-                property string style: "panel" // "panel" | "pill"
+                property string style: "panel" // "panel" | "pill" | "macos" | "island"
                 property bool cardStyle: false
                 property bool enable: false
                 property bool monochromeIcons: true
@@ -1675,6 +1766,7 @@ Singleton {
                 property bool minimizeUnfocused: false // Show dot for unfocused apps
                 property bool enableBlurGlass: true
                 property bool separatePinnedFromRunning: true // Waffle-style: pinned-only apps on left, running on right
+                property bool notificationBadge: true // Count of pending notifications on the app icon
                 property list<string> pinnedApps: [ // IDs of pinned entries
                     "org.gnome.Nautilus", "firefox", "kitty",]
                 property list<string> ignoredAppRegexes: []
@@ -1840,6 +1932,13 @@ Singleton {
             property JsonObject notifications: JsonObject {
                 property int timeout: 7000
                 property list<string> screenList: []
+                // Daily window where popups are suppressed. History is unaffected.
+                // A window whose end is before its start wraps past midnight.
+                property JsonObject quietHours: JsonObject {
+                    property bool enable: false
+                    property string start: "22:00"
+                    property string end: "08:00"
+                }
                 // Timeouts por urgencia (ms). 0 = no expira automáticamente
                 property int timeoutLow: 5000
                 property int timeoutNormal: 7000
@@ -2002,7 +2101,14 @@ Singleton {
                 property int duration: 5
             }
 
+            property JsonObject clipboard: JsonObject {
+                // Decoded text of pinned entries, newest first. Stored decoded so a
+                // pin survives cliphist rotating its store past the original id.
+                property list<string> pinned: []
+            }
+
             property JsonObject search: JsonObject {
+                property string style: "default" // "default" | "island" (Ricelin gradient card surface)
                 property int nonAppResultDelay: 30 // This prevents lagging when typing
                 property string engineBaseUrl: "https://www.google.com/search?q="
                 property list<string> excludedSites: ["quora.com", "facebook.com"]
@@ -2037,6 +2143,7 @@ Singleton {
             }
 
             property JsonObject sidebar: JsonObject {
+                property string style: "panel" // "panel" | "island" (Ricelin gradient card face)
                 property bool cardStyle: false
                 property string layout: "default" // "default" | "compact"
                 property bool keepRightSidebarLoaded: true

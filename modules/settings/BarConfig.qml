@@ -150,13 +150,360 @@ ContentPage {
                         { displayName: Translation.tr("Classic"), icon: "toolbar", value: "classic" },
                         { displayName: Translation.tr("Islands"), icon: "linear_scale", value: "islands" },
                         { displayName: Translation.tr("Scenic"), icon: "gradient", value: "scenic" },
-                        { displayName: Translation.tr("Frame"), icon: "crop_free", value: "frame" }
+                        { displayName: Translation.tr("Frame"), icon: "crop_free", value: "frame" },
+                        { displayName: Translation.tr("Pill"), icon: "blur_on", value: "pill" }
                     ]
                 }
 
                 StyledText {
                     Layout.fillWidth: true
                     text: Translation.tr("Islands floats every module group as its own capsule. Scenic fades the bar into the wallpaper. Frame draws an outlined floating frame. They apply to the horizontal bar.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            ContentSubsection {
+                visible: (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"
+                title: Translation.tr("Pill options")
+
+                SettingsSwitch {
+                    buttonIcon: "expand_content"
+                    text: Translation.tr("Bar mode")
+                    checked: Config.options?.bar?.pill?.barMode ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.pill.barMode", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Keep the pill expanded as a persistent bar: workspaces, clock and every trigger stay visible without hovering.")
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    SettingsSwitch {
+                        buttonIcon: "notifications"
+                        text: Translation.tr("Pill toasts")
+                        checked: Config.options?.bar?.pill?.toasts ?? true
+                        onCheckedChanged: Config.setNestedValue("bar.pill.toasts", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Notifications take over the resting pill. Off shows iNiR's regular notification popups instead.")
+                        }
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "page_info"
+                        text: Translation.tr("Pill OSD")
+                        checked: Config.options?.bar?.pill?.osd ?? true
+                        onCheckedChanged: Config.setNestedValue("bar.pill.osd", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Volume, brightness and mic changes flash on the pill. Off shows iNiR's regular on-screen display instead.")
+                        }
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    ConfigSpinBox {
+                        icon: "pinch"
+                        text: Translation.tr("Icon size (px)")
+                        value: Config.options?.bar?.pill?.iconSize ?? 17
+                        from: 14
+                        to: 26
+                        stepSize: 1
+                        onValueChanged: Config.setNestedValue("bar.pill.iconSize", value)
+                        StyledToolTip {
+                            text: Translation.tr("Size of the hover-row icons. Click targets grow with them.")
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "space_bar"
+                        text: Translation.tr("Icon spacing (px)")
+                        value: Config.options?.bar?.pill?.iconSpacing ?? 12
+                        from: 6
+                        to: 24
+                        stepSize: 2
+                        onValueChanged: Config.setNestedValue("bar.pill.iconSpacing", value)
+                    }
+                }
+
+                ConfigSpinBox {
+                    icon: "format_letter_spacing"
+                    text: Translation.tr("Group spacing (px)")
+                    value: Config.options?.bar?.pill?.rowSpacing ?? 20
+                    from: 10
+                    to: 36
+                    stepSize: 2
+                    onValueChanged: Config.setNestedValue("bar.pill.rowSpacing", value)
+                    StyledToolTip {
+                        text: Translation.tr("Air between the row's groups: workspaces, clock and the status icons.")
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    ConfigSpinBox {
+                        icon: "zoom_in"
+                        text: Translation.tr("Scale (%)")
+                        value: Math.round((Config.options?.bar?.pill?.scale ?? 1) * 100)
+                        from: 60
+                        to: 160
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("bar.pill.scale", value / 100)
+                        StyledToolTip {
+                            text: Translation.tr("Size multiplier for the whole pill and its surfaces.")
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "opacity"
+                        text: Translation.tr("Body opacity (%)")
+                        value: Math.round((Config.options?.bar?.pill?.opacity ?? 1) * 100)
+                        from: 20
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("bar.pill.opacity", value / 100)
+                        StyledToolTip {
+                            text: Translation.tr("Fill opacity of the pill body. Content stays fully opaque.")
+                        }
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    ConfigSpinBox {
+                        icon: "vertical_align_top"
+                        text: Translation.tr("Top gap (px)")
+                        value: Math.round((Config.options?.bar?.pill?.topGap ?? 1) * 8)
+                        from: 0
+                        to: 32
+                        stepSize: 2
+                        onValueChanged: Config.setNestedValue("bar.pill.topGap", value / 8)
+                        StyledToolTip {
+                            text: Translation.tr("Air between the screen edge and the pill.")
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "expand"
+                        text: Translation.tr("Window gap (%)")
+                        value: Math.round((Config.options?.bar?.pill?.appGap ?? 1) * 100)
+                        from: 0
+                        to: 200
+                        stepSize: 10
+                        onValueChanged: Config.setNestedValue("bar.pill.appGap", value / 100)
+                        StyledToolTip {
+                            text: Translation.tr("How much reserved space the pill keeps between itself and tiled windows.")
+                        }
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    SettingsSwitch {
+                        buttonIcon: "translate"
+                        text: Translation.tr("Kanji glyphs")
+                        checked: Config.options?.bar?.pill?.showGlyphs ?? true
+                        onCheckedChanged: Config.setNestedValue("bar.pill.showGlyphs", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Label the pill faces with kanji instead of plain icons.")
+                        }
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "graphic_eq"
+                        text: Translation.tr("Music visualizer")
+                        checked: Config.options?.bar?.pill?.musicViz ?? true
+                        onCheckedChanged: Config.setNestedValue("bar.pill.musicViz", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Swap the resting glyph for a live spectrum while audio plays.")
+                        }
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    SettingsSwitch {
+                        buttonIcon: "schedule"
+                        text: Translation.tr("Clock seconds")
+                        checked: Config.options?.bar?.pill?.clockSeconds ?? false
+                        onCheckedChanged: Config.setNestedValue("bar.pill.clockSeconds", checked)
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "update"
+                        text: Translation.tr("12-hour time")
+                        checked: Config.options?.bar?.pill?.time12h ?? false
+                        onCheckedChanged: Config.setNestedValue("bar.pill.time12h", checked)
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    SettingsSwitch {
+                        buttonIcon: "monitor_heart"
+                        text: Translation.tr("System monitor")
+                        checked: Config.options?.bar?.pill?.surfaces?.sysmon ?? true
+                        onCheckedChanged: Config.setNestedValue("bar.pill.surfaces.sysmon", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Show the system vitals surface and its hover icon.")
+                        }
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "content_paste"
+                        text: Translation.tr("Clipboard")
+                        checked: Config.options?.bar?.pill?.surfaces?.clipboard ?? true
+                        onCheckedChanged: Config.setNestedValue("bar.pill.surfaces.clipboard", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Show the clipboard history surface and its hover icon.")
+                        }
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    SettingsSwitch {
+                        buttonIcon: "today"
+                        text: Translation.tr("Today glance")
+                        checked: Config.options?.bar?.pill?.surfaces?.glance ?? true
+                        onCheckedChanged: Config.setNestedValue("bar.pill.surfaces.glance", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Show the day-at-a-glance surface: weather, agenda and pending tasks in one look.")
+                        }
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "apps"
+                        text: Translation.tr("App launcher")
+                        checked: Config.options?.bar?.pill?.surfaces?.launcher ?? true
+                        onCheckedChanged: Config.setNestedValue("bar.pill.surfaces.launcher", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Show the fuzzy app launcher surface with inline calculator.")
+                        }
+                    }
+                }
+
+                ConfigRow {
+                    uniform: true
+                    SettingsSwitch {
+                        buttonIcon: "screen_record"
+                        text: Translation.tr("Screen recorder")
+                        checked: Config.options?.bar?.pill?.surfaces?.recorder ?? false
+                        onCheckedChanged: Config.setNestedValue("bar.pill.surfaces.recorder", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Show the screen recorder icon. The surface stays reachable via 'inir pill open recorder' either way.")
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                id: pillHoverRowSection
+                visible: (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"
+                title: Translation.tr("Pill hover row")
+
+                readonly property var moduleDescriptors: [
+                    { key: "workspaces", icon: "workspaces", label: Translation.tr("Workspaces"), tip: Translation.tr("Workspace dots on the left of the expanded row.") },
+                    { key: "weather", icon: "partly_cloudy_day", label: Translation.tr("Weather"), tip: Translation.tr("Current condition and temperature. Opens the calendar surface.") },
+                    { key: "tray", icon: "shelf_position", label: Translation.tr("System tray"), tip: Translation.tr("Tray icons of running apps.") },
+                    { key: "wifi", icon: "wifi", label: Translation.tr("Wi-Fi"), tip: Translation.tr("Signal glyph. Opens the link surface on the network list.") },
+                    { key: "battery", icon: "battery_5_bar", label: Translation.tr("Battery"), tip: Translation.tr("Charge percentage. Opens the battery surface.") },
+                    { key: "inbox", icon: "inbox", label: Translation.tr("Inbox"), tip: Translation.tr("Notification inbox with unread dot. Opens the link surface.") },
+                    { key: "mixer", icon: "tune", label: Translation.tr("Mixer"), tip: Translation.tr("Opens the volume/brightness fader surface.") },
+                    { key: "sidebars", icon: "view_sidebar", label: Translation.tr("Sidebar shortcuts"), tip: Translation.tr("The two icons that open iNiR's left and right sidebars.") },
+                    { key: "power", icon: "power_settings_new", label: Translation.tr("Power"), tip: Translation.tr("Opens the session surface. Still reachable via 'inir pill open power'.") }
+                ]
+
+                Repeater {
+                    model: pillHoverRowSection.moduleDescriptors
+
+                    SettingsSwitch {
+                        required property var modelData
+                        buttonIcon: modelData.icon
+                        text: modelData.label
+                        checked: Config.options?.bar?.pill?.modules?.[modelData.key] ?? true
+                        onCheckedChanged: Config.setNestedValue("bar.pill.modules." + modelData.key, checked)
+                        StyledToolTip {
+                            text: modelData.tip
+                        }
+                    }
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Surface icons (launcher, clipboard, glance, …) follow their surface toggles above.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            ContentSubsection {
+                visible: (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"
+                title: Translation.tr("Soul bead")
+
+                SettingsSwitch {
+                    buttonIcon: "motion_photos_on"
+                    text: Translation.tr("Show the soul bead")
+                    checked: Config.options?.bar?.pill?.soul?.enable ?? true
+                    onCheckedChanged: Config.setNestedValue("bar.pill.soul.enable", checked)
+                    StyledToolTip {
+                        text: Translation.tr("The little companion that glides between hover targets. Surface cursors stay either way.")
+                    }
+                }
+
+                ConfigSelectionArray {
+                    Layout.fillWidth: true
+                    currentValue: Config.options?.bar?.pill?.soul?.style ?? "orb"
+                    onSelected: (newValue) => {
+                        Config.setNestedValue("bar.pill.soul.style", newValue)
+                    }
+                    options: [
+                        { displayName: Translation.tr("Orb"), icon: "blur_circular", value: "orb" },
+                        { displayName: Translation.tr("Ember"), icon: "circle", value: "ember" },
+                        { displayName: Translation.tr("Ring"), icon: "radio_button_unchecked", value: "ring" }
+                    ]
+                }
+
+                ConfigSpinBox {
+                    icon: "zoom_in"
+                    text: Translation.tr("Bead size (%)")
+                    value: Math.round((Config.options?.bar?.pill?.soul?.size ?? 1) * 100)
+                    from: 60
+                    to: 160
+                    stepSize: 10
+                    onValueChanged: Config.setNestedValue("bar.pill.soul.size", value / 100)
+                }
+            }
+
+            ContentSubsection {
+                visible: (Config.options?.bar?.appearanceStyle ?? "classic") === "islands"
+                title: Translation.tr("Islands options")
+
+                ConfigRow {
+                    uniform: true
+                    ConfigSpinBox {
+                        icon: "height"
+                        text: Translation.tr("Inset (px)")
+                        value: Config.options?.bar?.islands?.inset ?? 4
+                        from: 0
+                        to: 10
+                        stepSize: 1
+                        onValueChanged: Config.setNestedValue("bar.islands.inset", value)
+                        StyledToolTip {
+                            text: Translation.tr("Vertical breathing room around each island. Smaller = taller capsules.")
+                        }
+                    }
+                    ConfigSpinBox {
+                        icon: "width"
+                        text: Translation.tr("Capsule padding (px)")
+                        value: Config.options?.bar?.islands?.padding ?? 12
+                        from: 4
+                        to: 24
+                        stepSize: 2
+                        onValueChanged: Config.setNestedValue("bar.islands.padding", value)
+                        StyledToolTip {
+                            text: Translation.tr("Horizontal air between an edge island's border and its content.")
+                        }
+                    }
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Island corner radius, opacity, shadow and top sheen are shared with every island surface: Settings › Ricelin › Island skin.")
                     color: Appearance.colors.colSubtext
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     wrapMode: Text.WordWrap
