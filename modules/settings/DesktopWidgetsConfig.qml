@@ -2559,16 +2559,13 @@ ContentPage {
             property var poseOptions: []
             FileView {
                 path: Quickshell.shellPath("assets/images/mascot/manifest.json")
+                watchChanges: true
                 onLoadedChanged: {
                     if (!loaded) return
                     try {
                         const m = JSON.parse(text())
-                        const set = new Set()
-                        Object.keys(m.linesByPose ?? {}).forEach(p => set.add(p))
-                        ;(m.idlePicks ?? []).forEach(p => set.add(p[0]))
-                        ;(m.animatedPoses ?? []).forEach(p => set.add(p))
                         const anim = m.animatedPoses ?? []
-                        mascotWidgetGroup.poseOptions = Array.from(set).sort().map(p => ({
+                        mascotWidgetGroup.poseOptions = (m.desktopWidgetPoses ?? []).map(p => ({
                             displayName: p,
                             value: p,
                             image: Quickshell.shellPath(`assets/images/mascot/inir-mascot-${p}.${anim.includes(p) ? "gif" : "png"}`)
@@ -2606,7 +2603,12 @@ ContentPage {
                 Layout.fillWidth: true
                 label: Translation.tr("Pose on the desktop")
                 options: mascotWidgetGroup.poseOptions
-                currentValue: Config.getNestedValue("background.widgets.mascot.pose", "reading")
+                currentValue: {
+                    const configured = Config.getNestedValue("background.widgets.mascot.pose", "reading")
+                    return mascotWidgetGroup.poseOptions.some(o => o.value === configured)
+                        ? configured
+                        : (mascotWidgetGroup.poseOptions[0]?.value ?? "presence-idle-loop")
+                }
                 onSelected: value => Config.setNestedValue("background.widgets.mascot.pose", value)
             }
             WidgetSettingRow {
