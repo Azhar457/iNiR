@@ -22,10 +22,6 @@
 </div>
 
 <div class="inir-masthead__aside">
-<figure class="inir-masthead__mascot">
-  <img src="assets/inir-mascot-docs-guide.png" alt="iNiR mascot presenting the documentation">
-</figure>
-
 <aside class="inir-command" aria-label="First run command" markdown>
 <span>first run</span>
 

@@ -1,7 +1,5 @@
 # Default Keybinds
 
-![iNiR mascot directing window traffic](assets/inir-mascot-marshaller-windows.png){ align=right width=150 }
-
 These are the default keybinds shipped with iNiR. They live in `~/.config/niri/config.d/70-binds.kdl` after install.
 
 Change them. Break them. Make them yours. We won't judge.
@@ -112,8 +110,8 @@ Niri arranges windows in an infinite horizontal strip. These binds control colum
 
 | Key | Action |
 |-----|--------|
-| `Mod+1-9` | Focus workspace 1–9 |
-| `Mod+Ctrl+1-9` | Move column to workspace 1–9 |
+| `Mod+1-9` | Focus workspace 1-9 |
+| `Mod+Ctrl+1-9` | Move column to workspace 1-9 |
 | `Mod+Page_Down` | Focus workspace down |
 | `Mod+Page_Up` | Focus workspace up |
 | `Mod+Ctrl+Page_Down` | Move column to workspace down |

@@ -1,7 +1,5 @@
 # Config System
 
-![iNiR mascot judging your settings](assets/inir-mascot-settings-judging.png){ align=right width=150 }
-
 How configuration works in iNiR, from the user's perspective and from the code side.
 
 ## For users
@@ -92,7 +90,7 @@ Config uses Quickshell's `FileView` with `watchChanges: true`. External edits (f
 
 ### The configChanged signal
 
-`setNestedValue` emits `Config.configChanged()` **immediately**, in the same call — before the debounced 50 ms disk write actually happens. So the signal reflects the new in-memory value, not a confirmed write to disk. Components that need to react to config changes (beyond just re-reading a property) can connect to this signal.
+`setNestedValue` emits `Config.configChanged()` **immediately**, in the same call, before the debounced 50 ms disk write actually happens. So the signal reflects the new in-memory value, not a confirmed write to disk. Components that need to react to config changes (beyond just re-reading a property) can connect to this signal.
 
 ## Config sections
 

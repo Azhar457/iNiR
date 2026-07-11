@@ -1,7 +1,5 @@
 # Setup & Updates
 
-![iNiR mascot celebrating a finished setup](assets/inir-mascot-wizard-complete.png){ align=right width=150 }
-
 ## Interactive Menu
 
 ```bash
@@ -313,7 +311,7 @@ These checks cover:
 | GTK themes      | `~/.config/gtk-3.0/`, `~/.config/gtk-4.0/`                                         |
 | Qt themes       | `~/.config/kdeglobals`, `~/.config/Kvantum/`                                       |
 | Color schemes   | `~/.local/share/color-schemes/`                                                    |
-| Color templates | `~/.config/matugen/` _(legacy directory name — matugen binary no longer required)_ |
+| Color templates | `~/.config/matugen/` _(legacy directory name, matugen binary no longer required)_ |
 | Fuzzel config   | `~/.config/fuzzel/`                                                                |
 | Vesktop themes  | `~/.config/vesktop/themes/`                                                        |
 
@@ -399,7 +397,7 @@ These may be used by other applications. The script asks before removing:
 | Path                                                           | Type         | Default Action                                                                                          |
 | -------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------- |
 | `~/.config/niri/config.kdl`                                    | Essential    | Keep (especially if in Niri session)                                                                    |
-| `~/.config/matugen/`                                           | Optional     | Ask (remove if you do not want to keep iNiR color templates — legacy path, matugen binary not required) |
+| `~/.config/matugen/`                                           | Optional     | Ask (remove if you do not want to keep iNiR color templates; legacy path, matugen binary not required) |
 | `~/.config/fuzzel/`                                            | Optional     | Ask (remove if fuzzel not installed)                                                                    |
 | `~/.config/Kvantum/`                                           | Optional     | Ask (remove if Kvantum not installed)                                                                   |
 | `~/.config/kdeglobals`                                         | Optional     | Ask                                                                                                     |

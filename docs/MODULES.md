@@ -20,7 +20,7 @@ Users can disable any panel from Settings without touching config files.
 |--------|----------|-------------|
 | `bar/` | `iiBar` | Top bar. Workspaces, clock, system indicators, tray, weather. ~35 QML files. |
 | `verticalBar/` | `iiVerticalBar` | Vertical bar variant for left/right edge placement. |
-| `dock/` | `iiDock` | Application dock. Supports all 4 edges (top/bottom/left/right). |
+| `dock/` | `iiDock` | Application dock. Supports all 4 edges (top/bottom/left/right). Scroll an icon to cycle that app's windows; `dock.notificationBadge` puts an app's pending notification count on its icon. |
 | `background/` | `iiBackground` | Desktop wallpaper layer. Parallax, blur, desktop widget canvas. |
 
 ### Sidebars
@@ -36,7 +36,7 @@ Users can disable any panel from Settings without touching config files.
 |--------|----------|-------------|
 | `overview/` | `iiOverview` | Workspace overview with app search, calculator, and global actions. |
 | `ii/` | `iiOverlay` | Notification overlays and ii-specific UI elements. |
-| `clipboard/` | `iiClipboard` | Clipboard history browser with search and image preview. |
+| `clipboard/` | `iiClipboard` | Clipboard history browser with search and image preview. `Ctrl+P` pins an entry to the top of the list; pins store their own decoded copy in `clipboard.pinned`, so they outlive the cliphist history. |
 | `cheatsheet/` | `iiCheatsheet` | Keybind viewer pulled from compositor config. |
 | `controlPanel/` | `iiControlPanel` | Quick settings panel. |
 | `dashboard/` | `iiDashboard` | Centered hub panel: welcome, clock, agenda (local events + ICS), notifications, todo, notes, media, weather, calendar, system usage, GitHub heatmap. Modular three-column layout with in-panel edit mode; configured in Settings › Dashboard. IPC target `dashboard`. |
@@ -59,7 +59,7 @@ Users can disable any panel from Settings without touching config files.
 | `shellUpdate/` | `iiShellUpdate` | Shell update notification banner. |
 | `recordingOsd/` | `iiRecordingOsd` | Screen recording indicator (disabled by default). |
 | `workspaceStrip/` | `iiWorkspaceStrip` | Hover-triggered edge strip with live workspace previews, window thumbnails, drag-to-reorder, and media cards. Shared with waffle. IPC target `workspaceStrip`. |
-| `mascot/` | `iiMascotCompanion` | Playful mascot companion: peeks from screen edges, reacts to shell events (music, battery, network, updates, notifications, screenshots, gaming, unlock), click interactions. Every reaction and its pose is configurable in Settings › Mascot; a desktop widget variant lives in Settings › Widgets. Never over fullscreen or game mode. Shared with waffle. IPC targets `mascot`, `mascotMood`. |
+| `mascot/` | `iiMascotCompanion` | Playful full-body mascot companion: peeks from screen edges, reacts to shell events (music, battery, network, updates, notifications, screenshots, gaming, unlock), plays chase/hide-and-seek, and can physically interact with desktop widgets in chaos mode. Curated poses and per-surface overrides live in Settings › Mascot; a desktop widget variant lives in Settings › Widgets. Never over fullscreen, game mode, lock or session screens. Shared with waffle. IPC targets `mascot`, `mascotMood`. |
 
 ## Waffle Panels
 

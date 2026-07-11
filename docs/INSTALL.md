@@ -1,7 +1,5 @@
 # Installation
 
-![iNiR mascot ticking off setup steps](assets/inir-mascot-checklist-steps.png){ align=right width=150 }
-
 > **Arch Linux only.** The installer only supports Arch-based distros. If you're on something else, you're on your own - check the manual section below and figure out the equivalent packages for your distro.
 >
 > **NixOS:** there is an experimental flake path. See [NixOS](NIXOS.md).
@@ -66,7 +64,7 @@ For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by categor
 >
 > **Optional content packs** (`./setup` → Extras): the iNiR-Walls wallpaper
 > pack, the ii-pixel-sddm login theme, YAMIS icons, and the Kira mascot art
-> pack (~20 MiB — the mascot feature ships disabled and does nothing until
+> pack (~20 MiB, the mascot feature ships disabled and does nothing until
 > you install the pack and enable her in Settings › Mascot).
 >
 > **Important for minimal installs (Arch base / netinstall):**

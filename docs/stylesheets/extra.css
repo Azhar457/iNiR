@@ -690,21 +690,7 @@ body {
   gap: var(--space-lg);
 }
 
-.md-typeset .inir-masthead__mascot {
-  display: grid;
-  place-items: end center;
-  min-height: 13rem;
-  margin: -2rem 0 0;
-}
 
-.md-typeset .inir-masthead__mascot img {
-  width: min(100%, 17rem);
-  max-height: 17rem;
-  object-fit: contain;
-  object-position: bottom center;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 1.2rem 2rem rgba(0, 0, 0, 0.34));
-}
 
 .md-typeset .inir-command > span {
   display: block;
@@ -968,13 +954,6 @@ html { scroll-behavior: smooth; }
     grid-template-columns: minmax(10rem, 0.34fr) minmax(20rem, 1fr);
     align-items: end;
   }
-  .md-typeset .inir-masthead__mascot {
-    min-height: 0;
-    margin: 0;
-  }
-  .md-typeset .inir-masthead__mascot img {
-    max-height: 14rem;
-  }
   .md-typeset .routebook-grid {
     grid-template-columns: 1fr;
   }
@@ -1000,9 +979,6 @@ html { scroll-behavior: smooth; }
   .md-typeset .inir-masthead__aside {
     grid-template-columns: 1fr;
   }
-  .md-typeset .inir-masthead__mascot img {
-    max-height: 12rem;
-  }
   .md-typeset .inir-command,
   .md-typeset .family-kakejiku {
     padding: var(--space-lg);
@@ -1017,3 +993,4 @@ html { scroll-behavior: smooth; }
   .md-typeset { max-width: none; }
   .md-typeset a { color: var(--md-default-fg-color); border-bottom: 0; }
 }
+

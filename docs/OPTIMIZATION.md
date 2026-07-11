@@ -1,7 +1,5 @@
 # QML/Quickshell Performance Optimization Guide
 
-![iNiR mascot riding a rocket](assets/inir-mascot-rocket-ride.png){ align=right width=130 }
-
 Best practices for optimizing iNiR based on Qt6 QML documentation and KDAB recommendations.
 
 ## Quick Reference
@@ -228,23 +226,23 @@ Rectangle {
 iNiR's config uses Quickshell's `JsonAdapter` + `FileView`. Every property is declared in `Config.qml` with a typed default. When the user's `config.json` has a value, JsonAdapter reads it; when it doesn't, the schema default applies. The property always exists for declared schema keys.
 
 ```qml
-// Config access — schema properties are guaranteed by JsonAdapter
+// Config access: schema properties are guaranteed by JsonAdapter
 property int value: Config.options.bar.cornerStyle  //  always valid
 
-// ❌ Direct assignment — persists to disk via JsonAdapter, but does NOT emit
+// ❌ Direct assignment: persists to disk via JsonAdapter, but does NOT emit
 //    configChanged(). Listeners (settings pages, bar layout, theme reactivity)
 //    will not update. This is the #1 silent bug source in iNiR.
 // Config.options.bar.bottom = true
 
-// ✅ Always use setNestedValue() — persists to disk AND emits configChanged()
+// ✅ Always use setNestedValue(): persists to disk AND emits configChanged()
 //    so every listener reacts correctly.
 Config.setNestedValue("bar.bottom", true)
 
-// Runtime data — may genuinely be null, USE optional chaining here
+// Runtime data: may genuinely be null, USE optional chaining here
 property string title: NiriService.activeWindow?.title ?? ""
 ```
 
-> **Project rule:** always use `Config.setNestedValue("dot.path", value)` for any config write. Direct property assignment (`Config.options.x = y`) skips the `configChanged()` signal — the value reaches disk but the UI and any reactive listeners never see the change.
+> **Project rule:** always use `Config.setNestedValue("dot.path", value)` for any config write. Direct property assignment (`Config.options.x = y`) skips the `configChanged()` signal. The value reaches disk but the UI and any reactive listeners never see the change.
 
 > **Also:** use `?.` + `??` on config reads in module code. It protects against edge cases like key renames during migrations or malformed user configs. JsonAdapter guarantees schema defaults, but defensive access is the safer habit.
 
