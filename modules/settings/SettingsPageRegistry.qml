@@ -169,6 +169,20 @@ Singleton {
             desc: Translation.tr("The washi & flame dialect: pill bar, islands, surfaces"),
             essential: false,
             component: "modules/settings/RicelinConfig.qml"
+        },
+        {
+            name: Translation.tr("Dock"),
+            icon: "call_to_action",
+            desc: Translation.tr("Dock style, position, behavior and indicators"),
+            essential: false,
+            component: "modules/settings/DockConfig.qml"
+        },
+        {
+            name: Translation.tr("Sidebars"),
+            icon: "side_navigation",
+            desc: Translation.tr("Left and right sidebar content and behavior"),
+            essential: false,
+            component: "modules/settings/SidebarsConfig.qml"
         }
     ]
 
@@ -177,7 +191,7 @@ Singleton {
     readonly property var defaultCategories: [
         { label: Translation.tr("Essentials"), pages: [0] },
         { label: Translation.tr("Appearance"), pages: [4, 3, 14, 21] },
-        { label: Translation.tr("Shell"), pages: [2, 5, 16, 10, 11, 18, 19, 20] },
+        { label: Translation.tr("Shell"), pages: [2, 5, 22, 23, 16, 10, 11, 18, 19, 20] },
         { label: Translation.tr("System"), pages: [1, 7, 6, 12, 15, 8, 17] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
     ]
@@ -899,63 +913,63 @@ Singleton {
             keywords: ["alt", "tab", "preset", "style", "sidebar", "list", "compact"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 22, pageName: root.pages[22].name,
             section: Translation.tr("Dock"),
             label: Translation.tr("Dock"),
             description: Translation.tr("Dock position and behaviour"),
             keywords: ["dock", "position", "pinned", "hover", "reveal", "desktop", "show"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 22, pageName: root.pages[22].name,
             section: Translation.tr("Dock"),
             label: Translation.tr("Dock enable"),
             description: Translation.tr("Enable or disable the dock"),
             keywords: ["dock", "enable", "disable", "show", "hide"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 22, pageName: root.pages[22].name,
             section: Translation.tr("Dock"),
             label: Translation.tr("Dock position"),
             description: Translation.tr("Dock position: top, bottom, left, right"),
             keywords: ["dock", "position", "top", "bottom", "left", "right"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 22, pageName: root.pages[22].name,
             section: Translation.tr("Dock"),
             label: Translation.tr("Pinned apps"),
             description: Translation.tr("Apps pinned to the dock"),
             keywords: ["dock", "pinned", "apps", "pin", "favorite"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 22, pageName: root.pages[22].name,
             section: Translation.tr("Dock"),
             label: Translation.tr("Show on desktop"),
             description: Translation.tr("Show dock when no window is focused"),
             keywords: ["dock", "desktop", "show", "focus", "window", "empty"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 22, pageName: root.pages[22].name,
             section: Translation.tr("Dock"),
             label: Translation.tr("Window preview"),
             description: Translation.tr("Show window preview on hover"),
             keywords: ["dock", "preview", "hover", "window", "thumbnail"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 22, pageName: root.pages[22].name,
             section: Translation.tr("Dock"),
             label: Translation.tr("Dock icon size"),
             description: Translation.tr("Size of dock icons"),
             keywords: ["dock", "icon", "size", "height"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 22, pageName: root.pages[22].name,
             section: Translation.tr("Dock"),
             label: Translation.tr("Monochrome dock icons"),
             description: Translation.tr("Tint dock icons to match theme"),
             keywords: ["dock", "monochrome", "icons", "tint", "theme"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 22, pageName: root.pages[22].name,
             section: Translation.tr("Dock"),
             label: Translation.tr("Smart indicator"),
             description: Translation.tr("Show which window is focused in the dock"),
@@ -1032,21 +1046,21 @@ Singleton {
             keywords: ["region", "selector", "snip", "lens", "screenshot", "google"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 23, pageName: root.pages[23].name,
             section: Translation.tr("Sidebars"),
             label: Translation.tr("Sidebars"),
             description: Translation.tr("Sidebar toggles, sliders and corner open"),
             keywords: ["sidebar", "quick", "toggles", "sliders", "corner"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 21, pageName: root.pages[21].name,
             section: Translation.tr("Islands"),
             label: Translation.tr("Island look"),
             description: Translation.tr("Radius, opacity, shadow and top sheen of every island surface"),
             keywords: ["island", "radius", "opacity", "shadow", "sheen", "card", "gradient", "ricelin", "skin", "glass", "blur", "transparency"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 23, pageName: root.pages[23].name,
             section: Translation.tr("Sidebars"),
             label: Translation.tr("Sidebar style"),
             description: Translation.tr("Panel or island (gradient card) sidebar surface"),
@@ -1060,35 +1074,35 @@ Singleton {
             keywords: ["search", "style", "island", "card", "gradient", "launcher", "apps", "ricelin"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 23, pageName: root.pages[23].name,
             section: Translation.tr("Sidebars"),
             label: Translation.tr("Corner open"),
             description: Translation.tr("Open sidebar by hovering screen corners"),
             keywords: ["sidebar", "corner", "open", "hover", "edge", "clickless"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 23, pageName: root.pages[23].name,
             section: Translation.tr("Sidebars"),
             label: Translation.tr("Quick toggles style"),
             description: Translation.tr("Classic or Android-style quick toggles"),
             keywords: ["sidebar", "quick", "toggles", "style", "android", "classic"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 23, pageName: root.pages[23].name,
             section: Translation.tr("Sidebars"),
             label: Translation.tr("Keep sidebars loaded"),
             description: Translation.tr("Keep sidebar content in memory for faster opening"),
             keywords: ["sidebar", "loaded", "memory", "keep", "preload", "fast"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 23, pageName: root.pages[23].name,
             section: Translation.tr("Sidebars"),
             label: Translation.tr("YT Music Up Next notifications"),
             description: Translation.tr("Enable or disable next-track notifications for YT Music auto-advance"),
             keywords: ["ytmusic", "youtube", "music", "up next", "notification", "auto", "advance"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 23, pageName: root.pages[23].name,
             section: Translation.tr("Sidebars"),
             label: Translation.tr("YT Music fullscreen suppression"),
             description: Translation.tr("Mute YT Music Up Next notifications during fullscreen apps or GameMode"),

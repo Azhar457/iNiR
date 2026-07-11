@@ -6,4 +6,6 @@ ColorPickerRow 1.0 ColorPickerRow.qml
 WaffleConfig 1.0 WaffleConfig.qml
 AutostartConfig 1.0 AutostartConfig.qml
 WorkspaceStripConfig 1.0 WorkspaceStripConfig.qml
+DockConfig 1.0 DockConfig.qml
+SidebarsConfig 1.0 SidebarsConfig.qml
 SettingsOverlay 1.0 SettingsOverlay.qml
