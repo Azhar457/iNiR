@@ -46,7 +46,7 @@ Singleton {
     }
     
     // True if ANY window in ANY workspace is fullscreen (for toast suppression)
-    property bool hasAnyFullscreenWindow: false
+    readonly property bool hasAnyFullscreenWindow: checkAnyFullscreenWindow()
     
     // Suppress niri reload toast briefly after GameMode changes
     property bool suppressNiriToast: false
@@ -138,9 +138,14 @@ Singleton {
         if (!winSize || winSize.length < 2) return false
 
         const ws = NiriService.workspaces[window.workspace_id]
-        if (!ws) return false
-
-        const output = NiriService.outputs[ws.output]
+        let output = ws ? NiriService.outputs[ws.output] : null
+        // Niri can deliver WindowLayoutsChanged before the matching workspace
+        // snapshot reaches the service. On a single-output session the target
+        // is unambiguous, so do not miss that fullscreen transition.
+        if (!output) {
+            const availableOutputs = Object.values(NiriService.outputs ?? {})
+            if (availableOutputs.length === 1) output = availableOutputs[0]
+        }
         if (!output?.logical) return false
 
         const tolerance = 2
@@ -176,12 +181,8 @@ Singleton {
         if (!CompositorService.isNiri) {
             _autoActive = false
             _focusedIsFullscreen = false
-            hasAnyFullscreenWindow = false
             return
         }
-        
-        // Always update hasAnyFullscreenWindow (for toast suppression)
-        hasAnyFullscreenWindow = checkAnyFullscreenWindow()
 
         // Find focused window from the current windows array, not activeWindow.
         // activeWindow is only refreshed on focus-change events, so it's stale

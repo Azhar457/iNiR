@@ -12,15 +12,29 @@ Singleton {
     id: root
 
     property bool inhibit: false
-    readonly property int screenOffTimeout: Config.options?.idle?.screenOffTimeout ?? 300
-    readonly property int lockTimeout: Config.options?.idle?.lockTimeout ?? 600
-    readonly property int suspendTimeout: Config.options?.idle?.suspendTimeout ?? 0
+
+    // Battery profile: only meaningful on a laptop that is actually unplugged.
+    readonly property bool batteryProfileActive: (Config.options?.idle?.onBattery?.enable ?? false)
+        && Battery.available && !Battery.isPluggedIn
+
+    readonly property int screenOffTimeout: batteryProfileActive
+        ? (Config.options?.idle?.onBattery?.screenOffTimeout ?? 120)
+        : (Config.options?.idle?.screenOffTimeout ?? 300)
+    readonly property int lockTimeout: batteryProfileActive
+        ? (Config.options?.idle?.onBattery?.lockTimeout ?? 300)
+        : (Config.options?.idle?.lockTimeout ?? 600)
+    readonly property int suspendTimeout: batteryProfileActive
+        ? (Config.options?.idle?.onBattery?.suspendTimeout ?? 600)
+        : (Config.options?.idle?.suspendTimeout ?? 0)
     readonly property string launcherPath: Quickshell.shellPath("scripts/inir")
 
     onScreenOffTimeoutChanged: _restartSwayidle()
     onLockTimeoutChanged: _restartSwayidle()
     onSuspendTimeoutChanged: _restartSwayidle()
     onInhibitChanged: _restartSwayidle()
+    // Plugging in with identical timeouts on both profiles changes no timeout
+    // property, so swayidle would keep the old command line without this.
+    onBatteryProfileActiveChanged: _restartSwayidle()
 
     function toggleInhibit(active = null): void {
         if (active !== null) {

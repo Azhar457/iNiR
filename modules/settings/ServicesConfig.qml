@@ -67,6 +67,54 @@ ContentPage {
                 }
             }
 
+            // Battery profile is meaningless without a battery.
+            SettingsSwitch {
+                visible: Battery.available
+                buttonIcon: "battery_saver"
+                text: Translation.tr("Separate timeouts on battery")
+                checked: Config.options?.idle?.onBattery?.enable ?? false
+                onCheckedChanged: Config.setNestedValue("idle.onBattery.enable", checked)
+                StyledToolTip {
+                    text: Translation.tr("Use shorter idle timeouts while the laptop runs unplugged")
+                }
+            }
+
+            ConfigSpinBox {
+                visible: Battery.available
+                enabled: Config.options?.idle?.onBattery?.enable ?? false
+                icon: "screen_lock_portrait"
+                text: Translation.tr("Battery: screen off") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
+                value: Config.options?.idle?.onBattery?.screenOffTimeout ?? 120
+                from: 0
+                to: 3600
+                stepSize: 30
+                onValueChanged: Config.setNestedValue("idle.onBattery.screenOffTimeout", value)
+            }
+
+            ConfigSpinBox {
+                visible: Battery.available
+                enabled: Config.options?.idle?.onBattery?.enable ?? false
+                icon: "lock"
+                text: Translation.tr("Battery: lock") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
+                value: Config.options?.idle?.onBattery?.lockTimeout ?? 300
+                from: 0
+                to: 7200
+                stepSize: 30
+                onValueChanged: Config.setNestedValue("idle.onBattery.lockTimeout", value)
+            }
+
+            ConfigSpinBox {
+                visible: Battery.available
+                enabled: Config.options?.idle?.onBattery?.enable ?? false
+                icon: "dark_mode"
+                text: Translation.tr("Battery: suspend") + ` (${value > 0 ? Math.floor(value/60) + "m" : Translation.tr("disabled")})`
+                value: Config.options?.idle?.onBattery?.suspendTimeout ?? 600
+                from: 0
+                to: 7200
+                stepSize: 60
+                onValueChanged: Config.setNestedValue("idle.onBattery.suspendTimeout", value)
+            }
+
             SettingsSwitch {
                 buttonIcon: "coffee"
                 text: Translation.tr("Keep awake (caffeine)")
@@ -824,6 +872,29 @@ ContentPage {
         title: Translation.tr("Search")
 
         SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Surface style")
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.search?.style ?? "default"
+                    onSelected: newValue => {
+                        Config.setNestedValue("search.style", newValue);
+                    }
+                    options: [
+                        { displayName: Translation.tr("Default"), icon: "search", value: "default" },
+                        { displayName: Translation.tr("Island"), icon: "blur_on", value: "island" }
+                    ]
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Island wraps the search in the gradient card look used by the island bar, dock and sidebars.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+            }
+
             SettingsSwitch {
                 text: Translation.tr("Use Levenshtein distance-based algorithm instead of fuzzy")
                 checked: Config.options?.search?.sloppy ?? false
