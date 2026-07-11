@@ -104,23 +104,22 @@ AbstractBackgroundWidget {
     readonly property color accentPrimary: root.widgetAccent
     readonly property color accentSecondary: root.widgetAccent2
     readonly property color accentTertiary: root.widgetAccent3
-    // Region-aware shared plate (dark on bright wallpaper regions).
-    readonly property color accentPrimaryContainer: root.widgetPlateColor
-    // The cookie face plate (compat alias — ensureVisible is identity now; the
-    // plate itself is already region-aware via widgetPlateColor).
+    // The cookie face keeps the THEME's container color — it is an opaque
+    // plate, so wallpaper-region adaptation buys no legibility on it and the
+    // region-toned plate (near-black/near-white) killed the cookie's colour
+    // identity ("colores rotos", 2026-07-11). Region adaptation stays for the
+    // digital/bare paths where text truly sits on the wallpaper.
+    readonly property color accentPrimaryContainer: Appearance.colors.colPrimaryContainer
     readonly property color accentPrimaryContainerVisible: root.ensureVisible(root.accentPrimaryContainer)
-    // Hands sit on the cookie FACE, not on the wallpaper — clamp against it, so
-    // e.g. a light theme's deep accents stay visible when a bright wallpaper
-    // region flips the face to the near-black plate.
+    // Hands sit on the cookie FACE — clamp against it, not the wallpaper.
     readonly property color handPrimary: ColorUtils.adaptAccent(root.accentPrimary, root.accentPrimaryContainerVisible)
     readonly property color handTertiary: ColorUtils.adaptAccent(root.accentTertiary, root.accentPrimaryContainerVisible)
+    // Marks/numbers/date ink: the Material on-container pair, with a floor so
+    // exotic generated palettes never drop below comfortable contrast.
     readonly property color cookieInk: ColorUtils.ensureReadable(
-        ColorUtils.mix(
-            Appearance.colors.colOnPrimaryContainer,
-            ColorUtils.contrastColor(root.accentPrimaryContainerVisible),
-            0.35),
+        Appearance.colors.colOnPrimaryContainer,
         root.accentPrimaryContainerVisible,
-        7.0)
+        4.5)
     readonly property color cookieInkMuted: ColorUtils.applyAlpha(root.cookieInk, 0.68)
 
     // Local clock with seconds precision when needed (and power is active)
@@ -220,8 +219,13 @@ AbstractBackgroundWidget {
         return ColorUtils.boostInkSaturation(faded, base, Qt.color(base).hslSaturation);
     }
     // On the digital card the ink opposes the plate (widgetInk); bare on the
-    // wallpaper it opposes the region (colText).
-    property color clockTextColor: root.dimmed(root._digitalCard ? root.widgetInk : root.colText)
+    // wallpaper it opposes the region (colText). Either way, guarantee a
+    // readable floor against the actual backdrop — the auto light/dark pick
+    // alone goes muddy over mid-brightness wallpaper regions while dragging.
+    property color clockTextColor: root.dimmed(ColorUtils.ensureReadable(
+        root._digitalCard ? root.widgetInk : root.colText,
+        root._inkBackdrop,
+        4.5))
 
     // Card background (mainly for digital mode)
     WidgetSurface {
