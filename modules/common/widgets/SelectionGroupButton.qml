@@ -44,53 +44,48 @@ GroupButton {
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive
 
+    /**
+     * Mini screen-top mockup: the tile is a screen, the shape is the bar. Every
+     * kind shares one size and one fill (zzz doctrine: separation by fill, no
+     * outlines) so only the actual corner geometry differs — hug touches the
+     * top edge and rounds downward, float detaches fully rounded, rect bleeds
+     * square, card floats narrower with its accent tick.
+     */
     component ZzzCornerPreview: Item {
         id: preview
         required property string kind
         implicitWidth: 18
         implicitHeight: 12
-        clip: true
 
         readonly property bool hug: kind === "hug"
         readonly property bool rect: kind === "rect"
         readonly property bool card: kind === "card"
-        readonly property bool detached: kind === "float" || kind === "card"
-        readonly property color previewFill: root.toggled
-            ? ColorUtils.mix(Appearance.zzz.sticker, Appearance.zzz.onSticker, 0.18)
-            : (card ? Appearance.zzz.chromeAlt : Appearance.zzz.paperAlt)
-        readonly property color previewStroke: root.toggled
-            ? ColorUtils.applyAlpha(Appearance.zzz.onSticker, 0.58)
-            : Appearance.zzz.hairlineStrong
-        readonly property color accentColor: root.toggled
-            ? Appearance.zzz.onSticker
-            : (card ? Appearance.zzz.secondary : Appearance.zzz.accentSoft)
+        readonly property color barFill: root.toggled
+            ? ColorUtils.mix(Appearance.zzz.onSticker, Appearance.zzz.sticker, 0.75)
+            : ColorUtils.applyAlpha(Appearance.zzz.ink, 0.5)
 
-        ZzzPlate {
-            anchors {
-                fill: parent
-                leftMargin: preview.hug ? -5 : 0
-                topMargin: preview.detached ? 1 : 0
-                bottomMargin: preview.detached ? 1 : 0
-            }
-            fillColor: preview.previewFill
-            strokeColor: preview.previewStroke
-            strokeWidth: 1
-            radius: preview.rect ? 0 : (preview.card ? Appearance.zzz.cardRadius : Appearance.zzz.controlRadius)
-            chamfer: (!Appearance.zzz.round && !preview.rect) ? Math.max(4, Appearance.zzz.cutCorner * 0.35) : 0
-            chamferTopRight: !preview.rect
-            chamferBottomRight: false
-            chamferBottomLeft: false
+        Rectangle {
+            id: miniBar
+            x: preview.card ? 3 : (preview.hug || preview.rect ? 0 : 2)
+            y: preview.hug || preview.rect ? 0 : 2
+            width: preview.implicitWidth - 2 * x
+            height: 7
+            color: preview.barFill
+            topLeftRadius: preview.hug || preview.rect ? 0 : 3
+            topRightRadius: preview.hug || preview.rect ? 0 : 3
+            bottomLeftRadius: preview.rect ? 0 : 3
+            bottomRightRadius: preview.rect ? 0 : 3
         }
 
         Rectangle {
             visible: preview.card
-            x: 2
-            y: 1
+            anchors.horizontalCenter: miniBar.horizontalCenter
+            y: miniBar.y + miniBar.height + 2
             width: 8
-            height: 1
+            height: 1.5
             radius: height / 2
-            color: preview.accentColor
-            opacity: 0.92
+            color: preview.barFill
+            opacity: 0.7
         }
     }
 

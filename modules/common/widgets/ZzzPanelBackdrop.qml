@@ -28,6 +28,17 @@ Item {
     property real horizontalBias: 0.12
     property real verticalBias: 0.04
 
+    // Silhouette of the host panel, used to mask the wallpaper-glass wash so it
+    // can't square off past a rounded corner. Panels are plain rounded plates in
+    // round mode and flat rects in square mode — they carry no cut corner, so the
+    // chamfer defaults to 0 rather than to ZzzGlassWash's plate default.
+    property real maskRadius: Appearance.zzz.round ? Appearance.zzz.panelRadius : 0
+    property real chamfer: 0
+    property bool chamferTopLeft: false
+    property bool chamferTopRight: false
+    property bool chamferBottomLeft: false
+    property bool chamferBottomRight: false
+
     // Global ZZZ backdrop switches (appearance.zzz.backdrop, edited from the
     // ZZZ style editor). Each layer's visibility is (consumer intent) AND
     // (global master), so a panel that never wanted a layer stays off and the
@@ -72,36 +83,24 @@ Item {
         }
     }
 
-    // Wallpaper-glass wash (backmost layer). Self-contained blurred crop of the
-    // current wallpaper — no screen-position plumbing — kept low-opacity so it
-    // tints the plate without fighting the grid. FBO releases when the panel is
-    // hidden (layer gated on visible), so closed panels cost zero.
-    Image {
-        id: glassWall
+    // Wallpaper-glass wash (backmost layer). Was a private copy of the same blur
+    // that ZzzGlassWash does, minus the screen alignment: it cropped the wallpaper
+    // to the panel's own aspect, so the atmosphere never matched the desktop behind
+    // it. Cards sit opaque on top, so this colours the panel/content gaps.
+    ZzzGlassWash {
         anchors.fill: parent
         z: -1
-        visible: root.active && root.glass && status === Image.Ready
-        // Real wallpaper presence, not a flat wash: enough that the plate breathes
-        // the desktop's colour (the panel reads dead without it), but blurred and
-        // only lightly desaturated so it's atmosphere behind the cards, not a
-        // muddy tint fighting the text. Cards sit opaque on top, so this colours
-        // the panel/content gaps, not the card faces.
-        opacity: Appearance.zzz.dark ? 0.16 : 0.12
-        source: (root.active && root.glass) ? Wallpapers.effectiveWallpaperUrl : ""
-        fillMode: Image.PreserveAspectCrop
-        cache: true
-        asynchronous: true
-        sourceSize.width: width
-        sourceSize.height: height
-        layer.enabled: root.active && root.glass && root.visible
-        layer.effect: MultiEffect {
-            source: glassWall
-            anchors.fill: source
-            saturation: -0.05
-            blurEnabled: true
-            blurMax: 64
-            blur: 1
-        }
+        glassEnabled: root.active && root.glass
+        // Match the HOST's silhouette or the wash squares off behind a rounded
+        // panel. Default to the zzz panel plate (round → panelRadius, square →
+        // a flat rect, since panels carry no cut corner); hosts with a different
+        // shape override these.
+        maskRadius: root.maskRadius
+        chamfer: root.chamfer
+        chamferTopLeft: root.chamferTopLeft
+        chamferTopRight: root.chamferTopRight
+        chamferBottomLeft: root.chamferBottomLeft
+        chamferBottomRight: root.chamferBottomRight
     }
 
     // Elegant depth: a faint top sheen lifts the surface and a soft floor

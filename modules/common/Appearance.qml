@@ -1073,7 +1073,19 @@ Singleton {
             ? Qt.hsla(surfaceHue, Math.min(0.18, root.m3colors.m3onSurface.hslSaturation * 0.6), _inkL, 1.0)
             : Qt.hsla(0, 0, _inkL, 1.0)
         // Solid muted ink (not alpha) so small labels stay crisp over textures.
-        readonly property color onMuted: ColorUtils.mix(onColor, bg0, dark ? 0.46 : 0.44)
+        //
+        // CONTRAST GROUND = bg4, NOT bg0. Two reasons, both measured:
+        //  1. A constant blend fraction is not a constant contrast. The same 44-46%
+        //     mix lands at 4.1:1 over the dark bg0 but 2.8:1 over the light one —
+        //     WCAG luminance is far from linear near white.
+        //  2. bg0 is the FRIENDLIEST surface in the ramp. Ink actually lands on
+        //     panels (chrome at 0.84/0.88 alpha over the wallpaper) and on elevated
+        //     cards (bg2..bg4). Guaranteeing contrast against bg0 guarantees it
+        //     nowhere else: the bar's muted icons measured 1.65:1 on screen.
+        // bg4 is the adverse end of the ramp in BOTH faces (lightest carbon /
+        // darkest paper), so pinning the floor there holds everywhere above it.
+        readonly property color onMuted: ColorUtils.ensureReadable(
+            ColorUtils.mix(onColor, bg0, dark ? 0.46 : 0.44), bg4, 4.5)
         // Alias used by consumers writing text on the bg plate (= onColor on bg0).
         readonly property color onBg: ColorUtils.ensureReadable(onColor, bg0, 7.0)
 
@@ -1092,17 +1104,25 @@ Singleton {
         // damps the whole triad together so they stay harmonious.
         readonly property real signalRelax: 0.80
         // Readable band: lighten accent for dark ground, deepen for light.
+        // Ground is bg4 (the adverse end of the ramp) for the same reason onMuted
+        // uses it: accents land on elevated cards and translucent panels, never on
+        // the bare bg0 they used to be measured against.
         readonly property color accent: _primarySat > 0.05
-            ? ColorUtils.ensureReadable(ColorUtils.adjustSaturation(ColorUtils.colorWithLightness(_srcPrimary, dark ? 0.60 : 0.46), signalRelax), bg0, 4.5)
-            : ColorUtils.ensureReadable(ColorUtils.adjustSaturation(_srcPrimary, 1.05), bg0, 4.5)
+            ? ColorUtils.ensureReadable(ColorUtils.adjustSaturation(ColorUtils.colorWithLightness(_srcPrimary, dark ? 0.60 : 0.46), signalRelax), bg4, 4.5)
+            : ColorUtils.ensureReadable(ColorUtils.adjustSaturation(_srcPrimary, 1.05), bg4, 4.5)
         readonly property color onAccent: ColorUtils.ensureReadable(root.m3colors.m3onPrimary, accent, 4.5)
         // sticker = the filled/active plate (toggled buttons, active chips). A
         // confident accent at slightly deeper lightness so it reads as "active on"
         // without glare; NOT a muddy accent+ground mix.
+        // The two bands used to be 0.46 (dark) and 0.50 (light) — four hundredths
+        // apart, so a filled plate rendered the SAME colour in both faces and the
+        // weather blob kept reading as dark mode on a light desktop. Now the
+        // sticker moves away from its own ground: lighter than carbon, deeper than
+        // paper.
         readonly property color sticker: ColorUtils.ensureReadable(
-            _primarySat > 0.05 ? ColorUtils.adjustSaturation(ColorUtils.colorWithLightness(_srcPrimary, dark ? 0.46 : 0.50), signalRelax)
+            _primarySat > 0.05 ? ColorUtils.adjustSaturation(ColorUtils.colorWithLightness(_srcPrimary, dark ? 0.58 : 0.40), signalRelax)
                               : ColorUtils.adjustSaturation(_srcPrimary, 1.0),
-            bg0, 3.0)
+            bg4, 3.0)
         readonly property color onSticker: ColorUtils.ensureReadable(onAccent, sticker, 4.5)
         // Softer accent for LARGE filled areas (slider fills) so a big block of
         // signal colour reads as a calm console state, not a glare.
@@ -1110,9 +1130,9 @@ Singleton {
         readonly property color onAccentSoft: ColorUtils.ensureReadable(root.m3colors.m3onPrimary, accentSoft, 4.5)
         // secondary/tertiary derive from the wallpaper's own m3secondary/m3tertiary.
         readonly property color secondary: ColorUtils.ensureReadable(
-            ColorUtils.adjustSaturation(ColorUtils.colorWithLightness(root.m3colors.m3secondary, dark ? 0.62 : 0.44), signalRelax), bg1, 3.0)
+            ColorUtils.adjustSaturation(ColorUtils.colorWithLightness(root.m3colors.m3secondary, dark ? 0.62 : 0.44), signalRelax), bg4, 3.0)
         readonly property color tertiary: ColorUtils.ensureReadable(
-            ColorUtils.adjustSaturation(ColorUtils.colorWithLightness(root.m3colors.m3tertiary, dark ? 0.60 : 0.46), signalRelax), bg1, 3.0)
+            ColorUtils.adjustSaturation(ColorUtils.colorWithLightness(root.m3colors.m3tertiary, dark ? 0.60 : 0.46), signalRelax), bg4, 3.0)
         readonly property color onSecondary: ColorUtils.ensureReadable(onColor, secondary, 4.5)
         readonly property color onTertiary: ColorUtils.ensureReadable(onColor, tertiary, 4.5)
 
