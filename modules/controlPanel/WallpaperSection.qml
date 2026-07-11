@@ -11,6 +11,7 @@ import Quickshell
 
 PanelSurface {
     id: root
+    islandSkin: (Config.options?.controlPanel?.style ?? "panel") === "island"
     Layout.fillWidth: true
     implicitHeight: wallpaperLayout.implicitHeight + 16
     readonly property bool showSchemeChips: Config.options?.controlPanel?.showWallpaperSchemeChips ?? false

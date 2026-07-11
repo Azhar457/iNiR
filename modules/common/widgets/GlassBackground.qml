@@ -29,7 +29,8 @@ Rectangle {
     readonly property bool angelEverywhere: Appearance.angelEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     readonly property bool inirEverywhere: Appearance.inirEverywhere
-    readonly property bool useWallpaperBackdrop: root.wallpaperBackdropEnabled && root.auroraEverywhere && !root.inirEverywhere
+    property bool forceBackdrop: false
+    readonly property bool useWallpaperBackdrop: root.forceBackdrop || (root.wallpaperBackdropEnabled && root.auroraEverywhere && !root.inirEverywhere)
     
     color: root.useWallpaperBackdrop ? "transparent"
         : root.inirEverywhere ? root.inirColor

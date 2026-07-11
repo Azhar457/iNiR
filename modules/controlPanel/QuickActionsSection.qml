@@ -10,6 +10,7 @@ import qs.modules.common.functions
 
 PanelSurface {
     id: root
+    islandSkin: (Config.options?.controlPanel?.style ?? "panel") === "island"
     Layout.fillWidth: true
     implicitHeight: actionsGrid.implicitHeight + 16
     readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true

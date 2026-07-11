@@ -12,6 +12,7 @@ import qs.modules.sidebarRight
 
 PanelSurface {
     id: root
+    islandSkin: (Config.options?.controlPanel?.style ?? "panel") === "island"
     Layout.fillWidth: true
     implicitHeight: slidersRow.implicitHeight + 12
     readonly property bool compactMode: Config.options?.controlPanel?.compactMode ?? true

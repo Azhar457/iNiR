@@ -46,10 +46,31 @@ Item {
     property string frameLabel: ""
     property string frameIndex: ""
 
+    // Backdrop de vidrio aurora (opt-in): wallpaper blureado DETRÁS del fill
+    // translúcido del estilo, para que la transparencia lea como vidrio
+    // esmerilado y no como agujero. El consumidor pasa su posición en
+    // coordenadas de pantalla (los mismos números que usan los sidebars).
+    property bool wallpaperBackdrop: false
+    property real backdropScreenX: 0
+    property real backdropScreenY: 0
+    property real backdropScreenWidth: 1920
+    property real backdropScreenHeight: 1080
+
+    // Cara island Ricelin (opt-in por superficie, gateada por config del
+    // consumidor): gradiente washi + hairline + sheen + glass, dibujada con
+    // Appearance directo — modules/common no puede importar qs.modules.pill.
+    property bool islandSkin: false
+
     readonly property bool _zzz: Appearance.zzzEverywhere
     readonly property bool _angel: Appearance.angelEverywhere
     readonly property bool _inir: Appearance.inirEverywhere
     readonly property bool _aurora: Appearance.auroraEverywhere
+    readonly property bool _island: root.islandSkin && !root._zzz
+    readonly property real _islandOpacity: Config.options?.appearance?.island?.opacity ?? 1
+    readonly property bool _backdropActive: !root.borderless && Appearance.effectsEnabled
+        && ((root.wallpaperBackdrop && root._aurora)
+            || (root._island && (Config.options?.appearance?.island?.glass ?? true)
+                && root._islandOpacity < 0.999))
 
     // ── Color de fondo (misma elección que hacían los paneles a mano) ──
     readonly property color _fill: root.borderless ? "transparent"
@@ -64,6 +85,7 @@ Item {
 
     // ── Esquinas ──
     readonly property real _radius: root.radiusOverride >= 0 ? root.radiusOverride
+        : root._island ? (Config.options?.appearance?.island?.radius ?? 18)
         : root.island ? Math.min(width, height) / 2
         : root._angel ? Appearance.angel.roundingSmall
         : root._inir ? Appearance.inir.roundingNormal
@@ -79,6 +101,22 @@ Item {
         : root._inir ? Appearance.inir.colBorder
         : Appearance.colors.colLayer0Border
 
+    // ── Backdrop de vidrio (aurora opt-in / island glass) debajo de la cara ──
+    GlassBackground {
+        anchors.fill: parent
+        visible: root._backdropActive
+        wallpaperBackdropEnabled: root._backdropActive
+        // Island glass fuera de aurora: GlassBackground gatea su blur a aurora,
+        // forceBackdrop lo enciende igual. Blur fijo de la casa (island.glassBlur
+        // fino queda para IslandPanel, que alinea offsets por superficie).
+        forceBackdrop: root._backdropActive && root._island
+        radius: root._radius
+        screenX: root.backdropScreenX
+        screenY: root.backdropScreenY
+        screenWidth: root.backdropScreenWidth
+        screenHeight: root.backdropScreenHeight
+    }
+
     // ── Cara ZZZ: placa con esquina cortada + hairline ──
     ZzzPlate {
         anchors.fill: parent
@@ -89,10 +127,34 @@ Item {
         chamfer: Appearance.zzz.cutCorner
     }
 
+    // ── Cara island (Ricelin): gradiente cardTop→cardBot + hairline + sheen ──
+    Rectangle {
+        id: islandFace
+        anchors.fill: parent
+        visible: root._island
+        radius: root._radius
+        border.width: 1
+        border.color: Appearance.colors.colLayer0Border
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Qt.alpha(Appearance.colors.colLayer3, root._islandOpacity) }
+            GradientStop { position: 1.0; color: Qt.alpha(Appearance.colors.colLayer1, root._islandOpacity) }
+        }
+
+        Rectangle {
+            anchors { top: parent.top; left: parent.left; right: parent.right }
+            anchors.topMargin: 1
+            anchors.leftMargin: islandFace.radius * 0.6
+            anchors.rightMargin: islandFace.radius * 0.6
+            height: 1
+            visible: Config.options?.appearance?.island?.sheen ?? true
+            color: Qt.alpha(Appearance.colors.colOnLayer0, 0.07)
+        }
+    }
+
     // ── Cara resto (y zzz transparente): rectángulo redondeado ──
     Rectangle {
         anchors.fill: parent
-        visible: !(root._zzz && root.zzzChamfer && !root.borderless)
+        visible: !(root._zzz && root.zzzChamfer && !root.borderless) && !root._island
         color: root._zzz ? "transparent" : root._fill
         radius: root._zzz ? Appearance.zzz.cardRadius : root._radius
         border.width: root._zzz ? 0 : root._borderWidth

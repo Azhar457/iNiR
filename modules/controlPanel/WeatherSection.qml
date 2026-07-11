@@ -8,6 +8,7 @@ import qs.modules.common.functions
 
 PanelSurface {
     id: root
+    islandSkin: (Config.options?.controlPanel?.style ?? "panel") === "island"
     Layout.fillWidth: true
     implicitHeight: (Weather.enabled && Weather.data.temp && !Weather.data.temp.startsWith("--")) ? contentLayout.implicitHeight + 16 : 0
     visible: implicitHeight > 0

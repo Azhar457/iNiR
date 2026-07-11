@@ -39,7 +39,14 @@ Rectangle {
     readonly property bool _aurora: Appearance.auroraEverywhere && !Appearance.inirEverywhere
     readonly property bool _inir: Appearance.inirEverywhere
     readonly property bool _zzz: Appearance.zzzEverywhere
-    readonly property bool _glass: (_aurora || _angel) && Appearance.effectsEnabled && root.surfaceUseBlur
+    // Ricelin island dialect for every desktop widget at once (opt-in via
+    // background.widgets.style; zzz keeps its plate).
+    readonly property bool _island: !_zzz
+        && (Config.options?.background?.widgets?.style ?? "panel") === "island"
+    readonly property real _islandOpacity: Config.options?.appearance?.island?.opacity ?? 1
+    readonly property bool _islandGlass: _island && root.surfaceUseBlur
+        && (Config.options?.appearance?.island?.glass ?? true) && _islandOpacity < 0.999
+    readonly property bool _glass: (_aurora || _angel || _islandGlass) && Appearance.effectsEnabled && root.surfaceUseBlur
     readonly property string _wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
     // Wallpaper region brightness behind the widget (0-1; -1 = unknown).
@@ -69,7 +76,8 @@ Rectangle {
     readonly property color _flatFill: ColorUtils.applyAlpha(_plate, Math.min(0.96, 0.72 + surfaceOpacity * 0.24))
 
     radius: surfaceRadius
-    color: _glass ? "transparent"
+    color: _island ? "transparent"
+        : _glass ? "transparent"
         : _zzz ? "transparent"
         : _inir ? "transparent"
         : surfaceOpacity > 0 ? _flatFill : "transparent"
@@ -120,7 +128,7 @@ Rectangle {
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
-        visible: !root._glass && !root._zzz && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0
+        visible: !root._glass && !root._zzz && !root._island && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0
         border.width: root.surfaceBorderWidth
         border.color: root._inir
             ? ColorUtils.applyAlpha(Appearance.inir.colBorder, root.surfaceBorderOpacity * 3)
@@ -171,17 +179,43 @@ Rectangle {
                 : 0.15
             blurEnabled: true
             blurMax: 64
-            blur: root._angel ? Appearance.angel.blurIntensity : 0.8
+            blur: root._angel ? Appearance.angel.blurIntensity
+                : root._islandGlass ? (Config.options?.appearance?.island?.glassBlur ?? 1)
+                : 0.8
         }
     }
 
-    // Tinted overlay for aurora/angel
+    // Tinted overlay for aurora/angel — island tints with its own gradient below.
     Rectangle {
         anchors.fill: parent
-        visible: root._glass
+        visible: root._glass && !root._island
         color: root._angel
             ? ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
             : ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.aurora.popupTransparentize * 1.2)
+    }
+
+    // Island card: washi gradient + hairline border + lit top sheen (the blur
+    // above provides the glass; screenX/Y keep its crop aligned per widget).
+    Rectangle {
+        id: islandCard
+        anchors.fill: parent
+        visible: root._island
+        radius: root.radius
+        border.width: 1
+        border.color: Appearance.colors.colLayer0Border
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Qt.alpha(Appearance.colors.colLayer3, root._islandOpacity) }
+            GradientStop { position: 1.0; color: Qt.alpha(Appearance.colors.colLayer1, root._islandOpacity) }
+        }
+        Rectangle {
+            anchors { top: parent.top; left: parent.left; right: parent.right }
+            anchors.topMargin: 1
+            anchors.leftMargin: islandCard.radius * 0.6
+            anchors.rightMargin: islandCard.radius * 0.6
+            height: 1
+            visible: Config.options?.appearance?.island?.sheen ?? true
+            color: Qt.alpha(Appearance.colors.colOnLayer0, 0.07)
+        }
     }
 
     // Inset glow — angel only
