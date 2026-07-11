@@ -53,6 +53,27 @@ ContentPage {
             }
 
             ContentSubsection {
+                title: Translation.tr("Look")
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.workspaceStrip?.style ?? "auto"
+                    onSelected: value => Config.setNestedValue("workspaceStrip.style", value)
+                    options: [
+                        { displayName: Translation.tr("Follow bar"), icon: "link", value: "auto" },
+                        { displayName: Translation.tr("Island"), icon: "landscape", value: "island" },
+                        { displayName: Translation.tr("Stock"), icon: "layers", value: "stock" }
+                    ]
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Island applies the Ricelin card look; Follow bar uses it only while the pill bar is active")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            ContentSubsection {
                 title: Translation.tr("Size")
 
                 // One spinbox per row: stacked three-up they collide because each

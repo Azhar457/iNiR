@@ -225,7 +225,7 @@ ContentPage {
         required property string configPath
         required property var defaults
         Layout.fillWidth: true
-        text: Translation.tr("Reset to defaults")
+        buttonText: Translation.tr("Reset to defaults")
         onClicked: {
             const updates = {}
             for (const key in wrb.defaults)
@@ -1107,7 +1107,7 @@ ContentPage {
 
             RippleButton {
                 Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
+                buttonText: Translation.tr("Reset to defaults")
                 onClicked: {
                     Config.setNestedValue("background.widgets.clock.style", "digital");
                     Config.setNestedValue("background.widgets.clock.placementStrategy", "free");
@@ -1428,7 +1428,7 @@ ContentPage {
 
             RippleButton {
                 Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
+                buttonText: Translation.tr("Reset to defaults")
                 onClicked: {
                     Config.setNestedValue("background.widgets.weather.preset", "default");
                     Config.setNestedValue("background.widgets.weather.style", "pill");
@@ -1588,7 +1588,7 @@ ContentPage {
 
             RippleButton {
                 Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
+                buttonText: Translation.tr("Reset to defaults")
                 onClicked: {
                     Config.setNestedValue("background.widgets.mediaControls.placementStrategy", "leastBusy");
                     Config.setNestedValue("background.widgets.mediaControls.playerPreset", "full");
@@ -1778,7 +1778,7 @@ ContentPage {
 
             RippleButton {
                 Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
+                buttonText: Translation.tr("Reset to defaults")
                 onClicked: {
                     Config.setNestedValue("background.widgets.visualizer.preset", "default");
                     Config.setNestedValue("background.widgets.visualizer.placementStrategy", "free");
@@ -2017,7 +2017,7 @@ ContentPage {
 
             RippleButton {
                 Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
+                buttonText: Translation.tr("Reset to defaults")
                 onClicked: {
                     Config.setNestedValue("background.widgets.systemMonitor.preset", "default");
                     Config.setNestedValue("background.widgets.systemMonitor.placementStrategy", "free");
@@ -2263,7 +2263,7 @@ ContentPage {
 
             RippleButton {
                 Layout.fillWidth: true
-                text: Translation.tr("Reset to defaults")
+                buttonText: Translation.tr("Reset to defaults")
                 onClicked: {
                     Config.setNestedValue("background.widgets.battery.preset", "default");
                     Config.setNestedValue("background.widgets.battery.placementStrategy", "free");

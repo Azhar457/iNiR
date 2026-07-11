@@ -151,6 +151,36 @@ ContentPage {
                     text: Translation.tr("Affects the search overlay: island card face instead of the stock surface.")
                 }
             }
+
+            SettingsSwitch {
+                buttonIcon: "tune"
+                text: Translation.tr("Island control panel")
+                checked: (Config.options?.controlPanel?.style ?? "panel") === "island"
+                onCheckedChanged: Config.setNestedValue("controlPanel.style", checked ? "island" : "panel")
+                StyledToolTip {
+                    text: Translation.tr("Every control panel section wears the gradient island card with glass.")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "widgets"
+                text: Translation.tr("Island desktop widgets")
+                checked: (Config.options?.background?.widgets?.style ?? "panel") === "island"
+                onCheckedChanged: Config.setNestedValue("background.widgets.style", checked ? "island" : "panel")
+                StyledToolTip {
+                    text: Translation.tr("Every desktop widget plate becomes an island card; glass follows the shared Island skin settings.")
+                }
+            }
+
+            SettingsSwitch {
+                buttonIcon: "dock_to_right"
+                text: Translation.tr("Island workspace strip")
+                checked: (Config.options?.workspaceStrip?.style ?? "auto") === "island"
+                onCheckedChanged: Config.setNestedValue("workspaceStrip.style", checked ? "island" : "auto")
+                StyledToolTip {
+                    text: Translation.tr("Forces the strip's flyouts into the island dialect. Off returns to Follow bar (island only while the pill bar is active).")
+                }
+            }
         }
     }
 
@@ -254,6 +284,7 @@ ContentPage {
             { key: "sysmon", label: Translation.tr("System monitor") },
             { key: "recorder", label: Translation.tr("Recorder") },
             { key: "link", label: Translation.tr("Link / network") },
+            { key: "workspaces", label: Translation.tr("Workspace strip") },
             { key: "notify", label: Translation.tr("Notifications") },
             { key: "dnd", label: Translation.tr("Do not disturb") },
             { key: "clear", label: Translation.tr("Clear notifications") }
