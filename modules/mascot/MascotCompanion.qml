@@ -454,21 +454,8 @@ Scope {
         interval: Math.max(3, root.visibleSeconds) * 1000
         onTriggered: {
             if (companionLoader.item?.hovered ?? false) { restart(); return }
-            const cameFrom = root.edge
             root.showing = false
-            // Rare prank: she immediately re-peeks from the opposite edge, watching
-            if (Math.random() < 0.08 && !root.suppressed) {
-                root._prankEdge = cameFrom === "left" ? "right" : "left"
-                prankTimer.restart()
-            }
         }
-    }
-
-    property string _prankEdge: "right"
-    Timer {
-        id: prankTimer
-        interval: 1400
-        onTriggered: root.show(root._pickPose(root._manifest.prankPoses ?? ["fisheye-inspect"]), root._prankEdge)
     }
 
     // If a fullscreen window / game / lock appears mid-peek, vanish instantly

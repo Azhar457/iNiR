@@ -7,8 +7,10 @@ import qs.modules.common.widgets
 Item {
     id: root
     required property var preset
-    property bool isActive: preset.id === ThemeService.currentTheme
-    readonly property bool isFavorite: (Config.options?.appearance?.favoriteThemes ?? []).includes(preset.id)
+    property bool forceActive: false
+    property bool isActive: forceActive || preset.id === ThemeService.currentTheme
+    readonly property bool favoriteEnabled: preset.saved !== true
+    readonly property bool isFavorite: favoriteEnabled && (Config.options?.appearance?.favoriteThemes ?? []).includes(preset.id)
 
     signal clicked()
 
@@ -83,6 +85,13 @@ Item {
             }
         }
 
+        MaterialSymbol {
+            visible: root.preset.saved === true
+            text: "bookmark"
+            iconSize: 13
+            color: cardBg.presetPrimary
+        }
+
         // Theme name - clickable area for selecting theme
         Item {
             Layout.fillWidth: true
@@ -119,7 +128,7 @@ Item {
             color: starMouseArea.containsMouse
                 ? (root.isFavorite ? Appearance.colors.colLayer1Hover : Appearance.colors.colTertiaryContainer)
                 : "transparent"
-            visible: root.isFavorite || cardMouseArea.containsMouse || starMouseArea.containsMouse
+            visible: root.favoriteEnabled && (root.isFavorite || cardMouseArea.containsMouse || starMouseArea.containsMouse)
 
             Behavior on color {
                 enabled: Appearance.animationsEnabled

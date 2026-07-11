@@ -10,6 +10,59 @@ import qs.modules.common.widgets
 ContentPage {
     id: root
 
+    readonly property string savedThemesDir: Directories.shellConfig + "/themes"
+    property var savedThemePresets: []
+
+    function refreshSavedThemes(): void {
+        if (!savedThemesProcess.running)
+            savedThemesProcess.running = true
+    }
+
+    function applyThemeChoice(preset): void {
+        if (preset.saved !== true) {
+            themesGroup.activeSavedTheme = ""
+            ThemeService.setTheme(preset.id)
+            return
+        }
+        const current = Config.options?.appearance?.customTheme ?? ({})
+        const updates = ({})
+        for (const key in preset.colors) {
+            if (current.hasOwnProperty(key))
+                updates[`appearance.customTheme.${key}`] = preset.colors[key]
+        }
+        Config.setNestedValues(updates)
+        themesGroup.activeSavedTheme = preset.id
+        ThemePresets.applyPreset("custom")
+        if (ThemeService.currentTheme !== "custom")
+            ThemeService.setTheme("custom")
+    }
+
+    Process {
+        id: savedThemesProcess
+        command: ["/usr/bin/bash", "-lc", `for f in "${root.savedThemesDir}"/*.json; do [ -f "$f" ] || continue; /usr/bin/jq -c --arg name "$(/usr/bin/basename "$f" .json)" '{id:("saved:" + $name),name:$name,description:"Saved custom theme",tags:["saved"],saved:true,colors:.}' "$f"; done`]
+        stdout: SplitParser {
+            onRead: data => {
+                try {
+                    const preset = JSON.parse(data)
+                    root.savedThemePresets = [...root.savedThemePresets, preset]
+                } catch (e) {
+                    console.warn("[ThemesConfig] Skipping invalid saved theme entry:", e)
+                }
+            }
+        }
+        onStarted: root.savedThemePresets = []
+    }
+
+    Timer {
+        interval: 2000
+        repeat: true
+        running: root.visible && customThemeEditorSection.expanded
+        triggeredOnStart: true
+        onTriggered: root.refreshSavedThemes()
+    }
+
+    Component.onCompleted: root.refreshSavedThemes()
+
     function _log(...args): void {
         if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
     }
@@ -34,6 +87,7 @@ ContentPage {
             property string searchQuery: ""
             property int selectedTab: 0  // 0=All, 1=Dark, 2=Light
             property string selectedTag: ""  // Single active tag filter
+            property string activeSavedTheme: ""
 
             function isDarkTheme(preset) {
                 if (preset.id === "auto" || preset.id === "custom") return true
@@ -53,8 +107,9 @@ ContentPage {
             readonly property var filteredPresets: {
                 let result = []
                 const favorites = Config.options?.appearance?.favoriteThemes ?? []
-                for (let i = 0; i < ThemePresets.presets.length; i++) {
-                    const preset = ThemePresets.presets[i]
+                const available = ThemePresets.presets.concat(root.savedThemePresets)
+                for (let i = 0; i < available.length; i++) {
+                    const preset = available[i]
                     // Dark/Light filter
                     if (selectedTab === 1 && !isDarkTheme(preset)) continue
                     if (selectedTab === 2 && isDarkTheme(preset)) continue
@@ -80,28 +135,8 @@ ContentPage {
                 })
                 return result
             }
-
-            // Double-click hint
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.bottomMargin: 4
-                spacing: 6
-
-                MaterialSymbol {
-                    text: "touch_app"
-                    iconSize: 16
-                    color: Appearance.colors.colTertiary
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Double-click a theme to apply it reliably. A single click may not always trigger the full color generation.")
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: Appearance.colors.colSubtext
-                    opacity: 0.8
-                    wrapMode: Text.WordWrap
-                }
-            }
+            readonly property var filteredSavedPresets: filteredPresets.filter(preset => preset.saved === true)
+            readonly property var filteredBuiltInPresets: filteredPresets.filter(preset => preset.saved !== true)
 
             // Compact search + filter row
             RowLayout {
@@ -473,7 +508,58 @@ ContentPage {
                 }
             }
 
-            // Theme grid - scrollable with 3 columns
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 10
+                spacing: 6
+                visible: themesGroup.filteredSavedPresets.length > 0
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    MaterialSymbol {
+                        text: "folder_special"
+                        iconSize: 15
+                        color: Appearance.colors.colPrimary
+                    }
+                    StyledText {
+                        text: Translation.tr("Saved themes")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.weight: Font.Medium
+                        color: Appearance.colors.colOnLayer1
+                    }
+                    StyledText {
+                        text: themesGroup.filteredSavedPresets.length.toString()
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        color: Appearance.colors.colSubtext
+                    }
+                    Item { Layout.fillWidth: true }
+                    StyledText {
+                        text: Translation.tr("Created in Custom Theme Editor")
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        color: Appearance.colors.colSubtext
+                    }
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Repeater {
+                        model: themesGroup.filteredSavedPresets
+
+                        ThemePresetCard {
+                            required property var modelData
+                            width: Math.max(140, (parent.width - 8) / 3)
+                            preset: modelData
+                            forceActive: themesGroup.activeSavedTheme === modelData.id
+                            onClicked: root.applyThemeChoice(modelData)
+                        }
+                    }
+                }
+            }
+
+            // Built-in theme grid - scrollable with 3 columns
             Rectangle {
                 Layout.fillWidth: true
                 Layout.topMargin: 10
@@ -507,13 +593,14 @@ ContentPage {
                         rowSpacing: 4
 
                         Repeater {
-                            model: themesGroup.filteredPresets
+                            model: themesGroup.filteredBuiltInPresets
 
                             ThemePresetCard {
                                 required property var modelData
                                 width: (themeGridContent.width - themeGridContent.columnSpacing * 2) / 3
                                 preset: modelData
-                                onClicked: ThemeService.setTheme(modelData.id)
+                                forceActive: modelData.saved === true && themesGroup.activeSavedTheme === modelData.id
+                                onClicked: root.applyThemeChoice(modelData)
                             }
                         }
                     }
@@ -1619,7 +1706,8 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: ThemeService.currentTheme === "custom" && !(Config.options?.settingsUi?.easyMode ?? false)
+        id: customThemeEditorSection
+        visible: !(Config.options?.settingsUi?.easyMode ?? false)
         expanded: false
         icon: "edit"
         title: Translation.tr("Custom Theme Editor")
@@ -1627,7 +1715,7 @@ ContentPage {
         SettingsGroup {
             Loader {
                 Layout.fillWidth: true
-                active: ThemeService.currentTheme === "custom"
+                active: customThemeEditorSection.expanded
                 source: "CustomThemeEditor.qml"
             }
         }

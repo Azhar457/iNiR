@@ -384,8 +384,10 @@ ContentPage {
                     try {
                         const m = JSON.parse(text())
                         const anim = m.animatedPoses ?? []
+                        const all = m.collectionPoses ?? []
+                        const ordered = all.filter(p => !anim.includes(p)).concat(all.filter(p => anim.includes(p)))
                         mascotReactionsGroup.poseOptions = [{ displayName: Translation.tr("Auto (rotate pool)"), value: "", image: "" }]
-                            .concat((m.pickerPoses ?? []).map(p => ({
+                            .concat(ordered.map(p => ({
                                 displayName: p,
                                 value: p,
                                 image: Quickshell.shellPath(`assets/images/mascot/inir-mascot-${p}.${anim.includes(p) ? "gif" : "png"}`)
