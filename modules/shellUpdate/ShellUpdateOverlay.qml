@@ -346,8 +346,8 @@ Scope {
                     MascotImage {
                         id: updateMascot
                         Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: 72
-                        Layout.preferredHeight: 72
+                        Layout.preferredWidth: 84
+                        Layout.preferredHeight: 84
                         surface: "updates"
                         pose: root.hasUpdate ? "update-ready" : "success-celebrate"
                     }
@@ -528,8 +528,8 @@ Scope {
                         RowLayout {
                             spacing: 8
                             MascotImage {
-                                Layout.preferredWidth: 64
-                                Layout.preferredHeight: 64
+                                Layout.preferredWidth: 72
+                                Layout.preferredHeight: 72
                                 pose: "doctor-checkup"
                                 surface: "updates"
                             }
@@ -1302,8 +1302,8 @@ Scope {
                         spacing: 8
 
                         MascotImage {
-                            Layout.preferredWidth: 48
-                            Layout.preferredHeight: 48
+                            Layout.preferredWidth: 72
+                            Layout.preferredHeight: 72
                             pose: "dead-crash"
                             surface: "updates"
                         }

@@ -254,6 +254,7 @@ Scope {
                     MascotImage {
                         anchors.bottom: parent.bottom
                         anchors.horizontalCenter: parent.horizontalCenter
+                        visible: active && navRail.expanded
                         width: navRail.expanded ? 130 : 54
                         height: width
                         surface: "cheatsheet"
