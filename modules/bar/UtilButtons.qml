@@ -16,7 +16,10 @@ Item {
         : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2
     readonly property color dangerIconColor: Appearance.zzzEverywhere ? Appearance.zzz.signal
         : Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
-    implicitWidth: rowLayout.implicitWidth + rowLayout.spacing * 2
+    // Exact content width — self-inflating (+spacing*2) made every group that
+    // ends with these buttons read asymmetric: the group's own padding is the
+    // spacing authority, modules must not add their own.
+    implicitWidth: rowLayout.implicitWidth
     implicitHeight: rowLayout.implicitHeight
 
     RowLayout {

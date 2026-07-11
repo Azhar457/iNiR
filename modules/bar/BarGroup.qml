@@ -1,16 +1,23 @@
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.pill
 import QtQuick
 import QtQuick.Layouts
 
 Item {
     id: root
     property bool vertical: false
-    property real padding: 8
+    // Islands: the capsule needs real breathing room around content (matches
+    // the edge islands' inner padding); classic groups keep the tight fit and
+    // bare chips (no surface of their own) don't pad like a capsule.
+    property real padding: islandStyle && !bare ? 12 : 8
     readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
     // Islands bar appearance: each group is its own floating surface
     readonly property bool islandStyle: !vertical && (Config.options?.bar?.appearanceStyle ?? "classic") === "islands"
+    // Bare: no surface of its own — for groups that live INSIDE another island
+    // (e.g. the weather chip in an edge island) so cards never nest.
+    property bool bare: false
     readonly property bool zzzPlate: false
     implicitWidth: vertical ? Appearance.sizes.baseVerticalBarWidth : (gridLayout.implicitWidth + padding * 2)
     implicitHeight: vertical ? (gridLayout.implicitHeight + padding * 2) : Appearance.sizes.baseBarHeight
@@ -35,12 +42,28 @@ Item {
             leftMargin: root.vertical ? 4 : 0
             rightMargin: root.vertical ? 4 : 0
         }
-        island: root.islandStyle
+        visible: !root.islandStyle && !root.bare
         cardStyle: root.cardStyleEverywhere
         borderless: !root.islandStyle && (Config.options?.bar?.borderless ?? false)
-        elevation: root.islandStyle ? 0 : 1
+        elevation: 1
         // En zzz la barra mantiene su contorno unificado; los grupos quedan transparentes.
         zzzChamfer: false
+    }
+
+    // Islands wear the Ricelin pill card in EVERY global style — picking the
+    // islands bar is an explicit opt-in to that dialect, so the zzz "groups
+    // stay transparent" doctrine (which left the centre groups naked over the
+    // wallpaper) does not apply here.
+    IslandPanel {
+        readonly property int inset: Config.options?.bar?.islands?.inset ?? 4
+        anchors {
+            fill: parent
+            topMargin: root.vertical ? 0 : inset
+            bottomMargin: root.vertical ? 0 : inset
+            leftMargin: root.vertical ? inset : 0
+            rightMargin: root.vertical ? inset : 0
+        }
+        visible: root.islandStyle && !root.bare
     }
 
     GridLayout {

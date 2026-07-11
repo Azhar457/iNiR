@@ -9,6 +9,7 @@ import qs.modules.common
 import qs.modules.common.models
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.pill
 import QtQuick.Effects
 import Qt5Compat.GraphicalEffects as GE
 
@@ -155,6 +156,10 @@ Item { // Bar content region
     //   frame   — outlined floating frame, transparent inside
     readonly property string barAppearance: Config.options?.bar?.appearanceStyle ?? "classic"
     readonly property bool isIslands: root.barAppearance === "islands"
+    // Island geometry knobs (bar.islands.*): vertical breathing room and the
+    // horizontal capsule padding the edge islands wrap their content with.
+    readonly property int islandInset: Config.options?.bar?.islands?.inset ?? 4
+    readonly property int islandPad: Config.options?.bar?.islands?.padding ?? 12
     readonly property bool isScenic: root.barAppearance === "scenic"
     readonly property bool isFrame: root.barAppearance === "frame"
     readonly property bool zzzDetachedRounded: root.zzzEverywhere
@@ -204,43 +209,18 @@ Item { // Bar content region
         return "";
     }
 
-    // Islands appearance: each SECTION floats as one cohesive capsule (left
-    // edge, centre pills, right edge), matching the BarGroup island look. The
-    // centre pills get it via BarGroup.islandStyle; the edge zones draw one
-    // EdgeIsland behind their whole content row.
-    component EdgeIsland: Rectangle {
-        color: root.zzzEverywhere ? Appearance.zzz.paperAlt
-            : root.angelEverywhere ? Appearance.angel.colGlassCard
-            : root.inirEverywhere ? Appearance.inir.colLayer0
-            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-            : Appearance.colors.colLayer0
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        border.width: root.zzzEverywhere ? Appearance.zzz.borderThick : 1
-        border.color: root.zzzEverywhere ? Appearance.zzz.hairlineStrong
-            : root.angelEverywhere ? Appearance.angel.colCardBorder
-            : root.inirEverywhere ? Appearance.inir.colBorder
-            : Appearance.colors.colLayer0Border
-        radius: root.zzzEverywhere ? Appearance.zzz.controlRadius : Math.min(width, height) / 2
-        Behavior on width {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-        }
-        Behavior on radius {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on border.width {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on border.color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-    }
+    // Islands appearance: each SECTION floats as one cohesive Ricelin card
+    // (left edge, centre pills, right edge). The centre pills get it via
+    // BarGroup.islandStyle; the edge zones draw one EdgeIsland behind their
+    // whole content row. Same skin in every global style — islands mode is an
+    // explicit opt-in to the pill's dialect.
+    // NO Behaviors on x/width here: the capsule derives from the row's
+    // implicitWidth, and the row reflows INSTANTLY when a module's implicit
+    // changes (active-window titles change it constantly). Animating only the
+    // capsule left content poking outside it for the whole animation. Motion
+    // is applied at the SOURCE instead (the activeWindow wrapper animates its
+    // implicitWidth), so row and capsule move through the same frames.
+    component EdgeIsland: IslandPanel {}
     // Edge-zone layout cell: hosts the module Loader. Layout hints live HERE
     // (the real layout child) — hints inside the loaded item are ignored.
     component EdgeZoneCell: Item {
@@ -252,7 +232,10 @@ Item { // Bar content region
         Layout.fillHeight: root._fillHeight(modelData)
         implicitWidth: cellLoader.implicitWidth
         implicitHeight: cellLoader.implicitHeight
-        visible: cellLoader.status !== Loader.Ready || (cellLoader.item?.visible ?? true)
+        // Same latch-free rule as the centre zones: never read item.visible
+        // from the host (effective visibility latches hidden) — mirror the
+        // module's show conditions from root state.
+        visible: root._moduleShown(cell.modelData)
         Loader {
             id: cellLoader
             anchors.fill: parent
@@ -297,6 +280,25 @@ Item { // Bar content region
     readonly property var _rightIds:       root._zone("right",       ["rightSidebarButton", "tray", "timer", "shellUpdate", "spacer", "weather"])
 
     function _moduleVisible(id) { return Config.options?.bar?.modules?.[id] ?? true }
+
+    /**
+     * Latch-free layout visibility. Reading `item.visible` from a host Loader
+     * returns EFFECTIVE visibility (parent chain included): once the Loader
+     * hides, the item can never be observed turning visible again and the
+     * module is stuck hidden. Mirror each module's own show conditions from
+     * root state/services instead — these bindings re-evaluate reliably.
+     * Modules not listed either are always shown or self-collapse via
+     * implicitWidth (shellUpdate) / an inner wrapper (activeWindow).
+     */
+    function _moduleShown(id) {
+        if (id === "tray") return root._moduleVisible("sysTray") && root.useShortenedForm === 0;
+        if (!root._moduleVisible(id)) return false;
+        if (id === "media") return root.useShortenedForm < 2;
+        if (id === "utilButtons") return (Config.options?.bar?.verbose ?? true) && root.useShortenedForm === 0;
+        if (id === "battery") return root.useShortenedForm < 2 && Battery.available;
+        if (id === "weather") return Config.options?.bar?.weather?.enable ?? false;
+        return true;
+    }
 
     // Unified id→Component map. Every zone uses this same map so ANY module can
     // live in ANY zone (the editor allows cross-zone moves). Layout sizing hints
@@ -411,6 +413,9 @@ Item { // Bar content region
         LeftSidebarButton {
             visible: root._moduleVisible("leftSidebarButton")
             Layout.alignment: Qt.AlignVCenter
+            // Inside a capsule the hover/toggled plate must sit clearly within
+            // the island — at the classic padding it nearly filled its height.
+            buttonPadding: root.isIslands ? 3 : 5
             colBackground: buttonHovered
                 ? (Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover)
                 : "transparent"
@@ -435,9 +440,25 @@ Item { // Bar content region
             implicitWidth: fillSlot ? 0 : Math.min(_awItem.contentImplicitWidth, 220)
             implicitHeight: Appearance.sizes.baseBarHeight
             clip: true
+            // The one animated width in the chain: every title change reflows
+            // the row, the island and the edge-section geometry from THIS
+            // value, all in the same frame — smooth, and nothing can lag
+            // outside the capsule. The texts elide at intermediate widths.
+            Behavior on implicitWidth {
+                enabled: !awWrapper.fillSlot && Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+            }
             ActiveWindow {
                 id: _awItem
                 anchors.fill: parent
+                // Islands: bound the text block to the island's inner height.
+                // A title glyph served by a fallback font (Discord channel
+                // symbols) inflates its line's ascent; the column then centres
+                // on the full bar height and paints over the island's edges.
+                // With the island's insets here, ActiveWindow's own clip cuts
+                // that empty ascent at the capsule instead.
+                anchors.topMargin: root.isIslands ? root.islandInset + 2 : 0
+                anchors.bottomMargin: root.isIslands ? root.islandInset + 2 : 0
                 visible: root._moduleVisible("activeWindow") && root.useShortenedForm === 0 && !root.taskbarEnabled
             }
             Loader {
@@ -527,9 +548,11 @@ Item { // Bar content region
         color: {
             if (root.zzzEverywhere) {
                 const zzzBase = cornerStyle === 3 ? Appearance.zzz.chromeAlt : Appearance.zzz.chrome
-                return barBackground.zzzGlassActive
-                    ? ColorUtils.applyAlpha(zzzBase, Appearance.zzz.dark ? 0.88 : 0.84)
-                    : zzzBase
+                // With glass on, ZzzGlassWash below paints the whole background
+                // (blurred wallpaper + chrome veil). Painting a translucent chrome
+                // here too just let the SHARP wallpaper through — transparency, not
+                // glass — and double-veiled the wash.
+                return barBackground.zzzGlassActive ? "transparent" : zzzBase
             }
             // Frame is an outline only; scenic paints via the gradient above
             if (root.isFrame || root.isScenic) {
@@ -692,6 +715,12 @@ Item { // Bar content region
             // itself has no cut to match. Match the host: no chamfer here.
             chamfer: 0
             glassEnabled: barBackground.zzzGlassActive
+            selfBacked: true
+            // The bar carries small text, so it keeps the heaviest veil of the two
+            // glass hosts — enough wallpaper to read as glass, not enough to move
+            // the ink's ground out of the band onMuted is calibrated for.
+            veilAlpha: Appearance.zzz.dark ? 0.78 : 0.82
+            z: -1
         }
 
         layer.enabled: auroraEverywhere && !root.inirEverywhere && !root.zzzEverywhere && !gameModeMinimal && root.barAppearance === "classic"
@@ -806,16 +835,22 @@ Item { // Bar content region
         EdgeIsland {
             visible: root.isIslands && leftSectionRowLayout.implicitWidth > 1
             anchors.verticalCenter: parent.verticalCenter
-            x: leftSectionRowLayout.anchors.leftMargin - 12
-            width: leftSectionRowLayout.implicitWidth + 24
-            height: Appearance.sizes.baseBarHeight - 8
+            x: leftSectionRowLayout.anchors.leftMargin - root.islandPad
+            width: leftSectionRowLayout.implicitWidth + root.islandPad * 2
+            height: Appearance.sizes.baseBarHeight - root.islandInset * 2
         }
 
         RowLayout {
             id: leftSectionRowLayout
-            anchors.fill: parent
+            // Islands: hug content (no right anchor → width = implicitWidth), so
+            // the island wraps the row exactly and nothing can stretch across
+            // the zone's slack. Classic keeps the full-zone fill.
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: root.isIslands ? undefined : parent.right
             anchors.leftMargin: root.isIslands
-                ? Appearance.sizes.hyprlandGapsOut + 12
+                ? Appearance.sizes.hyprlandGapsOut + root.islandPad
                 : Appearance.rounding.screenRounding
             anchors.rightMargin: Appearance.rounding.screenRounding
             spacing: 10
@@ -862,6 +897,9 @@ Item { // Bar content region
                     Layout.alignment: Qt.AlignVCenter
                     Layout.fillWidth: root._fillWidth(modelData, "center")
                     Layout.fillHeight: root._fillHeight(modelData)
+                    // Hidden modules must leave the layout entirely, or their
+                    // implicit width lingers as a ghost gap inside the pill.
+                    visible: root._moduleShown(modelData)
                     sourceComponent: root._allComponents[modelData] ?? null
                     onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = false
                 }
@@ -898,6 +936,7 @@ Item { // Bar content region
                     Layout.alignment: Qt.AlignVCenter
                     Layout.fillWidth: root._fillWidth(modelData, "centerLeft")
                     Layout.fillHeight: root._fillHeight(modelData)
+                    visible: root._moduleShown(modelData)
                     sourceComponent: root._allComponents[modelData] ?? null
                     onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = false
                 }
@@ -948,6 +987,7 @@ Item { // Bar content region
                         Layout.alignment: Qt.AlignVCenter
                         Layout.fillWidth: root._fillWidth(modelData, "centerRight")
                         Layout.fillHeight: root._fillHeight(modelData)
+                        visible: root._moduleShown(modelData)
                         sourceComponent: root._allComponents[modelData] ?? null
                         onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = false
                     }
@@ -1044,17 +1084,22 @@ Item { // Bar content region
         EdgeIsland {
             visible: root.isIslands && rightSectionRowLayout.implicitWidth > 1
             anchors.verticalCenter: parent.verticalCenter
-            x: parent.width - rightSectionRowLayout.anchors.rightMargin - rightSectionRowLayout.implicitWidth - 12
-            width: rightSectionRowLayout.implicitWidth + 24
-            height: Appearance.sizes.baseBarHeight - 8
+            x: parent.width - rightSectionRowLayout.anchors.rightMargin - rightSectionRowLayout.implicitWidth - root.islandPad
+            width: rightSectionRowLayout.implicitWidth + root.islandPad * 2
+            height: Appearance.sizes.baseBarHeight - root.islandInset * 2
         }
 
         RowLayout {
             id: rightSectionRowLayout
-            anchors.fill: parent
+            // Islands: hug content against the right margin (no left anchor →
+            // width = implicitWidth) so the island wraps the row exactly.
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            anchors.left: root.isIslands ? undefined : parent.left
             anchors.leftMargin: Appearance.rounding.screenRounding
             anchors.rightMargin: root.isIslands
-                ? Appearance.sizes.hyprlandGapsOut + 12
+                ? Appearance.sizes.hyprlandGapsOut + root.islandPad
                 : Appearance.rounding.screenRounding
             spacing: 5
             layoutDirection: Qt.RightToLeft
@@ -1108,7 +1153,12 @@ Item { // Bar content region
         Loader {
             active: root._moduleVisible("weather") && (Config.options?.bar?.weather?.enable ?? false)
             visible: active
-            sourceComponent: BarGroup { WeatherBar {} }
+            sourceComponent: BarGroup {
+                // Inside an edge island the weather is a bare chip — its own
+                // card would nest a card inside the island.
+                bare: root.isIslands
+                WeatherBar {}
+            }
         }
     }
     Component {
@@ -1120,8 +1170,10 @@ Item { // Bar content region
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             Layout.fillWidth: false
 
-            implicitWidth: indicatorsRowLayout.implicitWidth + 10 * 2
-            implicitHeight: indicatorsRowLayout.implicitHeight + 5 * 2
+            // Islands: tighter plate so the hover/toggled pill reads as a chip
+            // inside the capsule instead of almost filling it.
+            implicitWidth: indicatorsRowLayout.implicitWidth + (root.isIslands ? 7 : 10) * 2
+            implicitHeight: indicatorsRowLayout.implicitHeight + (root.isIslands ? 2 : 5) * 2
 
             buttonRadius: root.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
 
