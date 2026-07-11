@@ -35,6 +35,7 @@ Item {
     }
 
     Item {
+        id: emptyState
         anchors {
             left: parent.left
             right: parent.right
@@ -44,7 +45,7 @@ Item {
             bottomMargin: 28
         }
         visible: opacity > 0
-        opacity: Notifications.list.length === 0 ? 1 : 0
+        opacity: listview.count === 0 ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation {
@@ -79,7 +80,7 @@ Item {
                 Layout.preferredHeight: 128
                 surface: "notifications"
                 fallbackSurface: "emptyStates"
-                pose: "notifications-clear"
+                pose: "cleanup-sweep-loop"
             }
 
             StyledText {
