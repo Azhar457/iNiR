@@ -358,8 +358,10 @@ Item {
             id: coverBox
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 44 * root.s
-            height: 44 * root.s
+            // Fit inside whatever height the host grants (bar mode keeps the
+            // bar's own geometry, slightly shorter than the capsule face).
+            width: Math.min(44 * root.s, trackRow.height - 8 * root.s)
+            height: width
             radius: 9 * root.s
             color: PillTheme.tileBg
 

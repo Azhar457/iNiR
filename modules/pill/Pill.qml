@@ -152,6 +152,36 @@ Item {
     readonly property bool gameMode: GameMode.active
 
     /**
+     * A fullscreen window on this pill's active workspace hides the resting
+     * faces — classic-bar parity: top-layer bars get covered by the
+     * compositor, but the pill's Overlay layer never is, so it opts out
+     * itself. Transient announces (osd/toast) and open surfaces still show.
+     */
+    readonly property bool fsCovered: {
+        if (!CompositorService.isNiri)
+            return GameMode.hasAnyFullscreenWindow;
+        const wins = NiriService.windows ?? [];
+        for (const w of wins) {
+            const ws = NiriService.workspaces?.[w.workspace_id];
+            if (!(ws?.is_active ?? false))
+                continue;
+            if (screenName.length > 0 && ws.output !== screenName)
+                continue;
+            if (GameMode.isWindowFullscreen(w))
+                return true;
+        }
+        return false;
+    }
+    readonly property bool fsHide: fsCovered
+        && (mode === "rest" || mode === "hover" || mode === "game")
+
+    opacity: fsHide ? 0 : 1
+    visible: opacity > 0.01
+    Behavior on opacity {
+        NumberAnimation { duration: PillMotion.standard; easing.type: PillMotion.easeStandard }
+    }
+
+    /**
      * Mode ladder. An open surface always wins; game mode docks the pill into a
      * flush bar; an arriving toast takes the resting pill over, but never
      * interrupts a pinned or hovered one.
@@ -197,12 +227,14 @@ Item {
     readonly property var modeSize: ({
         hover: () => Qt.size(hoverW, hoverH),
         game: () => Qt.size(gameW, gameH),
-        osd: () => barMode ? Qt.size(Math.max(hoverW, osd.desiredW), Math.max(hoverH, osd.desiredH))
-            : Qt.size(osd.desiredW, osd.desiredH),
+        // Announces are compact and centred in every mode (maintainer call,
+        // 2026-07-11): in bar mode the bar morphs down to the capsule face for
+        // the flash and glides back, instead of stretching the announce across
+        // the full bar width.
+        osd: () => Qt.size(osd.desiredW, osd.desiredH),
         toast: () => {
             const th = toastLoader.item ? toastLoader.item.implicitHeight + 24 * s : restH;
-            return barMode ? Qt.size(Math.max(hoverW, toastW), Math.max(hoverH, th))
-                : Qt.size(toastW, th);
+            return Qt.size(toastW, th);
         }
     })
 

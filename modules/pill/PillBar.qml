@@ -145,7 +145,10 @@ Scope {
 
             anchors { top: true; left: true; right: true; bottom: true }
 
-            mask: modal ? fullRegion : pillRegion
+            // While a fullscreen window owns this monitor the pill is hidden and
+            // must not eat pointer input either.
+            mask: modal ? fullRegion : (pill.fsHide ? emptyOverlay : pillRegion)
+            Region { id: emptyOverlay }
             Region {
                 id: pillRegion
                 readonly property real baseW: Math.max(pill.width, pill.targetW)

@@ -89,7 +89,7 @@ Singleton {
         clock: "時", media: "奏", mediaPaused: "休", link: "繋", notify: "報",
         clear: "払", dnd: "静", sysmon: "系", glance: "今", clipboard: "掃",
         recorder: "録", power: "電", battery: "蓄", calendar: "暦", mixer: "調",
-        launcher: "探", clipboardSearch: "控"
+        launcher: "探", clipboardSearch: "控", workspaces: "場"
     })
     function glyph(key) {
         const o = Config.options?.bar?.pill?.glyphs?.[key];
