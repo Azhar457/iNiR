@@ -7,6 +7,7 @@ import qs.modules.common.functions
 
 RippleButton {
     id: root
+    cookieMorphing: true
 
     property bool showPing: false
 

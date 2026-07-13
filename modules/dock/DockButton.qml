@@ -14,6 +14,10 @@ RippleButton {
 
     implicitWidth: vertical ? (implicitHeight - topInset - bottomInset) : (implicitHeight - topInset - bottomInset)
     implicitHeight: 50
+    // Square by construction, so the face stays organic. The dock paints no
+    // resting background, which leaves the hover state as the cookie face —
+    // and the pill/macOS styles hide `background` outright, so they are unaffected.
+    cookieMorphing: true
     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal

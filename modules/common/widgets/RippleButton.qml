@@ -23,8 +23,12 @@ Button {
         : (Appearance?.rounding?.small ?? 4)
     property real buttonRadiusPressed: buttonRadius
     property real buttonEffectiveRadius: root.down ? root.buttonRadiusPressed : root.buttonRadius
-    property int rippleDuration: Appearance.zzzEverywhere ? Appearance.zzz.overshootDuration : 1200
+    property int rippleDuration: Appearance.cookieEverywhere ? Appearance.animation.elementMoveFast.duration
+        : Appearance.zzzEverywhere ? Appearance.zzz.overshootDuration : 1200
     property bool rippleEnabled: true
+    // Expensive organic morph is explicit. Generic buttons remain familiar
+    // pills; compact semantic controls can opt in and keep one persistent face.
+    property bool cookieMorphing: false
     property var downAction // When left clicking (down)
     property var releaseAction // When left clicking (release)
     property var moveAction // When mouse moves while pressed (for drag support)
@@ -162,12 +166,16 @@ Button {
 
     background: Rectangle {
         id: buttonBackground
-        radius: root.buttonEffectiveRadius
         implicitHeight: 30
 
-        color: root.buttonColor
-        border.width: Appearance.angelEverywhere ? 1 : 0
-        border.color: Appearance.angelEverywhere
+        color: Appearance.cookieEverywhere && root.cookieMorphing ? "transparent" : root.buttonColor
+        radius: Appearance.cookieEverywhere ? height / 2 : root.buttonEffectiveRadius
+        // Cookie has no rectangular chrome: a pill focus ring fights the organic
+        // silhouette. cookieMorphing surfaces still show focus through CookieFace.
+        border.width: Appearance.cookieEverywhere ? 0
+            : (Appearance.angelEverywhere ? 1 : 0)
+        border.color: Appearance.cookieEverywhere ? "transparent"
+            : Appearance.angelEverywhere
             ? (root.buttonHovered ? Appearance.angel.colBorderHover : "transparent")
             : "transparent"
         Behavior on border.color {
@@ -178,13 +186,53 @@ Button {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
+        scale: Appearance.cookieEverywhere && root.down ? 0.97 : 1
+        Behavior on scale {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
+
+        Loader {
+            anchors.fill: parent
+            active: Appearance.cookieEverywhere && root.cookieMorphing
+            // Focus is a ring on the same silhouette, not a plate underneath: a
+            // filled face behind a host with a transparent fill (the dock) shows
+            // through as a solid accent blob. visualFocus, not activeFocus —
+            // clicking a dock icon must not leave it ringed.
+            sourceComponent: CookieFace {
+                role: "control"
+                selected: root.toggled
+                color: root.buttonColor
+                strokeColor: root.visualFocus ? Appearance.colors.colPrimary : "transparent"
+                strokeWidth: root.visualFocus ? 2 : 0
+            }
+        }
 
         layer.enabled: true
         layer.effect: OpacityMask {
-            maskSource: Rectangle {
+            maskSource: Item {
                 width: buttonBackground.width
                 height: buttonBackground.height
-                radius: root.buttonEffectiveRadius
+
+                Rectangle {
+                    anchors.fill: parent
+                    visible: !Appearance.cookieEverywhere || !root.cookieMorphing
+                    radius: Appearance.cookieEverywhere ? height / 2 : root.buttonEffectiveRadius
+                    color: "white"
+                }
+                Loader {
+                    anchors.fill: parent
+                    active: Appearance.cookieEverywhere && root.cookieMorphing
+                    sourceComponent: CookieFace {
+                        role: "control"
+                        selected: root.toggled
+                        color: "white"
+                    }
+                }
             }
         }
 

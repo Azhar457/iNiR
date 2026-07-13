@@ -1558,6 +1558,7 @@ ContentPage {
                     case "inir": return styles.inir ?? 1
                     case "angel": return styles.angel ?? 1
                     case "zzz": return styles.zzz ?? 0
+                    case "cookie": return styles.cookie ?? 1
                     default: return 1
                 }
             }
@@ -1641,14 +1642,15 @@ ContentPage {
                         { displayName: Translation.tr("Aurora"), icon: "blur_on", value: "aurora" },
                         { displayName: Translation.tr("Inir"), icon: "terminal", value: "inir" },
                         { displayName: Translation.tr("Angel"), icon: "raven", value: "angel" },
-                        { displayName: Translation.tr("ZZZ"), icon: "bolt", value: "zzz" }
+                        { displayName: Translation.tr("ZZZ"), icon: "bolt", value: "zzz" },
+                        { displayName: Translation.tr("Cookie Shapes"), icon: "cookie", value: "cookie" }
                     ]
                 }
             }
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Material keeps the original surfaces. Cards enables rounded card containers everywhere. Aurora enables a wallpaper-tinted glass surface style across panels. Inir uses a TUI-inspired dark theme with accent-colored borders. Angel is the flagship glass style with refined blur, escalonado shadows, and partial accent borders. ZZZ is a Zenless Zone Zero-inspired poster system: wallpaper-generated signal colors, squared console plates, technical grid frames, cut-corner cards, sticker badges, segmented metrics, halftone texture, and bold Oxanium type.")
+                text: Translation.tr("Material keeps the original surfaces. Cards enables rounded card containers everywhere. Aurora enables a wallpaper-tinted glass surface style across panels. Inir uses a TUI-inspired dark theme with accent-colored borders. Angel is the flagship glass style with refined blur, escalonado shadows, and partial accent borders. ZZZ is a Zenless Zone Zero-inspired poster system. Cookie Shapes uses organic Material Expressive silhouettes that morph with interface state.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.WordWrap

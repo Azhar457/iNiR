@@ -46,14 +46,23 @@ Item {
             Layout.preferredWidth: 48
             Layout.preferredHeight: 48
 
-            // Border ring
+            // Cookie mode keeps the photo familiar and uses one organic frame,
+            // avoiding a second animated mask on the image itself.
+            CookieFace {
+                anchors.fill: parent
+                visible: Appearance.cookieEverywhere
+                role: "badge"
+                selected: true
+                color: Appearance.colors.colPrimaryContainer
+            }
             Rectangle {
                 anchors.fill: parent
+                visible: !Appearance.cookieEverywhere
                 radius: width / 2
                 color: "transparent"
                 border.width: 2
                 border.color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                            : root.inirEverywhere ? Appearance.inir.colPrimary 
+                            : root.inirEverywhere ? Appearance.inir.colPrimary
                             : root.auroraEverywhere ? Appearance.colors.colPrimary
                             : Appearance.colors.colPrimary
             }

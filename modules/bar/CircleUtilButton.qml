@@ -11,6 +11,8 @@ RippleButton {
 
     implicitHeight: Math.max(content.implicitHeight, 26, content.implicitHeight)
     implicitWidth: implicitHeight
+    // Square and standalone, so the face stays organic in cookie mode.
+    cookieMorphing: true
     contentItem: content
     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
     colBackground: "transparent"

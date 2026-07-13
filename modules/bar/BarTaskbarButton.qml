@@ -105,6 +105,7 @@ RippleButton {
     buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
         : Appearance.rounding.small
+    cookieMorphing: true
 
     colBackground: "transparent"
     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -119,7 +120,8 @@ RippleButton {
     // Focus is shown by the window-indicator dots/line below the icon, so the
     // active app gets NO filled background box (the dark box read like a shadow
     // and broke the flat look). Hover still gives subtle feedback.
-    colBackgroundToggled: "transparent"
+    colBackgroundToggled: Appearance.cookieEverywhere
+        ? Appearance.colors.colPrimaryContainer : "transparent"
     colBackgroundToggledHover: root.colBackgroundHover
     colRippleToggled: root.colRipple
 

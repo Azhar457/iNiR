@@ -100,6 +100,7 @@ Item {
                         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colPrimary, 0.85)
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                        : Appearance.cookieEverywhere ? Appearance.colors.colLayer2
                         : Appearance.colors.colSecondaryContainer
                     border.width: Appearance.zzzEverywhere ? 1 : (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
                     border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong
@@ -114,6 +115,7 @@ Item {
                         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
                     anchors.verticalCenter: parent.verticalCenter
+
                     // Organic morph on style/shape switch (organic-transitions)
                     Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                     Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }

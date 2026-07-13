@@ -125,7 +125,8 @@ PanelSurface {
         property string icon
         property bool active: false
         property color iconColor: active 
-            ? (Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
+            ? (Appearance.cookieEverywhere ? Appearance.colors.colOnPrimaryContainer
+             : Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
              : root.inirEverywhere ? Appearance.inir.colOnPrimary 
              : root.auroraEverywhere ? Appearance.colors.colOnPrimary
              : Appearance.colors.colOnPrimary)
@@ -178,12 +179,27 @@ PanelSurface {
 
         AngelPartialBorder { targetRadius: parent.radius; coverage: 0.4; borderColor: active ? Appearance.angel.colPrimary : Appearance.angel.colBorderSubtle }
 
+        Loader {
+            anchors.centerIn: parent
+            width: root.compactMode ? 24 : 28
+            height: width
+            active: Appearance.cookieEverywhere && tile.visible
+            sourceComponent: CookieFace {
+                role: "badge"
+                selected: tile.active
+                color: tile.active
+                    ? Appearance.colors.colPrimaryContainer
+                    : Appearance.colors.colLayer2
+            }
+        }
+
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
 
         MaterialSymbol {
+            z: 1
             anchors.centerIn: parent
             text: tile.icon
             iconSize: root.compactMode ? 16 : 18

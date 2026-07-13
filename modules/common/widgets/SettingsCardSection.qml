@@ -77,6 +77,7 @@ Item {
     Rectangle {
         visible: !Appearance.angelEverywhere
             && !Appearance.zzzEverywhere
+            && !Appearance.cookieEverywhere
             && Appearance.effectsEnabled
         x: card.x + 0.5
         y: card.y + 1.5
@@ -110,6 +111,7 @@ Item {
     Rectangle {
         id: accentBar
         visible: !Appearance.angelEverywhere && !Appearance.zzzEverywhere
+            && !Appearance.cookieEverywhere
         anchors {
             left: card.left
             top: card.top
@@ -138,17 +140,27 @@ Item {
         }
     }
 
+    Loader {
+        anchors.fill: card
+        active: Appearance.cookieEverywhere && root.visible
+        sourceComponent: CookieFace {
+            role: "card"
+            color: SettingsMaterialPreset.cardColor
+        }
+    }
+
     Rectangle {
         id: card
 
         anchors.fill: parent
         implicitHeight: cardColumn.implicitHeight + SettingsMaterialPreset.cardPadding * 2
         radius: SettingsMaterialPreset.cardRadius
-        color: SettingsMaterialPreset.cardColor
+        color: Appearance.cookieEverywhere ? "transparent" : SettingsMaterialPreset.cardColor
         border.width: Appearance.angelEverywhere ? 0
                      : (Appearance.zzzEverywhere ? 0
+                     : (Appearance.cookieEverywhere ? 0
                      : (Appearance.inirEverywhere ? 1
-                     : (Appearance.auroraEverywhere ? 1 : 1)))
+                     : (Appearance.auroraEverywhere ? 1 : 1))))
         border.color: Appearance.angelEverywhere ? "transparent" : SettingsMaterialPreset.cardBorderColor
 
         Behavior on color {
@@ -220,8 +232,22 @@ Item {
                             implicitWidth: Appearance.zzzEverywhere ? 26 : Appearance.font.pixelSize.larger
                             implicitHeight: implicitWidth
                             readonly property color iconColor: root.expanded
-                                ? SettingsMaterialPreset.iconExpandedColor
-                                : SettingsMaterialPreset.iconCollapsedColor
+                                ? (Appearance.cookieEverywhere
+                                    ? Appearance.colors.colOnPrimaryContainer
+                                    : SettingsMaterialPreset.iconExpandedColor)
+                                : (Appearance.cookieEverywhere
+                                    ? Appearance.colors.colOnLayer2
+                                    : SettingsMaterialPreset.iconCollapsedColor)
+
+                            CookieFace {
+                                anchors.fill: parent
+                                visible: Appearance.cookieEverywhere
+                                role: "badge"
+                                selected: root.expanded
+                                color: root.expanded
+                                    ? Appearance.colors.colPrimaryContainer
+                                    : Appearance.colors.colLayer2
+                            }
 
                             MaterialSymbol {
                                 visible: !Appearance.zzzEverywhere

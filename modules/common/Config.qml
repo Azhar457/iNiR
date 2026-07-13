@@ -700,7 +700,7 @@ Singleton {
 
             property JsonObject appearance: JsonObject {
                 property string theme: "auto" // Theme preset ID: "auto" for wallpaper-based, or preset name like "gruvbox-dark", "catppuccin-mocha", "custom", etc.
-                property string globalStyle: "material" // "material" | "cards" | "aurora" | "inir" | "angel" | "zzz"
+                property string globalStyle: "material" // "material" | "cards" | "aurora" | "inir" | "angel" | "zzz" | "cookie"
                 // Shared skin for every island surface (islands bar, island dock,
                 // island sidebars, island search). Consumed by IslandPanel.
                 property JsonObject island: JsonObject {
@@ -820,6 +820,7 @@ Singleton {
                     property int inir: 1
                     property int angel: 1
                     property int zzz: 0
+                    property int cookie: 1
                 }
                 property bool extraBackgroundTint: true
                 property bool softenColors: true

@@ -56,6 +56,8 @@ MascotImage 1.0 MascotImage.qml
 MascotCollection 1.0 MascotCollection.qml
 MascotPoseGallery 1.0 MascotPoseGallery.qml
 MaterialCookie 1.0 MaterialCookie.qml
+CookieFace 1.0 CookieFace.qml
+CookiePlate 1.0 CookiePlate.qml
 MaterialLoadingIndicator 1.0 MaterialLoadingIndicator.qml
 MediaArtworkResolver 1.0 MediaArtworkResolver.qml
 SoundPicker 1.0 SoundPicker.qml

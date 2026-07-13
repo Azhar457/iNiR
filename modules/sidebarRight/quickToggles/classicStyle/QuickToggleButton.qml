@@ -10,6 +10,9 @@ GroupButton {
     baseHeight: 40
     clickedWidth: baseWidth + 20
     toggled: false
+    // A standalone square control: cookie mode reads "on" as a six-lobed face
+    // instead of a filled circle.
+    cookieMorphing: true
     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall

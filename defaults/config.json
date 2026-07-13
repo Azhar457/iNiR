@@ -106,7 +106,8 @@
             "aurora": 0,
             "inir": 1,
             "angel": 1,
-            "zzz": 0
+            "zzz": 0,
+            "cookie": 1
         },
         "themeSchedule": {
             "enabled": false,

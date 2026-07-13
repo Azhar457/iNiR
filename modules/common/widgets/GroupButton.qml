@@ -22,6 +22,10 @@ Button {
     property var altAction // When right clicking
     property var middleClickAction // When middle clicking
     property bool bounce: true
+    // Cookie Shapes: an organic face costs a Canvas, and a segmented group needs
+    // its members to share one continuous silhouette. Standalone semantic
+    // controls opt in; grouped ones stay rectangular on purpose.
+    property bool cookieMorphing: false
     property real baseWidth: contentItem.implicitWidth + horizontalPadding * 2
     property real baseHeight: contentItem.implicitHeight + verticalPadding * 2
     property bool enableImplicitWidthAnimation: true
@@ -134,16 +138,32 @@ Button {
 
     background: Rectangle {
         id: buttonBackground
+        readonly property bool cookieFace: Appearance.cookieEverywhere && root.cookieMorphing
         topLeftRadius: root.leftRadius
         topRightRadius: root.rightRadius
         bottomLeftRadius: root.leftRadius
         bottomRightRadius: root.rightRadius
         implicitHeight: 50
 
-        color: root.color
+        color: buttonBackground.cookieFace ? "transparent" : root.color
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+        }
+
+        // The face carries the toggled state as topology (pill → cookie), so the
+        // colour is all this needs; press/hover stay on colour and the bounce.
+        // Keyboard focus is a ring on that same silhouette.
+        Loader {
+            anchors.fill: parent
+            active: buttonBackground.cookieFace
+            sourceComponent: CookieFace {
+                role: "control"
+                selected: root.toggled
+                color: root.color
+                strokeColor: root.visualFocus ? Appearance.colors.colPrimary : "transparent"
+                strokeWidth: root.visualFocus ? 2 : 0
+            }
         }
     }
 

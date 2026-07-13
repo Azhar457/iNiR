@@ -1164,6 +1164,7 @@ Item { // Bar content region
         id: rightSidebarButtonComponent
         RippleButton { // Right sidebar button
             id: rightSidebarButton
+            cookieMorphing: true
             visible: root._moduleVisible("rightSidebarButton")
 
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter

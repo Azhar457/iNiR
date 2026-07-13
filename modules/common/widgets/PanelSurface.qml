@@ -65,6 +65,7 @@ Item {
     readonly property bool _angel: Appearance.angelEverywhere
     readonly property bool _inir: Appearance.inirEverywhere
     readonly property bool _aurora: Appearance.auroraEverywhere
+    readonly property bool _cookie: Appearance.cookieEverywhere
     readonly property bool _island: root.islandSkin && !root._zzz
     readonly property real _islandOpacity: Config.options?.appearance?.island?.opacity ?? 1
     readonly property bool _backdropActive: !root.borderless && Appearance.effectsEnabled
@@ -127,6 +128,16 @@ Item {
         chamfer: Appearance.zzz.cutCorner
     }
 
+    // ── Cookie Shapes: one organic face; host geometry/input stay rectangular ──
+    Loader {
+        anchors.fill: parent
+        active: root._cookie && !root.borderless && root.visible
+        sourceComponent: CookieFace {
+            role: "plate"
+            color: root._fill
+        }
+    }
+
     // ── Cara island (Ricelin): gradiente cardTop→cardBot + hairline + sheen ──
     Rectangle {
         id: islandFace
@@ -154,7 +165,8 @@ Item {
     // ── Cara resto (y zzz transparente): rectángulo redondeado ──
     Rectangle {
         anchors.fill: parent
-        visible: !(root._zzz && root.zzzChamfer && !root.borderless) && !root._island
+        visible: !(root._zzz && root.zzzChamfer && !root.borderless)
+            && !root._island && !root._cookie
         color: root._zzz ? "transparent" : root._fill
         radius: root._zzz ? Appearance.zzz.cardRadius : root._radius
         border.width: root._zzz ? 0 : root._borderWidth

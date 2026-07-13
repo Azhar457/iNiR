@@ -79,6 +79,8 @@ Singleton {
     readonly property bool auroraEverywhere: globalStyle === "aurora" || globalStyle === "angel"
     // zzzEverywhere - Zenless Zone Zero urban graphic identity (poster palette + sharp + bold)
     readonly property bool zzzEverywhere: globalStyle === "zzz"
+    // cookieEverywhere - Material Expressive organic silhouettes and state morphing
+    readonly property bool cookieEverywhere: globalStyle === "cookie"
     
     // Aurora light mode: when aurora + light theme, use ink-colored text for contrast
     // Ink colors are muted dark tones (not pure black) that work well over light/transparent backgrounds

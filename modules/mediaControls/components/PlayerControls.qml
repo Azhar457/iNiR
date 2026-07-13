@@ -55,6 +55,7 @@ RowLayout {
     
     // Previous button
     RippleButton {
+        cookieMorphing: true
         implicitWidth: root.buttonSize
         implicitHeight: root.buttonSize
         enabled: root.canGoPrevious
@@ -82,6 +83,7 @@ RowLayout {
     
     // Play/Pause button
     RippleButton {
+        cookieMorphing: true
         implicitWidth: root.playButtonSize
         implicitHeight: root.playButtonSize
         buttonRadius: root.playButtonRadius
@@ -113,6 +115,7 @@ RowLayout {
     
     // Next button
     RippleButton {
+        cookieMorphing: true
         implicitWidth: root.buttonSize
         implicitHeight: root.buttonSize
         enabled: root.canGoNext
