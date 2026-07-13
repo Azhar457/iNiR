@@ -126,21 +126,25 @@ Scope {
                     id: contentLoader
                     anchors.fill: parent
                     focus: true
-                    // Use source URL for waffle to avoid parsing when using ii family
-                    sourceComponent: Config.options?.panelFamily === "waffle" ? undefined : iiContent
-                    source: Config.options?.panelFamily === "waffle" ? "WCloseConfirmContent.qml" : ""
-                    onLoaded: {
-                        if (item) {
-                            item.targetWindow = Qt.binding(() => root.targetWindow)
-                            item.confirm.connect(root.confirmClose)
-                            item.cancel.connect(root.cancel)
-                            item.forceActiveFocus()
-                        }
-                    }
+                    // Both contents declare targetWindow as required, so they must be
+                    // instantiated from an inline Component. A Loader source URL cannot
+                    // initialize required properties and fails to Loader.Error, leaving
+                    // this keyboard-exclusive fullscreen window with no way out.
+                    sourceComponent: Config.options?.panelFamily === "waffle" ? waffleContent : iiContent
+                    onLoaded: if (item) item.forceActiveFocus()
 
                     Component {
                         id: iiContent
                         CloseConfirmContent {
+                            targetWindow: root.targetWindow
+                            onConfirm: root.confirmClose()
+                            onCancel: root.cancel()
+                        }
+                    }
+
+                    Component {
+                        id: waffleContent
+                        WCloseConfirmContent {
                             targetWindow: root.targetWindow
                             onConfirm: root.confirmClose()
                             onCancel: root.cancel()
