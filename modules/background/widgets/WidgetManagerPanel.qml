@@ -245,6 +245,7 @@ Item {
             WidgetCard { widgetKey: "uptime"; widgetIcon: "avg_pace"; widgetLabel: Translation.tr("System uptime"); defaultEnabled: false }
             WidgetCard { widgetKey: "newsTicker"; widgetIcon: "newspaper"; widgetLabel: Translation.tr("News Ticker"); defaultEnabled: false }
             WidgetCard { widgetKey: "mascot"; widgetIcon: "pets"; widgetLabel: Translation.tr("Mascot"); defaultEnabled: false }
+            WidgetCard { widgetKey: "japaneseTypography"; widgetIcon: "translate"; widgetLabel: Translation.tr("Japanese Typography"); defaultEnabled: false }
 
             // ── Extra mascot instances ── (each is its own WidgetCard, positioned/posed independently)
             Item { width: 1; height: 8 }
@@ -414,7 +415,7 @@ Item {
         // avoid silent setNestedValue failures (their schemas don't expose those keys).
         readonly property bool _supportsAppearance: isMascotInstance || (!isCustom && [
             "clock", "weather", "visualizer", "systemMonitor", "battery", "notes",
-            "calendarUpcoming", "uptime", "newsTicker", "mascot"
+            "calendarUpcoming", "uptime", "newsTicker", "mascot", "japaneseTypography"
         ].indexOf(widgetKey) !== -1)
         readonly property bool _expanded: card._enabled && _expandToggle
         property bool _expandToggle: false

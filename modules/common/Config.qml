@@ -1340,6 +1340,42 @@ Singleton {
                         property real y: 80
                     }
 
+                    property JsonObject japaneseTypography: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property string preset: "exhibition"
+                        property string primaryText: "夏の記憶"
+                        property string secondaryText: "潮風と、あの子と、終わらない夏"
+                        property string sealText: "特別展"
+                        property string footerText: "PACIFIC DRIVE-IN"
+                        property string dateText: "7.12 — 8.31"
+                        property bool showSecondary: true
+                        property bool showSeal: true
+                        property bool showFooter: true
+                        property string fontFamily: "serif"
+                        property int primarySize: 72
+                        property int secondarySize: 18
+                        property int columnGap: 14
+                        property int letterSpacing: 2
+                        property int shadowStrength: 35
+                        property int contentWidth: 330
+                        property int contentHeight: 600
+                        property int dim: 10
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: false
+                        property bool useBlur: false
+                        property bool showBorder: false
+                        property real backgroundOpacity: 0
+                        property real borderWidth: 0
+                        property real borderOpacity: 0.12
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property real x: 56
+                        property real y: 120
+                    }
+
                     property JsonObject calendarUpcoming: JsonObject {
                         property bool enable: false
                         property bool locked: false

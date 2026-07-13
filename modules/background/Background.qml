@@ -27,6 +27,7 @@ import qs.modules.background.widgets.calendar
 import qs.modules.background.widgets.uptime
 import qs.modules.background.widgets.newsTicker
 import qs.modules.background.widgets.mascot
+import qs.modules.background.widgets.japaneseTypography
 import "root:modules/common/functions/parallax.js" as ParallaxMath
 
 Scope {
@@ -57,7 +58,7 @@ Scope {
 
         function setWidgetEnabled(widgetName: string, enabled: bool): string {
             const knownWidgets = ["weather", "clock", "mediaControls", "visualizer", "systemMonitor",
-                "battery", "notes", "calendarUpcoming", "uptime", "newsTicker", "mascot"];
+                "battery", "notes", "calendarUpcoming", "uptime", "newsTicker", "mascot", "japaneseTypography"];
             if (!knownWidgets.includes(widgetName))
                 return "unknown widget: " + widgetName;
             Config.setNestedValue("background.widgets." + widgetName + ".enable", enabled);
@@ -234,7 +235,8 @@ Scope {
             { key: "battery",        defaultOn: false, icon: "battery_full" },
             { key: "uptime",         defaultOn: false, icon: "avg_pace" },
             { key: "newsTicker",     defaultOn: false, icon: "newspaper" },
-            { key: "mascot",         defaultOn: false, icon: "pets" }
+            { key: "mascot",         defaultOn: false, icon: "pets" },
+            { key: "japaneseTypography", defaultOn: false, icon: "translate" }
         ]
         // Revision counter to force re-evaluation
         property int _zoneRevision: 0
@@ -1986,6 +1988,20 @@ Scope {
                     Item { id: _hitMask13; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
                     sourceComponent: MascotWidget {
                         widgetIndex: 12
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("japaneseTypography", false)
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask14 : null
+                    Item { id: _hitMask14; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    sourceComponent: JapaneseTypographyWidget {
+                        widgetIndex: 13
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width

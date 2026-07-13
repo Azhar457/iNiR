@@ -698,6 +698,13 @@ Singleton {
         },
         {
             pageIndex: 14, pageName: root.pages[14].name,
+            section: Translation.tr("Japanese Typography"),
+            label: Translation.tr("Japanese typography widget"),
+            description: Translation.tr("Vertical editorial lettering, seal, footer, and wallpaper-aware ink"),
+            keywords: ["japanese", "typography", "vertical", "text", "kanji", "kana", "poster", "magazine", "editorial", "seal", "widget"]
+        },
+        {
+            pageIndex: 14, pageName: root.pages[14].name,
             section: Translation.tr("Weather"),
             label: Translation.tr("Desktop weather widget"),
             description: Translation.tr("Weather display on the desktop background"),
@@ -1619,6 +1626,7 @@ Singleton {
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Edit Mode"), label: Translation.tr("Widget edit mode"), description: Translation.tr("Grid overlay and snap-to-grid for widget placement"), keywords: ["widget", "edit", "grid", "snap", "placement", "drag"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Desktop clock"), description: Translation.tr("Clock widget on the desktop background"), keywords: ["clock", "widget", "cookie", "digital", "background", "desktop", "wallpaper", "adaptive", "colors"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Clock style"), description: Translation.tr("Cookie (analog) or digital clock"), keywords: ["clock", "style", "cookie", "digital", "analog", "hands"] },
+        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Japanese Typography"), label: Translation.tr("Japanese typography widget"), description: Translation.tr("Vertical editorial lettering, seal, footer, and wallpaper-aware ink"), keywords: ["japanese", "typography", "vertical", "text", "kanji", "kana", "poster", "magazine", "editorial", "seal", "widget"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Weather"), label: Translation.tr("Desktop weather widget"), description: Translation.tr("Weather display on the desktop background"), keywords: ["weather", "widget", "background", "temperature"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Media Controls"), label: Translation.tr("Desktop media widget"), description: Translation.tr("Media player controls on the desktop background"), keywords: ["media", "widget", "background", "player", "music", "album"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Visualizer"), label: Translation.tr("Audio visualizer"), description: Translation.tr("Audio visualizer bars on the desktop"), keywords: ["visualizer", "audio", "bars", "music", "equalizer", "spectrum"] },

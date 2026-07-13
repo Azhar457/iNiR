@@ -465,7 +465,8 @@ ContentPage {
                         { key: "calendarUpcoming", icon: "event", label: Translation.tr("Events"), def: false },
                         { key: "uptime", icon: "avg_pace", label: Translation.tr("Uptime"), def: false },
                         { key: "newsTicker", icon: "newspaper", label: Translation.tr("News"), def: false },
-                        { key: "mascot", icon: "pets", label: Translation.tr("Mascot"), def: false }
+                        { key: "mascot", icon: "pets", label: Translation.tr("Mascot"), def: false },
+                        { key: "japaneseTypography", icon: "translate", label: Translation.tr("Japanese Typography"), def: false }
                     ]
                     delegate: WidgetToggleChip {
                         required property var modelData
@@ -1225,6 +1226,202 @@ ContentPage {
                     "y": 100,
                     "locked": false
 })
+            }
+        }
+    }
+
+    // ── Japanese Typography ─────────────────────────────────
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "translate"
+        title: Translation.tr("Japanese Typography")
+
+        SettingsGroup {
+            WidgetSettingRow {
+                label: Translation.tr("State")
+                icon: "check"
+                trailing: false
+                WidgetToggleChip {
+                    configPath: "background.widgets.japaneseTypography.enable"
+                    buttonIcon: "check"
+                    buttonText: Translation.tr("Enable")
+                }
+                WidgetPlacementSelector {
+                    configPath: "background.widgets.japaneseTypography"
+                    configEntry: Config.getNestedValue("background.widgets.japaneseTypography", ({}))
+                    defaultStrategy: "free"
+                }
+            }
+
+            WidgetZonePicker {
+                configPath: "background.widgets.japaneseTypography"
+                configEntry: Config.getNestedValue("background.widgets.japaneseTypography", ({}))
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Editorial content")
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Lead title")
+                    text: Config.getNestedValue("background.widgets.japaneseTypography.primaryText", "夏の記憶")
+                    onAccepted: Config.setNestedValue("background.widgets.japaneseTypography.primaryText", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.japaneseTypography.primaryText", text)
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Secondary vertical copy")
+                    text: Config.getNestedValue("background.widgets.japaneseTypography.secondaryText", "潮風と、あの子と、終わらない夏")
+                    onAccepted: Config.setNestedValue("background.widgets.japaneseTypography.secondaryText", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.japaneseTypography.secondaryText", text)
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Seal text")
+                    text: Config.getNestedValue("background.widgets.japaneseTypography.sealText", "特別展")
+                    onAccepted: Config.setNestedValue("background.widgets.japaneseTypography.sealText", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.japaneseTypography.sealText", text)
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Footer label")
+                    text: Config.getNestedValue("background.widgets.japaneseTypography.footerText", "PACIFIC DRIVE-IN")
+                    onAccepted: Config.setNestedValue("background.widgets.japaneseTypography.footerText", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.japaneseTypography.footerText", text)
+                }
+
+                MaterialTextField {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Date or edition line")
+                    text: Config.getNestedValue("background.widgets.japaneseTypography.dateText", "7.12 — 8.31")
+                    onAccepted: Config.setNestedValue("background.widgets.japaneseTypography.dateText", text)
+                    onEditingFinished: Config.setNestedValue("background.widgets.japaneseTypography.dateText", text)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Composition")
+
+                SettingsSwitch {
+                    buttonIcon: "notes"
+                    text: Translation.tr("Show secondary vertical copy")
+                    autoToggle: false
+                    checked: Config.getNestedValue("background.widgets.japaneseTypography.showSecondary", true)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.japaneseTypography.showSecondary", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "ink_pen"
+                    text: Translation.tr("Show exhibition seal")
+                    autoToggle: false
+                    checked: Config.getNestedValue("background.widgets.japaneseTypography.showSeal", true)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.japaneseTypography.showSeal", checked)
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "horizontal_rule"
+                    text: Translation.tr("Show footer and date")
+                    autoToggle: false
+                    checked: Config.getNestedValue("background.widgets.japaneseTypography.showFooter", true)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.japaneseTypography.showFooter", checked)
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Lead size")
+                    icon: "format_size"
+                    StyledSpinBox {
+                        from: 28; to: 140; stepSize: 2
+                        value: Config.getNestedValue("background.widgets.japaneseTypography.primarySize", 72)
+                        onValueModified: Config.setNestedValue("background.widgets.japaneseTypography.primarySize", value)
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Secondary size")
+                    icon: "text_fields"
+                    StyledSpinBox {
+                        from: 10; to: 48; stepSize: 1
+                        value: Config.getNestedValue("background.widgets.japaneseTypography.secondarySize", 18)
+                        onValueModified: Config.setNestedValue("background.widgets.japaneseTypography.secondarySize", value)
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Column gap")
+                    icon: "space_bar"
+                    StyledSpinBox {
+                        from: 4; to: 48; stepSize: 1
+                        value: Config.getNestedValue("background.widgets.japaneseTypography.columnGap", 14)
+                        onValueModified: Config.setNestedValue("background.widgets.japaneseTypography.columnGap", value)
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Character spacing")
+                    icon: "format_line_spacing"
+                    StyledSpinBox {
+                        from: 0; to: 20; stepSize: 1
+                        value: Config.getNestedValue("background.widgets.japaneseTypography.letterSpacing", 2)
+                        onValueModified: Config.setNestedValue("background.widgets.japaneseTypography.letterSpacing", value)
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Wallpaper shadow")
+                    icon: "blur_on"
+                    StyledSpinBox {
+                        from: 0; to: 100; stepSize: 5
+                        value: Config.getNestedValue("background.widgets.japaneseTypography.shadowStrength", 35)
+                        onValueModified: Config.setNestedValue("background.widgets.japaneseTypography.shadowStrength", value)
+                    }
+                }
+
+                FontSelector {
+                    id: japaneseTypographyFontSelector
+                    label: Translation.tr("Japanese typography font")
+                    icon: "font_download"
+                    selectedFont: Config.getNestedValue("background.widgets.japaneseTypography.fontFamily", "serif")
+                    onSelectedFontChanged: {
+                        if (selectedFont !== Config.getNestedValue("background.widgets.japaneseTypography.fontFamily", "serif"))
+                            Config.setNestedValue("background.widgets.japaneseTypography.fontFamily", selectedFont)
+                    }
+                    Connections {
+                        target: Config.options?.background?.widgets?.japaneseTypography ?? null
+                        function onFontFamilyChanged() {
+                            japaneseTypographyFontSelector.selectedFont = Config.getNestedValue("background.widgets.japaneseTypography.fontFamily", "serif")
+                        }
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.japaneseTypography"
+                configEntry: Config.getNestedValue("background.widgets.japaneseTypography", ({}))
+                dimDefault: 10
+                hasCardControls: true
+            }
+
+            WidgetResetButton {
+                configPath: "background.widgets.japaneseTypography"
+                defaults: ({
+                    enable: false, locked: false, placementStrategy: "free",
+                    preset: "exhibition", primaryText: "夏の記憶",
+                    secondaryText: "潮風と、あの子と、終わらない夏",
+                    sealText: "特別展", footerText: "PACIFIC DRIVE-IN",
+                    dateText: "7.12 — 8.31", showSecondary: true,
+                    showSeal: true, showFooter: true, fontFamily: "serif",
+                    primarySize: 72, secondarySize: 18, columnGap: 14,
+                    letterSpacing: 2, shadowStrength: 35, contentWidth: 330,
+                    contentHeight: 600, dim: 10, widgetScale: 100,
+                    widgetOpacity: 100, showBackground: false, useBlur: false,
+                    showBorder: false, backgroundOpacity: 0, borderWidth: 0,
+                    borderOpacity: 0.12, cornerRadius: -1, colorMode: "auto",
+                    x: 56, y: 120
+                })
             }
         }
     }
