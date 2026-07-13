@@ -17,9 +17,21 @@ Item {
     property real padding: 4
     property var inputField: messageInputField
     property string commandPrefix: "/"
+    property bool historyOpen: false
+    readonly property bool dictating: VoiceSearch.running && VoiceSearch.mode === "dictate"
 
     property var suggestionQuery: ""
     property var suggestionList: []
+
+    Connections {
+        target: VoiceSearch
+        function onTranscriptionReady(text) {
+            if (VoiceSearch.mode !== "dictate") return;
+            const needsSpace = messageInputField.text.length > 0 && !messageInputField.text.endsWith(" ");
+            messageInputField.insert(messageInputField.length, (needsSpace ? " " : "") + text);
+            messageInputField.forceActiveFocus();
+        }
+    }
 
     onFocusChanged: focus => {
         if (focus) {
@@ -460,6 +472,13 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 z: 3
                 target: messageListView
             }
+
+            ChatHistoryPanel {
+                z: 5
+                anchors.fill: parent
+                open: root.historyOpen
+                onRequestClose: root.historyOpen = false
+            }
         }
 
         // Compact hint row (replaces DescriptionBox for model suggestions)
@@ -779,6 +798,37 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     }
                 }
 
+                RippleButton { // Voice dictation button
+                    id: micButton
+                    Layout.alignment: Qt.AlignTop
+                    implicitWidth: 40
+                    implicitHeight: 40
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+                    toggled: root.dictating
+                    colBackgroundToggled: Appearance.colors.colError
+                    onClicked: {
+                        if (VoiceSearch.running) {
+                            VoiceSearch.stop();
+                        } else {
+                            VoiceSearch.startDictation();
+                        }
+                    }
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        iconSize: 22
+                        color: root.dictating ? Appearance.colors.colOnError : Appearance.colors.colOnLayer2
+                        text: root.dictating
+                            ? (VoiceSearch.transcribing ? "graphic_eq" : "stop")
+                            : "mic"
+                    }
+                    StyledToolTip {
+                        text: root.dictating
+                            ? (VoiceSearch.transcribing ? Translation.tr("Transcribing…") : Translation.tr("Stop recording"))
+                            : Translation.tr("Voice input (needs a Gemini API key)")
+                    }
+                }
+
                 RippleButton { // Send button
                     id: sendButton
                     Layout.alignment: Qt.AlignTop
@@ -786,7 +836,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     implicitWidth: 40
                     implicitHeight: 40
                     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
-                    enabled: messageInputField.text.length > 0
+                    enabled: Ai.busy || messageInputField.text.length > 0
                     toggled: enabled
                     // Active send = accent, not the default dark chrome plate.
                     colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.accent
@@ -801,6 +851,10 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                         anchors.fill: parent
                         cursorShape: sendButton.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onClicked: {
+                            if (Ai.busy && messageInputField.text.length === 0) {
+                                Ai.stopRequest();
+                                return;
+                            }
                             const inputText = messageInputField.text;
                             root.handleInput(inputText);
                             messageInputField.clear();
@@ -814,7 +868,12 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                         color: sendButton.enabled
                             ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker : Appearance.colors.colOnPrimary)
                             : Appearance.colors.colOnLayer2Disabled
-                        text: "arrow_upward"
+                        text: (Ai.busy && messageInputField.text.length === 0) ? "stop" : "arrow_upward"
+                    }
+                    StyledToolTip {
+                        text: (Ai.busy && messageInputField.text.length === 0)
+                            ? Translation.tr("Stop generating")
+                            : Translation.tr("Send")
                     }
                 }
             }
@@ -865,11 +924,20 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 }
 
                 ApiInputBoxIndicator {
+                    icon: "history"
+                    text: ""
+                    tooltipText: Translation.tr("Conversations")
+                    clickAction: () => {
+                        root.historyOpen = !root.historyOpen
+                    }
+                }
+
+                ApiInputBoxIndicator {
                     icon: "settings"
                     text: ""
                     tooltipText: Translation.tr("AI Settings")
                     clickAction: () => {
-                        GlobalStates.settingsOverlayRequestedPage = 7
+                        GlobalStates.settingsOverlayRequestedPage = 24
                         GlobalStates.settingsOverlayOpen = true
                     }
                 }

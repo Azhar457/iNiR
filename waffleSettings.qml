@@ -97,6 +97,11 @@ ApplicationWindow {
             name: Translation.tr("Mascot"),
             icon: "image",
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WMascotPage.qml")
+        },
+        {
+            name: Translation.tr("AI"),
+            icon: "wand",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WAiPage.qml")
         }
     ]
     

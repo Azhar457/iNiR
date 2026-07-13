@@ -68,7 +68,7 @@ Singleton {
         {
             name: Translation.tr("Services"),
             icon: "settings",
-            desc: Translation.tr("Weather, AI, apps"),
+            desc: Translation.tr("Weather, music, calendar, apps"),
             essential: false,
             component: "modules/settings/ServicesConfig.qml"
         },
@@ -183,6 +183,13 @@ Singleton {
             desc: Translation.tr("Left and right sidebar content and behavior"),
             essential: false,
             component: "modules/settings/SidebarsConfig.qml"
+        },
+        {
+            name: Translation.tr("AI"),
+            icon: "neurology",
+            desc: Translation.tr("Providers, models, behavior, voice input"),
+            essential: false,
+            component: "modules/settings/AiConfig.qml"
         }
     ]
 
@@ -192,7 +199,7 @@ Singleton {
         { label: Translation.tr("Essentials"), pages: [0] },
         { label: Translation.tr("Appearance"), pages: [4, 3, 14, 21] },
         { label: Translation.tr("Shell"), pages: [2, 5, 22, 23, 16, 10, 11, 18, 19, 20] },
-        { label: Translation.tr("System"), pages: [1, 7, 6, 12, 15, 8, 17] },
+        { label: Translation.tr("System"), pages: [1, 24, 7, 6, 12, 15, 8, 17] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
     ]
 
@@ -1201,18 +1208,39 @@ Singleton {
         // Services (page 7) — per-option entries
         // =====================================================================
         {
-            pageIndex: 7, pageName: root.pages[7].name,
+            pageIndex: 24, pageName: root.pages[24].name,
             section: Translation.tr("AI"),
             label: Translation.tr("AI"),
-            description: Translation.tr("System prompt for sidebar AI"),
-            keywords: ["ai", "prompt", "system", "sidebar", "chat"]
+            description: Translation.tr("Providers, models, behavior and voice input for the assistant"),
+            keywords: ["ai", "assistant", "chat", "llm", "sidebar", "gemini", "ollama", "openai", "claude", "mistral"]
         },
         {
-            pageIndex: 7, pageName: root.pages[7].name,
-            section: Translation.tr("AI"),
+            pageIndex: 24, pageName: root.pages[24].name,
+            section: Translation.tr("Assistant behavior"),
             label: Translation.tr("AI system prompt"),
             description: Translation.tr("Custom instructions for the AI assistant"),
-            keywords: ["ai", "prompt", "system", "instructions", "custom", "assistant"]
+            keywords: ["ai", "prompt", "system", "instructions", "custom", "assistant", "personality"]
+        },
+        {
+            pageIndex: 24, pageName: root.pages[24].name,
+            section: Translation.tr("Providers & models"),
+            label: Translation.tr("AI providers"),
+            description: Translation.tr("Add Ollama, OpenRouter, Gemini, Groq or any compatible endpoint"),
+            keywords: ["ai", "provider", "model", "api", "key", "endpoint", "ollama", "openrouter", "gemini", "groq", "local", "add"]
+        },
+        {
+            pageIndex: 24, pageName: root.pages[24].name,
+            section: Translation.tr("Assistant behavior"),
+            label: Translation.tr("AI tools & temperature"),
+            description: Translation.tr("Default tool mode (functions, search) and creativity"),
+            keywords: ["ai", "tool", "functions", "search", "temperature", "creativity"]
+        },
+        {
+            pageIndex: 24, pageName: root.pages[24].name,
+            section: Translation.tr("Voice input"),
+            label: Translation.tr("Voice input"),
+            description: Translation.tr("Dictate messages to the assistant and voice search duration"),
+            keywords: ["voice", "mic", "microphone", "dictate", "speech", "transcribe", "recording"]
         },
         {
             pageIndex: 7, pageName: root.pages[7].name,

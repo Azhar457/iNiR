@@ -211,7 +211,10 @@ Singleton {
 
     // Gemini: https://ai.google.dev/gemini-api/docs/function-calling
     // OpenAI: https://platform.openai.com/docs/guides/function-calling
-    property string currentTool: Config.options?.ai?.tool ?? "search"
+    // Temporary override used by switch_to_search_mode; assigning currentTool
+    // directly would sever the Config binding for the rest of the session
+    property string _toolOverride: ""
+    property string currentTool: _toolOverride.length > 0 ? _toolOverride : (Config.options?.ai?.tool ?? "search")
     property var tools: {
         "gemini": {
             "functions": [{"functionDeclarations": [
@@ -467,7 +470,10 @@ Singleton {
     property list<var> availableTools: {
         const fmt = models[currentModelId]?.api_format
         const map = fmt ? root.tools[fmt] : null
-        return map ? Object.keys(map) : []
+        if (!map) return []
+        // Don't offer modes that are empty for this API format (e.g. "search"
+        // only exists on Gemini) — offering them just sends tools: []
+        return Object.keys(map).filter(tool => tool === "none" || map[tool].length > 0)
     }
     property var toolDescriptions: {
         "functions": Translation.tr("Commands, edit configs, search.\nTakes an extra turn to switch to search mode if that's needed"),
@@ -505,15 +511,26 @@ Singleton {
     property ApiStrategy currentApiStrategy: apiStrategies[models[currentModelId]?.api_format || "openai"]
 
     property var _loadedExtraModelIds: []
+    property string _extraModelsSignature: ""
 
     function _syncExtraModels() {
         if (!Config.ready) return
+        const policy = Config.options?.policies?.ai ?? 0
+        const extraModels = Config.options?.ai?.extraModels ?? []
+        // onConfigChanged fires on every global save. Rebuilding on each one
+        // recreated every AiModel; skip when nothing this function reads moved.
+        const signature = policy + "|" + JSON.stringify(extraModels)
+        if (signature === root._extraModelsSignature) return
+        root._extraModelsSignature = signature
+
         root._loadedExtraModelIds.forEach(id => {
-            if (root.models[id]) delete root.models[id]
+            const old = root.models[id]
+            if (!old) return
+            delete root.models[id]
+            old.destroy()
         })
         root._loadedExtraModelIds = []
-        const policy = Config.options?.policies?.ai ?? 0
-        ;(Config.options?.ai?.extraModels ?? []).forEach(model => {
+        extraModels.forEach(model => {
             if (policy === 2 && !(model?.endpoint ?? "").includes("localhost")) return
             const safeModelName = root.safeModelName(model["model"])
             root.addModel(safeModelName, model)
@@ -934,8 +951,13 @@ Singleton {
         property AiMessageData message
         property ApiStrategy currentStrategy
 
+        property bool _restartQueued: false
+
         function markDone() {
             requester.message.done = true;
+            // A tool-call continuation is queued: this isn't the final
+            // response yet, so the hook/save/signal wait for it
+            if (requester._restartQueued) return;
             if (root.postResponseHook) {
                 root.postResponseHook();
                 root.postResponseHook = null; // Reset hook after use
@@ -945,6 +967,13 @@ Singleton {
         }
 
         function makeRequest() {
+            // Called mid-stream by tool-call continuations: setting running
+            // on a live process is a no-op and would silently drop the
+            // follow-up request, so queue it for onExited instead
+            if (requester.running) {
+                requester._restartQueued = true;
+                return;
+            }
             const model = models[currentModelId];
 
             if (!model) {
@@ -1024,12 +1053,16 @@ Singleton {
                 root.pendingFilePath = ""
             }
 
-            /* Create command string */
+            /* Create command string. The payload goes through the printf
+               builtin into curl's stdin: as a curl argument it hits the
+               kernel's per-argument exec limit (~128 KiB) on large payloads
+               (e.g. get_shell_config output), killing the request silently. */
             let scriptRequestContent = ""
-            scriptRequestContent += `curl -sS --no-buffer "${endpoint}"`
+            scriptRequestContent += `printf '%s' '${CF.StringUtils.shellSingleQuoteEscape(JSON.stringify(data))}'`
+                + ` | curl -sS --no-buffer "${endpoint}"`
                 + ` ${headerString}`
                 + (authHeader ? ` ${authHeader}` : "")
-                + ` --data '${CF.StringUtils.shellSingleQuoteEscape(JSON.stringify(data))}'`
+                + ` --data @-`
                 + "\n"
             
             /* Send the request */
@@ -1038,7 +1071,9 @@ Singleton {
             requesterScriptFile.path = Qt.resolvedUrl(shellScriptPath)
             requesterScriptFile.setText(scriptContent)
             requester.command = baseCommand.concat([shellScriptPath]);
-            requester.running = true
+            // Setting running=true from inside this Process's own onExited
+            // handler is silently dropped — start on the next event-loop turn
+            Qt.callLater(() => { requester.running = true; });
         }
 
         stdout: SplitParser {
@@ -1074,19 +1109,46 @@ Singleton {
         }
 
         onExited: (exitCode, exitStatus) => {
-            const result = requester.currentStrategy.onRequestFinished(requester.message);
-            
-            if (result.finished) {
-                requester.markDone();
-            } else if (!requester.message.done) {
+            const finishedMessage = requester.message;
+            const result = requester.currentStrategy.onRequestFinished(finishedMessage);
+
+            // A tool call flushed at end-of-stream still needs handling
+            if (result.functionCall) {
+                finishedMessage.functionCall = result.functionCall;
+                root.handleFunctionCall(result.functionCall.name, result.functionCall.args, finishedMessage);
+            }
+
+            if (requester._restartQueued) {
+                requester._restartQueued = false;
+                finishedMessage.done = true;
+                requester.makeRequest();
+                return;
+            }
+            // handleFunctionCall above may have started the continuation
+            // directly (process already exited) — don't touch the new message
+            if (requester.message !== finishedMessage) {
+                finishedMessage.done = true;
+                return;
+            }
+
+            if (!finishedMessage.done) {
                 requester.markDone();
             }
 
             // Handle error responses
-            if (requester.message.content.includes("API key not valid")) {
-                root.addApiKeyAdvice(models[requester.message.model]);
+            if (finishedMessage.content.includes("API key not valid")) {
+                root.addApiKeyAdvice(models[finishedMessage.model]);
             }
         }
+    }
+
+    // Whether a response is currently being generated (UI: stop button)
+    readonly property bool busy: requester.running
+
+    function stopRequest() {
+        if (!requester.running) return;
+        requester._restartQueued = false;
+        requester.signal(15);
     }
 
     function sendUserMessage(message) {
@@ -1111,21 +1173,24 @@ Singleton {
         requester.makeRequest();
     }
 
-    function createFunctionOutputMessage(name, output, includeOutputInChat = true) {
+    function createFunctionOutputMessage(name, output, includeOutputInChat = true, callId = "") {
         return aiMessageComponent.createObject(root, {
             "role": "user",
             "content": `[[ Output of ${name} ]]${includeOutputInChat ? ("\n\n<think>\n" + output + "\n</think>") : ""}`,
             "rawContent": `[[ Output of ${name} ]]${includeOutputInChat ? ("\n\n<think>\n" + output + "\n</think>") : ""}`,
             "functionName": name,
             "functionResponse": output,
+            // Carries the originating call id so strategies can echo the
+            // exact tool_call_id — providers reject mismatched ids
+            "functionCall": (callId && callId.length > 0) ? { "id": callId, "name": name } : undefined,
             "thinking": false,
             "done": true,
             // "visibleToUser": false,
         });
     }
 
-    function addFunctionOutputMessage(name, output) {
-        const aiMessage = createFunctionOutputMessage(name, output);
+    function addFunctionOutputMessage(name, output, callId = "") {
+        const aiMessage = createFunctionOutputMessage(name, output, true, callId);
         const id = idForMessage(aiMessage);
         root.messageIDs = [...root.messageIDs, id];
         root.messageByID[id] = aiMessage;
@@ -1134,14 +1199,14 @@ Singleton {
     function rejectCommand(message: AiMessageData) {
         if (!message.functionPending) return;
         message.functionPending = false; // User decided, no more "thinking"
-        addFunctionOutputMessage(message.functionName, Translation.tr("Command rejected by user"))
+        addFunctionOutputMessage(message.functionName, Translation.tr("Command rejected by user"), message.functionCall?.id ?? "")
     }
 
     function approveCommand(message: AiMessageData) {
         if (!message.functionPending) return;
         message.functionPending = false; // User decided, no more "thinking"
 
-        const responseMessage = createFunctionOutputMessage(message.functionName, "", false);
+        const responseMessage = createFunctionOutputMessage(message.functionName, "", false, message.functionCall?.id ?? "");
         const id = idForMessage(responseMessage);
         root.messageIDs = [...root.messageIDs, id];
         root.messageByID[id] = responseMessage;
@@ -1171,35 +1236,39 @@ Singleton {
     }
 
     function handleFunctionCall(name, args: var, message: AiMessageData) {
+        const callId = message?.functionCall?.id ?? "";
         if (name === "switch_to_search_mode") {
-            const modelId = root.currentModelId;
-            root.currentTool = "search"
-            root.postResponseHook = () => { root.currentTool = "functions" }
-            addFunctionOutputMessage(name, Translation.tr("Switched to search mode. Continue with the user's request."))
+            root._toolOverride = "search"
+            root.postResponseHook = () => { root._toolOverride = "" }
+            addFunctionOutputMessage(name, Translation.tr("Switched to search mode. Continue with the user's request."), callId)
             requester.makeRequest();
         } else if (name === "get_shell_config") {
             const configJson = CF.ObjectUtils.toPlainObject(Config.options)
-            addFunctionOutputMessage(name, JSON.stringify(configJson));
+            addFunctionOutputMessage(name, JSON.stringify(configJson), callId);
             requester.makeRequest();
         } else if (name === "set_shell_config") {
             if (!args.key || !args.value) {
-                addFunctionOutputMessage(name, Translation.tr("Invalid arguments. Must provide `key` and `value`."));
+                addFunctionOutputMessage(name, Translation.tr("Invalid arguments. Must provide `key` and `value`."), callId);
+                requester.makeRequest();
                 return;
             }
-            const key = args.key;
-            const value = args.value;
-            Config.setNestedValue(key, value);
+            Config.setNestedValue(args.key, args.value);
+            addFunctionOutputMessage(name, Translation.tr("Set `%1` to `%2`.").arg(args.key).arg(args.value), callId);
+            requester.makeRequest();
         } else if (name === "run_shell_command") {
             if (!args.command || args.command.length === 0) {
-                addFunctionOutputMessage(name, Translation.tr("Invalid arguments. Must provide `command`."));
+                addFunctionOutputMessage(name, Translation.tr("Invalid arguments. Must provide `command`."), callId);
+                requester.makeRequest();
                 return;
             }
             const contentToAppend = `\n\n**Command execution request**\n\n\`\`\`command\n${args.command}\n\`\`\``;
             message.rawContent += contentToAppend;
             message.content += contentToAppend;
             message.functionPending = true; // Use thinking to indicate the command is waiting for approval
+        } else {
+            addFunctionOutputMessage(name, Translation.tr("Unknown function: %1").arg(name), callId);
+            requester.makeRequest();
         }
-        else root.addMessage(Translation.tr("Unknown function call: %1").arg(name), "assistant");
     }
 
     function chatToJson() {
@@ -1240,6 +1309,36 @@ Singleton {
         const saveContent = JSON.stringify(root.chatToJson())
         chatSaveFile.setText(saveContent)
         getSavedChats.running = true;
+    }
+
+    Process {
+        id: chatFileOps
+        onExited: getSavedChats.running = true
+    }
+
+    function chatPathForName(chatName) {
+        return `${Directories.aiChats}/${chatName.trim()}.json`;
+    }
+
+    function deleteChat(chatName) {
+        if (!chatName || chatName.trim().length === 0) return;
+        chatFileOps.exec(["/usr/bin/rm", "-f", "--", chatPathForName(chatName)]);
+    }
+
+    function renameChat(oldName, newName) {
+        if (!oldName || !newName) return;
+        const clean = newName.trim().replace(/[\/\0]/g, "-");
+        if (clean.length === 0 || clean === oldName.trim()) return;
+        chatFileOps.exec(["/usr/bin/mv", "--", chatPathForName(oldName), chatPathForName(clean)]);
+    }
+
+    // Stash the current conversation under a timestamped name, then clear
+    function newChat() {
+        if (root.messageIDs.length > 0) {
+            const stamp = Qt.formatDateTime(new Date(), "yyyy-MM-dd_hh-mm");
+            root.saveChat(`chat-${stamp}`);
+        }
+        root.clearMessages();
     }
 
     /**

@@ -37,6 +37,8 @@ The Kira mascot system, the dashboard hub, three new bar surface styles, a rebui
 - **Quiet hours** (Settings › Interface › Notifications): pick a nightly window and popups stay quiet inside it. Notifications still land in the history — you just read them in the morning. Both families.
 - **Separate idle timeouts on battery** (Settings › Services): laptops can blank, lock and suspend sooner while unplugged, without touching the plugged-in numbers. Hidden entirely on desktops.
 - **Search the notification history** in the waffle notification center, once you have enough of it to bother.
+- **AI settings page** (both families): everything about the assistant in one place — a setup checklist that tells you what is still missing, one-click providers (Ollama, OpenRouter, Gemini, Groq and more) with API-format detection, the system prompt, tool mode, temperature, the privacy policy and voice input. Previously these controls were scattered through Settings › Services, and waffle had none of them at all.
+- **Conversation history and voice dictation in the AI sidebar**: past chats can be listed, reopened, renamed and deleted; a mic button records and transcribes straight into the message box; and the send button becomes a stop button while the model is answering.
 
 ### Changed
 - **Kira now moves as one character**: companion visits, event reactions, chaos actions, empty states and the desktop widget use normal-proportion full-body art, with four new frame-by-frame loops for presence, music, screenshots and wallpaper changes. Speech bubbles sit beside her shoulder instead of floating away from her, and reduced-motion mode pauses animated poses.
@@ -54,6 +56,7 @@ The Kira mascot system, the dashboard hub, three new bar surface styles, a rebui
 - Docs counts and examples refreshed to match the live tree (raw `qs kill` example replaced with the `inir` CLI).
 
 ### Fixed
+- **AI tool calls never completed**, on any provider: a large tool result (the shell config, for instance) exceeded the kernel's per-argument limit and killed the request with no visible error; the follow-up request that carries the tool result back to the model was silently dropped; and the OpenAI format — Ollama, OpenRouter, Groq, Mistral — never parsed `tool_calls`, so the model's function call was discarded mid-stream. Search is no longer offered on providers that do not implement it.
 - **Config: writing a whole section at once** (what "Reset to defaults" does) could drop the keys the payload left out from `config.json` while keeping them alive in memory — the setting looked applied and came back changed after a restart.
 - Kira no longer appears over fullscreen Niri windows; fullscreen state now follows the live window geometry stream instead of waiting for an imperative refresh.
 - **Bar SIGSEGV when a new PipeWire stream appeared** (#190, e.g. MPD): `playerStreamNode` binding loop replaced with imperative recomputation.

@@ -20,12 +20,26 @@ Singleton {
     
     property string lastTranscription: ""
     property string _audioPath: ""
+    // "search" opens the browser with the transcription; "dictate" only
+    // emits transcriptionReady (used by the AI chat mic button)
+    property string mode: "search"
 
     signal transcriptionReady(string text)
     signal searchReady(string url)
 
+    function startDictation() {
+        if (root.running) return
+        root.mode = "dictate"
+        root._begin()
+    }
+
     function start() {
         if (root.running) return
+        root.mode = "search"
+        root._begin()
+    }
+
+    function _begin() {
         if (!KeyringStorage.loaded) {
             KeyringStorage.fetchKeyringData()
             root._pendingStart = true
@@ -169,15 +183,18 @@ rm -f "$tmp_header" "$tmp_info" "$AUDIO_PATH" 2>/dev/null
     }
 
     function _handleTranscription(text) {
+        const wasDictation = root.mode === "dictate"
         const transcription = text.trim()
         if (!transcription || transcription.length === 0) {
             Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Voice Search"), Translation.tr("No speech detected"), "-a", "Shell"])
             return
         }
-        
+
         root.lastTranscription = transcription
         root.transcriptionReady(transcription)
-        
+
+        if (wasDictation) return
+
         const searchUrl = root.searchEngineUrl + encodeURIComponent(transcription)
         root.searchReady(searchUrl)
         Qt.openUrlExternally(searchUrl)
