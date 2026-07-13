@@ -547,6 +547,17 @@ ApplicationWindow {
                         layer.effect: OpacityMask {
                             maskSource: settingsAvatarMask
                         }
+
+                        // Walk the fallback chain from the signal, not from a bound
+                        // property: binding status back into the index that feeds
+                        // source is a loop.
+                        onStatusChanged: {
+                            if (settingsAvatarImage.status !== Image.Error)
+                                return
+                            const next = settingsAvatarResolver.avatarIndex + 1
+                            if (next < Directories.userAvatarPaths.length)
+                                settingsAvatarResolver.avatarIndex = next
+                        }
                     }
 
                     // Reactive avatar resolver — retries fallback paths without breaking bindings
@@ -558,15 +569,6 @@ ApplicationWindow {
                         // Reset to primary whenever Directories re-resolves (e.g. username changes)
                         readonly property string primaryWatch: Directories.userAvatarSourcePrimary
                         onPrimaryWatchChanged: avatarIndex = 0
-
-                        readonly property int imgStatus: settingsAvatarImage.status
-                        onImgStatusChanged: {
-                            if (imgStatus === Image.Error) {
-                                const nextIdx = avatarIndex + 1
-                                if (nextIdx < Directories.userAvatarPaths.length)
-                                    avatarIndex = nextIdx
-                            }
-                        }
                     }
 
                     MaterialSymbol {
