@@ -131,7 +131,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [appCatalog]="refresh search install list"
   [audio]="volumeUp volumeDown mute playEvent micMute"
   [autostart]="status addCommand addApp removeLast reload"
-  [background]="toggleEditMode setWidgetEnabled"
+  [background]="toggleEditMode setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
   [bar]="toggle close open"
   [brightness]="increment decrement"
   [cheatsheet]="toggle close open"
@@ -211,6 +211,11 @@ declare -gA IPC_FUNCTION_DESC=(
   ["autostart:reload"]="Force re-read the startup file"
   ["background:toggleEditMode"]="Toggle widget edit mode (drag, resize, configure desktop widgets)"
   ["background:setWidgetEnabled"]="Enable or disable a built-in desktop widget"
+  ["background:clockDebugState"]="Report bounded clock palette and quick-control geometry diagnostics"
+  ["background:clockDebugSetMode"]="Set a temporary clock diagnostic mode (requires INIR_REGION_DEBUG=1)"
+  ["background:clockDebugSetRegion"]="Inject a temporary wallpaper-region sample (requires INIR_REGION_DEBUG=1)"
+  ["background:clockDebugSetLayout"]="Probe quick-control geometry at a hypothetical clock position (requires INIR_REGION_DEBUG=1)"
+  ["background:clockDebugRestore"]="Restore clock config captured by diagnostics"
   ["bar:toggle"]="Show/hide bar"
   ["bar:close"]="Hide bar"
   ["bar:open"]="Show bar"
@@ -394,6 +399,9 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["autostart:addCommand"]="<cmd>"
   ["autostart:addApp"]="<desktopId>"
   ["background:setWidgetEnabled"]="<widgetName> <enabled>"
+  ["background:clockDebugSetMode"]="<digital|cookie> <adaptToWallpaper>"
+  ["background:clockDebugSetRegion"]="<color> <brightness> <spread>"
+  ["background:clockDebugSetLayout"]="<x> <y> <quickControlsOpen>"
   ["customWidgets:create"]="<name>"
   ["customWidgets:remove"]="<widgetId>"
   ["globalActions:run"]="<actionId>"
@@ -474,4 +482,3 @@ declare -gA IPC_KEBAB_ALIASES=(
   [wnotification-center]=wnotificationCenter
   [workspace-strip]=workspaceStrip
 )
-

@@ -30,6 +30,24 @@ import qs.modules.background.widgets.mascot
 import "root:modules/common/functions/parallax.js" as ParallaxMath
 
 Scope {
+    id: backgroundScope
+
+    // Bounded diagnostics for the desktop clock. They are inert unless the
+    // supervised shell is loaded with INIR_REGION_DEBUG=1.
+    property bool clockDebugRegionActive: false
+    property color clockDebugRegionColor: "transparent"
+    property real clockDebugRegionBrightness: -1
+    property real clockDebugRegionSpread: 0
+    property bool clockDebugQuickControlsOpen: false
+    property bool clockDebugLayoutProbeActive: false
+    property int clockDebugLayoutProbeX: 0
+    property int clockDebugLayoutProbeY: 0
+    property var _clockDebugSnapshot: null
+    property bool _clockDebugEditModeSnapshot: false
+    property bool _clockDebugEditModeSnapshotValid: false
+    property string clockDebugPaletteReport: "{}"
+    property string clockDebugControlsReport: "{}"
+
     IpcHandler {
         target: "background"
         function toggleEditMode(): string {
@@ -45,6 +63,111 @@ Scope {
             Config.setNestedValue("background.widgets." + widgetName + ".enable", enabled);
             return widgetName + (enabled ? " enabled" : " disabled");
         }
+
+        function clockDebugState(): string {
+            return JSON.stringify({
+                enabled: Quickshell.env("INIR_REGION_DEBUG") === "1",
+                config: {
+                    style: Config.getNestedValue("background.widgets.clock.style", "cookie"),
+                    adaptToWallpaper: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true),
+                    placementStrategy: Config.getNestedValue("background.widgets.clock.placementStrategy", "free"),
+                    x: Config.getNestedValue("background.widgets.clock.x", 0),
+                    y: Config.getNestedValue("background.widgets.clock.y", 0)
+                },
+                injectedRegion: {
+                    active: backgroundScope.clockDebugRegionActive,
+                    color: String(backgroundScope.clockDebugRegionColor),
+                    brightness: backgroundScope.clockDebugRegionBrightness,
+                    spread: backgroundScope.clockDebugRegionSpread
+                },
+                palette: backgroundScope.clockDebugPaletteReport,
+                controls: backgroundScope.clockDebugControlsReport,
+                snapshotActive: backgroundScope._clockDebugSnapshot !== null
+                    || backgroundScope._clockDebugEditModeSnapshotValid
+            });
+        }
+
+        function clockDebugSetMode(style: string, adaptToWallpaper: bool): string {
+            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
+                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
+            if (style !== "digital" && style !== "cookie")
+                return "invalid clock style: " + style;
+            backgroundScope._captureClockDebugSnapshot();
+            let updates = {};
+            updates["background.widgets.clock.style"] = style;
+            updates["background.widgets.clock.digital.adaptToWallpaper"] = adaptToWallpaper;
+            if (style === "cookie") {
+                updates["background.widgets.clock.cookie.hourMarks"] = true;
+                updates["background.widgets.clock.cookie.timeIndicators"] = true;
+                updates["background.widgets.clock.cookie.dialNumberStyle"] = "full";
+                updates["background.widgets.clock.cookie.minuteHandStyle"] = "medium";
+                updates["background.widgets.clock.cookie.hourHandStyle"] = "fill";
+                updates["background.widgets.clock.cookie.secondHandStyle"] = "classic";
+                updates["background.widgets.clock.cookie.dateStyle"] = "bubble";
+            }
+            Config.setNestedValues(updates);
+            return style + (adaptToWallpaper ? " adaptive" : " static");
+        }
+
+        function clockDebugSetRegion(color: string, brightness: real, spread: real): string {
+            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
+                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
+            const parsed = Qt.color(color);
+            if (!parsed.valid)
+                return "invalid color: " + color;
+            backgroundScope.clockDebugRegionColor = parsed;
+            backgroundScope.clockDebugRegionBrightness = Math.max(0, Math.min(1, brightness));
+            backgroundScope.clockDebugRegionSpread = Math.max(0, Math.min(1, spread));
+            backgroundScope.clockDebugRegionActive = true;
+            return "region injected";
+        }
+
+        function clockDebugSetLayout(x: int, y: int, quickControlsOpen: bool): string {
+            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
+                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
+            if (!backgroundScope._clockDebugEditModeSnapshotValid) {
+                backgroundScope._clockDebugEditModeSnapshot = GlobalStates.widgetEditMode;
+                backgroundScope._clockDebugEditModeSnapshotValid = true;
+            }
+            backgroundScope.clockDebugLayoutProbeX = x;
+            backgroundScope.clockDebugLayoutProbeY = y;
+            backgroundScope.clockDebugLayoutProbeActive = true;
+            GlobalStates.widgetEditMode = true;
+            backgroundScope.clockDebugQuickControlsOpen = quickControlsOpen;
+            return "layout probe requested";
+        }
+
+        function clockDebugRestore(): string {
+            backgroundScope.clockDebugRegionActive = false;
+            backgroundScope.clockDebugQuickControlsOpen = false;
+            backgroundScope.clockDebugLayoutProbeActive = false;
+            if (backgroundScope._clockDebugSnapshot !== null) {
+                Config.setNestedValues(backgroundScope._clockDebugSnapshot);
+                backgroundScope._clockDebugSnapshot = null;
+            }
+            if (backgroundScope._clockDebugEditModeSnapshotValid) {
+                GlobalStates.widgetEditMode = backgroundScope._clockDebugEditModeSnapshot;
+                backgroundScope._clockDebugEditModeSnapshotValid = false;
+            }
+            return "clock diagnostics restored";
+        }
+    }
+
+    function _captureClockDebugSnapshot(): void {
+        if (backgroundScope._clockDebugSnapshot !== null)
+            return;
+        const prefix = "background.widgets.clock";
+        let snapshot = {};
+        snapshot[prefix + ".style"] = Config.getNestedValue(prefix + ".style", "cookie");
+        snapshot[prefix + ".digital.adaptToWallpaper"] = Config.getNestedValue(prefix + ".digital.adaptToWallpaper", true);
+        snapshot[prefix + ".cookie.hourMarks"] = Config.getNestedValue(prefix + ".cookie.hourMarks", false);
+        snapshot[prefix + ".cookie.timeIndicators"] = Config.getNestedValue(prefix + ".cookie.timeIndicators", true);
+        snapshot[prefix + ".cookie.dialNumberStyle"] = Config.getNestedValue(prefix + ".cookie.dialNumberStyle", "none");
+        snapshot[prefix + ".cookie.minuteHandStyle"] = Config.getNestedValue(prefix + ".cookie.minuteHandStyle", "medium");
+        snapshot[prefix + ".cookie.hourHandStyle"] = Config.getNestedValue(prefix + ".cookie.hourHandStyle", "fill");
+        snapshot[prefix + ".cookie.secondHandStyle"] = Config.getNestedValue(prefix + ".cookie.secondHandStyle", "dot");
+        snapshot[prefix + ".cookie.dateStyle"] = Config.getNestedValue(prefix + ".cookie.dateStyle", "bubble");
+        backgroundScope._clockDebugSnapshot = snapshot;
     }
 
     Variants {
@@ -1732,6 +1855,16 @@ Scope {
                         scaledScreenHeight: bgRoot.screen.height
                         wallpaperScale: 1
                         wallpaperSafetyTriggered: bgRoot.wallpaperSafetyTriggered
+                        debugRegionActive: backgroundScope.clockDebugRegionActive
+                        debugRegionColor: backgroundScope.clockDebugRegionColor
+                        debugRegionBrightness: backgroundScope.clockDebugRegionBrightness
+                        debugRegionSpread: backgroundScope.clockDebugRegionSpread
+                        debugQuickControlsOpen: backgroundScope.clockDebugQuickControlsOpen
+                        debugLayoutProbeActive: backgroundScope.clockDebugLayoutProbeActive
+                        debugLayoutProbeX: backgroundScope.clockDebugLayoutProbeX
+                        debugLayoutProbeY: backgroundScope.clockDebugLayoutProbeY
+                        onDebugPaletteReportChanged: backgroundScope.clockDebugPaletteReport = debugPaletteReport
+                        onEditControlsGeometryReportChanged: backgroundScope.clockDebugControlsReport = editControlsGeometryReport
                     }
                 }
 

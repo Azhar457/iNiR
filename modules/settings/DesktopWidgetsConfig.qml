@@ -806,6 +806,19 @@ ContentPage {
                         onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.digital.animateChange", checked)
                     }
                 }
+                ConfigRow {
+                    Layout.fillWidth: true
+                    SettingsSwitch {
+                        Layout.fillWidth: false
+                        buttonIcon: "wallpaper"
+                        text: Translation.tr("Adapt colors to wallpaper")
+                        autoToggle: false
+
+                        checked: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.digital.adaptToWallpaper", checked)
+                        StyledToolTip { text: Translation.tr("Gently adapt the Cookie-inspired ink to the wallpaper behind the digital clock") }
+                    }
+                }
 
                 GridLayout {
                     columns: 2
@@ -1101,7 +1114,7 @@ ContentPage {
             WidgetAppearanceControls {
                 configPath: "background.widgets.clock"
                 configEntry: Config.getNestedValue("background.widgets.clock", ({}))
-                dimDefault: 55
+                dimDefault: 70
                 hasCardControls: true
             }
 
@@ -1120,6 +1133,7 @@ ContentPage {
                     Config.setNestedValue("background.widgets.clock.dateScale", 100);
                     Config.setNestedValue("background.widgets.clock.showShadow", true);
                     Config.setNestedValue("background.widgets.clock.dim", 70);
+                    Config.setNestedValue("background.widgets.clock.digital.adaptToWallpaper", true);
                     Config.setNestedValue("background.widgets.clock.digital.animateChange", true);
                     Config.setNestedValue("background.widgets.clock.digital.fontWeight", 600);
                     Config.setNestedValue("background.widgets.clock.digital.spacing", 6);
@@ -1177,6 +1191,7 @@ ContentPage {
                     },
                     "dateStyle": "long",
                     "digital": {
+                                        "adaptToWallpaper": true,
                                         "animateChange": true,
                                         "fontWeight": 600,
                                         "spacing": 6,

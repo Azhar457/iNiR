@@ -443,6 +443,7 @@
                 },
                 "dateStyle": "long",
                 "digital": {
+                    "adaptToWallpaper": true,
                     "animateChange": true,
                     "fontWeight": 600,
                     "spacing": 6,

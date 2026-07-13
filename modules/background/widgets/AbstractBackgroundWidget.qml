@@ -23,6 +23,12 @@ AbstractWidget {
     readonly property string _configPath: "background.widgets." + root.configEntryName
     property bool visibleWhenLocked: false
     property int widgetIndex: 0 // used to offset auto-placed widgets so they don't stack
+    // Diagnostic-only control, supplied by Background.qml when the supervised
+    // shell is loaded with INIR_REGION_DEBUG=1.
+    property bool debugQuickControlsOpen: false
+    property bool debugLayoutProbeActive: false
+    property int debugLayoutProbeX: 0
+    property int debugLayoutProbeY: 0
     // Supports nested configEntryName like "custom.my-widget"
     // Custom widget data lives in Config.customWidgetData (outside adapter).
     property var configEntry: Config.getNestedValue(root._configPath, ({}))
@@ -447,6 +453,78 @@ AbstractWidget {
     readonly property int _editGridSize: Config.getNestedValue("background.widgets.editGrid.size", 32)
     readonly property bool _snapEnabled: GlobalStates.widgetEditMode && (Config.getNestedValue("background.widgets.editGrid.snap", true))
 
+    readonly property int _editScreenMargin: 8
+    readonly property int _editToolbarGap: 12
+    readonly property int _editPopoverGap: 6
+    function _resolveEditControlsGeometry(widgetX: real, widgetY: real, popoverVisible: bool): var {
+        const margin = root._editScreenMargin;
+        const safeX = Math.max(0, Math.min(root.scaledScreenWidth - root.width, widgetX));
+        const safeY = Math.max(0, Math.min(root.scaledScreenHeight - root.height, widgetY));
+        const stackHeight = editToolbar.height + root._editToolbarGap
+            + (popoverVisible ? editPopoverPanel.height + root._editPopoverGap : 0);
+        const spaceAbove = Math.max(0, safeY - margin);
+        const spaceBelow = Math.max(0,
+            root.scaledScreenHeight - margin - safeY - root.height);
+        const fitsAbove = spaceAbove >= stackHeight;
+        const fitsBelow = spaceBelow >= stackHeight;
+        const below = fitsAbove ? false : fitsBelow ? true : spaceBelow > spaceAbove;
+        const toolbarX = Math.max(margin, Math.min(
+            root.scaledScreenWidth - margin - editToolbar.width,
+            safeX + (root.width - editToolbar.width) / 2));
+        const toolbarY = below
+            ? safeY + root.height + root._editToolbarGap
+            : safeY - editToolbar.height - root._editToolbarGap;
+        const popoverX = Math.max(margin, Math.min(
+            root.scaledScreenWidth - margin - editPopoverPanel.width,
+            toolbarX + (editToolbar.width - editPopoverPanel.width) / 2));
+        const popoverY = below
+            ? toolbarY + editToolbar.height + root._editPopoverGap
+            : toolbarY - editPopoverPanel.height - root._editPopoverGap;
+        const toolbarInBounds = toolbarX >= margin && toolbarY >= margin
+            && toolbarX + editToolbar.width <= root.scaledScreenWidth - margin
+            && toolbarY + editToolbar.height <= root.scaledScreenHeight - margin;
+        const popoverInBounds = !popoverVisible || (popoverX >= margin && popoverY >= margin
+            && popoverX + editPopoverPanel.width <= root.scaledScreenWidth - margin
+            && popoverY + editPopoverPanel.height <= root.scaledScreenHeight - margin);
+        return {
+            widgetX: safeX,
+            widgetY: safeY,
+            below: below,
+            toolbarX: toolbarX,
+            toolbarY: toolbarY,
+            popoverX: popoverX,
+            popoverY: popoverY,
+            inBounds: toolbarInBounds && popoverInBounds
+        };
+    }
+
+    readonly property var _editControlsGeometry: root._resolveEditControlsGeometry(
+        root.x, root.y, editPopoverPanel.visible)
+    readonly property bool _editControlsBelow: root._editControlsGeometry.below
+
+    readonly property string editControlsGeometryReport: {
+        const requestedX = root.debugLayoutProbeActive ? root.debugLayoutProbeX : root.x;
+        const requestedY = root.debugLayoutProbeActive ? root.debugLayoutProbeY : root.y;
+        const geometry = root._resolveEditControlsGeometry(
+            requestedX, requestedY, editPopoverPanel.visible);
+        return JSON.stringify({
+            widget: root.configEntryName,
+            screen: { width: root.scaledScreenWidth, height: root.scaledScreenHeight },
+            probe: root.debugLayoutProbeActive,
+            requested: { x: Math.round(requestedX), y: Math.round(requestedY) },
+            position: { x: Math.round(geometry.widgetX), y: Math.round(geometry.widgetY) },
+            below: geometry.below,
+            toolbar: { x: Math.round(geometry.toolbarX), y: Math.round(geometry.toolbarY), width: Math.round(editToolbar.width), height: Math.round(editToolbar.height) },
+            popover: { visible: editPopoverPanel.visible, x: Math.round(geometry.popoverX), y: Math.round(geometry.popoverY), width: Math.round(editPopoverPanel.width), height: Math.round(editPopoverPanel.height) },
+            inBounds: geometry.inBounds
+        });
+    }
+
+    onDebugQuickControlsOpenChanged: {
+        if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+            editPopoverPanel.visible = root.debugQuickControlsOpen;
+    }
+
     function _snapToGrid(value: real): real {
         return Math.round(value / _editGridSize) * _editGridSize;
     }
@@ -475,13 +553,27 @@ AbstractWidget {
         z: 200
         visible: opacity > 0
         opacity: GlobalStates.widgetEditMode ? 1 : 0
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            bottom: parent.top
-            bottomMargin: 12
-        }
+        x: root._editControlsGeometry.toolbarX - root.x
+        y: root._editControlsGeometry.toolbarY - root.y
         width: toolbarRow.implicitWidth + 12
         height: 36
+
+        Behavior on x {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animationCurves.standardDecel
+            }
+        }
+        Behavior on y {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animationCurves.standardDecel
+            }
+        }
 
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
@@ -627,17 +719,32 @@ AbstractWidget {
             }
         }
 
-        // Inline popover panel (appears above the toolbar, away from widget)
+        // Inline popover panel follows the toolbar to whichever side has room.
         Item {
             id: editPopoverPanel
             visible: false
-            anchors {
-                bottom: toolbarRow.top
-                bottomMargin: 6
-                horizontalCenter: toolbarRow.horizontalCenter
-            }
-            width: popoverLoader.item ? popoverLoader.item.implicitWidth + 16 : 200
+            x: root._editControlsGeometry.popoverX - root._editControlsGeometry.toolbarX
+            y: root._editControlsGeometry.popoverY - root._editControlsGeometry.toolbarY
+            width: Math.min(root.scaledScreenWidth - 2 * root._editScreenMargin,
+                popoverLoader.item ? popoverLoader.item.implicitWidth + 16 : 200)
             height: popoverLoader.item ? popoverLoader.item.implicitHeight + 16 : 0
+
+            Behavior on x {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Appearance.animationCurves.standardDecel
+                }
+            }
+            Behavior on y {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Appearance.animationCurves.standardDecel
+                }
+            }
 
             MouseArea {
                 anchors.fill: parent
@@ -996,6 +1103,11 @@ AbstractWidget {
     }
 
     property bool needsColText: false
+    // Opt-in for widgets whose bare content changes ink with the wallpaper under
+    // them. Sampling is throttled while dragging; the shared process remains
+    // serialized so pointer movement can never spawn an unbounded process fanout.
+    property bool liveColorTracking: false
+    property int liveColorTrackingInterval: 220
     property color dominantColor: Appearance.colors.colPrimary
     // Wallpaper region brightness (0-1, from image analysis). -1 = not yet analyzed.
     property real regionBrightness: -1
@@ -1152,6 +1264,16 @@ AbstractWidget {
     // Widgets may gate needsColText on runtime state (e.g. mascot only when its
     // card is on) — kick the analysis when it turns on after load.
     onNeedsColTextChanged: if (needsColText) _placementDebounce.restart()
+    onXChanged: root._queueLiveColorAnalysis()
+    onYChanged: root._queueLiveColorAnalysis()
+    onIsDraggingChanged: {
+        if (!root.liveColorTracking || !root.needsColText)
+            return;
+        if (root.isDragging)
+            root._queueLiveColorAnalysis();
+        else
+            _placementDebounce.restart();
+    }
     onPlacementStrategyChanged: Qt.callLater(root.applyPlacementFromConfig)
     // Re-snap zone positions when screen size changes
     onScaledScreenWidthChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
@@ -1198,7 +1320,25 @@ AbstractWidget {
         repeat: false
         onTriggered: root.refreshPlacementIfNeeded()
     }
+    Timer {
+        id: _liveColorAnalysisTimer
+        interval: root.liveColorTrackingInterval
+        repeat: false
+        onTriggered: {
+            if (root.liveColorTracking && root.needsColText && root.isDragging)
+                root._runColorAnalysis();
+        }
+    }
+    function _queueLiveColorAnalysis(): void {
+        if (!root.liveColorTracking || !root.needsColText || !root.isDragging)
+            return;
+        if (!_liveColorAnalysisTimer.running)
+            _liveColorAnalysisTimer.start();
+    }
     function refreshPlacementIfNeeded() {
+        if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+            console.log("[Region]", root.configEntryName, "refresh @", Math.round(root.x), Math.round(root.y),
+                "strategy", root.placementStrategy, "needsColText", root.needsColText);
         if (!Config.ready) return;
         if (!root.wallpaperPath || root.wallpaperPath.length === 0) return;
         // For auto-placement (leastBusy/mostBusy): full analysis (position + color)
@@ -1209,10 +1349,33 @@ AbstractWidget {
             return;
         }
         // For free/zone widgets that need color: position-aware color-only analysis
-        if (root.needsColText) {
-            colorOnlyProc.running = false;
-            colorOnlyProc.running = true;
+        if (root.needsColText) root._runColorAnalysis();
+    }
+
+    // The colour analysis is a subprocess and the widget can move while it runs.
+    // Restarting it with `running = false; running = true` did NOT discard the run
+    // in flight: its result still landed, carrying the colour of the position the
+    // widget had LEFT, and whichever of the two finished last won. That is the
+    // double colour change on every drag — one correct answer and one stale answer
+    // fighting, applied in completion order.
+    //
+    // So: never overlap runs, pin the position the run was launched for instead of
+    // letting it track root.x/y, and throw away any answer computed for somewhere
+    // the widget no longer is.
+    property bool _colorRerunQueued: false
+
+    function _colorTargetX(): int { return Math.max(0, Math.round(root.x / Math.max(root.wallpaperScale, 0.001))); }
+    function _colorTargetY(): int { return Math.max(0, Math.round(root.y / Math.max(root.wallpaperScale, 0.001))); }
+
+    function _runColorAnalysis(): void {
+        if (colorOnlyProc.running) {
+            root._colorRerunQueued = true;
+            return;
         }
+        root._colorRerunQueued = false;
+        colorOnlyProc.posX = root._colorTargetX();
+        colorOnlyProc.posY = root._colorTargetY();
+        colorOnlyProc.running = true;
     }
     Process {
         id: leastBusyRegionProc
@@ -1238,6 +1401,9 @@ AbstractWidget {
                 if (output.length === 0) return;
                 try {
                     const parsedContent = JSON.parse(output);
+                    if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+                        console.log("[Region]", root.configEntryName, "LEAST-BUSY landed",
+                            "dom", parsedContent.dominant_color, "bright", parsedContent.brightness);
                     root.dominantColor = parsedContent.dominant_color || Appearance.colors.colPrimary;
                     if (parsedContent.brightness !== undefined)
                         root.regionBrightness = parsedContent.brightness / 255.0;
@@ -1255,8 +1421,11 @@ AbstractWidget {
     // Color-only analysis for free/zone widgets at their actual position
     Process {
         id: colorOnlyProc
-        property int posX: Math.max(0, Math.round(root.x / Math.max(root.wallpaperScale, 0.001)))
-        property int posY: Math.max(0, Math.round(root.y / Math.max(root.wallpaperScale, 0.001)))
+        // Pinned at launch, NOT bound to root.x/y: the command must describe the
+        // position this run was actually started for, and the result has to be
+        // checked against it when it lands.
+        property int posX: 0
+        property int posY: 0
         property int contentWidth: Math.max(1, Math.round(root.width / Math.max(root.wallpaperScale, 0.001)))
         property int contentHeight: Math.max(1, Math.round(root.height / Math.max(root.wallpaperScale, 0.001)))
         command: [Quickshell.shellPath("scripts/images/least-busy-region-venv.sh")
@@ -1276,6 +1445,26 @@ AbstractWidget {
                 if (output.length === 0) return;
                 try {
                     const parsedContent = JSON.parse(output);
+                    const movedSinceSample = colorOnlyProc.posX !== root._colorTargetX()
+                        || colorOnlyProc.posY !== root._colorTargetY();
+                    // During opt-in live tracking, an in-flight result is a valid
+                    // recent sample along the drag path. Apply it smoothly and let
+                    // the serialized queued run catch up. Outside an active drag,
+                    // exact-position freshness remains mandatory.
+                    const acceptsLiveSample = root.liveColorTracking && root.isDragging;
+                    const stale = movedSinceSample && !acceptsLiveSample;
+                    if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+                        console.log("[Region]", root.configEntryName, "COLOR-ONLY for", colorOnlyProc.posX, colorOnlyProc.posY,
+                            "now at", root._colorTargetX(), root._colorTargetY(),
+                            "bright", parsedContent.brightness,
+                            stale ? "-> STALE, discarded" : acceptsLiveSample && movedSinceSample ? "-> LIVE sample" : "-> applied");
+                    // The widget moved while this was being computed: this colour is
+                    // for a place it is not any more. Applying it is the second,
+                    // wrong colour change. Drop it and analyse where it actually is.
+                    if (stale) {
+                        root._colorRerunQueued = true;
+                        return;
+                    }
                     root.dominantColor = parsedContent.dominant_color || Appearance.colors.colPrimary;
                     if (parsedContent.brightness !== undefined)
                         root.regionBrightness = parsedContent.brightness / 255.0;
@@ -1286,5 +1475,9 @@ AbstractWidget {
                 }
             }
         }
+        // Runs are serialised, so a request that arrived while this one was busy —
+        // or a result thrown away as stale — is picked up here, once, at the
+        // position the widget actually ended up at.
+        onExited: if (root._colorRerunQueued) Qt.callLater(root._runColorAnalysis)
     }
 }

@@ -783,6 +783,16 @@ Desktop background and widget controls.
 |----------|-------------|
 | `toggleEditMode` | Toggle widget edit mode (drag, resize, configure desktop widgets) |
 | `setWidgetEnabled widgetName enabled` | Enable or disable a built-in desktop widget |
+| `clockDebugState` | Report clock palette, renderer and quick-control geometry diagnostics |
+| `clockDebugSetMode digital\|cookie adaptToWallpaper` | Temporarily select a diagnostic clock mode |
+| `clockDebugSetRegion color brightness spread` | Inject a temporary wallpaper-region sample |
+| `clockDebugSetLayout x y quickControlsOpen` | Probe quick-control geometry at a hypothetical clock position without moving the widget |
+| `clockDebugRestore` | Restore the config captured by clock diagnostics |
+
+The mutating diagnostic functions require the supervised shell to be loaded
+with `INIR_REGION_DEBUG=1`. They snapshot the clock's relevant config on first
+use; always finish a diagnostic run with `clockDebugRestore` before removing
+the environment flag.
 
 ```kdl
 bind "Super+W" { spawn "inir" "background" "toggleEditMode"; }

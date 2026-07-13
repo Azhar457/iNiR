@@ -17,7 +17,8 @@ AbstractBackgroundWidget {
         placementStrategy: "leastBusy", style: "cookie",
         fontFamily: "Space Grotesk", timeFormat: "system",
         showSeconds: false, showDate: true, dateStyle: "long",
-        timeScale: 100, dateScale: 100, showShadow: true, dim: 55,
+        timeScale: 100, dateScale: 100, showShadow: true, dim: 70,
+        "digital.adaptToWallpaper": true,
         "digital.animateChange": true, "digital.fontWeight": 600,
         "digital.spacing": 6, "digital.preset": "default",
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
@@ -82,9 +83,16 @@ AbstractBackgroundWidget {
     }
 
     property string clockStyle: Config.getNestedValue("background.widgets.clock.style", "cookie")
+    property bool adaptDigitalToWallpaper: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true)
     property bool forceCenter: (GlobalStates.screenLocked && (Config.options?.lock?.centerClock ?? false))
     property bool wallpaperSafetyTriggered: false
-    needsColText: true
+    property bool debugRegionActive: false
+    property color debugRegionColor: "transparent"
+    property real debugRegionBrightness: -1
+    property real debugRegionSpread: 0
+    property string cookieDiagnostics: "{}"
+    needsColText: root.clockStyle === "digital" && (root.adaptDigitalToWallpaper || root.widgetHasSurface)
+    liveColorTracking: root.clockStyle === "digital" && root.adaptDigitalToWallpaper && !root.widgetHasSurface
     visibleWhenLocked: true
 
     // --- Clock customization config ---
@@ -104,23 +112,49 @@ AbstractBackgroundWidget {
     readonly property color accentPrimary: root.widgetAccent
     readonly property color accentSecondary: root.widgetAccent2
     readonly property color accentTertiary: root.widgetAccent3
-    // The cookie face keeps the THEME's container color — it is an opaque
-    // plate, so wallpaper-region adaptation buys no legibility on it and the
-    // region-toned plate (near-black/near-white) killed the cookie's colour
-    // identity ("colores rotos", 2026-07-11). Region adaptation stays for the
-    // digital/bare paths where text truly sits on the wallpaper.
-    readonly property color accentPrimaryContainer: Appearance.colors.colPrimaryContainer
-    readonly property color accentPrimaryContainerVisible: root.ensureVisible(root.accentPrimaryContainer)
+    // One semantic palette for both renderers. Global-style dispatch already
+    // happens in Appearance; ZZZ must keep its primary-container sticker face,
+    // not fall back to the near-black chrome used by rectangular plates.
+    readonly property color cookieFace: Appearance.colors.colPrimaryContainer
+    readonly property color cookieBaseInk: Appearance.zzzEverywhere
+        ? Appearance.zzz.onAccent : Appearance.colors.colOnPrimaryContainer
+    function readableClockColor(candidate: color, backdrop: color, minContrast: real): color {
+        const source = Qt.color(candidate);
+        if (ColorUtils.contrastRatio(source, backdrop) >= minContrast)
+            return source;
+        for (let step = 1; step <= 20; step++) {
+            const distance = step * 0.04;
+            const darker = Qt.hsla(source.hslHue, source.hslSaturation,
+                Math.max(0, source.hslLightness - distance), source.a);
+            const lighter = Qt.hsla(source.hslHue, source.hslSaturation,
+                Math.min(1, source.hslLightness + distance), source.a);
+            const darkRatio = ColorUtils.contrastRatio(darker, backdrop);
+            const lightRatio = ColorUtils.contrastRatio(lighter, backdrop);
+            if (darkRatio >= minContrast || lightRatio >= minContrast)
+                return darkRatio >= minContrast ? darker : lighter;
+        }
+        return ColorUtils.contrastColor(backdrop);
+    }
+    function supportingOnFace(strongInk: color, face: color): color {
+        for (let weight = 0.72; weight <= 1.001; weight += 0.04) {
+            const candidate = ColorUtils.mix(strongInk, face, weight);
+            if (ColorUtils.contrastRatio(candidate, face) >= 4.5)
+                return candidate;
+        }
+        return strongInk;
+    }
     // Hands sit on the cookie FACE — clamp against it, not the wallpaper.
-    readonly property color handPrimary: ColorUtils.adaptAccent(root.accentPrimary, root.accentPrimaryContainerVisible)
-    readonly property color handTertiary: ColorUtils.adaptAccent(root.accentTertiary, root.accentPrimaryContainerVisible)
-    // Marks/numbers/date ink: the Material on-container pair, with a floor so
-    // exotic generated palettes never drop below comfortable contrast.
-    readonly property color cookieInk: ColorUtils.ensureReadable(
-        Appearance.colors.colOnPrimaryContainer,
-        root.accentPrimaryContainerVisible,
+    readonly property color handPrimary: root.readableClockColor(
+        ColorUtils.adaptAccent(root.accentPrimary, root.cookieFace), root.cookieFace, 3.0)
+    readonly property color handTertiary: root.readableClockColor(
+        ColorUtils.adaptAccent(root.accentTertiary, root.cookieFace), root.cookieFace, 3.0)
+    // Marks/numbers use the strong on-face ink. Supporting information remains
+    // solid (not alpha-composited) so small text keeps an AA contrast floor.
+    readonly property color cookieInk: root.readableClockColor(
+        root.cookieBaseInk,
+        root.cookieFace,
         4.5)
-    readonly property color cookieInkMuted: ColorUtils.applyAlpha(root.cookieInk, 0.68)
+    readonly property color cookieInfo: root.supportingOnFace(root.cookieInk, root.cookieFace)
 
     // Local clock with seconds precision when needed (and power is active)
     SystemClock {
@@ -196,14 +230,23 @@ AbstractBackgroundWidget {
     // the analyzed wallpaper region otherwise (theme surface until the analysis
     // lands, so nothing re-tones on first paint).
     readonly property bool _digitalCard: root.clockStyle === "digital" && root.widgetHasSurface
-    readonly property color _inkBackdrop: root._digitalCard ? root.widgetPlateColor
-        : root._hasBrightness ? root._regionBg
-        : Appearance.colors.colLayer0
-    // Accent as displayed over that backdrop — identity clamp, see adaptAccent.
-    function displayAccent(base: color): color {
-        return ColorUtils.adaptAccent(base, root._inkBackdrop);
+    readonly property bool _digitalHasBrightness: root.debugRegionActive
+        ? root.debugRegionBrightness >= 0 : root._hasBrightness
+    readonly property color _digitalRegionColor: root.debugRegionActive
+        ? root.debugRegionColor : root.dominantColor
+    readonly property real _digitalRegionBrightness: root.debugRegionActive
+        ? root.debugRegionBrightness : root.regionBrightness
+    readonly property color _digitalRegionBg: {
+        const dominant = Qt.color(root._digitalRegionColor);
+        if (!root._digitalHasBrightness) return dominant;
+        return Qt.hsla(dominant.hslHue, dominant.hslSaturation,
+            root._digitalRegionBrightness, 1.0);
     }
-
+    readonly property color _inkBackdrop: root._digitalCard ? root.widgetPlateColor
+        : root._digitalHasBrightness ? root._digitalRegionBg
+        : Appearance.colors.colLayer0
+    readonly property color _digitalBackdrop: root.adaptDigitalToWallpaper
+        ? root._inkBackdrop : Appearance.colors.colLayer0
     // Effective text color for clock based on palette + dim.
     // Dim toward the luminance opposite of the ACTUAL backdrop (card plate or
     // wallpaper region — dimming away from the region while sitting on a plate
@@ -215,17 +258,73 @@ AbstractBackgroundWidget {
     function dimmed(base, backdrop) {
         if (dimFactor <= 0) return base;
         const target = ColorUtils.contrastColor(backdrop ?? root._inkBackdrop);
-        const faded = ColorUtils.mix(base, target, dimFactor * 0.7);
-        return ColorUtils.boostInkSaturation(faded, base, Qt.color(base).hslSaturation);
+        const faded = Qt.color(ColorUtils.mix(base, target, 1 - dimFactor * 0.22));
+        const source = Qt.color(base);
+        return Qt.hsla(source.hslHue, source.hslSaturation,
+            faded.hslLightness, source.a);
     }
-    // On the digital card the ink opposes the plate (widgetInk); bare on the
-    // wallpaper it opposes the region (colText). Either way, guarantee a
-    // readable floor against the actual backdrop — the auto light/dark pick
-    // alone goes muddy over mid-brightness wallpaper regions while dragging.
-    property color clockTextColor: root.dimmed(ColorUtils.ensureReadable(
-        root._digitalCard ? root.widgetInk : root.colText,
-        root._inkBackdrop,
-        4.5))
+
+    // Retain most of the Cookie role while borrowing enough hue/chroma from the
+    // local wallpaper region for movement to be visible even when two regions
+    // share the same brightness. Lightness is kept until the contrast clamp.
+    function regionalCookieColor(base: color, cookieWeight: real): color {
+        const source = Qt.color(base);
+        const region = Qt.color(root._digitalRegionColor);
+        if (!region.valid || region.hslSaturation < 0.04)
+            return source;
+        const localSaturation = Math.max(source.hslSaturation,
+            Math.min(0.72, region.hslSaturation * 0.72));
+        const localRole = Qt.hsla(region.hslHue, localSaturation,
+            source.hslLightness, source.a);
+        return ColorUtils.mix(source, localRole, cookieWeight);
+    }
+
+    // Digital borrows the Cookie's ink and hand character, never its face fill.
+    function digitalColor(base: color, cookieWeight: real, minContrast: real): color {
+        const displayed = root.adaptDigitalToWallpaper
+            ? root.regionalCookieColor(base, cookieWeight) : base;
+        const dimmedColor = root.dimmed(displayed, root._digitalBackdrop);
+        return root.readableClockColor(dimmedColor, root._digitalBackdrop, minContrast);
+    }
+    readonly property color digitalTimeBase: ColorUtils.mix(root.cookieInk, root.handPrimary, 0.84)
+    readonly property color digitalStatusBase: ColorUtils.mix(root.cookieInk, root.handPrimary, 0.78)
+    readonly property color digitalTimeColor: root.digitalColor(root.digitalTimeBase, 0.78, 4.5)
+    readonly property color digitalDateColor: root.digitalColor(root.cookieInfo, 0.84, 4.5)
+    readonly property color digitalMetaColor: root.digitalColor(root.cookieInfo, 0.88, 4.5)
+    readonly property color digitalStatusColor: root.digitalColor(root.digitalStatusBase, 0.82, 4.5)
+
+    readonly property string debugPaletteReport: JSON.stringify({
+        style: root.clockStyle,
+        globalStyle: Appearance.globalStyle,
+        adaptive: root.adaptDigitalToWallpaper,
+        region: {
+            injected: root.debugRegionActive,
+            dominant: String(root._digitalRegionColor),
+            regionBackdrop: String(root._inkBackdrop),
+            displayBackdrop: String(root._digitalBackdrop),
+            brightness: root._digitalRegionBrightness
+        },
+        cookie: {
+            face: String(root.cookieFace),
+            ink: String(root.cookieInk),
+            info: String(root.cookieInfo),
+            hourHand: String(root.handPrimary),
+            minuteHand: String(root.handTertiary),
+            inkContrast: ColorUtils.contrastRatio(root.cookieInk, root.cookieFace),
+            infoContrast: ColorUtils.contrastRatio(root.cookieInfo, root.cookieFace),
+            renderer: root.cookieDiagnostics
+        },
+        digital: {
+            time: String(root.digitalTimeColor),
+            date: String(root.digitalDateColor),
+            quote: String(root.digitalMetaColor),
+            status: String(root.digitalStatusColor),
+            timeContrast: ColorUtils.contrastRatio(root.digitalTimeColor, root._digitalBackdrop),
+            dateContrast: ColorUtils.contrastRatio(root.digitalDateColor, root._digitalBackdrop),
+            quoteContrast: ColorUtils.contrastRatio(root.digitalMetaColor, root._digitalBackdrop),
+            statusContrast: ColorUtils.contrastRatio(root.digitalStatusColor, root._digitalBackdrop)
+        }
+    })
 
     // Card background (mainly for digital mode)
     WidgetSurface {
@@ -259,12 +358,13 @@ AbstractBackgroundWidget {
                 CookieClock {
                     anchors.horizontalCenter: parent.horizontalCenter
                     scaleFactor: root.scaleFactor
-                    colBackground: root.accentPrimaryContainerVisible
+                    colBackground: root.cookieFace
                     colOnBackground: root.cookieInk
-                    colBackgroundInfo: root.cookieInkMuted
+                    colBackgroundInfo: root.cookieInfo
                     colHourHand: root.handPrimary
                     colMinuteHand: root.handTertiary
                     colSecondHand: root.cookieInk
+                    onDiagnosticReportChanged: root.cookieDiagnostics = diagnosticReport
                 }
                 FadeLoader {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -284,17 +384,13 @@ AbstractBackgroundWidget {
                 spacing: Math.round(root.digitalSpacing * root.scaleFactor)
 
                 ClockText {
-                    // Material accents (same source the desktop player themes from)
-                    // instead of neutral ink: time = primary, date = secondary —
-                    // displayed through the region/plate clamp so a theme accent
-                    // tuned for the shell's surfaces stays legible on any wallpaper.
-                    color: root.dimmed(root.displayAccent(root.accentPrimary))
+                    color: root.digitalTimeColor
                     font.pixelSize: Math.round(90 * Appearance.fontSizeScale * root.timeScale / 100 * root.scaleFactor)
                     text: root.timeText
                 }
                 ClockText {
                     visible: root.showDate
-                    color: root.dimmed(root.displayAccent(root.accentSecondary))
+                    color: root.digitalDateColor
                     Layout.topMargin: Math.round(-5 * root.scaleFactor)
                     font.pixelSize: Math.round(20 * root.dateScale / 100 * root.scaleFactor)
                     text: root.dateText
@@ -309,10 +405,18 @@ AbstractBackgroundWidget {
                         pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
                         weight: 350
                     }
-                    color: root.clockTextColor
+                    color: root.digitalMetaColor
                     style: root.showShadow ? Text.Raised : Text.Normal
                     styleColor: root.colHalo
                     text: Config.getNestedValue("background.widgets.clock.quote.text", "")
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation {
+                            duration: Appearance.animation.elementMoveFast.duration
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Appearance.animationCurves.standardDecel
+                        }
+                    }
                 }
             }
         }
@@ -335,7 +439,7 @@ AbstractBackgroundWidget {
                 implicitHeight: statusTextRow.implicitHeight + 5 * 2
                 implicitWidth: statusTextRow.implicitWidth + 5 * 2
                 radius: Appearance.rounding.small
-                color: ColorUtils.transparentize(root.accentPrimaryContainer, root.clockStyle === "cookie" ? 0 : 1)
+                color: ColorUtils.transparentize(root.cookieFace, root.clockStyle === "cookie" ? 0 : 1)
 
                 Behavior on implicitWidth {
                     animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
@@ -384,21 +488,28 @@ AbstractBackgroundWidget {
             pixelSize: 20
             weight: root.digitalFontWeight
         }
-        color: root.clockTextColor
+        color: root.digitalTimeColor
         style: root.showShadow ? Text.Raised : Text.Normal
         styleColor: root.colHalo
         animateChange: Config.getNestedValue("background.widgets.clock.digital.animateChange", false)
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            animation: ColorAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Appearance.animationCurves.standardDecel
+            }
+        }
     }
     component ClockStatusText: Row {
         id: statusTextRow
         property alias statusIcon: statusIconWidget.text
         property alias statusText: statusTextWidget.text
         property bool shown: true
-        // Cookie style renders the status on the container plate — clamp the
-        // accent against it and dim toward ITS opposite, not the region's.
+        // Cookie status sits on the same face plate; digital status sits directly
+        // on the wallpaper and therefore uses its own adapted supporting role.
         property color textColor: root.clockStyle === "cookie"
-            ? root.dimmed(ColorUtils.adaptAccent(root.accentPrimary, root.accentPrimaryContainer), root.accentPrimaryContainer)
-            : root.clockTextColor
+            ? root.cookieInk : root.digitalStatusColor
         opacity: shown ? 1 : 0
         visible: opacity > 0
         Behavior on opacity {
@@ -412,6 +523,14 @@ AbstractBackgroundWidget {
             color: statusTextRow.textColor
             style: root.showShadow ? Text.Raised : Text.Normal
             styleColor: root.colHalo
+            Behavior on color {
+                enabled: Appearance.animationsEnabled
+                ColorAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Appearance.animationCurves.standardDecel
+                }
+            }
         }
         ClockText {
             id: statusTextWidget

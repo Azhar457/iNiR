@@ -1168,6 +1168,7 @@ Singleton {
                             property string preset: "default"
                         }
                         property JsonObject digital: JsonObject {
+                            property bool adaptToWallpaper: true
                             property bool animateChange: true
                             property int fontWeight: 600
                             property int spacing: 6
