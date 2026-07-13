@@ -33,12 +33,13 @@ Singleton {
 
     function restart(): void {
         _log("user requested restart")
-        Notifications.send(
+        Quickshell.execDetached([
+            "/usr/bin/notify-send",
             "iNiR",
             Translation.tr("Restarting shell..."),
-            "system-reboot-symbolic",
-            2000, false, {}
-        )
+            "-a", "Shell",
+            "--hint=int:transient:1",
+        ])
         // Small delay so notification shows
         Qt.callLater(() => {
             Quickshell.execDetached(["systemctl", "--user", "restart", "inir.service"])
@@ -84,13 +85,14 @@ Singleton {
         
         root.notificationShown = true
         const mbEstimate = Math.round(root.currentDeletedMappings * 0.5)  // ~0.5 MB per mapping
-        
-        Notifications.send(
+
+        Quickshell.execDetached([
+            "/usr/bin/notify-send",
             "iNiR",
             Translation.tr("Memory usage is high (~%1 MB accumulated). A restart would free it. Run: inir memory restart").arg(mbEstimate),
-            "dialog-warning-symbolic",
-            0, false, {}  // persistent until dismissed
-        )
+            "-u", "critical",
+            "-a", "Shell",
+        ])
         _log("notified user, estimated leak:", mbEstimate, "MB")
     }
 
@@ -106,7 +108,10 @@ Singleton {
     // ── Maps reader ───────────────────────────────────────────────────────
     Process {
         id: _mapsReader
-        command: ["sh", "-c", "grep -c 'JSGCHeap.*deleted' /proc/self/maps 2>/dev/null || echo 0; grep -c JSGCHeap /proc/self/maps 2>/dev/null || echo 0"]
+        // /proc/$PPID, not /proc/self: this runs in an sh child of the shell, so
+        // /proc/self is that sh process (zero JSGCHeap mappings) and the counter
+        // always read 0 — the threshold could never trip. $PPID is the shell.
+        command: ["sh", "-c", "grep -c 'JSGCHeap.*deleted' /proc/$PPID/maps 2>/dev/null || echo 0; grep -c JSGCHeap /proc/$PPID/maps 2>/dev/null || echo 0"]
         stdout: SplitParser {
             property int lineNum: 0
             onRead: line => {
@@ -143,6 +148,10 @@ Singleton {
         if (!root.enabled) return
         Qt.callLater(() => {
             _checkTimer.start()
+            // Prime it once: the timer's first tick is a full interval away, so
+            // without this the service reports 0 mappings for the first 5 minutes
+            // after every restart.
+            root._checkMemoryPressure()
         })
     }
 }
