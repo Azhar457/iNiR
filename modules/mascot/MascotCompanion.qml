@@ -28,6 +28,10 @@ Scope {
 
     // Only peek from edges the user allows; fall back to any edge if all are off
     function _edgeAllowed(e) {
+        // Never slide out from behind an open sidebar — overlapping an
+        // active surface reads as a rendering glitch, not a visit
+        if (e === "left" && GlobalStates.sidebarLeftOpen) return false
+        if (e === "right" && GlobalStates.sidebarRightOpen) return false
         const cfg = Config.options?.mascot?.companion?.edges
         if (!cfg) return true
         const v = cfg[e]
@@ -120,6 +124,13 @@ Scope {
             { pose: "fisheye-inspect", line: "Take a picture. It lasts longer." },
             { pose: "annoyed-poked", line: "Creeping is still creeping." }
         ]
+
+    // Attention backoff: every peek that ends completely untouched (no
+    // hover, no click) stretches the next idle visit a little; a single
+    // interaction resets the streak. She reads the room instead of nagging.
+    property int _ignoredStreak: 0
+    property bool _peekTouched: false
+    readonly property real _attentionFactor: 1 + Math.min(_ignoredStreak, 6) * 0.25
 
     // Anti-repetition memory: she never repeats a recent line or pose,
     // which is most of what "she feels scripted" was.
@@ -280,6 +291,7 @@ Scope {
         const picked = _lineFor(poseName)
         line = _pendingLineArg.length > 0 ? picked.arg(_pendingLineArg) : picked
         _pendingLineArg = ""
+        _peekTouched = false
         _clickCount = 0
         _lastShownAt = Date.now()
         showing = true
@@ -442,9 +454,9 @@ Scope {
         id: idleTimer
         running: root.companionEnabled && !root.showing && !root.suppressed
         repeat: true
-        interval: Math.max(3, root.intervalMinutes) * 60000 * (0.75 + Math.random() * 0.5)
+        interval: Math.max(3, root.intervalMinutes) * 60000 * (0.75 + Math.random() * 0.5) * root._attentionFactor
         onTriggered: {
-            interval = Math.max(3, root.intervalMinutes) * 60000 * (0.75 + Math.random() * 0.5)
+            interval = Math.max(3, root.intervalMinutes) * 60000 * (0.75 + Math.random() * 0.5) * root._attentionFactor
             root.poke()
         }
     }
@@ -688,12 +700,12 @@ Scope {
         // Without Battery.available this reads a desktop (percentage 0, never
         // "plugged in") as a laptop at 0% and romps about a battery it lacks.
         if (Battery.available && Battery.percentage <= 0.15 && !Battery.isPluggedIn) {
-            key = "batteryCritical"; pose = "battery-low"
+            key = "batteryCritical"; pose = "power-cord-yank"
         } else if (Notifications.list.length >= 8) {
-            key = "notificationPileup"; pose = "facepalm"
+            key = "notificationPileup"; pose = "notification-scout"
         } else {
             const hour = new Date().getHours()
-            if (hour >= 1 && hour < 5) { key = "bedtime"; pose = "late-night" }
+            if (hour >= 1 && hour < 5) { key = "bedtime"; pose = "yawn-stretch" }
         }
         if (key.length === 0) return
         const lines = triggers[key]?.lines ?? []
@@ -875,7 +887,10 @@ Scope {
                     mirror: root.edge === "right" && (root._manifest.mirrorOnRight ?? ["edge-peek"]).includes(root.pose)
                 }
 
-                HoverHandler { id: mascotHover }
+                HoverHandler {
+                    id: mascotHover
+                    onHoveredChanged: if (hovered) root._peekTouched = true
+                }
 
                 // Stare at her long enough and she notices
                 Timer {
@@ -895,6 +910,7 @@ Scope {
 
                 TapHandler {
                     onTapped: {
+                        root._peekTouched = true
                         root._clickCount++
                         clickResetTimer.restart()
                         if (root._clickCount >= 4) {
@@ -1002,5 +1018,11 @@ Scope {
         }
     }
 
-    onShowingChanged: if (!showing) teardownTimer.restart()
+    onShowingChanged: if (!showing) {
+        teardownTimer.restart()
+        // A suppression cut (fullscreen/lock appeared mid-peek) is nobody
+        // ignoring her — only a peek that ran its course counts.
+        if (_peekTouched) _ignoredStreak = 0
+        else if (!suppressed) _ignoredStreak = Math.min(_ignoredStreak + 1, 6)
+    }
 }

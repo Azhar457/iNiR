@@ -352,6 +352,24 @@ PanelWindow {
             romp._runTo(hideX)
             return
         }
+        // Rare spectacle: she rockets straight across the sky and is gone.
+        // No stops, no victims — pure entrance value.
+        if (Math.random() < 0.08) {
+            romp._enterFromLeft = Math.random() < 0.5
+            romp.spriteX = romp._enterFromLeft ? -romp.spriteSize : romp.width + romp.spriteSize
+            romp.spriteY = romp.height * (0.15 + Math.random() * 0.35)
+            romp.pose = "rocket-ride"
+            romp.planType = "flyby"
+            romp.planStops = []
+            romp.planIndex = 0
+            if (Math.random() < 0.6) romp.line = romp._pickLine(romp._chaosCfg.flyby?.lines)
+            romp.phase = "leave"
+            console.log("[MascotRomp] flyby")
+            runTween.to = romp._enterFromLeft ? romp.width + romp.spriteSize : -romp.spriteSize
+            runTween.duration = Math.abs(runTween.to - romp.spriteX) / 1.1
+            runTween.restart()
+            return
+        }
         if (!romp._makePlan()) { romp._abort(); return }
         romp.planIndex = 0
         const first = romp.planStops[0]
@@ -529,7 +547,7 @@ PanelWindow {
                 // the widget saw it coming — quick sidestep, she whiffs
                 romp._dodged = true
                 MascotChaos.impact(stop.key, (Math.random() < 0.5 ? -1 : 1) * 70, 0, "bounce")
-                romp.pose = romp._pickActPose(romp._chaosCfg.dodge_pose, "spin-dodge")
+                romp.pose = romp._pickActPose(romp._chaosCfg.dodge_pose, "shocked-jump")
                 romp.line = romp._pickLine(romp._chaosCfg.dodge ?? ["Oh, it DODGED. Cute."])
                 romp.phase = "act"
                 phaseTimer.interval = 900
@@ -617,7 +635,7 @@ PanelWindow {
         duration: 320
         easing.type: Easing.OutQuad
         onStopped: if (romp.phase === "chase")
-            romp.pose = romp._safeFullBodyPose(romp._chaosCfg.chase?.wait, "crouch-ready")
+            romp.pose = romp._safeFullBodyPose(romp._chaosCfg.chase?.wait, "low-angle-guard")
     }
 
     function _startChase(): void {
@@ -634,7 +652,7 @@ PanelWindow {
     function _chasePounce(cx: real, cy: real): void {
         romp._chaseClicks++
         if (romp._chaseClicks > 14) { romp._endChase("bored"); return }
-        romp.pose = romp._safeFullBodyPose(romp._chaosCfg.chase?.pounce, "pounce-point")
+        romp.pose = romp._safeFullBodyPose(romp._chaosCfg.chase?.pounce, "jump-bounce")
         romp.line = ""
         chaseXTween.stop(); chaseYTween.stop()
         chaseXTween.to = Math.max(0, Math.min(cx - romp.spriteSize / 2, romp.width - romp.spriteSize))
@@ -728,7 +746,7 @@ PanelWindow {
                 const dy = ty - (romp.spriteY >= 0 ? romp.spriteY : romp.groundY)
                 const dist = Math.hypot(dx, dy)
                 if (dist < romp.spriteSize * 0.45) {
-                    romp.pose = romp._chaosCfg.chase?.wait ?? "crouch-ready"
+                    romp.pose = romp._chaosCfg.chase?.wait ?? "low-angle-guard"
                     return
                 }
                 if (romp.spriteY < 0) romp.spriteY = romp.groundY
@@ -736,8 +754,8 @@ PanelWindow {
                 const lunge = dist < romp.spriteSize * 2.4 && Math.random() < 0.30
                 const step = lunge ? 1.0 : Math.min(1.0, (110 + Math.random() * 60) / dist)
                 romp.pose = lunge
-                    ? romp._safeFullBodyPose(romp._chaosCfg.chase?.pounce, "pounce-point")
-                    : romp._safeFullBodyPose(romp._chaosCfg.chase?.stalk, "prowl-low")
+                    ? romp._safeFullBodyPose(romp._chaosCfg.chase?.pounce, "jump-bounce")
+                    : romp._safeFullBodyPose(romp._chaosCfg.chase?.stalk, "tiptoe-sneak")
                 chaseXTween.duration = lunge ? 260 : 340
                 chaseYTween.duration = chaseXTween.duration
                 chaseXTween.to = Math.max(0, Math.min(romp.spriteX + dx * step, romp.width - romp.spriteSize))
@@ -873,7 +891,8 @@ PanelWindow {
         id: rompBubble
         readonly property int pad: 10
         visible: opacity > 0
-        opacity: romp.line.length > 0 && romp.phase !== "leave" ? 1 : 0
+        // The flyby lives entirely in "leave", so it keeps its bubble mid-flight
+        opacity: romp.line.length > 0 && (romp.phase !== "leave" || romp.planType === "flyby") ? 1 : 0
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

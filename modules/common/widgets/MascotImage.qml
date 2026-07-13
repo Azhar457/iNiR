@@ -25,6 +25,7 @@ Image {
     // Coarse group this spot belonged to before finer keys existed; old
     // configs (visibility and pose overrides) keep applying through it.
     property string fallbackSurface: ""
+    property string rotatingPose: ""
     readonly property bool active: previewMode || ((Config.options?.mascot?.enable ?? false) && surfaceEnabled)
     readonly property bool surfaceEnabled: {
         if (surface.length === 0) return true
@@ -46,7 +47,7 @@ Image {
                 if (legacy.length > 0) return legacy
             }
         }
-        return pose
+        return rotatingPose.length > 0 ? rotatingPose : pose
     }
     readonly property string effectivePose: previewMode
         ? requestedPose
@@ -73,6 +74,19 @@ Image {
     cache: true
     smooth: false
     mipmap: false
+
+    function refreshSurfacePose() {
+        if (previewMode || !MascotCatalog.ready) return
+        rotatingPose = MascotCatalog.pickSurfacePose(surface, fallbackSurface, pose)
+    }
+
+    Component.onCompleted: refreshSurfacePose()
+    onSurfaceChanged: Qt.callLater(refreshSurfacePose)
+    onFallbackSurfaceChanged: Qt.callLater(refreshSurfacePose)
+    Connections {
+        target: MascotCatalog
+        function onRevisionChanged() { root.refreshSurfacePose() }
+    }
 
     // Animated overrides: AnimatedImage can't be the root (sourceSize is
     // read-only there), so it fills the statically-sized Image instead.

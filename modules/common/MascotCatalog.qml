@@ -22,7 +22,10 @@ Singleton {
     property var contextualOcclusionPoses: []
     property var fullBodyReplacements: ({})
     property var surfaceDefaults: ({})
+    property var surfacePools: ({})
     property bool ready: false
+    property int revision: 0
+    property var _surfaceHistory: ({})
     // Per-pose apparent-size correction, derived from the composition tag
     // logged in PROMPTS.md (extreme close-ups read "bigger" than full-body
     // shots at the same box size). Absent = 1.0, no correction.
@@ -73,6 +76,24 @@ Singleton {
         return root.isCompatible(surfacePose) ? surfacePose : "presence-idle-loop"
     }
 
+    function pickSurfacePose(surface, fallbackSurface, preferred) {
+        const key = root.surfacePools[surface] ? surface
+            : root.surfacePools[fallbackSurface] ? fallbackSurface : ""
+        const pool = key.length > 0
+            ? root.surfacePools[key].filter(pose => root.isCompatible(pose))
+            : []
+        if (pool.length === 0)
+            return root.resolvePose(preferred, surface, fallbackSurface)
+
+        const recent = root._surfaceHistory[key] ?? []
+        const fresh = pool.filter(pose => recent.indexOf(pose) === -1)
+        const source = fresh.length > 0 ? fresh : pool
+        const pick = source[Math.floor(Math.random() * source.length)]
+        const nextRecent = recent.concat([pick]).slice(-Math.min(2, Math.max(1, pool.length - 1)))
+        root._surfaceHistory = Object.assign({}, root._surfaceHistory, { [key]: nextRecent })
+        return pick
+    }
+
     FileView {
         path: Quickshell.shellPath("assets/images/mascot/manifest.json")
         watchChanges: true
@@ -89,8 +110,10 @@ Singleton {
                 root.contextualOcclusionPoses = m.contextualOcclusionPoses ?? []
                 root.fullBodyReplacements = m.fullBodyReplacements ?? {}
                 root.surfaceDefaults = m.surfaceDefaults ?? {}
+                root.surfacePools = m.surfacePools ?? {}
                 root.frameScale = m.frameScale ?? {}
                 root.ready = true
+                root.revision++
             } catch (e) {
                 root.ready = false
                 console.warn("[MascotCatalog] manifest load failed:", e)
