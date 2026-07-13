@@ -133,7 +133,33 @@ Singleton {
             obj = obj[keys[i]];
         }
 
-        obj[keys[keys.length - 1]] = convertedValue;
+        const lastKey = keys[keys.length - 1];
+        const isPlainObject = convertedValue !== null && typeof convertedValue === "object" && !Array.isArray(convertedValue);
+        if (isPlainObject && root._isQtObject(obj[lastKey])) {
+            root._assignObjectInto(obj[lastKey], convertedValue);
+        } else {
+            obj[lastKey] = convertedValue;
+        }
+    }
+
+    function _isQtObject(v) {
+        // QObjects always expose objectName; plain JS objects/arrays don't
+        return v !== null && typeof v === "object" && v.objectName !== undefined;
+    }
+
+    // The engine rejects wholesale QJSValue → JsonObject* assignment, so
+    // object payloads aimed at schema-backed sections land key by key.
+    function _assignObjectInto(target, value) {
+        const ks = Object.keys(value);
+        for (let i = 0; i < ks.length; ++i) {
+            const k = ks[i];
+            const v = value[k];
+            if (v !== null && typeof v === "object" && !Array.isArray(v) && root._isQtObject(target[k])) {
+                root._assignObjectInto(target[k], v);
+            } else {
+                target[k] = v;
+            }
+        }
     }
 
     function setNestedValue(nestedKey, value) {
@@ -197,12 +223,44 @@ Singleton {
         // Skip extra mascot instance paths — same reason
         if (keys.length >= 3 && keys[0] === "background" && keys[1] === "widgets" && keys[2] === "mascotInstances") return;
         let obj = root._jsonMirror;
+        let schema = root.options;
         for (let i = 0; i < keys.length - 1; i++) {
             if (!obj[keys[i]] || typeof obj[keys[i]] !== "object")
                 obj[keys[i]] = {};
             obj = obj[keys[i]];
+            schema = (schema !== null && typeof schema === "object") ? schema[keys[i]] : undefined;
         }
-        obj[keys[keys.length - 1]] = value;
+
+        // The mirror is what reaches disk, and _assignObjectInto only merges an
+        // object payload into schema-backed sections. Replacing wholesale here
+        // would drop the keys the payload omitted from the file while they stay
+        // alive in memory — the setting looks applied and comes back changed on
+        // the next start. Mirror the same decision, on the same nodes.
+        const lastKey = keys[keys.length - 1];
+        const isPlainObject = value !== null && typeof value === "object" && !Array.isArray(value);
+        if (isPlainObject && root._isQtObject(schema?.[lastKey])) {
+            if (!obj[lastKey] || typeof obj[lastKey] !== "object" || Array.isArray(obj[lastKey]))
+                obj[lastKey] = {};
+            root._mergeIntoMirror(obj[lastKey], value, schema[lastKey]);
+        } else {
+            obj[lastKey] = value;
+        }
+    }
+
+    function _mergeIntoMirror(target, value, schemaNode): void {
+        const ks = Object.keys(value);
+        for (let i = 0; i < ks.length; ++i) {
+            const k = ks[i];
+            const v = value[k];
+            const isPlainObject = v !== null && typeof v === "object" && !Array.isArray(v);
+            if (isPlainObject && root._isQtObject(schemaNode?.[k])) {
+                if (!target[k] || typeof target[k] !== "object" || Array.isArray(target[k]))
+                    target[k] = {};
+                root._mergeIntoMirror(target[k], v, schemaNode[k]);
+            } else {
+                target[k] = v;
+            }
+        }
     }
 
     function getNestedValue(nestedKey, fallback) {

@@ -54,6 +54,7 @@ The Kira mascot system, the dashboard hub, three new bar surface styles, a rebui
 - Docs counts and examples refreshed to match the live tree (raw `qs kill` example replaced with the `inir` CLI).
 
 ### Fixed
+- **Config: writing a whole section at once** (what "Reset to defaults" does) could drop the keys the payload left out from `config.json` while keeping them alive in memory — the setting looked applied and came back changed after a restart.
 - Kira no longer appears over fullscreen Niri windows; fullscreen state now follows the live window geometry stream instead of waiting for an imperative refresh.
 - **Bar SIGSEGV when a new PipeWire stream appeared** (#190, e.g. MPD): `playerStreamNode` binding loop replaced with imperative recomputation.
 - **Dark/light choice not persisted through regeneration** (#178, partial): the explicit toggle is written before `switchwall.sh` and honored from `colors.json`; presets whose JSON omits `darkmode` still infer.
