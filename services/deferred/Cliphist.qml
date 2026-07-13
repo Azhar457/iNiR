@@ -59,16 +59,22 @@ Singleton {
         return match ? match[1] : ""
     }
 
+    // Entries captured before the watcher started stripping browser markup still
+    // hold it, and they outlive the fix — so clean on the way out as well. The
+    // filter forwards anything that is not a browser text/html payload byte for
+    // byte, which keeps images intact.
+    readonly property string _markupFilter: `'${Directories.scriptsPath}/clipboard-store.py' --filter`
+
     function decodeCommand(entry): string {
         if (root.cliphistBinary.includes("cliphist")) {
             const id = root.entryId(entry)
             if (id.length > 0)
-                return `${root.cliphistBinary} decode ${id}`
-            return `printf '%s\n' '${StringUtils.shellSingleQuoteEscape(entry)}' | ${root.cliphistBinary} decode`
+                return `${root.cliphistBinary} decode ${id} | ${root._markupFilter}`
+            return `printf '%s\n' '${StringUtils.shellSingleQuoteEscape(entry)}' | ${root.cliphistBinary} decode | ${root._markupFilter}`
         }
 
         const entryNumber = String(entry ?? "").split("\t")[0]
-        return `${root.cliphistBinary} decode ${entryNumber}`
+        return `${root.cliphistBinary} decode ${entryNumber} | ${root._markupFilter}`
     }
 
     function refresh() {
@@ -173,11 +179,23 @@ Singleton {
         id: pinProc
         stdout: StdioCollector {
             onStreamFinished: {
-                const decoded = text.slice(0, root.maxPinLength)
+                // Entries stored before the watcher stripped browser markup still
+                // carry it, and a pin keeps the decoded text forever — so clean it
+                // here too, or pinning an old entry pins the markup with it.
+                const decoded = root.stripBrowserMarkup(text).slice(0, root.maxPinLength)
                 if (decoded.length === 0 || root.isPinned(decoded)) return
                 Config.setNestedValue("clipboard.pinned", [decoded, ...root.pinned])
             }
         }
+    }
+
+    // Browsers prepend this to a text/html payload; it is the only reliable sign
+    // that the content is markup rather than text that happens to contain tags.
+    function stripBrowserMarkup(text): string {
+        const str = String(text ?? "")
+        if (!str.startsWith('<meta http-equiv="content-type" content="text/html'))
+            return str
+        return StringUtils.stripHtmlTags(str.replace(/^<meta[^>]*>/, "")).trim()
     }
 
     Connections {
