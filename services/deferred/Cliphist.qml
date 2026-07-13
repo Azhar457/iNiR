@@ -165,6 +165,33 @@ Singleton {
         return root.pinned.indexOf(text) !== -1
     }
 
+    // Pins hold decoded text; list entries are "id<TAB>preview". Decoding every
+    // visible row to compare would mean a subprocess per item, so match on the
+    // preview instead.
+    //
+    // cliphist truncates that preview at 100 characters. Below the cut the
+    // preview IS the whole entry, so it has to match exactly: prefix-matching a
+    // short preview would mark every entry that merely starts a longer pin as
+    // pinned. At or above the cut the preview is a prefix of the pinned text.
+    readonly property int previewLimit: 100
+
+    function _previewKey(text): string {
+        return String(text ?? "").replace(/\s+/g, " ").trim()
+    }
+
+    function pinnedTextFor(entry): string {
+        const raw = String(entry ?? "")
+        const tab = raw.indexOf("\t")
+        if (tab < 0) return ""
+        const preview = root._previewKey(raw.slice(tab + 1))
+        if (preview.length === 0) return ""
+        const truncated = preview.length >= root.previewLimit
+        return root.pinned.find(p => {
+            const key = root._previewKey(p)
+            return truncated ? key.startsWith(preview) : key === preview
+        }) ?? ""
+    }
+
     function unpin(text): void {
         Config.setNestedValue("clipboard.pinned", root.pinned.filter(p => p !== text))
     }

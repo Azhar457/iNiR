@@ -29,7 +29,6 @@ Scope {
     property string lastCopiedEntry: ""
     property bool showClearConfirmation: false
     property bool navigateMode: false
-    property double _lastPanelCopyTime: 0
 
     function formatCliphistName(entry) {
         let cleaned = StringUtils.cleanCliphistEntry(entry)
@@ -106,6 +105,20 @@ Scope {
         }
     }
 
+    // The panel window is hidden, not destroyed, on close, so the ListView keeps
+    // the contentY it was left at. Rebuilding the model does not reset it, and
+    // neither does `currentIndex = 0`: on open the model is rebuilt while the
+    // window is still invisible, so the view never lays out and the highlight
+    // never scrolls anything. positionViewAtBeginning() forces the layout, which
+    // is the only thing that actually moves contentY back to the top.
+    property bool pendingViewReset: false
+
+    function resetViewPosition(): void {
+        if (typeof listView === "undefined" || !listView) return
+        listView.currentIndex = filteredClipboardModel.count > 0 ? 0 : -1
+        listView.positionViewAtBeginning()
+    }
+
     function jumpToNextMatch() {
         const count = filteredClipboardModel.count
         if (count === 0) return
@@ -149,13 +162,11 @@ Scope {
     function copyEntry(entry) {
         _log("[ClipboardPanel] copyEntry", String(entry).slice(0, 120))
         lastCopiedEntry = entry
-        _lastPanelCopyTime = Date.now()
         Cliphist.copy(entry)
         GlobalStates.clipboardOpen = false
     }
 
     function copyPinnedText(text) {
-        _lastPanelCopyTime = Date.now()
         Quickshell.clipboardText = text
         GlobalStates.clipboardOpen = false
     }
@@ -196,8 +207,14 @@ Scope {
         target: Cliphist
         function onEntriesChanged() {
             // Only update model if clipboard panel is open to avoid lag
-            if (GlobalStates.clipboardOpen) {
-                root.updateFilteredModel()
+            if (!GlobalStates.clipboardOpen) return
+            root.updateFilteredModel()
+            // The refresh started on open is asynchronous: these entries land
+            // once the panel is already on screen and rebuild the model under
+            // it, undoing the reset done at open time.
+            if (root.pendingViewReset) {
+                root.pendingViewReset = false
+                Qt.callLater(root.resetViewPosition)
             }
         }
         function onPinnedChanged() {
@@ -215,14 +232,25 @@ Scope {
         target: GlobalStates
         function onClipboardOpenChanged() {
             if (GlobalStates.clipboardOpen) {
-                // Skip refresh if we just copied from the panel (keeps original order)
-                if (Date.now() - root._lastPanelCopyTime > 5000)
-                    root.refresh()
+                // Always refresh on open. Skipping it for 5s after a panel copy
+                // was meant to keep the list from reordering under the cursor,
+                // but cliphist has already moved that entry to the top by then:
+                // the panel just showed a stale order, so the entry you copied
+                // last appeared wherever it used to be instead of first — and a
+                // copy made outside the panel in that window did not show up.
+                root.refresh()
                 root.searchText = ""
                 root.navigateMode = false
                 root.showClearConfirmation = false
+                root.pendingViewReset = true
                 root.updateFilteredModel()
-                Qt.callLater(() => searchField.forceActiveFocus())
+                root.resetViewPosition()
+                Qt.callLater(() => {
+                    searchField.forceActiveFocus()
+                    root.resetViewPosition()
+                })
+            } else {
+                root.pendingViewReset = false
             }
         }
     }
@@ -336,7 +364,10 @@ Scope {
                     // Toggle pin on the current entry
                     const row = currentRow()
                     if (row !== null) {
-                        if (row.isPin) Cliphist.unpin(row.pinText)
+                        const pinnedAs = row.isPin ? row.pinText : Cliphist.pinnedTextFor(row.rawEntry)
+                        // Ctrl+P is a toggle: on an entry that is already pinned it
+                        // used to pin it again instead of unpinning.
+                        if (pinnedAs.length > 0) Cliphist.unpin(pinnedAs)
                         else if (Cliphist.isPinnable(row.rawEntry)) Cliphist.pinEntry(row.rawEntry)
                         event.accepted = true
                     }
@@ -723,7 +754,18 @@ Scope {
                                         execute: () => root.deleteEntry(raw),
                                     },
                                 ]
-                                if (Cliphist.isPinnable(raw)) {
+                                // An already-pinned entry offered "Pin" again and gave
+                                // no sign it was pinned. Offer the action that is
+                                // actually available, and badge the row.
+                                const pinnedAs = Cliphist.pinnedTextFor(raw)
+                                if (pinnedAs.length > 0) {
+                                    actions.splice(1, 0, {
+                                        name: "Unpin",
+                                        label: Translation.tr("Unpin"),
+                                        materialIcon: "keep_off",
+                                        execute: () => Cliphist.unpin(pinnedAs),
+                                    })
+                                } else if (Cliphist.isPinnable(raw)) {
                                     actions.splice(1, 0, {
                                         name: "Pin",
                                         label: Translation.tr("Pin"),
@@ -737,6 +779,7 @@ Scope {
                                     name: name,
                                     clickActionName: Translation.tr("Copy"),
                                     type: type,
+                                    materialSymbol: pinnedAs.length > 0 ? "keep" : "",
                                     execute: () => {
                                         root.copyEntry(raw)
                                     },
