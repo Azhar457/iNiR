@@ -11,6 +11,7 @@ import QtQuick.Effects
 import QtMultimedia
 import Qt5Compat.GraphicalEffects as GE
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import "root:modules/common/functions/md5.js" as MD5
@@ -35,12 +36,50 @@ Variants {
         anchors.right: true
 
         color: "transparent"
+
+        // A fullscreen window covers the backdrop completely, so keeping this
+        // screen-sized surface mapped underneath it only holds its swapchain and
+        // wallpaper textures on the GPU for nothing. Background.qml already
+        // unmaps itself here; the backdrop sits below it and must follow, or the
+        // wallpaper stack stays resident for the whole game. Same config key —
+        // the backdrop IS the background as far as the user is concerned.
+        property list<HyprlandWorkspace> workspacesForMonitor: CompositorService.isHyprland
+            ? Hyprland.workspaces.values.filter(workspace => workspace.monitor && workspace.monitor.name === backdropWindow.modelData?.name)
+            : []
+        property bool hasFullscreenWindow: {
+            if (CompositorService.isHyprland) {
+                return workspacesForMonitor.some(workspace => workspace.active
+                    && workspace.toplevels.values.some(window => window.wayland?.fullscreen))
+            }
+            if (CompositorService.isNiri) {
+                return GameMode.hasFullscreenOnOutput(backdropWindow.modelData?.name ?? "")
+            }
+            return false
+        }
+        // Do NOT gate this on NiriService.inOverview to reclaim its swapchain: the
+        // surface maps a frame or two after the overview event lands, and Niri's
+        // zoom animation is already running by then. It flashes. Tried and
+        // reverted 2026-07-12 — the ~50 MB of GPU is not worth an artifact in an
+        // interaction users hit every day.
         visible: !GameMode.shouldHidePanels
+            && (GlobalStates.screenLocked
+                || !hasFullscreenWindow
+                || !(Config.options?.background?.hideWhenFullscreen ?? false))
 
         // Material ii backdrop config (independent)
         readonly property var iiBackdrop: Config.options?.background?.backdrop ?? {}
 
         readonly property int backdropBlurRadius: iiBackdrop.blurRadius ?? 32
+
+        // The backdrop is a blurred wallpaper, so decoding the source at native
+        // screen resolution buys detail the blur immediately destroys — and the
+        // crossfader holds two of them. Halve the decoded size whenever a blur is
+        // actually applied; fall back to full resolution when the user turned the
+        // blur off, because then the backdrop IS the sharp image.
+        readonly property real backdropSourceScale: backdropBlurRadius > 0 ? 0.5 : 1.0
+        readonly property size backdropSourceSize: Qt.size(
+            Math.round((screen?.width ?? 1920) * backdropSourceScale),
+            Math.round((screen?.height ?? 1080) * backdropSourceScale))
         readonly property int thumbnailBlurStrength: Config.options?.background?.effects?.thumbnailBlurStrength ?? 50
         readonly property bool enableAnimatedBlur: iiBackdrop.enableAnimatedBlur ?? false
         readonly property int backdropDim: iiBackdrop.dim ?? 35
@@ -153,9 +192,9 @@ Variants {
                         : "file://" + backdropWindow.effectiveWallpaperPath)
                     : ""
                 visible: !backdropWindow.useAuroraStyle && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
-                // Constrain decoded size to monitor resolution — no need for native
-                // resolution since backdrop is always screen-sized with blur.
-                sourceSize: Qt.size(backdropWindow.screen?.width ?? 1920, backdropWindow.screen?.height ?? 1080)
+                // Constrain decoded size — no need for native resolution since the
+                // backdrop is always screen-sized, and halved again while blurred.
+                sourceSize: backdropWindow.backdropSourceSize
             }
 
             MultiEffect {
@@ -270,11 +309,16 @@ Variants {
                 smooth: true
                 mipmap: false
                 visible: backdropWindow.useAuroraStyle && status === Image.Ready && !backdropWindow.wallpaperIsGif && !backdropWindow.wallpaperIsVideo
-                // Constrain decoded size — aurora is heavily blurred, screen res is enough.
-                sourceSize.width: backdropWindow.screen?.width ?? 1920
-                sourceSize.height: backdropWindow.screen?.height ?? 1080
+                // Aurora is always blurred at full strength, so both the decoded
+                // source and the effect's own texture run at half resolution. The
+                // blur radius is halved with them (blurMax counts source pixels),
+                // which keeps the visible blur identical.
+                sourceSize.width: Math.round((backdropWindow.screen?.width ?? 1920) * 0.5)
+                sourceSize.height: Math.round((backdropWindow.screen?.height ?? 1080) * 0.5)
 
                 layer.enabled: Appearance.effectsEnabled
+                layer.smooth: true
+                layer.textureSize: Qt.size(Math.round(width * 0.5), Math.round(height * 0.5))
                 layer.effect: MultiEffect {
                     source: auroraWallpaper
                     anchors.fill: source
@@ -282,7 +326,7 @@ Variants {
                         ? Appearance.angel.blurSaturation
                         : (Appearance.effectsEnabled ? 0.2 : 0)
                     blurEnabled: Appearance.effectsEnabled
-                    blurMax: 64
+                    blurMax: 32
                     blur: Appearance.effectsEnabled ? 1 : 0
                 }
             }

@@ -132,7 +132,7 @@ Item { // Player instance - Old style design
             id: auroraWallpaper
             anchors.fill: parent
             visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere
-            source: Wallpapers.effectiveWallpaperUrl
+            source: visible ? Wallpapers.effectiveWallpaperUrl : ""
             fillMode: Image.PreserveAspectCrop
             cache: true
             sourceSize.width: background.width

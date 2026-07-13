@@ -15,7 +15,9 @@ ContentPage {
     settingsPageIndex: 0
     settingsPageName: Translation.tr("Quick")
     readonly property bool isOverlayPage: GlobalStates.settingsOverlayOpen ?? false
-    property bool quickGridLoaded: !isOverlayPage
+    // Deferred in both modes: entering the page must never kick off directory-wide
+    // thumbnail generation. The user asks for the grid explicitly.
+    property bool quickGridLoaded: false
 
     Component.onCompleted: {
         Wallpapers.load()
@@ -477,7 +479,7 @@ ContentPage {
 
                             StyledText {
                                 Layout.fillWidth: true
-                                text: Translation.tr("Quick wallpaper thumbnails are deferred in overlay mode.")
+                                text: Translation.tr("Quick wallpaper thumbnails are loaded on demand.")
                                 wrapMode: Text.WordWrap
                                 color: Appearance.colors.colOnLayer0
                                 font.pixelSize: Appearance.font.pixelSize.normal
@@ -512,7 +514,7 @@ ContentPage {
                             id: quickGridLoader
                             anchors.fill: parent
                             active: root.quickGridLoaded
-                            asynchronous: root.isOverlayPage
+                            asynchronous: true
 
                             sourceComponent: Rectangle {
                                 id: gridCard

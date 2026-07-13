@@ -67,8 +67,8 @@ Scope {
             if (CompositorService.isHyprland) {
                 return activeWorkspaceWithFullscreen != undefined
             }
-            if (CompositorService.isNiri && NiriService.windows) {
-                return NiriService.windows.some(w => w.is_focused && w.is_fullscreen)
+            if (CompositorService.isNiri) {
+                return GameMode.hasFullscreenOnOutput(modelData?.name ?? "")
             }
             return false
         }
@@ -845,8 +845,14 @@ Scope {
                     anchors.fill: parent
                     visible: !blurLoader.active && !bgRoot.backdropActive && !bgRoot.wallpaperIsGif && !bgRoot.wallpaperIsVideo
                     opacity: (wallpaperContainer.showInternalStaticWallpaper ? 1 : 0) * bgRoot._awwwRevealOpacity
-                    layer.enabled: !wallpaperContainer.showInternalStaticWallpaper
-                    source: (bgRoot.wallpaperSafetyTriggered || bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif) ? "" : bgRoot.wallpaperPath
+                    // The backdrop replaces the desktop wallpaper outright: this
+                    // crossfader is hidden, blurAlwaysLoader is off, and the lock
+                    // blur cannot see it either (an invisible child never reaches
+                    // the ShaderEffectSource texture). Nothing consumes it, so drop
+                    // the source instead of holding a decoded fullscreen bitmap —
+                    // an Image with a source decodes whether or not it is visible.
+                    layer.enabled: !wallpaperContainer.showInternalStaticWallpaper && !bgRoot.backdropActive
+                    source: (bgRoot.wallpaperSafetyTriggered || bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif || bgRoot.backdropActive) ? "" : bgRoot.wallpaperPath
                     // NEVER use crossfader transitions when awww is active — awww handles all transitions.
                     // When parallax is on, the crossfader fades out to reveal awww's native transition.
                     enableTransitions: !AwwwBackend.active
@@ -892,7 +898,7 @@ Scope {
                     cache: false
                     playing: visible && bgRoot.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive
                     asynchronous: true
-                    source: (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsGif) ? "" : bgRoot.wallpaperPathRaw
+                    source: (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsGif || bgRoot.backdropActive) ? "" : bgRoot.wallpaperPathRaw
                     fillMode: Image.PreserveAspectCrop
                     // No sourceSize for GIFs - let Qt handle native size for performance
 
@@ -917,7 +923,7 @@ Scope {
                         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                     }
                     source: {
-                        if (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsVideo) return "";
+                        if (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsVideo || bgRoot.backdropActive) return "";
                         const path = bgRoot.wallpaperPathRaw;
                         if (!path) return "";
                         return path.startsWith("file://") ? path : ("file://" + path);

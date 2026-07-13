@@ -575,11 +575,17 @@ Item {
                 color: PillTheme.tileBg
                 clip: true
                 Image {
+                    id: pillTrackArt
                     anchors.fill: parent
                     source: MprisController.activePlayer?.trackArtUrl ?? ""
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     visible: status === Image.Ready
+                    // Cover art arrives at whatever resolution the player ships
+                    // (commonly 1000x1000+, i.e. ~4 MB decoded) and this tile is
+                    // 26px. Decode at 2x the drawn size instead of native.
+                    sourceSize.width: Math.max(1, Math.round(pillTrackArt.width * 2))
+                    sourceSize.height: Math.max(1, Math.round(pillTrackArt.height * 2))
                 }
             }
             Column {

@@ -109,6 +109,11 @@ Rectangle {
         smooth: true
         mipmap: true
         visible: false
+        // Players ship cover art at native resolution (often 1000px+). Bound the
+        // decode to what is actually drawn, or every track change allocates the
+        // full bitmap twice (live + outgoing snapshot).
+        sourceSize.width: Math.max(1, Math.round(root.width * 2))
+        sourceSize.height: Math.max(1, Math.round(root.height * 2))
         onStatusChanged: root._startTransitionWhenReady()
         layer.enabled: root.effectEnabled
         layer.effect: MultiEffect {
@@ -132,6 +137,8 @@ Rectangle {
         smooth: true
         mipmap: true
         visible: false
+        sourceSize.width: Math.max(1, Math.round(root.width * 2))
+        sourceSize.height: Math.max(1, Math.round(root.height * 2))
         layer.enabled: root.effectEnabled
         layer.effect: MultiEffect {
             blurEnabled: root.blurEnabled

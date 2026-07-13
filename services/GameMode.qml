@@ -153,6 +153,27 @@ Singleton {
             && Math.abs(winSize[1] - output.logical.height) <= tolerance
     }
     
+    // True when a fullscreen window covers the given output (empty name = any
+    // output). Callers gating a per-monitor surface MUST pass their output
+    // name: a game on one monitor must not unmap the wallpaper on the other.
+    // Goes through isWindowFullscreen because reading `window.is_fullscreen`
+    // directly never fires on current niri (see above) — it silently reports
+    // "no fullscreen" forever.
+    function hasFullscreenOnOutput(outputName: string): bool {
+        if (!CompositorService.isNiri) return false
+        const windows = NiriService.windows
+        if (!Array.isArray(windows)) return false
+
+        for (let i = 0; i < windows.length; i++) {
+            const w = windows[i]
+            const ws = NiriService.workspaces?.[w.workspace_id]
+            if (!(ws?.is_active ?? false)) continue
+            if (outputName.length > 0 && ws.output !== outputName) continue
+            if (isWindowFullscreen(w)) return true
+        }
+        return false
+    }
+
     // Check if ANY window across all workspaces is fullscreen
     function checkAnyFullscreenWindow(): bool {
         if (!CompositorService.isNiri) return false

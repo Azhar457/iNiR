@@ -57,6 +57,7 @@ The Kira mascot system, the dashboard hub, three new bar surface styles, a rebui
 
 ### Fixed
 - **AI tool calls never completed**, on any provider: a large tool result (the shell config, for instance) exceeded the kernel's per-argument limit and killed the request with no visible error; the follow-up request that carries the tool result back to the model was silently dropped; and the OpenAI format — Ollama, OpenRouter, Groq, Mistral — never parsed `tool_calls`, so the model's function call was discarded mid-stream. Search is no longer offered on providers that do not implement it.
+- **The wallpaper stayed on screen under fullscreen windows on niri**: the check read a window property niri no longer exposes, so `background.hideWhenFullscreen` never actually fired and the wallpaper, the backdrop and their GPU textures stayed resident under every fullscreen game. A fullscreen window now also hides the wallpaper only on the monitor it covers, instead of every monitor.
 - **Config: writing a whole section at once** (what "Reset to defaults" does) could drop the keys the payload left out from `config.json` while keeping them alive in memory — the setting looked applied and came back changed after a restart.
 - Kira no longer appears over fullscreen Niri windows; fullscreen state now follows the live window geometry stream instead of waiting for an imperative refresh.
 - **Bar SIGSEGV when a new PipeWire stream appeared** (#190, e.g. MPD): `playerStreamNode` binding loop replaced with imperative recomputation.

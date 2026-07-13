@@ -35,6 +35,16 @@ Rectangle {
     // Parent widgets should bind this to their powerActive property.
     property bool powerActive: WidgetPowerManager.widgetsActive
 
+    // The glass behind a widget is a screen-sized crop of the wallpaper, and
+    // every WidgetSurface keeps its own copy plus its own screen-sized FBO (see
+    // the note on blurredWallpaper below). At full resolution that was ~15 MB of
+    // GPU memory per widget for something the user only ever sees through a
+    // 64px blur. Rendering the source and its layer at half resolution is
+    // invisible once blurred — provided the blur radius is scaled by the same
+    // factor (blurMax is measured in source pixels, so a half-size texture would
+    // otherwise blur twice as wide) and the layer is smoothed on upscale.
+    readonly property real _blurScale: 0.5
+
     readonly property bool _angel: Appearance.angelEverywhere
     readonly property bool _aurora: Appearance.auroraEverywhere && !Appearance.inirEverywhere
     readonly property bool _inir: Appearance.inirEverywhere
@@ -166,11 +176,14 @@ Rectangle {
         fillMode: Image.PreserveAspectCrop
         cache: true
         asynchronous: true
-        sourceSize.width: root.screenWidth
-        sourceSize.height: root.screenHeight
+        sourceSize.width: Math.round(root.screenWidth * root._blurScale)
+        sourceSize.height: Math.round(root.screenHeight * root._blurScale)
 
         // OPTIMIZATION: Release FBO when widget is not visible or power is off
         layer.enabled: root._glass && !Appearance.compositorBlurActive && root.visible && root.powerActive
+        layer.smooth: true
+        layer.textureSize: Qt.size(Math.round(width * root._blurScale),
+                                   Math.round(height * root._blurScale))
         layer.effect: MultiEffect {
             source: blurredWallpaper
             anchors.fill: source
@@ -178,7 +191,7 @@ Rectangle {
                 ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
                 : 0.15
             blurEnabled: true
-            blurMax: 64
+            blurMax: Math.max(1, Math.round(64 * root._blurScale))
             blur: root._angel ? Appearance.angel.blurIntensity
                 : root._islandGlass ? (Config.options?.appearance?.island?.glassBlur ?? 1)
                 : 0.8

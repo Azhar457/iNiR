@@ -91,7 +91,7 @@ Item {
             width: Quickshell.screens[0]?.width ?? 1920
             height: Quickshell.screens[0]?.height ?? 1080
             visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere && !Appearance.zzzEverywhere
-            source: Wallpapers.effectiveWallpaperUrl
+            source: visible ? Wallpapers.effectiveWallpaperUrl : ""
             fillMode: Image.PreserveAspectCrop
             cache: true
             sourceSize.width: Quickshell.screens[0]?.width ?? 1920

@@ -327,7 +327,9 @@ Scope {
                                     width: dockRoot.screen?.width ?? 1920
                                     height: dockRoot.screen?.height ?? 1080
                                     visible: dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere && !root.zzzEverywhere && !dockVisualBackground.gameModeMinimal
-                                    source: dockVisualBackground.wallpaperUrl
+                                    // An invisible Image still decodes its source: gate it too,
+                                    // or non-aurora users keep a screen-sized wallpaper resident.
+                                    source: visible ? dockVisualBackground.wallpaperUrl : ""
                                     fillMode: Image.PreserveAspectCrop
                                     cache: true
                                     sourceSize.width: dockRoot.screen?.width ?? 1920

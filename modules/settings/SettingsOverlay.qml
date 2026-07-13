@@ -795,9 +795,6 @@ Scope {
                                         onTextChanged: {
                                             root.overlaySearchText = text;
                                             if (text.length > 0) {
-                                                // Search-only page preload is armed by
-                                                // overlayPagesStack's own onOverlaySearchTextChanged
-                                                // handler — no need to duplicate that here.
                                                 searchDebounceTimer.restart();
                                             } else {
                                                 // Clear immediately for clean exit morph (no debounce)
@@ -1436,66 +1433,14 @@ Scope {
                                 id: overlayPagesStack
                                 anchors { top: overlayPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
 
-                                property var visitedPages: ({})   // search-forced-alive pages (transient)
-                                property int preloadIndex: 0
-                                property bool preloadRequested: false
                                 property int keepRadius: 1        // current ± keepRadius stay loaded
 
-                                // A page is active if it's inside the retention window around the
-                                // current page, or search forced it alive. Direct predicate instead
-                                // of a warm-all preloader timer: the old timer kept instantiating
-                                // EVERY page on a tick regardless of window, racing the window's own
-                                // unload logic (load, then immediately unload next tick) — that
-                                // thrash was the reported "every tab click lags" stutter.
+                                // Bounded retention: only the current page and its immediate
+                                // neighbours stay instantiated. Search never forces pages alive —
+                                // static index entries navigate to an unloaded page and the
+                                // spotlight retry waits for it to register its controls.
                                 function _pageActive(index) {
-                                    if (index === overlayCurrentPage) return true
-                                    if (Math.abs(index - overlayCurrentPage) <= keepRadius) return true
-                                    return visitedPages[index] === true
-                                }
-
-                                Connections {
-                                    target: root
-                                    function onSettingsOpenChanged() {
-                                        if (root.settingsOpen) {
-                                            if (root.overlaySearchText.length > 0 && !overlayPagesStack.preloadRequested) {
-                                                overlayPagesStack.preloadRequested = true
-                                                overlaySearchPreloadTimer.start()
-                                            }
-                                        } else {
-                                            overlayPagesStack.visitedPages = ({})
-                                            overlayPagesStack.preloadRequested = false
-                                            overlayPagesStack.preloadIndex = 0
-                                        }
-                                    }
-                                }
-
-                                // Search-only preload: only while the user is actively searching,
-                                // walk pages into visitedPages so a search-result jump lands
-                                // instantly. Never runs otherwise.
-                                Timer {
-                                    id: overlaySearchPreloadTimer
-                                    interval: 140
-                                    repeat: true
-                                    onTriggered: {
-                                        if (root.overlaySearchText.length === 0) { stop(); return }
-                                        if (overlayPagesStack.preloadIndex >= overlayPages.length) { stop(); return }
-                                        const i = overlayPagesStack.preloadIndex
-                                        if (!overlayPagesStack.visitedPages[i]) {
-                                            overlayPagesStack.visitedPages[i] = true
-                                            overlayPagesStack.visitedPagesChanged()
-                                        }
-                                        overlayPagesStack.preloadIndex++
-                                    }
-                                }
-
-                                Connections {
-                                    target: root
-                                    function onOverlaySearchTextChanged() {
-                                        if (root.overlaySearchText.length > 0 && !overlayPagesStack.preloadRequested) {
-                                            overlayPagesStack.preloadRequested = true
-                                            overlaySearchPreloadTimer.start()
-                                        }
-                                    }
+                                    return Math.abs(index - overlayCurrentPage) <= keepRadius
                                 }
 
                                 Repeater {

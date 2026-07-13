@@ -223,7 +223,7 @@ MouseArea { // Notification group area
             id: notifBlurredWallpaper
             anchors.fill: parent
             visible: root.popup && Appearance.auroraEverywhere && !Appearance.inirEverywhere
-            source: Wallpapers.effectiveWallpaperUrl
+            source: visible ? Wallpapers.effectiveWallpaperUrl : ""
             fillMode: Image.PreserveAspectCrop
             cache: true
             sourceSize.width: 480

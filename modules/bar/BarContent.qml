@@ -735,7 +735,10 @@ Item { // Bar content region
             width: root.screen?.width ?? 1920
             height: root.screen?.height ?? 1080
             visible: barBackground.auroraEverywhere && !root.inirEverywhere && !root.zzzEverywhere && !barBackground.gameModeMinimal && !Appearance.compositorBlurActive && root.barAppearance === "classic"
-            source: Appearance.compositorBlurActive ? "" : root.wallpaperUrl
+            // An invisible Image still downloads and decodes its source, so gating
+            // only `visible` on the style left a screen-sized wallpaper bitmap
+            // resident for every user NOT on aurora. Gate the source too.
+            source: visible ? root.wallpaperUrl : ""
             fillMode: Image.PreserveAspectCrop
             cache: true
             sourceSize.width: root.screen?.width ?? 1920

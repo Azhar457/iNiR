@@ -38,6 +38,16 @@ Item {
         && (Config.options?.appearance?.zzz?.glass ?? true)
     // Lets a host dial the wash down without forking the component.
     property real strength: 1.0
+
+    // Every host of this wash (bar, dock, every ZzzPanelBackdrop) keeps its OWN
+    // screen-sized copy of the wallpaper plus its own screen-sized blur FBO. The
+    // wallpaper is then blurred at full strength (blur: 1, blurMax: 64), so none
+    // of that resolution survives to the screen — it is decoded, uploaded and
+    // blurred away. Render the wash at half resolution instead: the blur radius
+    // is halved with it (blurMax counts source pixels, so a half-size texture
+    // would otherwise blur twice as wide) and the layer is smoothed on upscale,
+    // which makes the result identical while quartering the memory per host.
+    readonly property real _washScale: 0.5
     // When true the wash IS the host's background: opaque blurred wallpaper with a
     // chrome veil on top, so the desktop genuinely shows through. The host must
     // then paint its own fill transparent. When false it stays a translucent wash
@@ -115,8 +125,8 @@ Item {
         fillMode: Image.PreserveAspectCrop
         cache: true
         asynchronous: true
-        sourceSize.width: Math.max(1, Math.round(root.screenWidth))
-        sourceSize.height: Math.max(1, Math.round(root.screenHeight))
+        sourceSize.width: Math.max(1, Math.round(root.screenWidth * root._washScale))
+        sourceSize.height: Math.max(1, Math.round(root.screenHeight * root._washScale))
 
         layer.enabled: root.glassEnabled && root.visible
         layer.effect: MultiEffect {

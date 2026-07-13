@@ -145,6 +145,21 @@ Scope {
 
             anchors { top: true; left: true; right: true; bottom: true }
 
+            // This is a screen-sized surface on the Overlay layer — it has to be,
+            // so the pill can morph and drop its surfaces anywhere on screen. But
+            // a mapped fullscreen overlay forces the compositor to composite every
+            // frame, which costs a fullscreen game its direct-scanout path (games
+            // dropped to ~20 FPS under the pill bar and only under the pill bar).
+            // Hiding the pill ITEM was not enough: the surface stayed mapped and
+            // kept the compositor composing. Unmap the window itself whenever a
+            // fullscreen window covers this monitor — toasts and OSD clear fsHide
+            // on their own, so they still reach the screen over a game.
+            //
+            // Stay mapped while the pill is still fading out (it hides on an
+            // opacity Behavior, not instantly), or unmapping would cut the fade
+            // into a pop. Mapping back is immediate, so the fade-in is intact.
+            visible: modal || !pill.fsHide || pill.opacity > 0.01
+
             // While a fullscreen window owns this monitor the pill is hidden and
             // must not eat pointer input either.
             mask: modal ? fullRegion : (pill.fsHide ? emptyOverlay : pillRegion)

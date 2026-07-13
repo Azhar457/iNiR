@@ -454,13 +454,7 @@ ApplicationWindow {
 
     Shortcut {
         sequences: [StandardKey.Find]
-        onActivated: {
-            settingsSearchField.forceActiveFocus()
-            if (!pagesStack.preloadRequested) {
-                pagesStack.preloadRequested = true
-                preloadTimer.start()
-            }
-        }
+        onActivated: settingsSearchField.forceActiveFocus()
     }
 
     ZzzDiagonalPattern {
@@ -701,10 +695,6 @@ ApplicationWindow {
                             text: root.settingsSearchText
                             onTextChanged: {
                                 root.settingsSearchText = text;
-                                if (text.length > 0 && !pagesStack.preloadRequested) {
-                                    pagesStack.preloadRequested = true
-                                    preloadTimer.start()
-                                }
                                 root.recomputeSettingsSearchResults();
                             }
 
@@ -1300,22 +1290,14 @@ ApplicationWindow {
                     id: pagesStack
                     anchors { top: windowPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
 
-                    // search-forced-alive pages (transient) + the retention window
-                    // predicate. Direct predicate instead of a warm-all preloader
-                    // timer: the old timer kept instantiating EVERY page on a 100ms
-                    // tick regardless of what was actually visible, so opening
-                    // Settings and clicking around competed with ~18 pages' worth of
-                    // Loader instantiation for the first couple of seconds — that
-                    // was the reported "every tab click lags" stutter.
-                    property var visitedPages: ({})
-                    property int preloadIndex: 0
-                    property bool preloadRequested: false
+                    // Bounded retention: only the current page and its immediate
+                    // neighbours stay instantiated. Search never forces pages alive —
+                    // static index entries navigate to an unloaded page and the
+                    // spotlight retry waits for it to register its controls.
                     property int keepRadius: 1
 
                     function _pageActive(index) {
-                        if (index === root.currentPage) return true
-                        if (Math.abs(index - root.currentPage) <= keepRadius) return true
-                        return visitedPages[index] === true
+                        return Math.abs(index - root.currentPage) <= keepRadius
                     }
 
                     // Direction of the last nav change, so pages slide in from the
@@ -1328,19 +1310,6 @@ ApplicationWindow {
                         function onCurrentPageChanged() {
                             pagesStack.navDirection = root.currentPage >= pagesStack.lastPage ? 1 : -1
                             pagesStack.lastPage = root.currentPage
-                        }
-                    }
-
-                    // Search-only preload: only while the user is actively searching,
-                    // walk pages into visitedPages so a search-result jump lands
-                    // instantly. Never runs otherwise.
-                    Connections {
-                        target: root
-                        function onSettingsSearchTextChanged() {
-                            if (root.settingsSearchText.length > 0 && !pagesStack.preloadRequested) {
-                                pagesStack.preloadRequested = true
-                                preloadTimer.start()
-                            }
                         }
                     }
 
@@ -1370,24 +1339,6 @@ ApplicationWindow {
                         }
                     }
 
-                    // Preload pages for search only — never runs while the user is
-                    // just navigating the nav rail.
-                    Timer {
-                        id: preloadTimer
-                        interval: 140
-                        repeat: true
-                        onTriggered: {
-                            if (root.settingsSearchText.length === 0) { stop(); return }
-                            if (pagesStack.preloadIndex >= root.pages.length) { stop(); return }
-                            const i = pagesStack.preloadIndex
-                            if (!pagesStack.visitedPages[i]) {
-                                pagesStack.visitedPages[i] = true
-                                pagesStack.visitedPagesChanged()
-                            }
-                            pagesStack.preloadIndex++
-                        }
-                    }
-
                     Repeater {
                         id: windowPagesRepeater
                         model: root.pages.length
@@ -1395,12 +1346,9 @@ ApplicationWindow {
                             id: pageLoader
                             required property int index
                             anchors.fill: parent
-                            // Windowed retention: current ± keepRadius stay loaded, plus
-                            // any page search forced alive.
                             active: Config.ready && pagesStack._pageActive(index)
                             // Current page loads sync (instant content, async incubation of
-                            // huge pages is far slower); the eager preloader warms the rest,
-                            // so the sync hitch only exists in the first ~2s after launch.
+                            // huge pages is far slower); neighbours load async.
                             asynchronous: index !== root.currentPage
                             source: root.pages[index].component
                             visible: index === root.currentPage && status === Loader.Ready
