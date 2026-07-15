@@ -25,6 +25,33 @@ For low-level debugging, `inir ipc <target> <function>` still works.
 
 Everything iNiR can do, exposed for your scripting pleasure.
 
+### dev
+
+Development navigation for loading lazy surfaces and internal views without
+automating pointer or keyboard input. Destination identifiers are stable and
+returned as JSON by `list`.
+
+| Function | Description |
+|----------|-------------|
+| `list` | Return the destination inventory as JSON |
+| `open` | Open a destination by semantic identifier |
+| `close` | Close development-opened surfaces and clear the request |
+| `current` | Return the current destination or `closed` |
+
+```bash
+inir dev list | jq -r '.[].id'
+inir dev open sidebar-left/anime-schedule
+inir dev close
+inir dev audit
+```
+
+`inir dev audit` visits every safe destination for the active panel family,
+closes it again, and reports new QML warnings or errors against the destination
+that triggered them. Destructive actions such as locking, recording, power
+commands, and wallpaper mutation are excluded.
+
+---
+
 ### overview
 
 Toggle the workspace overview panel. The one with all your windows looking tiny and organized.

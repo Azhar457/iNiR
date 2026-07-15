@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: f2c20b99fe334588
-# Targets: 57
+# IPC.md hash: f9d3d6f34cd14328
+# Targets: 58
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="AI chat service. Multi-provider (Gemini, OpenAI, Mistral) with tool support."
@@ -22,6 +22,7 @@ declare -gA IPC_TARGET_DESC=(
   [coverflowSelector]="Wallpaper coverflow (3D card) picker."
   [customWidgets]="Custom widget management. Create, list, reload, and remove user-installed widgets from \`~/.config/inir/widgets/\`."
   [dashboard]="Centered welcome hub panel (ii family): greeting, clock, notifications, media, weather, calendar, todo, system usage and GitHub activity."
+  [dev]="Development navigation for loading lazy surfaces and internal views without automating pointer or keyboard input. Destination identifiers are stable and returned as JSON by \`list\`."
   [gamemode]="Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly."
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
   [keyboard]="Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info."
@@ -82,6 +83,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [coverflowSelector]="shared"
   [customWidgets]="waffle"
   [dashboard]="shared"
+  [dev]="shared"
   [gamemode]="shared"
   [globalActions]="shared"
   [keyboard]="shared"
@@ -126,7 +128,7 @@ declare -gA IPC_TARGET_FAMILY=(
 )
 
 declare -gA IPC_TARGET_FUNCTIONS=(
-  [ai]="ensureInitialized diagnose run runGet"
+  [ai]="ensureInitialized diagnose refreshCatalog catalog providers run runGet"
   [altSwitcher]="open close toggle next previous"
   [appCatalog]="refresh search install list"
   [audio]="volumeUp volumeDown mute playEvent micMute"
@@ -142,6 +144,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [coverflowSelector]="toggle open close"
   [customWidgets]="reload list create remove"
   [dashboard]="toggle close open"
+  [dev]="list open close current"
   [gamemode]="toggle activate deactivate status"
   [globalActions]="run runWithArgs list search open"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
@@ -188,6 +191,9 @@ declare -gA IPC_TARGET_FUNCTIONS=(
 declare -gA IPC_FUNCTION_DESC=(
   ["ai:ensureInitialized"]="Force-load models and API keys"
   ["ai:diagnose"]="Dump current AI state (model, keys, config) as JSON"
+  ["ai:refreshCatalog"]=""
+  ["ai:catalog"]=""
+  ["ai:providers"]=""
   ["ai:run"]="Send a message or \`/command\` to the AI chat"
   ["ai:runGet"]="Run AI command and return the last response"
   ["altSwitcher:open"]="Open switcher"
@@ -243,6 +249,10 @@ declare -gA IPC_FUNCTION_DESC=(
   ["dashboard:toggle"]="Open/close dashboard"
   ["dashboard:close"]="Close dashboard"
   ["dashboard:open"]="Open dashboard"
+  ["dev:list"]="Return the destination inventory as JSON"
+  ["dev:open"]="Open a destination by semantic identifier"
+  ["dev:close"]="Close development-opened surfaces and clear the request"
+  ["dev:current"]="Return the current destination or \`closed\`"
   ["gamemode:toggle"]="Toggle gamemode on/off"
   ["gamemode:activate"]="Force enable gamemode"
   ["gamemode:deactivate"]="Force disable gamemode"
@@ -391,6 +401,7 @@ declare -gA IPC_FUNCTION_DESC=(
 )
 
 declare -gA IPC_FUNCTION_ARGS=(
+  ["ai:catalog"]="<query>"
   ["ai:run"]="<inputText>"
   ["ai:runGet"]="<inputText>"
   ["appCatalog:search"]="<query>"
@@ -404,6 +415,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["background:clockDebugSetLayout"]="<x> <y> <quickControlsOpen>"
   ["customWidgets:create"]="<name>"
   ["customWidgets:remove"]="<widgetId>"
+  ["dev:open"]="<destination>"
   ["globalActions:run"]="<actionId>"
   ["globalActions:runWithArgs"]="<actionId> <args>"
   ["globalActions:list"]="<category>"
@@ -451,8 +463,8 @@ bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=()
 IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 

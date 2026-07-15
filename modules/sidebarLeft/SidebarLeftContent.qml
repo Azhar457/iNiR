@@ -97,8 +97,25 @@ Item {
         swipeView.currentItem?.forceActiveFocus()
     }
 
-    implicitHeight: sidebarLeftBackground.implicitHeight
-    implicitWidth: sidebarLeftBackground.implicitWidth
+    function applyDevDestination(): void {
+        if (!DevNavigation.currentDestination.startsWith("sidebar-left/")) return
+        const view = DevNavigation.currentDestination.substring("sidebar-left/".length)
+        const iconByView = {
+            "widgets": "widgets", "ai": "neurology", "translator": "translate",
+            "anime": "bookmark_heart", "anime-schedule": "calendar_month",
+            "wallhaven": "collections", "news": "newspaper", "ytmusic": "library_music",
+            "tools": "build", "software": "store"
+        }
+        const icon = iconByView[view] ?? ""
+        const index = root.tabButtonList.findIndex(tab => tab.icon === icon)
+        if (index >= 0) swipeView.currentIndex = index
+    }
+
+    Component.onCompleted: root.applyDevDestination()
+    Connections {
+        target: DevNavigation
+        function onCurrentDestinationChanged(): void { root.applyDevDestination() }
+    }
 
     StyledRectangularShadow {
         target: sidebarLeftBackground
@@ -108,8 +125,6 @@ Item {
         id: sidebarLeftBackground
 
         anchors.fill: parent
-        implicitHeight: parent.height - Appearance.sizes.hyprlandGapsOut * 2
-        implicitWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut * 2
         property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
         // Resolve one owner for the complete surface. Explicit Ricelin islands
         // override the global worldview; otherwise the selected global style owns it.

@@ -16,6 +16,7 @@ Singleton {
 
     readonly property var pages: [
         {
+            key: "quick",
             name: Translation.tr("Quick"),
             icon: "instant_mix",
             desc: Translation.tr("Wallpaper & quick tweaks"),
@@ -23,6 +24,7 @@ Singleton {
             component: "modules/settings/QuickConfig.qml"
         },
         {
+            key: "system",
             name: Translation.tr("System"),
             icon: "browse",
             desc: Translation.tr("Audio, battery, language, lock"),
@@ -30,6 +32,7 @@ Singleton {
             component: "modules/settings/GeneralConfig.qml"
         },
         {
+            key: "bar",
             name: Translation.tr("Bar"),
             icon: "toast",
             iconRotation: 180,
@@ -38,6 +41,7 @@ Singleton {
             component: "modules/settings/BarConfig.qml"
         },
         {
+            key: "wallpaper",
             name: Translation.tr("Wallpaper"),
             icon: "texture",
             desc: Translation.tr("Backend, effects, backdrop"),
@@ -45,6 +49,7 @@ Singleton {
             component: "modules/settings/BackgroundConfig.qml"
         },
         {
+            key: "themes",
             name: Translation.tr("Themes"),
             icon: "palette",
             desc: Translation.tr("Colors, fonts, styles"),
@@ -52,6 +57,7 @@ Singleton {
             component: "modules/settings/ThemesConfig.qml"
         },
         {
+            key: "panels",
             name: Translation.tr("Panels"),
             icon: "bottom_app_bar",
             desc: Translation.tr("Dock, sidebars, overview"),
@@ -59,6 +65,7 @@ Singleton {
             component: "modules/settings/InterfaceConfig.qml"
         },
         {
+            key: "tools",
             name: Translation.tr("Tools"),
             icon: "build",
             desc: Translation.tr("Recording, crosshair, overlays"),
@@ -66,6 +73,7 @@ Singleton {
             component: "modules/settings/ToolsConfig.qml"
         },
         {
+            key: "services",
             name: Translation.tr("Services"),
             icon: "settings",
             desc: Translation.tr("Weather, music, calendar, apps"),
@@ -73,6 +81,7 @@ Singleton {
             component: "modules/settings/ServicesConfig.qml"
         },
         {
+            key: "advanced",
             name: Translation.tr("Advanced"),
             icon: "construction",
             desc: Translation.tr("Color gen, performance"),
@@ -80,6 +89,7 @@ Singleton {
             component: "modules/settings/AdvancedConfig.qml"
         },
         {
+            key: "shortcuts",
             name: Translation.tr("Shortcuts"),
             icon: "keyboard",
             desc: Translation.tr("Keybindings reference"),
@@ -87,6 +97,7 @@ Singleton {
             component: "modules/settings/CheatsheetConfig.qml"
         },
         {
+            key: "modules",
             name: Translation.tr("Modules"),
             icon: "extension",
             desc: Translation.tr("Enable/disable panels, scaling"),
@@ -94,6 +105,7 @@ Singleton {
             component: "modules/settings/ModulesConfig.qml"
         },
         {
+            key: "waffle-style",
             name: Translation.tr("Waffle Style"),
             icon: "window",
             desc: Translation.tr("Win11-style taskbar"),
@@ -101,6 +113,7 @@ Singleton {
             component: "modules/settings/WaffleConfig.qml"
         },
         {
+            key: "compositor",
             name: Translation.tr("Compositor"),
             icon: "desktop_windows",
             desc: Translation.tr("Display, input, layout"),
@@ -108,6 +121,7 @@ Singleton {
             component: "modules/settings/NiriConfig.qml"
         },
         {
+            key: "about",
             name: Translation.tr("About"),
             icon: "info",
             desc: Translation.tr("Version & credits"),
@@ -115,6 +129,7 @@ Singleton {
             component: "modules/settings/About.qml"
         },
         {
+            key: "widgets",
             name: Translation.tr("Widgets"),
             icon: "widgets",
             desc: Translation.tr("Clock, weather, media, custom"),
@@ -122,6 +137,7 @@ Singleton {
             component: "modules/settings/DesktopWidgetsConfig.qml"
         },
         {
+            key: "monitors",
             name: Translation.tr("Monitors"),
             icon: "display_settings",
             desc: Translation.tr("Per-monitor shell visibility"),
@@ -129,6 +145,7 @@ Singleton {
             component: "modules/settings/MonitorVisibilityConfig.qml"
         },
         {
+            key: "dashboard",
             name: Translation.tr("Dashboard"),
             icon: "space_dashboard",
             desc: Translation.tr("Welcome hub panel & widgets"),
@@ -136,6 +153,7 @@ Singleton {
             component: "modules/settings/DashboardConfig.qml"
         },
         {
+            key: "autostart",
             name: Translation.tr("Autostart"),
             icon: "rocket_launch",
             desc: Translation.tr("Apps that start with iNiR"),
@@ -143,6 +161,7 @@ Singleton {
             component: "modules/settings/AutostartConfig.qml"
         },
         {
+            key: "workspace-strip",
             name: Translation.tr("Workspace Strip"),
             icon: "view_sidebar",
             desc: Translation.tr("Edge strip for workspace navigation"),
@@ -150,6 +169,7 @@ Singleton {
             component: "modules/settings/WorkspaceStripConfig.qml"
         },
         {
+            key: "mascot",
             name: Translation.tr("Mascot"),
             icon: "pets",
             desc: Translation.tr("Companion behavior, reactions, poses"),
@@ -157,6 +177,7 @@ Singleton {
             component: "modules/settings/MascotConfig.qml"
         },
         {
+            key: "arrange",
             name: Translation.tr("Arrange"),
             icon: "swap_vert",
             desc: Translation.tr("Reorder settings groups and pages"),
@@ -164,6 +185,7 @@ Singleton {
             component: "modules/settings/ArrangeConfig.qml"
         },
         {
+            key: "ricelin",
             name: Translation.tr("Ricelin"),
             icon: "jp:リ",
             desc: Translation.tr("The washi & flame dialect: pill bar, islands, surfaces"),
@@ -171,6 +193,7 @@ Singleton {
             component: "modules/settings/RicelinConfig.qml"
         },
         {
+            key: "dock",
             name: Translation.tr("Dock"),
             icon: "call_to_action",
             desc: Translation.tr("Dock style, position, behavior and indicators"),
@@ -178,6 +201,7 @@ Singleton {
             component: "modules/settings/DockConfig.qml"
         },
         {
+            key: "sidebars",
             name: Translation.tr("Sidebars"),
             icon: "side_navigation",
             desc: Translation.tr("Left and right sidebar content and behavior"),
@@ -185,6 +209,7 @@ Singleton {
             component: "modules/settings/SidebarsConfig.qml"
         },
         {
+            key: "ai",
             name: Translation.tr("AI"),
             icon: "neurology",
             desc: Translation.tr("Providers, models, behavior, voice input"),
@@ -192,6 +217,7 @@ Singleton {
             component: "modules/settings/AiConfig.qml"
         },
         {
+            key: "effects",
             name: Translation.tr("Effects"),
             icon: "blur_on",
             desc: Translation.tr("Blur, glass, motion and rendering policy"),

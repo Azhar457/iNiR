@@ -99,14 +99,13 @@ Item {
     readonly property string activePreviewSource: {
         if (!hasItems || activePath.length === 0 || activeIsDir)
             return ""
+        if (activeKind !== "video" && activeKind !== "gif")
+            return activePath.startsWith("file://") ? activePath : ("file://" + activePath)
         const thumbPath = Wallpapers.getExpectedThumbnailPath(activePath, _lastThumbnailSizeName)
         if (thumbPath.length === 0)
             return ""
         const thumbUrl = thumbPath.startsWith("file://") ? thumbPath : ("file://" + thumbPath)
-        return thumbUrl + (thumbUrl.indexOf("?") >= 0 ? "&" : "?")
-            + "hero=" + encodeURIComponent(activePath)
-            + "&index=" + currentIndex
-            + "&reload=" + _activePreviewReloadToken
+        return thumbUrl
     }
     readonly property string activeColorSource: {
         if (!hasItems || activePath.length === 0 || activeIsDir)
@@ -122,11 +121,7 @@ Item {
         const base = activeColorSource
         if (!hasItems || activePath.length === 0 || activeIsDir || base.length === 0)
             return ""
-        return base + (base.indexOf("?") >= 0 ? "&" : "?")
-            + "coverflowQuant=" + encodeURIComponent(activePath)
-            + "&index=" + currentIndex
-            + "&size=" + _lastThumbnailSizeName
-            + "&reload=" + _activeColorReloadToken
+        return base
     }
     readonly property string activeSubtitle: {
         if (!hasItems) return Translation.tr("No wallpapers in this folder")
@@ -307,6 +302,10 @@ Item {
         onTriggered: root._debouncedQuantizerSource = root.activeQuantizerSource
     }
     onActiveQuantizerSourceChanged: quantizerDebounce.restart()
+    on_ActiveColorReloadTokenChanged: {
+        root._debouncedQuantizerSource = ""
+        quantizerDebounce.restart()
+    }
 
     ColorQuantizer {
         id: quantizer
@@ -913,7 +912,7 @@ Item {
                     property string _heroPendingSource: ""
                     readonly property bool _heroShouldShow: root.hasItems && !root.activeIsDir && root.activePreviewSource.length > 0 && Images.isValidMediaByName(root.activeName)
 
-                    function _crossfadeTo(src) {
+                    function _crossfadeTo(src, forceReload) {
                         if (!_heroShouldShow) {
                             _heroPendingSource = ""
                             heroA.opacity = 0; heroB.opacity = 0
@@ -921,6 +920,16 @@ Item {
                         }
                         _heroPendingSource = src
                         const target = _heroSlotA ? heroB : heroA
+                        if (forceReload === true) {
+                            target.requestedSource = ""
+                            target.source = ""
+                            Qt.callLater(() => {
+                                if (heroClipContent._heroPendingSource !== src) return
+                                target.requestedSource = src
+                                target.source = src
+                            })
+                            return
+                        }
                         if (target.requestedSource === src && target.status === Image.Ready) {
                             _showSlot(target)
                             return
@@ -953,6 +962,9 @@ Item {
                         target: root
                         function onActivePreviewSourceChanged() {
                             heroClipContent._crossfadeTo(root.activePreviewSource)
+                        }
+                        function on_ActivePreviewReloadTokenChanged() {
+                            heroClipContent._crossfadeTo(root.activePreviewSource, true)
                         }
                     }
 

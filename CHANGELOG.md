@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The Kira mascot system, the dashboard hub, three new bar surface styles, a rebuilt YT Music on InnerTube, autostart that reads niri's own startup file, and the ZZZ global style fully shipped across the whole shell.
 
 ### Added
+- **Development navigation IPC**: `inir dev list/open/close/current` exposes stable semantic destinations for lazy shell surfaces and settings pages. `inir dev audit --all-families` visits every safe destination, attributes new QML warnings to the view that triggered them, and restores the original panel family when it finishes.
 - **Meet Kira**, the iNiR mascot: a retro pixel-art cat girl who can live across the shell — or stay completely out of your way. Everything about her is opt-in and off by default; her art pack is a separate ~20 MiB download under `./setup` → Extras. What she actually does when you let her loose is best discovered in Settings › Mascot.
 - **Mascot settings page** (both families): every behavior, reaction, placement and image she uses is yours to configure — curated full-body pose galleries, per-surface picks, custom images and phrases, and a searchable Kira collection that gives all 208 shipped illustrations a visible role without mixing portraits or chibis into the live full-body companion.
 - **Per-spot mascot images, GIFs included**: 17 placement groups (notifications, clipboard, media, todo, calendar, Wi-Fi, start menu, wallpaper selector, boot greeting and more) share a curated full-body collection — animated poses included — and the desktop mascot widget gains quick controls to cycle or shuffle poses right from the edit toolbar.
@@ -59,6 +60,7 @@ The Kira mascot system, the dashboard hub, three new bar surface styles, a rebui
 - Docs counts and examples refreshed to match the live tree (raw `qs kill` example replaced with the `inir` CLI).
 
 ### Fixed
+- Lazy sidebar, settings and wallpaper views now load with typed fallbacks and complete singleton imports; Coverflow no longer treats a corrupt static-image thumbnail as the source image.
 - **KDE's generic paused browser bridge no longer creates a duplicate desktop media card** while Chromium or another browser is already publishing the real playing track.
 - **`inir doctor` no longer reports a valid Niri configuration as broken**: current Niri releases can exit successfully without printing the word “valid”, so the check now trusts the validator's exit status.
 - **Settings no longer forgets where you were when pages unload**: ii and Waffle retain the active page, theme filters and Gowall editor choices independently from their bounded page render cache, including standalone window reopen.

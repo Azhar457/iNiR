@@ -35,6 +35,7 @@ ShellRoot {
     // Force singleton instantiation — startup-critical only
     property var _idleService: Idle
     property var _powerProfilePersistence: PowerProfilePersistence
+    property var _devNavigationService: DevNavigation
 
     // Deferred singletons — initialized after first frame to reduce boot contention
     // Tier 3: T+500ms (display/interaction services)
@@ -71,6 +72,7 @@ ShellRoot {
         root._log("[Boot] Tier 0: startup-critical singletons");
         FirstRunExperience.load();
         ConflictKiller.load();
+        DevNavigation.registerSettingsPages(SettingsPageRegistry.pages);
         // Force MemoryPressureService instantiation for IPC (#164)
         void MemoryPressureService.enabled;
         

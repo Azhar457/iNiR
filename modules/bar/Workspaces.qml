@@ -19,9 +19,14 @@ Item {
     readonly property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(root.QsWindow.window?.screen) : null
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
     readonly property var wsConfig: Config.options?.bar?.workspaces ?? {}
+    readonly property bool showAppIcons: wsConfig?.showAppIcons ?? true
+    readonly property bool alwaysShowNumbers: wsConfig?.alwaysShowNumbers ?? false
+    readonly property bool useNerdFont: wsConfig?.useNerdFont ?? false
+    readonly property bool monochromeIcons: wsConfig?.monochromeIcons ?? true
+    readonly property var numberMap: wsConfig?.numberMap ?? []
     
     // Per-monitor: each bar shows workspaces for its own output (Niri)
-    readonly property bool perMonitor: (wsConfig.perMonitor ?? true) && CompositorService.isNiri
+    readonly property bool perMonitor: (wsConfig?.perMonitor ?? true) && (CompositorService.isNiri ?? false)
     readonly property string screenName: root.QsWindow.window?.screen?.name ?? ""
     readonly property var outputWorkspaces: {
         if (!CompositorService.isNiri) return []
@@ -57,7 +62,7 @@ Item {
     }
 
     // Scroll behavior: "workspace" = switch workspaces, "column" = cycle windows left/right in same workspace
-    readonly property string scrollBehavior: wsConfig.scrollBehavior ?? "workspace"
+    readonly property string scrollBehavior: wsConfig?.scrollBehavior ?? "workspace"
     readonly property bool columnMode: scrollBehavior === "column" && CompositorService.isNiri
 
     readonly property int currentWorkspaceNumber: {
@@ -72,14 +77,14 @@ Item {
     }
     
     // Dynamic workspace count: use actual workspaces from Niri, or fixed count
-    readonly property bool dynamicCount: (wsConfig.dynamicCount ?? true) && CompositorService.isNiri
+    readonly property bool dynamicCount: (wsConfig?.dynamicCount ?? true) && (CompositorService.isNiri ?? false)
     readonly property int actualWorkspaceCount: {
-        if (!dynamicCount) return wsConfig.shown ?? 10
+        if (!dynamicCount) return wsConfig?.shown ?? 10
         // Niri: count workspaces on this output
         return Math.max(root.outputWorkspaces.length, 1)
     }
     readonly property int workspacesShown: actualWorkspaceCount
-    readonly property bool wrapAround: wsConfig.wrapAround ?? true
+    readonly property bool wrapAround: wsConfig?.wrapAround ?? true
     
     readonly property int workspaceGroup: Math.floor((currentWorkspaceNumber - 1) / root.workspacesShown)
     property list<bool> workspaceOccupied: []
@@ -209,7 +214,7 @@ Item {
         acceptedButtons: Qt.BackButton
         
         property int wheelStepCounter: 0
-        readonly property int wheelStepsRequired: Math.max(1, wsConfig.scrollSteps ?? 3)
+        readonly property int wheelStepsRequired: Math.max(1, wsConfig?.scrollSteps ?? 3)
         
         onPressed: (event) => {
             if (event.button === Qt.BackButton && CompositorService.isHyprland) {
@@ -226,7 +231,7 @@ Item {
             let delta = deltaX !== 0 ? deltaX : -deltaY
             if (delta === 0) return
             
-            if (wsConfig.invertScroll ?? false) delta = -delta
+            if (wsConfig?.invertScroll ?? false) delta = -delta
             const direction = delta > 0 ? 1 : -1
 
             if (CompositorService.isNiri) {
@@ -442,8 +447,8 @@ Item {
 
                     StyledText { // Workspace number text
                         opacity: root.showNumbers
-                            || ((wsConfig.alwaysShowNumbers && (!wsConfig.showAppIcons || !workspaceButtonBackground.biggestWindow || root.showNumbers))
-                            || (root.showNumbers && !wsConfig.showAppIcons)
+                            || ((root.alwaysShowNumbers && (!root.showAppIcons || !workspaceButtonBackground.biggestWindow || root.showNumbers))
+                            || (root.showNumbers && !root.showAppIcons)
                             )  ? 1 : 0
                         z: 3
 
@@ -452,15 +457,15 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         font {
                             pixelSize: Appearance.font.pixelSize.small - ((text.length - 1) * (text !== "10") * 2)
-                            family: wsConfig.useNerdFont ? Appearance.font.family.iconNerd : defaultFont
+                            family: root.useNerdFont ? (Appearance.font.family.iconNerd ?? "") : (defaultFont ?? "")
                         }
                         text: {
                             if (CompositorService.isNiri && workspaceButtonBackground.niriWorkspace) {
                                 const niriWs = workspaceButtonBackground.niriWorkspace;
-                                const mapped = wsConfig.numberMap?.[niriWs.idx - 1];
-                                return niriWs.name || mapped || niriWs.idx.toString();
+                                const mapped = root.numberMap?.[niriWs.idx - 1];
+                                return niriWs.name || mapped || niriWs.idx?.toString() || "";
                             }
-                            return wsConfig.numberMap?.[button.workspaceValue - 1] || button.workspaceValue
+                            return root.numberMap?.[button.workspaceValue - 1] || button.workspaceValue?.toString() || ""
                         }
                         elide: Text.ElideRight
                         color: (currentWorkspaceNumber == button.workspaceValue) ?
@@ -478,9 +483,9 @@ Item {
                     }
                     Rectangle { // Dot instead of ws number
                         id: wsDot
-                        opacity: (wsConfig.alwaysShowNumbers
+                        opacity: (root.alwaysShowNumbers
                             || root.showNumbers
-                            || (wsConfig.showAppIcons && workspaceButtonBackground.biggestWindow)
+                            || (root.showAppIcons && workspaceButtonBackground.biggestWindow)
                             ) ? 0 : 1
                         visible: opacity > 0
                         anchors.centerIn: parent
@@ -504,21 +509,21 @@ Item {
                         anchors.centerIn: parent
                         width: workspaceButtonWidth
                         height: workspaceButtonWidth
-                        opacity: !wsConfig.showAppIcons ? 0 :
-                            (workspaceButtonBackground.biggestWindow && !root.showNumbers && wsConfig.showAppIcons) ? 
+                        opacity: !root.showAppIcons ? 0 :
+                            (workspaceButtonBackground.biggestWindow && !root.showNumbers && root.showAppIcons) ?
                             1 : workspaceButtonBackground.biggestWindow ? workspaceIconOpacityShrinked : 0
                             visible: opacity > 0
                         IconImage {
                             id: mainAppIcon
                             anchors.bottom: parent.bottom
                             anchors.right: parent.right
-                            anchors.bottomMargin: (!root.showNumbers && wsConfig.showAppIcons) ? 
+                            anchors.bottomMargin: (!root.showNumbers && root.showAppIcons) ?
                                 (workspaceButtonWidth - workspaceIconSize) / 2 : workspaceIconMarginShrinked
-                            anchors.rightMargin: (!root.showNumbers && wsConfig.showAppIcons) ? 
+                            anchors.rightMargin: (!root.showNumbers && root.showAppIcons) ?
                                 (workspaceButtonWidth - workspaceIconSize) / 2 : workspaceIconMarginShrinked
 
                             source: workspaceButtonBackground.mainAppIconSource
-                            implicitSize: (!root.showNumbers && wsConfig.showAppIcons) ? workspaceIconSize : workspaceIconSizeShrinked
+                            implicitSize: (!root.showNumbers && root.showAppIcons) ? workspaceIconSize : workspaceIconSizeShrinked
 
                             Behavior on opacity {
                                 animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -535,7 +540,7 @@ Item {
                         }
 
                         Loader {
-                            active: wsConfig.monochromeIcons
+                            active: root.monochromeIcons
                             anchors.fill: mainAppIcon
                             sourceComponent: Item {
                                 Desaturate {
@@ -710,7 +715,7 @@ Item {
                         }
 
                         Loader {
-                            active: wsConfig.monochromeIcons
+                            active: root.monochromeIcons
                             anchors.fill: columnAppIcon
                             sourceComponent: Item {
                                 Desaturate {

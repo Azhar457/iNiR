@@ -384,6 +384,18 @@ Scope {
         }
     }
 
+    function applyDevDestination(): void {
+        if (!DevNavigation.currentDestination.startsWith("settings/")) return
+        const key = DevNavigation.currentDestination.substring("settings/".length)
+        const index = root.overlayPages.findIndex(page => page.key === key)
+        if (index >= 0) root.overlayCurrentPage = index
+    }
+
+    Connections {
+        target: DevNavigation
+        function onCurrentDestinationChanged(): void { root.applyDevDestination() }
+    }
+
     IpcHandler {
         target: "settingsNav"
         function page(index: int): void {

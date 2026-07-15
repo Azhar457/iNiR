@@ -86,6 +86,7 @@ services/                     # 61 top-level runtime singletons (+ services/defe
 ├── Weather.qml               # Weather polling + privacy-aware location
 ├── Bluetooth.qml             # BlueZ device management
 ├── Translation.qml           # i18n string lookup
+├── DevNavigation.qml         # Session-only semantic UI navigation + dev IPC
 └── [more services]
 
 scripts/                      # Shell/fish/python helpers (26 top-level entries)
@@ -141,6 +142,7 @@ docs/                         # User documentation (28 files)
 | `Appearance` | 488+ files | All ii module visuals |
 | `Translation` | 350+ files | All i18n strings |
 | `GlobalStates` | 160+ files | Panel visibility state |
+| `DevNavigation` | shell + navigable surfaces | Development-only semantic UI traversal |
 | `Looks` | waffle modules | Waffle visual tokens |
 | `NiriService` | compositor modules | Niri IPC, workspaces, windows |
 | `Audio` | medium | PipeWire volume, mute, per-app mixer |
@@ -156,6 +158,10 @@ These are **stability boundaries** — prefer add-only changes, verify all depen
 Handlers registered via `IpcHandler { target: "name" }` in QML.
 
 Called externally: `inir <target> <function> [args]`
+
+The always-instantiated `dev` target provides session-only semantic navigation
+for lazy UI. `inir dev audit --all-families` uses that inventory to instantiate
+safe destinations, inspect fresh logs, and restore the original panel family.
 
 All functions must declare return types (`string`, `int`, `bool`, `real`, `color`, `void`).
 

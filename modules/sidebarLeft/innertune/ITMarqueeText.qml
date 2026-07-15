@@ -1,3 +1,4 @@
+import qs
 import QtQuick
 import qs.modules.common
 import qs.modules.common.widgets
