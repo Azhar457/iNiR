@@ -25,8 +25,12 @@ Item {
     property bool vertical: false
     property string dockPosition: "bottom"
     property var parentWindow: null
-    readonly property bool pillStyle:   Config.options?.dock?.style === "pill"
-    readonly property bool macosStyle:  Config.options?.dock?.style === "macos"
+    readonly property string surfaceDialect: Appearance.surfaceDialectFor(
+        Config.options?.dock?.style === "island" ? "island" : "")
+    readonly property bool zzzStyle: surfaceDialect === "zzz"
+    readonly property bool inirStyle: surfaceDialect === "inir"
+    readonly property bool pillStyle: Config.options?.dock?.style === "pill" && !zzzStyle
+    readonly property bool macosStyle: Config.options?.dock?.style === "macos" && !zzzStyle
 
     // Propagated hovered index for neighbor magnify in macOS style
     property int macHoveredIndex: -1
@@ -762,8 +766,8 @@ Item {
                         : -(listView.spacing + height) / 2)
                     : (parent.height - height) / 2
 
-                color: Appearance.zzzEverywhere ? Appearance.zzz.tertiary
-                     : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                color: root.zzzStyle ? Appearance.zzz.tertiary
+                     : root.inirStyle ? Appearance.inir.colPrimary
                      : Appearance.colors.colPrimary
                 Behavior on color {
                     enabled: Appearance.animationsEnabled

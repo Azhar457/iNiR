@@ -85,8 +85,12 @@ ContentPage {
             id: themesGroup
 
             property string searchQuery: ""
-            property int selectedTab: 0  // 0=All, 1=Dark, 2=Light
-            property string selectedTag: ""  // Single active tag filter
+            property int selectedTab: Persistent.states?.settings?.themeTab ?? 0  // 0=All, 1=Dark, 2=Light
+            onSelectedTabChanged: if (Persistent.ready && Persistent.states?.settings)
+                Persistent.states.settings.themeTab = selectedTab
+            property string selectedTag: Persistent.states?.settings?.themeTag ?? ""  // Single active tag filter
+            onSelectedTagChanged: if (Persistent.ready && Persistent.states?.settings)
+                Persistent.states.settings.themeTag = selectedTag
             property string activeSavedTheme: ""
 
             function isDarkTheme(preset) {
@@ -1648,12 +1652,9 @@ ContentPage {
                 }
             }
 
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Material keeps the original surfaces. Cards enables rounded card containers everywhere. Aurora enables a wallpaper-tinted glass surface style across panels. Inir uses a TUI-inspired dark theme with accent-colored borders. Angel is the flagship glass style with refined blur, escalonado shadows, and partial accent borders. ZZZ is a Zenless Zone Zero-inspired poster system. Cookie Shapes uses organic Material Expressive silhouettes that morph with interface state.")
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                wrapMode: Text.WordWrap
+            SettingsNote {
+                icon: "palette"
+                text: Translation.tr("Restyles every surface in the shell. Applies instantly.")
             }
 
         }

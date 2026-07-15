@@ -22,6 +22,9 @@ Rectangle {
     property real surfaceBorderWidth: 1
     property real surfaceBorderOpacity: 0.08
     property color surfaceColor: Appearance.colors.colOnLayer0
+    // Auto preserves each global style's native plate. Explicit ink modes
+    // force the opposite plate polarity so the selected ink remains visible.
+    property string colorMode: "auto"
     // The widget's accent identity (usually root.widgetAccent) — gives the plate
     // an actual color seat instead of a neutral wallpaper-luminance scrim.
     property color surfaceAccent: Appearance.colors.colPrimary
@@ -49,14 +52,25 @@ Rectangle {
     readonly property bool _aurora: Appearance.auroraEverywhere && !Appearance.inirEverywhere
     readonly property bool _inir: Appearance.inirEverywhere
     readonly property bool _zzz: Appearance.zzzEverywhere
-    // Ricelin island dialect for every desktop widget at once (opt-in via
-    // background.widgets.style; zzz keeps its plate).
-    readonly property bool _island: !_zzz
+    readonly property bool _cookie: Appearance.cookieEverywhere
+    // Ricelin island dialect is an optional widget skin, but it must not
+    // override a selected global style with its own surface worldview.
+    readonly property bool _island: !root._zzz && !root._cookie && !root._angel
+        && !root._aurora && !root._inir
         && (Config.options?.background?.widgets?.style ?? "panel") === "island"
+    readonly property real _surfaceStrength: Math.max(0, Math.min(1, Number(root.surfaceOpacity) || 0))
+    readonly property bool _backgroundVisible: root._surfaceStrength > 0.001
+    readonly property real _plateAlpha: root._backgroundVisible
+        ? Math.min(0.96, 0.72 + root._surfaceStrength * 0.24) : 0
     readonly property real _islandOpacity: Config.options?.appearance?.island?.opacity ?? 1
-    readonly property bool _islandGlass: _island && root.surfaceUseBlur
+    readonly property bool _islandGlass: _island && root._backgroundVisible && root.surfaceUseBlur
         && (Config.options?.appearance?.island?.glass ?? true) && _islandOpacity < 0.999
-    readonly property bool _glass: (_aurora || _angel || _islandGlass) && Appearance.effectsEnabled && root.surfaceUseBlur
+    // Auto preserves the selected global style; an explicit Widgets override
+    // is allowed to opt any card into the shared wallpaper backend.
+    readonly property bool _glass: root._backgroundVisible
+        && Appearance.blurBackendFor("widgets",
+            Appearance.blurTopology.unsupported) === "wallpaper"
+        && root.surfaceUseBlur
     readonly property string _wallpaperUrl: Wallpapers.effectiveWallpaperUrl
 
     // Wallpaper region brightness behind the widget (0-1; -1 = unknown).
@@ -81,16 +95,44 @@ Rectangle {
     // Mirrors AbstractBackgroundWidget.widgetPlateIsDark — dark theme stays black
     // everywhere; light theme gets a paper plate except over a bright wallpaper
     // region, where a light card would read as glare.
-    readonly property bool _plateIsDark: Appearance.m3colors.darkmode || root._regionBright
+    readonly property bool _plateIsDark: root.colorMode === "light" ? true
+        : root.colorMode === "dark" ? false
+        : Appearance.m3colors.darkmode || root._regionBright
     readonly property color _plate: root._plateIsDark ? root._plateDark : root._plateLight
-    readonly property color _flatFill: ColorUtils.applyAlpha(_plate, Math.min(0.96, 0.72 + surfaceOpacity * 0.24))
+    readonly property color _flatFill: ColorUtils.applyAlpha(root._plate, root._plateAlpha)
+    readonly property color _cookieFillBase: root.colorMode === "auto"
+        ? Appearance.colors.colLayer2 : root._plate
+    readonly property color _cookieFill: root._backgroundVisible
+        ? ColorUtils.applyAlpha(root._cookieFillBase, root._plateAlpha)
+        : "transparent"
+    readonly property color _cookieStrokeBase: root.colorMode === "auto"
+        ? Appearance.cookie.onColor : ColorUtils.contrastColor(root._plate)
+    readonly property string surfaceReport: JSON.stringify({
+        style: root._cookie ? "cookie"
+            : root._zzz ? "zzz"
+            : root._island ? "island"
+            : root._angel ? "angel"
+            : root._aurora ? "aurora"
+            : root._inir ? "inir" : "material",
+        cookie: root._cookie,
+        island: root._island,
+        glass: root._glass,
+        visible: root.visible,
+        backgroundOpacity: root.surfaceOpacity,
+        backgroundVisible: root._backgroundVisible,
+        borderWidth: root.surfaceBorderWidth,
+        borderOpacity: root.surfaceBorderOpacity,
+        radius: root.radius,
+        fill: String(root._cookie ? root._cookieFill : root.color)
+    })
 
     radius: surfaceRadius
     color: _island ? "transparent"
         : _glass ? "transparent"
         : _zzz ? "transparent"
+        : _cookie ? "transparent"
         : _inir ? "transparent"
-        : surfaceOpacity > 0 ? _flatFill : "transparent"
+        : root._backgroundVisible ? _flatFill : "transparent"
     border.width: 0
     border.color: "transparent"
     clip: true
@@ -104,16 +146,32 @@ Rectangle {
         // INDEPENDENTLY, so "border only" (transparent fill + hairline) is
         // reachable like material. Before this, ZzzPlate always filled with
         // paper, so toggling Border read as adding a background plate.
-        fillColor: root.surfaceOpacity > 0
-            ? ColorUtils.applyAlpha(Appearance.zzz.paper, Math.min(1.0, 0.70 + root.surfaceOpacity * 0.30))
+        fillColor: root._backgroundVisible
+            ? ColorUtils.applyAlpha(root.colorMode === "auto" ? Appearance.zzz.paper : root._plate,
+                root._plateAlpha)
             : "transparent"
         // ZZZ hairline is subtle by design (plates separate by FILL, not
         // outlines). Respect the per-widget borderOpacity so the slider works in
         // zzz too, but cap at 0.5 so it never becomes a loud accent border.
-        strokeColor: ColorUtils.applyAlpha(Appearance.zzz.onColor, Math.max(0.06, Math.min(0.5, root.surfaceBorderOpacity * 1.4)))
+        strokeColor: ColorUtils.applyAlpha(Appearance.zzz.onColor,
+            Math.min(0.5, root.surfaceBorderOpacity * 1.4))
         strokeWidth: root.surfaceBorderWidth > 0 ? Appearance.zzz.hairlineThick : 0
         chamfer: Appearance.zzz.cutCorner
         radius: Appearance.zzz.round ? root.radius : 0
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: root._cookie && root.visible
+            && (root.surfaceOpacity > 0
+                || (root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0))
+        sourceComponent: CookieFace {
+            role: "card"
+            radius: root.radius
+            color: root._cookieFill
+            strokeWidth: root.surfaceBorderWidth
+            strokeColor: ColorUtils.applyAlpha(root._cookieStrokeBase, root.surfaceBorderOpacity)
+        }
     }
 
     Behavior on radius {
@@ -138,13 +196,17 @@ Rectangle {
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
-        visible: !root._glass && !root._zzz && !root._island && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0
+        visible: !root._zzz && !root._cookie && !root._island && !root._angel
+            && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0
         border.width: root.surfaceBorderWidth
         border.color: root._inir
             ? ColorUtils.applyAlpha(Appearance.inir.colBorder, root.surfaceBorderOpacity * 3)
-            : ColorUtils.applyAlpha(
-                ColorUtils.ensureReadable(Appearance.colors.colPrimary, root._flatFill, 3),
-                Math.max(0.18, root.surfaceBorderOpacity * 2))
+            : root._aurora
+                ? ColorUtils.applyAlpha(Appearance.aurora.colTooltipBorder,
+                    root.surfaceBorderOpacity)
+                : ColorUtils.applyAlpha(
+                    ColorUtils.ensureReadable(Appearance.colors.colPrimary, root._flatFill, 3),
+                    Math.min(1, root.surfaceBorderOpacity * 2))
     }
 
     // Removed: the ZZZ accent registration tick. Every fix to keep it inside
@@ -152,8 +214,10 @@ Rectangle {
     // desktop widget at once — removed outright per explicit request instead
     // of iterating on its geometry again.
 
-    // Blur layer for aurora/angel
-    layer.enabled: _glass
+    // Blur mask FBO is only useful while the surface can contribute pixels.
+    // Keep the decoded wallpaper cached for instant resume, but release the
+    // per-widget mask and blur targets during fullscreen/GameMode pauses.
+    layer.enabled: root._glass && root.visible && root.powerActive
     layer.effect: GE.OpacityMask {
         maskSource: Rectangle {
             width: root.width
@@ -171,8 +235,8 @@ Rectangle {
         // Don't load/blur when the compositor is already blurring underneath.
         // Each WidgetSurface keeps its own FBO when layer.enabled is true; with
         // many widgets enabled this multiplies fast. See #159.
-        visible: root._glass && !Appearance.compositorBlurActive && status === Image.Ready
-        source: (root._glass && !Appearance.compositorBlurActive) ? root._wallpaperUrl : ""
+        visible: root._glass && status === Image.Ready
+        source: root._glass ? root._wallpaperUrl : ""
         fillMode: Image.PreserveAspectCrop
         cache: true
         asynchronous: true
@@ -180,7 +244,7 @@ Rectangle {
         sourceSize.height: Math.round(root.screenHeight * root._blurScale)
 
         // OPTIMIZATION: Release FBO when widget is not visible or power is off
-        layer.enabled: root._glass && !Appearance.compositorBlurActive && root.visible && root.powerActive
+        layer.enabled: root._glass && root.visible && root.powerActive
         layer.smooth: true
         layer.textureSize: Qt.size(Math.round(width * root._blurScale),
                                    Math.round(height * root._blurScale))
@@ -212,13 +276,17 @@ Rectangle {
     Rectangle {
         id: islandCard
         anchors.fill: parent
-        visible: root._island
+        visible: root._island && (root._backgroundVisible
+            || (root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0))
         radius: root.radius
-        border.width: 1
-        border.color: Appearance.colors.colLayer0Border
+        border.width: root.surfaceBorderWidth
+        border.color: ColorUtils.applyAlpha(Appearance.colors.colLayer0Border,
+            root.surfaceBorderOpacity)
         gradient: Gradient {
-            GradientStop { position: 0.0; color: Qt.alpha(Appearance.colors.colLayer3, root._islandOpacity) }
-            GradientStop { position: 1.0; color: Qt.alpha(Appearance.colors.colLayer1, root._islandOpacity) }
+            GradientStop { position: 0.0; color: Qt.alpha(Appearance.colors.colLayer3,
+                root._islandOpacity * root._plateAlpha) }
+            GradientStop { position: 1.0; color: Qt.alpha(Appearance.colors.colLayer1,
+                root._islandOpacity * root._plateAlpha) }
         }
         Rectangle {
             anchors { top: parent.top; left: parent.left; right: parent.right }
@@ -226,7 +294,7 @@ Rectangle {
             anchors.leftMargin: islandCard.radius * 0.6
             anchors.rightMargin: islandCard.radius * 0.6
             height: 1
-            visible: Config.options?.appearance?.island?.sheen ?? true
+            visible: root._backgroundVisible && (Config.options?.appearance?.island?.sheen ?? true)
             color: Qt.alpha(Appearance.colors.colOnLayer0, 0.07)
         }
     }
@@ -235,20 +303,23 @@ Rectangle {
     Rectangle {
         anchors { top: parent.top; left: parent.left; right: parent.right }
         height: Appearance.angel.insetGlowHeight
-        visible: root._angel
+        visible: root._angel && root._backgroundVisible
         color: Appearance.angel.colInsetGlow
     }
 
     // Partial border — angel only
     AngelPartialBorder {
-        visible: root._angel
+        visible: root._angel && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0
         targetRadius: root.radius
+        borderWidth: Math.max(1, root.surfaceBorderWidth)
+        borderColor: ColorUtils.applyAlpha(Appearance.angel.colBorder,
+            root.surfaceBorderOpacity)
     }
 
     // Inir subtle fill
     Rectangle {
         anchors.fill: parent
-        visible: root._inir && root.surfaceOpacity > 0
+        visible: root._inir && root._backgroundVisible
         radius: root.radius
         color: ColorUtils.applyAlpha(root._plate, Math.min(0.96, 0.72 + root.surfaceOpacity * 0.24))
     }

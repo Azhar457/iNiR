@@ -81,7 +81,7 @@ RippleButton {
     }
 
     // ─── Layout sizing ──────────────────────────────────────────────
-    readonly property real barSize: vertical ? Appearance.sizes.baseVerticalBarWidth : Appearance.sizes.baseBarHeight
+    property real barSize: vertical ? Appearance.sizes.baseVerticalBarWidth : Appearance.sizes.baseBarHeight
     readonly property real buttonSize: barSize - 4
 
     enabled: !isSeparator

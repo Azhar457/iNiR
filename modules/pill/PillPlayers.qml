@@ -39,8 +39,8 @@ Singleton {
 
     readonly property string serviceLabel: has ? root.labelOf(active) : ""
 
-    /** Identity of the current track, so a card can reset its seek state on change. */
-    readonly property string trackKey: has ? (root.labelOf(active) + "|" + title + "|" + artist) : ""
+    /** Semantic identity of the current track, shared by duplicate browser MPRIS providers. */
+    readonly property string trackKey: root.identityFor(active)
 
     function select(p) {
         if (!p)
@@ -55,7 +55,34 @@ Singleton {
      */
     signal announce(var player)
 
-    onTrackKeyChanged: if (root.has && root.trackKey.length > 0) root.announce(root.active)
+    property string _lastAnnouncedKey: ""
+
+    onTrackKeyChanged: announceTimer.restart()
+
+    Timer {
+        id: announceTimer
+        interval: 400
+        onTriggered: {
+            if (!root.has || root.trackKey.length === 0 || root.trackKey === root._lastAnnouncedKey)
+                return;
+            root._lastAnnouncedKey = root.trackKey;
+            root.announce(root.active);
+        }
+    }
+
+    function identityFor(p) {
+        if (!p)
+            return "";
+        const url = String(p.metadata?.["xesam:url"] ?? "").trim().replace(/#.*$/, "");
+        if (url.length > 0)
+            return "url|" + url;
+        const rawTitle = String(p.trackTitle ?? "").trim();
+        if (rawTitle.length === 0)
+            return "";
+        const cleanTitle = root.refineTitle(p, rawTitle).toLowerCase().replace(/\s+/g, " ");
+        const cleanArtist = PillTheme.joinArtists(p.trackArtists, p.trackArtist).toLowerCase().trim().replace(/\s+/g, " ");
+        return "meta|" + cleanTitle + "|" + cleanArtist;
+    }
 
     /**
      * Strip the noise players append to titles (" - YouTube", " | Spotify") so the

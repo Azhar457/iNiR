@@ -60,6 +60,10 @@ Item {
         anchors.top: parent.top
         implicitHeight: 30
         implicitWidth: pillRow.implicitWidth + 20
+        // Follow the host's width so a tight status row can squeeze the pill and
+        // the model name elides. Anchored at its implicit width, it just ran off
+        // the sidebar instead.
+        width: root.width > 0 ? root.width : implicitWidth
         buttonRadius: Appearance.rounding.full
         colBackground: Appearance.colors.colLayer2
         colBackgroundHover: Appearance.colors.colLayer2Hover
@@ -67,7 +71,10 @@ Item {
 
         contentItem: RowLayout {
             id: pillRow
-            anchors.centerIn: parent
+            // fill, not centerIn: the row needs a real width for the name to elide.
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
             spacing: 6
             AiModelIcon {
                 icon: root.currentModel?.icon ?? "spark-symbolic"
@@ -80,6 +87,7 @@ Item {
                 font.weight: Font.Medium
                 color: Appearance.colors.colOnLayer2
                 elide: Text.ElideRight
+                Layout.fillWidth: true
                 Layout.maximumWidth: 180
             }
             MaterialSymbol {

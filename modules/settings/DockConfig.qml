@@ -40,7 +40,7 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Dock style")
-                tooltip: Translation.tr("Panel: classic unified background. Pill: each icon floats in its own capsule. macOS: frosted glass shelf with magnify effect. Island: gradient card with a hairline edge, matching the island bar.")
+                tooltip: Translation.tr("How the dock surface is drawn.")
 
                 ConfigSelectionArray {
                     currentValue: Config.options?.dock?.style ?? "panel"
@@ -53,6 +53,11 @@ ContentPage {
                         { displayName: Translation.tr("macOS"),  icon: "desktop_mac",    value: "macos"  },
                         { displayName: Translation.tr("Island"), icon: "blur_on",        value: "island" }
                     ]
+                }
+
+                SettingsNote {
+                    icon: "dock_to_bottom"
+                    text: Translation.tr("Redraws the dock surface.")
                 }
             }
 
@@ -317,7 +322,7 @@ ContentPage {
                         Config.setNestedValue("dock.keepPreviewOnClick", checked)
                     }
                     StyledToolTip {
-                        text: Translation.tr("Don't close the preview popup when clicking a window thumbnail, so you can navigate between windows")
+                        text: Translation.tr("Keeps the preview open while you click through windows.")
                     }
                 }
             }

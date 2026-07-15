@@ -19,24 +19,27 @@ AbstractBackgroundWidget {
 
     configEntryName: "mediaControls"
     defaultConfig: ({
-        placementStrategy: "leastBusy", playerPreset: "full",
+        placementStrategy: "free", playerPreset: "full",
+        visualizerType: "wave", visualizerPosition: "bottom",
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
-        x: 100, y: 100
+        x: 240, y: 240
     })
 
     readonly property real widgetWidth: Math.round(Appearance.sizes.mediaControlsWidth * scaleFactor)
     readonly property real widgetHeight: Math.round(Appearance.sizes.mediaControlsHeight * scaleFactor)
 
-    // Desktop players skip the per-track album-art scheme (blendedColors) in favor of
-    // the shell's wallpaper palette, but that leaves their on-surface text reading the
-    // raw, near-neutral Appearance.colors token instead of the boosted ink every other
-    // background widget gets via colText. This overrides just the two ink properties
-    // presets actually use for text (colOnLayer0/colSubtext) — everything else presets
-    // read off blendedColors is left undefined here, so `blendedColors?.x ?? Appearance.colors.x`
-    // falls through to the normal token untouched.
+    // Media presets always draw their own card, so their ink must be resolved
+    // against that card rather than against the wallpaper behind the widget.
+    accentBackdrop: Appearance.colors.colLayer0
+    readonly property color mediaSurfaceInk: root.forceLightInk ? root._inkLight
+        : root.forceDarkInk ? root._inkDark
+        : ColorUtils.ensureReadable(
+            ColorUtils.boostInkSaturation(Appearance.colors.colOnLayer0, root.widgetAccent),
+            Appearance.colors.colLayer0, 4.5)
+    readonly property color mediaSurfaceInkMuted: ColorUtils.applyAlpha(root.mediaSurfaceInk, 0.66)
     readonly property QtObject _desktopInkOverride: QtObject {
-        property color colOnLayer0: ColorUtils.boostInkSaturation(Appearance.colors.colOnLayer0, Appearance.m3colors.m3primary)
-        property color colSubtext: ColorUtils.boostInkSaturation(Appearance.colors.colSubtext, Appearance.m3colors.m3primary)
+        property color colOnLayer0: root.mediaSurfaceInk
+        property color colSubtext: root.mediaSurfaceInkMuted
     }
     property real popupRounding: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
     resizableAxes: ({ uniform: "widgetScale" })
@@ -51,7 +54,7 @@ AbstractBackgroundWidget {
     readonly property string vizPosition: Config.getNestedValue("background.widgets.mediaControls.visualizerPosition", "bottom")
 
     editPopoverContent: Component {
-        Column {
+        ColumnLayout {
             spacing: 6
             // Preset selector
             GridLayout {
@@ -134,8 +137,9 @@ AbstractBackgroundWidget {
     implicitWidth: widgetWidth
     implicitHeight: playerColumnLayout.implicitHeight
 
-    readonly property bool visualizerActive: (Config.options?.background?.widgets?.mediaControls?.enable ?? false)
-        && root.visible && MprisController.isPlaying
+    readonly property bool visualizerActive: selectedPreset === "visualizer"
+        && (Config.options?.background?.widgets?.mediaControls?.enable ?? false)
+        && root.visible && root.powerActive && MprisController.isPlaying
 
     CavaProcess {
         id: cavaProcess
@@ -143,13 +147,6 @@ AbstractBackgroundWidget {
     }
 
     property list<real> visualizerPoints: cavaProcess.points
-
-    // Dim factor (0..1)
-    property real dimFactor: {
-        const v = Config.getNestedValue("background.widgets.mediaControls.dim", 0);
-        const n = Number(v);
-        return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
-    }
 
     readonly property point widgetScreenPos: root.mapToItem(null, 0, 0)
     
@@ -202,7 +199,6 @@ AbstractBackgroundWidget {
         id: playerColumnLayout
         anchors.fill: parent
         spacing: -Appearance.sizes.elevationMargin
-        opacity: 1.0 - root.dimFactor * 0.6
 
         Repeater {
             model: ScriptModel {
@@ -235,7 +231,7 @@ AbstractBackgroundWidget {
                         // _desktopInkOverride only defines colOnLayer0/colSubtext, so every
                         // other `?? Appearance.colors.x` fallback still wins.
                         item.blendedColors = root._desktopInkOverride
-                        item.themeSourceColor = Qt.binding(() => Appearance.colors.colPrimary)
+                        item.themeSourceColor = Qt.binding(() => root.widgetAccentVisible)
                         item.visualizerPoints = Qt.binding(() => root.visualizerPoints)
                         item.radius = root.popupRounding
                         item.screenX = Qt.binding(() => root.widgetScreenPos.x)
@@ -253,12 +249,11 @@ AbstractBackgroundWidget {
             implicitWidth: placeholderBackground.implicitWidth + Appearance.sizes.elevationMargin
             implicitHeight: placeholderBackground.implicitHeight + Appearance.sizes.elevationMargin
 
-            Rectangle {
+            PanelSurface {
                 id: placeholderBackground
                 anchors.centerIn: parent
-                color: ColorUtils.applyAlpha(root.colText, 0.10)
-                radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.popupRounding
-                border { width: 1; color: ColorUtils.applyAlpha(root.colText, 0.08) }
+                elevation: 1
+                radiusOverride: root.popupRounding
                 property real padding: 24
                 implicitWidth: placeholderLayout.implicitWidth + padding * 2
                 implicitHeight: placeholderLayout.implicitHeight + padding * 2
@@ -272,13 +267,13 @@ AbstractBackgroundWidget {
                         Layout.alignment: Qt.AlignHCenter
                         implicitSize: 56
                         shape: MaterialShape.Shape.Cookie4Sided
-                        color: ColorUtils.applyAlpha(root.accentPrimary, 0.16)
+                        color: ColorUtils.applyAlpha(root.widgetAccentVisible, 0.16)
 
                         MaterialSymbol {
                             anchors.centerIn: parent
                             text: "music_note"
                             iconSize: 28
-                            color: root.accentPrimary
+                            color: root.widgetAccentVisible
                         }
                     }
 
@@ -287,11 +282,11 @@ AbstractBackgroundWidget {
                         text: Translation.tr("No active player")
                         font.pixelSize: Appearance.font.pixelSize.normal
                         font.weight: Font.Medium
-                        color: root.colText
+                        color: root.mediaSurfaceInk
                     }
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
-                        color: ColorUtils.applyAlpha(root.colText, 0.5)
+                        color: root.mediaSurfaceInkMuted
                         text: Translation.tr("Play something to see controls here")
                         font.pixelSize: Appearance.font.pixelSize.small
                     }

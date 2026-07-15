@@ -448,7 +448,7 @@ Item {
                     color: Appearance.colors.colOnLayer1
                     
                     RotationAnimation on rotation {
-                        running: AnimeService.loading
+                        running: AnimeService.loading && GlobalStates.sidebarLeftOpen
                         from: 0
                         to: 360
                         duration: 1000

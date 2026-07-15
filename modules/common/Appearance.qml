@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.modules.common.functions
 import qs.modules.common.models
 import qs.services
@@ -83,6 +84,13 @@ Singleton {
     // cookieEverywhere - Material Expressive organic silhouettes and state morphing
     readonly property bool cookieEverywhere: globalStyle === "cookie"
     
+    // Explicit surface dialects such as islands/Ricelin own their complete
+    // surface. Otherwise the selected global worldview owns it. Consumers use
+    // this once rather than mixing independent `island && zzz && aurora` flags.
+    function surfaceDialectFor(explicitDialect: string): string {
+        return explicitDialect.length > 0 ? explicitDialect : root.globalStyle
+    }
+
     // Aurora light mode: when aurora + light theme, use ink-colored text for contrast
     // Ink colors are muted dark tones (not pure black) that work well over light/transparent backgrounds
     readonly property bool _auroraLightMode: auroraEverywhere && !(m3colors?.darkmode ?? true)
@@ -96,10 +104,82 @@ Singleton {
     // Master switches for effects and animations
     property bool effectsEnabled: !Config.options?.performance?.lowPower && !_gameModeDisablesEffects
     property bool animationsEnabled: !_gameModeDisablesAnimations && !(Config.options?.performance?.reduceAnimations ?? false)
-    // Set to true when the compositor is already blurring the window surface so
-    // panels can skip their own QML MultiEffect blur (avoids double-blur and FBO cost).
-    // Currently always false on Niri (no compositor blur); Hyprland hook TBD (ref #159).
-    readonly property bool compositorBlurActive: false
+    property bool nativeBlurSupported: false
+
+    Process {
+        id: nativeBlurVersionProbe
+        running: CompositorService?.isNiri ?? false
+        command: ["niri", "--version"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const match = text.match(/(\d+)\.(\d+)/)
+                if (!match) {
+                    root.nativeBlurSupported = false
+                    return
+                }
+                const major = Number(match[1])
+                const minor = Number(match[2])
+                root.nativeBlurSupported = major > 26 || (major === 26 && minor >= 4)
+            }
+        }
+        onExited: exitCode => {
+            if (exitCode !== 0)
+                root.nativeBlurSupported = false
+        }
+    }
+
+    // Niri 26.04+ handles this request through ext-background-effect-v1. Only
+    // surfaces that publish a shape-accurate Region may use this global capability.
+    readonly property bool compositorBlurActive: effectsEnabled
+        && (Config.options?.performance?.compositorBlur ?? true)
+        && (CompositorService?.isNiri ?? false)
+        && root.nativeBlurSupported
+
+    // A surface must name the topology it actually publishes to Niri. This is
+    // stronger than a boolean claim: diagnostics can identify the geometry and
+    // future shapes cannot accidentally inherit compositor eligibility.
+    readonly property var blurTopology: ({
+        unsupported: "unsupported",
+        rectangle: "rectangle",
+        roundedRectangle: "rounded-rectangle",
+        islandsUnion: "islands-union"
+    })
+
+    function blurTopologyExact(topology): bool {
+        // Compatibility for third-party widgets written against the old helper.
+        // Product call sites use the named topology values above.
+        if (typeof topology === "boolean")
+            return topology
+        return topology === root.blurTopology.rectangle
+            || topology === root.blurTopology.roundedRectangle
+            || topology === root.blurTopology.islandsUnion
+    }
+
+    function blurBackendFor(area: string, topology): string {
+        if (!effectsEnabled)
+            return "off"
+        const performance = Config.options?.performance ?? ({})
+        const override = performance.blurAreas?.[area] ?? "inherit"
+        const requested = override !== "inherit" ? override : (performance.blurBackend ?? "auto")
+        const topologyExact = root.blurTopologyExact(topology)
+        if (requested === "off" || requested === "wallpaper")
+            return requested
+        if (requested === "compositor")
+            return compositorBlurActive && topologyExact ? "compositor" : "wallpaper"
+        // Auto is fidelity-first. Native blur is an explicit backend choice,
+        // never a reason to replace a style-owned wallpaper material.
+        if (area === "islands" || area === "waffle")
+            return "wallpaper"
+        if (auroraEverywhere || angelEverywhere)
+            return "wallpaper"
+        if (zzzEverywhere && (Config.options?.appearance?.zzz?.glass ?? true))
+            return "wallpaper"
+        return "off"
+    }
+
+    function useCompositorBlur(area: string, topology): bool {
+        return blurBackendFor(area, topology) === "compositor"
+    }
 
     // Minimal mode: panels become transparent, no backgrounds, reduced visual weight
     // Components should check this to hide backgrounds/shadows during GameMode

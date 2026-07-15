@@ -117,6 +117,8 @@ Item {
                     RippleButton {
                         implicitWidth: 32
                         implicitHeight: 32
+                        cookieMorphing: true
+                        toggled: root.isPlaying
                         buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.full
                         enabled: MprisController.canGoPrevious
                         colBackground: "transparent"

@@ -138,7 +138,10 @@ MouseArea { // Notification group area
 
     StyledRectangularShadow {
         target: background
-        visible: false
+        // Sidebar groups live on their parent surface. Popup notifications are
+        // genuinely elevated and Cookie's short contact shadow makes that
+        // hierarchy explicit without restoring Material's wide ambient haze.
+        visible: root.popup && Appearance.cookieEverywhere && Appearance.effectsEnabled
     }
 
     ZzzPlate {

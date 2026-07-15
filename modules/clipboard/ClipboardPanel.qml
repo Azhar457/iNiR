@@ -15,6 +15,7 @@ import Quickshell.Io
 
 Scope {
     id: root
+    property bool _presentedOpen: false
 
     function _log(...args): void {
         if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
@@ -198,9 +199,23 @@ Scope {
         Cliphist.refresh()
     }
 
-    Component.onCompleted: {
+    function prepareOpen(): void {
         refresh()
+        searchText = ""
+        navigateMode = false
+        showClearConfirmation = false
+        pendingViewReset = true
         updateFilteredModel()
+        resetViewPosition()
+        Qt.callLater(() => {
+            searchField.forceActiveFocus()
+            root.resetViewPosition()
+        })
+    }
+
+    Component.onCompleted: if (GlobalStates.clipboardOpen) {
+        prepareOpen()
+        Qt.callLater(() => { root._presentedOpen = GlobalStates.clipboardOpen })
     }
 
     Connections {
@@ -219,6 +234,7 @@ Scope {
         }
         function onPinnedChanged() {
             if (GlobalStates.clipboardOpen) {
+                Qt.callLater(() => { root._presentedOpen = GlobalStates.clipboardOpen })
                 root.updateFilteredModel()
             }
         }
@@ -238,34 +254,11 @@ Scope {
                 // the panel just showed a stale order, so the entry you copied
                 // last appeared wherever it used to be instead of first — and a
                 // copy made outside the panel in that window did not show up.
-                root.refresh()
-                root.searchText = ""
-                root.navigateMode = false
-                root.showClearConfirmation = false
-                root.pendingViewReset = true
-                root.updateFilteredModel()
-                root.resetViewPosition()
-                Qt.callLater(() => {
-                    searchField.forceActiveFocus()
-                    root.resetViewPosition()
-                })
+                root.prepareOpen()
             } else {
+                root._presentedOpen = false
                 root.pendingViewReset = false
             }
-        }
-    }
-
-    IpcHandler {
-        target: "clipboard"
-        enabled: Config.options?.panelFamily !== "waffle"
-        function open(): void {
-            root.open()
-        }
-        function close(): void {
-            root.close()
-        }
-        function toggle(): void {
-            root.toggle()
         }
     }
 
@@ -390,7 +383,7 @@ Scope {
             anchors.fill: parent
             color: Appearance.colors.colScrim
             visible: Appearance.auroraEverywhere
-            opacity: GlobalStates.clipboardOpen ? 1 : 0
+            opacity: root._presentedOpen ? 1 : 0
             Behavior on opacity {
                 NumberAnimation {
                     duration: Appearance.calcEffectiveDuration(200)
@@ -460,8 +453,8 @@ Scope {
             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             
             // Entry animation
-            opacity: GlobalStates.clipboardOpen ? 1 : 0
-            scale: GlobalStates.clipboardOpen ? 1 : 0.95
+            opacity: root._presentedOpen ? 1 : 0
+            scale: root._presentedOpen ? 1 : 0.95
             
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled

@@ -16,14 +16,16 @@ Rectangle {
     property bool   vertical:      false
     property string wallpaperUrl:  ""
     property var    dockScreen:    null
+    property bool   nativeBlurActive: false
+    property string surfaceDialect: "macos"
 
     // Pre-computed blended color from Dock.qml's dockVisualBackground.blendedColors
     property color  blendedLayer0: Appearance.colors.colLayer0
 
-    readonly property bool zzzEverywhere:    Appearance.zzzEverywhere
-    readonly property bool auroraEverywhere: Appearance.auroraEverywhere
-    readonly property bool inirEverywhere:   Appearance.inirEverywhere
-    readonly property bool angelEverywhere:  Appearance.angelEverywhere
+    readonly property bool zzzEverywhere: surfaceDialect === "zzz"
+    readonly property bool angelEverywhere: surfaceDialect === "angel"
+    readonly property bool auroraEverywhere: surfaceDialect === "aurora" || angelEverywhere
+    readonly property bool inirEverywhere: surfaceDialect === "inir"
     readonly property bool gameModeMinimal:  Appearance.gameModeMinimal
 
     // ─── Shape ───────────────────────────────────────────────────────
@@ -87,7 +89,7 @@ Rectangle {
     Image {
         id: macBlurWall
         visible: !root.gameModeMinimal
-        source: root.wallpaperUrl
+        source: root.nativeBlurActive ? "" : root.wallpaperUrl
         fillMode: Image.PreserveAspectCrop
         cache: true
         sourceSize.width: macBlurWall.scrW
@@ -105,7 +107,7 @@ Rectangle {
             : (-(scrH)     + root.height + Appearance.sizes.hyprlandGapsOut)
 
         // See #159 — skip QML blur when compositor blur covers this layer
-        layer.enabled: Appearance.effectsEnabled && !root.gameModeMinimal && !Appearance.compositorBlurActive
+        layer.enabled: Appearance.effectsEnabled && !root.gameModeMinimal && !root.nativeBlurActive
         layer.effect: MultiEffect {
             source: macBlurWall
             anchors.fill: source

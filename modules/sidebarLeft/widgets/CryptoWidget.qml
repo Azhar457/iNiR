@@ -252,7 +252,7 @@ Item {
                     }
                     opacity: 0.6
                     SequentialAnimation on opacity {
-                        running: root.loading && Appearance.animationsEnabled
+                        running: root.loading && GlobalStates.sidebarLeftOpen && Appearance.animationsEnabled
                         loops: Animation.Infinite
                         NumberAnimation { to: 0.3; duration: 400 }
                         NumberAnimation { to: 0.8; duration: 400 }

@@ -190,6 +190,13 @@ Singleton {
             desc: Translation.tr("Providers, models, behavior, voice input"),
             essential: false,
             component: "modules/settings/AiConfig.qml"
+        },
+        {
+            name: Translation.tr("Effects"),
+            icon: "blur_on",
+            desc: Translation.tr("Blur, glass, motion and rendering policy"),
+            essential: true,
+            component: "modules/settings/EffectsConfig.qml"
         }
     ]
 
@@ -197,7 +204,7 @@ Singleton {
     // pages array above — order here defines the visual nav order.
     readonly property var defaultCategories: [
         { label: Translation.tr("Essentials"), pages: [0] },
-        { label: Translation.tr("Appearance"), pages: [4, 3, 14, 21] },
+        { label: Translation.tr("Appearance"), pages: [4, 25, 3, 14, 21] },
         { label: Translation.tr("Shell"), pages: [2, 5, 22, 23, 16, 10, 11, 18, 19, 20] },
         { label: Translation.tr("System"), pages: [1, 24, 7, 6, 12, 15, 8, 17] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
@@ -700,8 +707,8 @@ Singleton {
             pageIndex: 14, pageName: root.pages[14].name,
             section: Translation.tr("Japanese Typography"),
             label: Translation.tr("Japanese typography widget"),
-            description: Translation.tr("Vertical editorial lettering, seal, footer, and wallpaper-aware ink"),
-            keywords: ["japanese", "typography", "vertical", "text", "kanji", "kana", "poster", "magazine", "editorial", "seal", "widget"]
+            description: Translation.tr("Vertical editorial lettering with layout, font, palette, seal, and footer controls"),
+            keywords: ["japanese", "typography", "vertical", "text", "kanji", "kana", "poster", "magazine", "editorial", "seal", "widget", "font", "mincho", "gothic", "color", "palette", "sumi", "outline"]
         },
         {
             pageIndex: 14, pageName: root.pages[14].name,
@@ -1373,11 +1380,18 @@ Singleton {
             keywords: ["terminal", "color", "saturation", "brightness", "harmony", "adjustment"]
         },
         {
-            pageIndex: 8, pageName: root.pages[8].name,
-            section: Translation.tr("Performance"),
+            pageIndex: 25, pageName: root.pages[25].name,
+            section: Translation.tr("Motion and power"),
             label: Translation.tr("Low power mode"),
             description: Translation.tr("Reduce resource usage for low-end hardware"),
             keywords: ["performance", "low", "power", "mode", "reduce", "battery", "laptop"]
+        },
+        {
+            pageIndex: 25, pageName: root.pages[25].name,
+            section: Translation.tr("Blur and glass"),
+            label: Translation.tr("Allow compositor blur"),
+            description: Translation.tr("Allow exact shaped blur regions on supported Niri surfaces"),
+            keywords: ["performance", "native", "blur", "niri", "gpu", "compositor", "glass"]
         },
         {
             pageIndex: 8, pageName: root.pages[8].name,
@@ -1626,7 +1640,7 @@ Singleton {
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Edit Mode"), label: Translation.tr("Widget edit mode"), description: Translation.tr("Grid overlay and snap-to-grid for widget placement"), keywords: ["widget", "edit", "grid", "snap", "placement", "drag"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Desktop clock"), description: Translation.tr("Clock widget on the desktop background"), keywords: ["clock", "widget", "cookie", "digital", "background", "desktop", "wallpaper", "adaptive", "colors"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Clock style"), description: Translation.tr("Cookie (analog) or digital clock"), keywords: ["clock", "style", "cookie", "digital", "analog", "hands"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Japanese Typography"), label: Translation.tr("Japanese typography widget"), description: Translation.tr("Vertical editorial lettering, seal, footer, and wallpaper-aware ink"), keywords: ["japanese", "typography", "vertical", "text", "kanji", "kana", "poster", "magazine", "editorial", "seal", "widget"] },
+        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Japanese Typography"), label: Translation.tr("Japanese typography widget"), description: Translation.tr("Vertical editorial lettering with layout, font, palette, seal, and footer controls"), keywords: ["japanese", "typography", "vertical", "text", "kanji", "kana", "poster", "magazine", "editorial", "seal", "widget", "font", "mincho", "gothic", "color", "palette", "sumi", "outline"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Weather"), label: Translation.tr("Desktop weather widget"), description: Translation.tr("Weather display on the desktop background"), keywords: ["weather", "widget", "background", "temperature"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Media Controls"), label: Translation.tr("Desktop media widget"), description: Translation.tr("Media player controls on the desktop background"), keywords: ["media", "widget", "background", "player", "music", "album"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Visualizer"), label: Translation.tr("Audio visualizer"), description: Translation.tr("Audio visualizer bars on the desktop"), keywords: ["visualizer", "audio", "bars", "music", "equalizer", "spectrum"] },
@@ -1666,6 +1680,10 @@ Singleton {
         { pageIndex: 18, pageName: root.pages[18].name, section: Translation.tr("Workspace Strip"), label: Translation.tr("Workspace strip"), description: Translation.tr("Hidden edge-hover navigator with workspace previews"), keywords: ["workspace", "strip", "edge", "hover", "navigate", "switch", "thumbnail", "preview"] },
         { pageIndex: 18, pageName: root.pages[18].name, section: Translation.tr("Interaction"), label: Translation.tr("Hover timing"), description: Translation.tr("Control edge activation and close delays"), keywords: ["workspace", "strip", "hover", "delay", "open", "close", "trigger"] },
         { pageIndex: 18, pageName: root.pages[18].name, section: Translation.tr("Content"), label: Translation.tr("Window previews"), description: Translation.tr("Live active preview with cached hidden-workspace snapshots"), keywords: ["workspace", "strip", "preview", "live", "cached", "thumbnail", "window"] },
-        { pageIndex: 18, pageName: root.pages[18].name, section: Translation.tr("Content"), label: Translation.tr("Metadata and app icons"), description: Translation.tr("Show focused-window details and filter workspaces per monitor"), keywords: ["workspace", "strip", "metadata", "icons", "monitor", "per-monitor", "apps"] }
+        { pageIndex: 18, pageName: root.pages[18].name, section: Translation.tr("Content"), label: Translation.tr("Metadata and app icons"), description: Translation.tr("Show focused-window details and filter workspaces per monitor"), keywords: ["workspace", "strip", "metadata", "icons", "monitor", "per-monitor", "apps"] },
+
+        { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Blur and glass"), label: Translation.tr("Default blur backend"), description: Translation.tr("Let the style choose, use wallpaper glass, compositor blur, or disable blur"), keywords: ["effects", "blur", "backend", "wallpaper", "compositor", "style", "glass"] },
+        { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Per-area overrides"), label: Translation.tr("Bars, dock, panels, islands and widgets"), description: Translation.tr("Override the blur backend independently for each shell area"), keywords: ["effects", "area", "bar", "dock", "panel", "island", "ricelin", "widget"] },
+        { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Motion and power"), label: Translation.tr("Reduce animations"), description: Translation.tr("Use immediate reduced-motion state changes"), keywords: ["motion", "animation", "reduce", "accessibility", "performance"] }
     ]
 }

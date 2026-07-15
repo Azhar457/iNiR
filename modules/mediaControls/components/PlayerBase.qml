@@ -200,7 +200,9 @@ QtObject {
     
     property var positionUpdateTimer: Timer {
         running: root.player?.playbackState === MprisPlaybackState.Playing
-        interval: 1000
+        // Four bounded updates per second are enough for a continuous timeline
+        // once PlayerProgress interpolates between samples.
+        interval: 250
         repeat: true
         onTriggered: root.player?.positionChanged()
     }

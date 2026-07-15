@@ -31,41 +31,14 @@ ContentPage {
     readonly property bool isMaterial: currentGlobalStyle === "material"
     readonly property bool isAngel: currentGlobalStyle === "angel"
 
+    // Corner style only shapes the classic bar surface; the other appearances draw
+    // their own (islands capsules, scenic scrim, frame outline, pill).
+    readonly property bool cornerStyleApplies: (Config.options?.bar?.appearanceStyle ?? "classic") === "classic"
+
     // Corner style compatibility per global style
     readonly property bool hugNeedsBackground: isHugStyle && !showBackground
     readonly property bool hugOnAurora: isHugStyle && isAurora
     readonly property bool cardOnNonCards: isCardStyle && !isCards
-
-    // Helper component for conflict warnings
-    component ConflictNote: RowLayout {
-        property string text
-        property string icon: "info"
-        property bool warning: false
-        spacing: 6
-        Layout.fillWidth: true
-
-        readonly property color noteColor: {
-            if (warning) {
-                return Appearance.inirEverywhere ? Appearance.inir.colWarning
-                     : Appearance.colors.colTertiary
-            }
-            return Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
-                 : Appearance.colors.colSubtext
-        }
-
-        MaterialSymbol {
-            text: parent.icon
-            iconSize: Appearance.font.pixelSize.small
-            color: parent.noteColor
-        }
-        StyledText {
-            Layout.fillWidth: true
-            text: parent.text
-            color: parent.noteColor
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            wrapMode: Text.WordWrap
-        }
-    }
 
     SettingsCardSection {
         visible: !root.isIiActive
@@ -119,6 +92,8 @@ ContentPage {
                     title: Translation.tr("Corner style")
 
                     ConfigSelectionArray {
+                        enabled: root.cornerStyleApplies
+                        opacity: enabled ? 1 : 0.5
                         currentValue: Config.options?.bar?.cornerStyle ?? 0
                         onSelected: newValue => {
                             // HUG mode (0) is incompatible with Angel style — revert to Float
@@ -134,6 +109,12 @@ ContentPage {
                             { displayName: Translation.tr("Rect"), icon: "toolbar", previewKind: "rect", value: 2 },
                             { displayName: Translation.tr("Card"), icon: "branding_watermark", previewKind: "card", value: 3 }
                         ]
+                    }
+
+                    SettingsNote {
+                        visible: !root.cornerStyleApplies
+                        icon: "info"
+                        text: Translation.tr("Only the Classic bar appearance uses corner style.")
                     }
                 }
             }
@@ -155,12 +136,9 @@ ContentPage {
                     ]
                 }
 
-                StyledText {
-                    Layout.fillWidth: true
-                    text: Translation.tr("Islands floats every module group as its own capsule. Scenic fades the bar into the wallpaper. Frame draws an outlined floating frame. They apply to the horizontal bar.")
-                    color: Appearance.colors.colSubtext
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    wrapMode: Text.WordWrap
+                SettingsNote {
+                    icon: "toolbar"
+                    text: Translation.tr("Redraws the bar surface. Horizontal bar only.")
                 }
             }
 
@@ -511,28 +489,28 @@ ContentPage {
             }
 
             // Corner style conflict notes
-            ConflictNote {
+            SettingsNote {
                 visible: root.hugNeedsBackground
                 warning: true
                 icon: "warning"
                 text: Translation.tr("Hug style requires background enabled to show the corner decorations.")
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: root.isAngel && root.isHugStyle
                 warning: true
                 icon: "sync_problem"
                 text: Translation.tr("Hug mode is not compatible with Angel global style. Switch to Float, Rect, or Card.")
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: root.isAngel
                 warning: false
                 icon: "raven"
                 text: Translation.tr("Hug mode is disabled while Angel global style is active.")
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: root.isCardStyle && !root.isGlobalCards
                 warning: true
                 icon: "sync_problem"
@@ -587,7 +565,7 @@ ContentPage {
                 }
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: !(Config.options?.bar?.showBackground ?? true)
                 icon: "info"
                 text: Translation.tr("Opacity has no effect while ‘Show background’ is off.")
@@ -629,7 +607,7 @@ ContentPage {
                 }
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: root.isBorderless && root.isCardStyle
                 warning: true
                 icon: "warning"
@@ -784,7 +762,7 @@ ContentPage {
                 }
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: !root.showBackground && root.isBorderless
                 icon: "lightbulb"
                 text: Translation.tr("No background + Seamless style = floating widgets look")
@@ -830,7 +808,7 @@ ContentPage {
                 }
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: root.hasVignette && root.isAutoHide
                 icon: "info"
                 text: Translation.tr("Vignette will hide along with the bar when auto-hide is active.")
@@ -916,7 +894,7 @@ ContentPage {
                 }
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: (Config.options?.bar?.modules?.taskbar ?? false)
                 icon: "info"
                 text: Translation.tr("Taskbar replaces the active window title. Pinned apps and running windows appear in the bar, like a traditional taskbar. Uses the same pinned apps as the dock.")
@@ -1236,7 +1214,7 @@ ContentPage {
                 }
             }
 
-            ConflictNote {
+            SettingsNote {
                 icon: "info"
                 text: Config.options?.media?.popupMode === "bar"
                     ? Translation.tr("Classic style popup anchored to bar widget")
@@ -1380,7 +1358,7 @@ ContentPage {
                 opacity: enabled ? 1 : 0.5
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: Config.options?.bar?.workspaces?.alwaysShowNumbers ?? false
                 icon: "info"
                 text: Translation.tr("Number reveal delay is ignored when 'Always show numbers' is enabled")
@@ -1406,7 +1384,7 @@ ContentPage {
                 }
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: !Config.options?.bar?.workspaces?.alwaysShowNumbers
                 icon: "lightbulb"
                 text: Translation.tr("Enable 'Always show numbers' to use number styles")
@@ -1454,7 +1432,7 @@ ContentPage {
                 }
             }
 
-            ConflictNote {
+            SettingsNote {
                 visible: !(Config.options?.bar?.modules?.sysTray ?? true)
                 warning: true
                 icon: "visibility_off"

@@ -16,13 +16,44 @@ Scope {
     // Deferred slide trigger: ensures the Wayland surface is mapped before
     // the Behavior animation starts, so Qt tracks the "from" position correctly.
     property bool _sidebarShown: false
+    property bool _presentationRequested: false
+    property int _presentationReadyFrames: 0
+
+    function requestPresentation(): void {
+        root._presentationRequested = true
+        root._presentationReadyFrames = 0
+        presentationTimer.restart()
+    }
+
+    function tryPresent(): void {
+        if (!root._presentationRequested || !GlobalStates.sidebarRightOpen)
+            return
+        if (sidebarRoot.height <= 0 || sidebarContentLoader.height <= 0
+                || sidebarContentLoader.status !== Loader.Ready)
+            return
+        root._presentationReadyFrames++
+        if (root._presentationReadyFrames < 2)
+            return
+        root._presentationRequested = false
+        presentationTimer.stop()
+        root._sidebarShown = true
+    }
+
+    Timer {
+        id: presentationTimer
+        interval: 16
+        repeat: true
+        onTriggered: root.tryPresent()
+    }
 
     PanelWindow {
         id: sidebarRoot
 
         Component.onCompleted: {
             visible = GlobalStates.sidebarRightOpen
-            root._sidebarShown = GlobalStates.sidebarRightOpen
+            root._sidebarShown = false
+            if (GlobalStates.sidebarRightOpen)
+                root.requestPresentation()
         }
 
         Connections {
@@ -31,13 +62,16 @@ Scope {
                 if (GlobalStates.sidebarRightOpen) {
                     _closeTimer.stop()
                     sidebarRoot.visible = true
-                    // Let the surface map for one frame before sliding in
-                    Qt.callLater(() => { root._sidebarShown = true })
+                    root.requestPresentation()
                 } else if (root.instantOpen || !Appearance.animationsEnabled) {
+                    root._presentationRequested = false
+                    presentationTimer.stop()
                     root._sidebarShown = false
                     _closeTimer.stop()
                     sidebarRoot.visible = false
                 } else {
+                    root._presentationRequested = false
+                    presentationTimer.stop()
                     root._sidebarShown = false
                     _closeTimer.restart()
                 }
@@ -147,14 +181,15 @@ Scope {
 
         Loader {
             id: sidebarContentLoader
-            // Latch first valid mount: the panel preloads with an unmapped surface (height 0); top+bottom
-            // anchors then yield negative height that mounts the content broken until a layout toggle.
-            // We only need height>0 for that FIRST mount — once latched we keep the content loaded per
-            // keepRightSidebarLoaded, so closing (surface unmaps, height→0) does NOT destroy and rebuild
-            // it, which was making every re-open laggy unlike sidebarLeft.
+            // Mount only with valid geometry, then retain the workspace so closing it does not
+            // discard navigation state or turn every entrance into a cold load.
             property bool _everMounted: false
-            onHeightChanged: if (height > 0) _everMounted = true
-            active: (GlobalStates.sidebarRightOpen || (Config?.options?.sidebar?.keepRightSidebarLoaded ?? true)) && (height > 0 || _everMounted)
+            onHeightChanged: {
+                if (height > 0)
+                    _everMounted = true
+                root.tryPresent()
+            }
+            active: GlobalStates.sidebarRightOpen || _everMounted
 
             // Shell desaturation effect
             layer.enabled: Appearance.shouldDesaturate("sidebars") && sidebarContentLoader.visible
@@ -169,12 +204,14 @@ Scope {
             }
             width: sidebarWidth - Appearance.sizes.hyprlandGapsOut - Appearance.sizes.elevationMargin
             height: Math.max(0, parent.height - Appearance.sizes.hyprlandGapsOut * 2)
+            onStatusChanged: root.tryPresent()
 
             // Animation properties driven by states/transitions below
             property real animTranslateX: (sidebarWidth + Appearance.sizes.hyprlandGapsOut)
             property real animOpacity: 1
             property real animScale: 1
             property bool useClip: root.animationType === "reveal"
+            property real clipWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut - Appearance.sizes.elevationMargin
             // Drop: vertical offset; Swing: horizontal scale from edge
             property real animTranslateY: 0
             property real animScaleX: 1
@@ -198,6 +235,7 @@ Scope {
                         animScale: 1
                         animTranslateY: 0
                         animScaleX: 1
+                        clipWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut - Appearance.sizes.elevationMargin
                     }
                 },
                 State {
@@ -214,6 +252,8 @@ Scope {
                         animTranslateY: root.animationType === "drop"
                             ? -(sidebarContentLoader.height + Appearance.sizes.hyprlandGapsOut * 2) : 0
                         animScaleX: root.animationType === "swing" ? 0 : 1
+                        clipWidth: root.animationType === "reveal" ? 0
+                            : sidebarWidth - Appearance.sizes.hyprlandGapsOut - Appearance.sizes.elevationMargin
                     }
                 }
             ]
@@ -265,6 +305,12 @@ Scope {
                             easing.type: Easing.BezierSpline
                             easing.bezierCurve: Appearance.animationCurves?.emphasizedDecel ?? [0.05, 0.7, 0.1, 1, 1, 1]
                         }
+                        NumberAnimation {
+                            target: sidebarContentLoader; property: "clipWidth"
+                            duration: Appearance.animation?.elementMoveEnter?.duration ?? 400
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Appearance.animationCurves?.emphasizedDecel ?? [0.05, 0.7, 0.1, 1, 1, 1]
+                        }
                     }
                     onRunningChanged: sidebarContentLoader.animating = running
                 },
@@ -302,12 +348,16 @@ Scope {
                             easing.type: Easing.BezierSpline
                             easing.bezierCurve: Appearance.animationCurves?.emphasizedAccel ?? [0.3, 0, 0.8, 0.15, 1, 1]
                         }
+                        NumberAnimation {
+                            target: sidebarContentLoader; property: "clipWidth"
+                            duration: Appearance.animation?.elementMoveExit?.duration ?? 200
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Appearance.animationCurves?.emphasizedAccel ?? [0.3, 0, 0.8, 0.15, 1, 1]
+                        }
                     }
                     onRunningChanged: sidebarContentLoader.animating = running
                 }
             ]
-
-            clip: sidebarContentLoader.useClip
 
             focus: GlobalStates.sidebarRightOpen
             Keys.onPressed: (event) => {
@@ -316,50 +366,27 @@ Scope {
                 }
             }
 
-            sourceComponent: contentStackComponent
-        }
-    }
+            sourceComponent: Item {
+                id: rightContentHost
+                anchors.fill: parent
 
-    IpcHandler {
-        target: "sidebarRight"
+                // Mirror the left reveal from the right edge without resizing the
+                // content tree, so both layouts keep their final measurements.
+                Item {
+                    id: rightRevealViewport
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.right: parent.right
+                    width: sidebarContentLoader.useClip
+                        ? sidebarContentLoader.clipWidth : parent.width
+                    clip: sidebarContentLoader.useClip
 
-        function toggle(): void {
-            GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
-        }
-
-        function close(): void {
-            GlobalStates.sidebarRightOpen = false;
-        }
-
-        function open(): void {
-            GlobalStates.sidebarRightOpen = true;
-        }
-    }
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "sidebarRightToggle"
-                description: "Toggles right sidebar on press"
-
-                onPressed: {
-                    GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
-                }
-            }
-            GlobalShortcut {
-                name: "sidebarRightOpen"
-                description: "Opens right sidebar on press"
-
-                onPressed: {
-                    GlobalStates.sidebarRightOpen = true;
-                }
-            }
-            GlobalShortcut {
-                name: "sidebarRightClose"
-                description: "Closes right sidebar on press"
-
-                onPressed: {
-                    GlobalStates.sidebarRightOpen = false;
+                    Loader {
+                        width: rightContentHost.width
+                        height: rightContentHost.height
+                        x: rightRevealViewport.width - width
+                        sourceComponent: contentStackComponent
+                    }
                 }
             }
         }

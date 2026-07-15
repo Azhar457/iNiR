@@ -29,7 +29,7 @@ Item {
 
     // Back-and-forth scroll with end pauses (raw timings — a decorative loop, not a token Behavior).
     SequentialAnimation {
-        running: root.scrolling
+        running: root.scrolling && GlobalStates.sidebarLeftOpen
         loops: Animation.Infinite
         PauseAnimation { duration: 1200 }
         NumberAnimation { target: label; property: "x"; from: 0; to: -root.overflow; duration: Math.max(1, root.overflow) * 28; easing.type: Easing.InOutQuad }

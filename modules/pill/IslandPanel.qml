@@ -34,6 +34,7 @@ Rectangle {
      * the shared appearance.island.glass switch and the fill opacity gate it.
      */
     property bool glassEnabled: false
+    property bool nativeBlurActive: false
     property real glassScreenX: 0
     property real glassScreenY: 0
     property real glassScreenWidth: screen?.width ?? 1920
@@ -41,7 +42,9 @@ Rectangle {
     property var screen: null
     readonly property bool glassActive: glassEnabled
         && (Config.options?.appearance?.island?.glass ?? true)
-        && Appearance.effectsEnabled
+        && Appearance.blurBackendFor("islands",
+            Appearance.blurTopology.roundedRectangle) === "wallpaper"
+        && !root.nativeBlurActive
         && fillOpacity < 0.999
 
     radius: Config.options?.appearance?.island?.radius ?? 18
@@ -53,7 +56,9 @@ Rectangle {
         GradientStop { position: 1.0; color: Qt.alpha(PillTheme.cardBot, root.fillOpacity) }
     }
 
-    layer.enabled: root.shadow
+    // Several island consumers stay instantiated while their panel is closed.
+    // Do not keep a shadow texture allocated for an invisible surface.
+    layer.enabled: root.shadow && root.visible
     layer.effect: MultiEffect {
         shadowEnabled: true
         shadowColor: Qt.rgba(0, 0, 0, PillTheme.shadowOpacity)

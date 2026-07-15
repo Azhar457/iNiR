@@ -32,6 +32,14 @@ Item {
     signal seekRequested(real seconds)
     
     readonly property real progressValue: length > 0 ? position / length : 0
+    readonly property bool waveAnimationActive: root.enableWavy && root.isPlaying
+        && root.visible && Appearance.animationsEnabled
+    property real displayedProgress: progressValue
+
+    Behavior on displayedProgress {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: 280; easing.type: Easing.Linear }
+    }
     
     // Seekable slider
     Loader {
@@ -40,11 +48,12 @@ Item {
         sourceComponent: StyledSlider {
             configuration: root.enableWavy ? StyledSlider.Configuration.Wavy : StyledSlider.Configuration.S
             wavy: root.enableWavy && root.isPlaying
-            animateWave: root.enableWavy && root.isPlaying
+            animateWave: root.waveAnimationActive
             highlightColor: root.highlightColor
             trackColor: root.trackColor
             handleColor: root.highlightColor
-            value: root.progressValue
+            value: root.displayedProgress
+            waveFps: 30
             onMoved: root.seekRequested(value * root.length)
             scrollable: root.scrollable
         }
@@ -56,10 +65,11 @@ Item {
         active: !root.canSeek
         sourceComponent: StyledProgressBar {
             wavy: root.enableWavy && root.isPlaying
-            animateWave: root.enableWavy && root.isPlaying
+            animateWave: root.waveAnimationActive
             highlightColor: root.highlightColor
             trackColor: root.trackColor
-            value: root.progressValue
+            value: root.displayedProgress
+            waveFps: 30
         }
     }
 }

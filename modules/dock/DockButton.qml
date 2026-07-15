@@ -8,6 +8,11 @@ RippleButton {
     id: root
     property bool vertical: false
     property string dockPosition: "bottom"
+    property string surfaceDialect: Appearance.surfaceDialectFor("")
+    readonly property bool zzzStyle: surfaceDialect === "zzz"
+    readonly property bool angelStyle: surfaceDialect === "angel"
+    readonly property bool inirStyle: surfaceDialect === "inir"
+    readonly property bool auroraStyle: surfaceDialect === "aurora" || angelStyle
 
     Layout.fillHeight: !vertical
     Layout.fillWidth: vertical
@@ -18,22 +23,21 @@ RippleButton {
     // resting background, which leaves the hover state as the cookie face —
     // and the pill/macOS styles hide `background` outright, so they are unaffected.
     cookieMorphing: true
-    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.normal
+    buttonRadius: root.zzzStyle ? Appearance.zzz.controlRadius
+        : root.angelStyle ? Appearance.angel.roundingSmall
+        : root.inirStyle ? Appearance.inir.roundingSmall : Appearance.rounding.normal
 
-    colBackground: Appearance.zzzEverywhere ? "transparent"
-        : Appearance.angelEverywhere ? "transparent" : "transparent"
+    colBackground: "transparent"
 
-    colBackgroundHover: Appearance.zzzEverywhere ? "transparent"
-        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+    colBackgroundHover: root.zzzStyle ? "transparent"
+        : root.angelStyle ? Appearance.angel.colGlassCard
+        : root.inirStyle ? Appearance.inir.colLayer1Hover
+        : root.auroraStyle ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0Hover
-    colRipple: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
-        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
+    colRipple: root.zzzStyle ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
+        : root.angelStyle ? Appearance.angel.colGlassCardActive
+        : root.inirStyle ? Appearance.inir.colLayer1Active
+        : root.auroraStyle ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer0Active
 
     background.implicitHeight: 50
@@ -45,7 +49,7 @@ RippleButton {
     // as a doubled border on hover.
     // Dock tiles are small: controlRadius in round mode (a clean rounded chip),
     // NOT the big panelRadius (ZzzPlate's default) which over-rounds into a blob.
-    property bool zzzPlateVisible: Appearance.zzzEverywhere
+    property bool zzzPlateVisible: root.zzzStyle
     property real zzzPlateRadius: Appearance.zzz.round ? Appearance.zzz.controlRadius : 0
     property real zzzPlateChamfer: Appearance.zzz.cutCorner * (root.buttonHovered ? 0.85 : 0.45)
     property color zzzPlateFill: root.buttonHovered ? ColorUtils.applyAlpha(Appearance.zzz.paper, 0.14) : "transparent"

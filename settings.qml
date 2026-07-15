@@ -32,6 +32,31 @@ ApplicationWindow {
         return entry;
     })
     property int currentPage: 0
+    property int _requestedStartPage: -1
+    property string _requestedStartSection: ""
+    property bool _navigationInitialized: false
+
+    function _persistCurrentPage(): void {
+        if (root._navigationInitialized && Persistent.ready && Persistent.states?.settings)
+            Persistent.states.settings.iiPage = Math.max(0, Math.min(root.currentPage, root.pages.length - 1))
+    }
+
+    function initializeNavigation(): void {
+        if (root._navigationInitialized || !Persistent.ready)
+            return
+        const persisted = Persistent.states?.settings?.iiPage ?? 0
+        const requested = root._requestedStartPage >= 0 ? root._requestedStartPage : persisted
+        root.currentPage = Math.max(0, Math.min(requested, root.pages.length - 1))
+        root._navigationInitialized = true
+        root._persistCurrentPage()
+        if (root._requestedStartSection.length > 0) {
+            root.pendingSpotlightSection = root._requestedStartSection
+            root.pendingSpotlightPageIndex = root.currentPage
+            root.trySpotlight()
+        }
+    }
+
+    onCurrentPageChanged: root._persistCurrentPage()
     property bool uiReady: Config.ready
 
     // Easy mode helpers — derived list filtered to essentials when on
@@ -423,15 +448,16 @@ ApplicationWindow {
         Quickshell.watchFiles = false
         Config.readWriteDelay = 0 // Settings app always only sets one var at a time so delay isn't needed
 
-        const startPage = Quickshell.env("QS_SETTINGS_PAGE");
-        if (startPage) root.currentPage = parseInt(startPage);
+        const startPage = parseInt(Quickshell.env("QS_SETTINGS_PAGE"));
+        if (!isNaN(startPage)) root._requestedStartPage = startPage;
 
-        const startSection = Quickshell.env("QS_SETTINGS_SECTION");
-        if (startSection) {
-            root.pendingSpotlightSection = startSection;
-            root.pendingSpotlightPageIndex = root.currentPage;
-            root.trySpotlight();
-        }
+        root._requestedStartSection = Quickshell.env("QS_SETTINGS_SECTION") || ""
+        root.initializeNavigation()
+    }
+
+    Connections {
+        target: Persistent
+        function onReadyChanged() { root.initializeNavigation() }
     }
 
     // Apply theme when Config is ready

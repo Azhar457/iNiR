@@ -59,12 +59,22 @@ Item {
                 Layout.topMargin: valueIndicatorVerticalPadding
                 Layout.bottomMargin: valueIndicatorVerticalPadding
 
+                CookieFace {
+                    anchors.fill: parent
+                    visible: Appearance.cookieEverywhere
+                    role: "badge"
+                    color: Appearance.colors.colPrimaryContainer
+                }
+
                 MaterialSymbol {
                     anchors {
                         centerIn: parent
                         alignWhenCentered: !root.rotateIcon
                     }
-                    color: root._zzz ? Appearance.zzz.onColor : Appearance.colors.colOnLayer0
+                    color: root._zzz ? Appearance.zzz.onColor
+                        : Appearance.cookieEverywhere
+                            ? Appearance.colors.colOnPrimaryContainer
+                            : Appearance.colors.colOnLayer0
 
                     text: root.icon
                     iconSize: 20 + 10 * (root.scaleIcon ? value : 1)

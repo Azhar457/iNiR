@@ -20,8 +20,18 @@ RippleButton {
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
         : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : height / 2
 
+    // The selected tab used to get a cookie badge behind the GLYPH only, so the
+    // label sat outside the face and the tab read as two disconnected pieces.
+    // The face belongs to the whole tab: RippleButton's own CookieFace covers the
+    // background, which means an icon-only tab morphs to cookie6 and a labelled
+    // one becomes a scalloped pill — one silhouette, whatever the tab's width.
+    cookieMorphing: Appearance.cookieEverywhere
+    toggled: Appearance.cookieEverywhere && root.current
+    colBackgroundToggled: Appearance.colors.colPrimaryContainer
+    colBackgroundToggledHover: Appearance.colors.colPrimaryContainer
+
     colBackground: "transparent"
-    colBackgroundHover: current ? "transparent" 
+    colBackgroundHover: current ? "transparent"
         : Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.contrastPlate, 0.14)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colText, 0.92)
@@ -48,19 +58,6 @@ RippleButton {
             iconSize: 22
             text: root.materialSymbol
 
-            // Cookie badge behind the glyph. Sized so the icon's corners clear the
-            // scalloped inner radius (~0.8R), and centered on the icon itself so it
-            // never drifts like a hand-placed plate in the tab strip.
-            CookieFace {
-                z: -1
-                anchors.centerIn: parent
-                width: icon.iconSize * 1.7
-                height: width
-                visible: Appearance.cookieEverywhere && root.current
-                role: "badge"
-                selected: true
-                color: Appearance.colors.colPrimaryContainer
-            }
             color: Appearance.zzzEverywhere
                 ? (root.current ? Appearance.zzz.accent : Appearance.zzz.inkMuted)
                 : Appearance.cookieEverywhere && root.current
@@ -99,6 +96,11 @@ RippleButton {
                 font.weight: Appearance.zzzEverywhere ? (root.current ? Font.Black : Font.Bold) : Font.Normal
                 color: Appearance.zzzEverywhere
                     ? (root.current ? Appearance.zzz.accent : Appearance.zzz.inkMuted)
+                    // The label sits on the face too, so it takes the face's ink.
+                    // It used to stay colOnSurface and read as unselected text on a
+                    // selected tab.
+                    : Appearance.cookieEverywhere && root.current
+                    ? Appearance.colors.colOnPrimaryContainer
                     : Appearance.angelEverywhere
                     ? (root.current ? Appearance.angel.colOnPrimary : Appearance.angel.colText)
                     : Appearance.inirEverywhere

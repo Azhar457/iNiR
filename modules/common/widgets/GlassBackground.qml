@@ -30,7 +30,9 @@ Rectangle {
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     readonly property bool inirEverywhere: Appearance.inirEverywhere
     property bool forceBackdrop: false
-    readonly property bool useWallpaperBackdrop: root.forceBackdrop || (root.wallpaperBackdropEnabled && root.auroraEverywhere && !root.inirEverywhere)
+    readonly property bool useWallpaperBackdrop: Appearance.blurBackendFor("panels",
+        Appearance.blurTopology.unsupported) === "wallpaper"
+        && (root.forceBackdrop || root.wallpaperBackdropEnabled)
     
     color: root.useWallpaperBackdrop ? "transparent"
         : root.inirEverywhere ? root.inirColor
@@ -43,7 +45,9 @@ Rectangle {
 
     clip: true
     
-    layer.enabled: root.useWallpaperBackdrop
+    // Hidden persistent surfaces must not retain their mask FBO. The decoded
+    // wallpaper stays in Qt's shared image cache, so remapping remains warm.
+    layer.enabled: root.useWallpaperBackdrop && root.visible
     layer.effect: GE.OpacityMask {
         maskSource: Rectangle {
             width: root.width

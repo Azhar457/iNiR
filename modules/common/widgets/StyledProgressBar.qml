@@ -81,6 +81,7 @@ ProgressBar {
                 frequency: root.waveFrequency
                 color: root.highlightColor
                 amplitudeMultiplier: root.wavy ? 0.5 : 0
+                animate: root.animateWave
                 height: contentItem.height * 6
                 width: contentItem.width * root.visualPosition
                 lineWidth: contentItem.height
@@ -89,12 +90,6 @@ ProgressBar {
                     target: root
                     function onValueChanged() { wavyFill.requestPaint(); }
                     function onHighlightColorChanged() { wavyFill.requestPaint(); }
-                }
-                FrameAnimation {
-                    running: root.animateWave
-                    onTriggered: {
-                        wavyFill.requestPaint()
-                    }
                 }
             }
         }

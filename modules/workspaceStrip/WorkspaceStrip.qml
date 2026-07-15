@@ -63,9 +63,29 @@ Scope {
     Variants {
         model: Quickshell.screens
 
-        PanelWindow {
-            id: stripWindow
+        Loader {
+            id: stripLoader
             required property var modelData
+            active: true
+
+            // The layershell anchor can't be flipped on a live window: swapping
+            // left/right left the strip stuck on the old edge until it was toggled
+            // off and on. Recreate it instead, the same way the dock handles moves.
+            property string sideKey: Config.options?.workspaceStrip?.side ?? "right"
+            onSideKeyChanged: {
+                active = false
+                stripReloadTimer.start()
+            }
+
+            Timer {
+                id: stripReloadTimer
+                interval: 50
+                onTriggered: stripLoader.active = true
+            }
+
+            sourceComponent: PanelWindow {
+            id: stripWindow
+            property var modelData: stripLoader.modelData
 
             readonly property string screenName: modelData?.name ?? ""
             readonly property bool isRight: (Config.options?.workspaceStrip?.side ?? "right") === "right"
@@ -911,6 +931,7 @@ Scope {
                 WorkspaceStripDragProxy {
                     id: windowDragProxy
                 }
+            }
             }
         }
     }

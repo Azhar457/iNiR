@@ -37,11 +37,16 @@ Singleton {
     property bool oskOpen: false
     property bool overlayOpen: false
     property bool overviewOpen: false
+    property string overviewSearchPrefix: ""
     property bool altSwitcherOpen: false
     property bool clipboardOpen: false
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
     property bool regionSelectorOpen: false
+    property var regionSelectorAction: 0
+    property var regionSelectorMode: 0
+    property bool tilingOverlayPickerOpen: false
+    property bool tilingOverlayOsdOpen: false
     // Native screenshot annotation editor (Edit action)
     property bool annotationEditorOpen: false
     property string annotationEditorPath: ""

@@ -335,8 +335,16 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     top: parent.top
                     topMargin: 4
                 }
-                implicitWidth: statusRowLayout.implicitWidth + 10 * 2
+                // Content-sized and centred, with no cap: a long model name plus the
+                // status chips pushed this wider than the sidebar itself, so the row
+                // ran off both edges. It may never exceed the space it sits in.
+                readonly property real _maxWidth: Math.max(0, parent.width - 8)
+                implicitWidth: Math.min(statusRowLayout.implicitWidth + 10 * 2, _maxWidth)
                 implicitHeight: Math.max(statusRowLayout.implicitHeight, 38)
+                // NO clip: the model-selector popup grows downward out of this
+                // plate, so clipping it to contain the row also swallowed the whole
+                // menu. Nothing overflows any more — the cap plus the model name
+                // eliding is what keeps the row inside.
                 radius: Appearance.rounding.normal - root.padding
                 color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2
@@ -344,9 +352,16 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 RowLayout {
                     id: statusRowLayout
                     anchors.centerIn: parent
+                    // Squeeze inside the capped plate instead of overflowing it —
+                    // the model name is the one item here that can give ground.
+                    width: Math.min(implicitWidth, statusBg._maxWidth - 10 * 2)
                     spacing: 10
 
-                    AiModelSelector {}
+                    // Shrinks when the row is tight, never stretches past its natural size.
+                    AiModelSelector {
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: implicitWidth
+                    }
                     StatusSeparator {}
                     StatusItem {
                         icon: Ai.currentModelHasApiKey ? "key" : "key_off"

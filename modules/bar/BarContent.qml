@@ -23,6 +23,7 @@ Item { // Bar content region
     property var screen: root.QsWindow.window?.screen
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
     property alias backgroundItem: barBackground
+    property bool nativeBlurAllowed: true
 
     // Mascot chaos: her ground slam rattles the bar; a direct kick more so
     property real _quakeY: 0
@@ -116,7 +117,7 @@ Item { // Bar content region
         return raw <= 0 ? 0 : Math.min(raw, root.centerSideMaxWidth)
     }
     readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
-    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    readonly property bool zzzEverywhere: root.surfaceDialect === "zzz"
     readonly property color separatorColor: root.zzzEverywhere ? Appearance.zzz.hairlineStrong : Appearance.colors.colOutlineVariant
 
     // Per-monitor wallpaper URL for Aurora blur — uses the actual wallpaper on this screen
@@ -130,7 +131,7 @@ Item { // Bar content region
     readonly property bool _useGlobalQuantizer: root.wallpaperUrl === Wallpapers.effectiveWallpaperUrl
     ColorQuantizer {
         id: wallpaperColorQuantizer
-        source: (Appearance.auroraEverywhere || Appearance.angelEverywhere)
+        source: root.auroraEverywhere
             ? (root._useGlobalQuantizer ? "" : root.wallpaperUrl)
             : ""
         depth: 0 // 2^0 = 1 color
@@ -147,21 +148,45 @@ Item { // Bar content region
     readonly property QtObject blendedColors: root._useGlobalQuantizer
         ? Appearance.wallpaperBlendedColors : _localBlendedColors
 
-    readonly property bool inirEverywhere: Appearance.inirEverywhere
-    readonly property bool angelEverywhere: Appearance.angelEverywhere
+    readonly property bool inirEverywhere: root.surfaceDialect === "inir"
+    readonly property bool angelEverywhere: root.surfaceDialect === "angel"
+    readonly property bool auroraEverywhere: root.surfaceDialect === "aurora" || root.angelEverywhere
     // Bar appearance style: how the bar surface itself is drawn.
     //   classic — single full-width background (per cornerStyle, current default)
     //   islands — no bar surface; every section floats as its own island
     //   scenic  — gradient scrim fading into the wallpaper, content on top
     //   frame   — outlined floating frame, transparent inside
     readonly property string barAppearance: Config.options?.bar?.appearanceStyle ?? "classic"
-    readonly property bool isIslands: root.barAppearance === "islands"
+    readonly property string surfaceDialect: Appearance.surfaceDialectFor(
+        root.barAppearance === "islands" ? "island" : "")
+    readonly property bool isIslands: root.surfaceDialect === "island"
     // Island geometry knobs (bar.islands.*): vertical breathing room and the
     // horizontal capsule padding the edge islands wrap their content with.
     readonly property int islandInset: Config.options?.bar?.islands?.inset ?? 4
     readonly property int islandPad: Config.options?.bar?.islands?.padding ?? 12
     readonly property bool isScenic: root.barAppearance === "scenic"
     readonly property bool isFrame: root.barAppearance === "frame"
+    // Name the exact Region topology published by Bar.qml. A five-card islands
+    // union is exact, but `auto` still keeps its style-owned wallpaper material;
+    // an explicit compositor request may use the proven union.
+    readonly property string nativeBlurTopology: root.isIslands
+        ? Appearance.blurTopology.islandsUnion
+        : root.barAppearance === "classic"
+            && (Config.options?.bar?.cornerStyle ?? 0) !== 0
+            && (!root.zzzEverywhere || Appearance.zzz.round)
+            ? Appearance.blurTopology.roundedRectangle
+            : Appearance.blurTopology.unsupported
+    readonly property bool nativeBlurGeometryExact: Appearance.blurTopologyExact(root.nativeBlurTopology)
+    readonly property bool nativeBlurActive: Appearance.useCompositorBlur(
+            root.isIslands ? "islands" : "bar", root.nativeBlurTopology)
+        && root.nativeBlurAllowed
+        && (Config.options?.bar?.showBackground ?? true)
+        && !root.gameModeMinimal
+    readonly property Item nativeBlurLeftIsland: leftEdgeIsland
+    readonly property Item nativeBlurCenterIsland: middleCenterGroup.islandSurface
+    readonly property Item nativeBlurCenterLeftIsland: leftCenterGroup.islandSurface
+    readonly property Item nativeBlurCenterRightIsland: rightCenterGroupPill.islandSurface
+    readonly property Item nativeBlurRightIsland: rightEdgeIsland
     readonly property bool zzzDetachedRounded: root.zzzEverywhere
         && Appearance.zzz.round
         && root.barAppearance === "classic"
@@ -220,7 +245,21 @@ Item { // Bar content region
     // capsule left content poking outside it for the whole animation. Motion
     // is applied at the SOURCE instead (the activeWindow wrapper animates its
     // implicitWidth), so row and capsule move through the same frames.
-    component EdgeIsland: IslandPanel {}
+    component EdgeIsland: IslandPanel {
+        glassEnabled: true
+        nativeBlurActive: root.nativeBlurActive
+        screen: root.screen
+        glassScreenX: {
+            const geometryDependency = x + width + (parent?.x ?? 0)
+            return mapToItem(null, 0, 0).x
+        }
+        glassScreenY: {
+            const geometryDependency = y + height + (parent?.y ?? 0)
+            return mapToItem(null, 0, 0).y
+        }
+        glassScreenWidth: root.screen?.width ?? 1920
+        glassScreenHeight: root.screen?.height ?? 1080
+    }
     // Edge-zone layout cell: hosts the module Loader. Layout hints live HERE
     // (the real layout child) — hints inside the loaded item are ignored.
     component EdgeZoneCell: Item {
@@ -352,7 +391,12 @@ Item { // Bar content region
         return false
     }
     function _fillHeight(id) {
-        return id === "spacer" || id === "tray" || id === "workspaces" || id === "activeWindow"
+        // Islands: filling the row's height means filling the BAR's height, which is
+        // taller than the capsule — the module then paints over the island's edges.
+        // Let it keep its own (capsule-sized) implicit height and centre instead.
+        if (id === "activeWindow")
+            return !root.isIslands
+        return id === "spacer" || id === "tray" || id === "workspaces"
     }
 
     Component {
@@ -417,7 +461,7 @@ Item { // Bar content region
             // the island — at the classic padding it nearly filled its height.
             buttonPadding: root.isIslands ? 3 : 5
             colBackground: buttonHovered
-                ? (Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover)
+                ? (root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover)
                 : "transparent"
         }
     }
@@ -437,28 +481,29 @@ Item { // Bar content region
             // width 0 + fillWidth), false in centre pills (no slack → adopt a
             // clamped intrinsic width so the title is actually visible).
             property bool fillSlot: true
-            implicitWidth: fillSlot ? 0 : Math.min(_awItem.contentImplicitWidth, 220)
-            implicitHeight: Appearance.sizes.baseBarHeight
+            // Islands: a FIXED width. The capsule derives from the row's implicit
+            // width, so a content-sized wrapper reflowed the whole island on every
+            // focus change. The texts elide inside a constant box instead.
+            implicitWidth: fillSlot ? 0
+                : (root.isIslands ? 220 : Math.min(_awItem.contentImplicitWidth, 220))
+            // Be exactly as tall as the surface we sit on. The cell adopts this as
+            // its implicitHeight, so at full bar height the module overflowed the
+            // shorter island capsule by the inset on both edges.
+            implicitHeight: root.isIslands
+                ? Appearance.sizes.baseBarHeight - root.islandInset * 2
+                : Appearance.sizes.baseBarHeight
             clip: true
             // The one animated width in the chain: every title change reflows
             // the row, the island and the edge-section geometry from THIS
             // value, all in the same frame — smooth, and nothing can lag
             // outside the capsule. The texts elide at intermediate widths.
             Behavior on implicitWidth {
-                enabled: !awWrapper.fillSlot && Appearance.animationsEnabled
+                enabled: !awWrapper.fillSlot && !root.isIslands && Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
             }
             ActiveWindow {
                 id: _awItem
                 anchors.fill: parent
-                // Islands: bound the text block to the island's inner height.
-                // A title glyph served by a fallback font (Discord channel
-                // symbols) inflates its line's ascent; the column then centres
-                // on the full bar height and paints over the island's edges.
-                // With the island's insets here, ActiveWindow's own clip cuts
-                // that empty ascent at the capsule instead.
-                anchors.topMargin: root.isIslands ? root.islandInset + 2 : 0
-                anchors.bottomMargin: root.isIslands ? root.islandInset + 2 : 0
                 visible: root._moduleVisible("activeWindow") && root.useShortenedForm === 0 && !root.taskbarEnabled
             }
             Loader {
@@ -466,7 +511,10 @@ Item { // Bar content region
                 anchors.fill: parent
                 active: root.taskbarEnabled
                 visible: active
-                sourceComponent: BarTaskbar { parentWindow: root.QsWindow.window }
+                sourceComponent: BarTaskbar {
+                    parentWindow: root.QsWindow.window
+                    slotSize: _tbLoader.height
+                }
             }
         }
     }
@@ -475,10 +523,10 @@ Item { // Bar content region
     Loader {
         active: root.barAppearance === "classic"
             && !root.inirEverywhere
-            && (Appearance.angelEverywhere || !Appearance.auroraEverywhere)
+            && (root.angelEverywhere || root.surfaceDialect !== "aurora")
             && !Appearance.gameModeMinimal
             && (Config.options?.bar?.showBackground ?? true)
-            && (Appearance.angelEverywhere || (((Config.options?.bar?.cornerStyle ?? 0) === 1 || (Config.options?.bar?.cornerStyle ?? 0) === 3)
+            && (root.angelEverywhere || (((Config.options?.bar?.cornerStyle ?? 0) === 1 || (Config.options?.bar?.cornerStyle ?? 0) === 3)
             && (Config.options?.bar?.floatStyleShadow ?? true)))
         anchors.fill: barBackground
         sourceComponent: StyledRectangularShadow {
@@ -489,7 +537,7 @@ Item { // Bar content region
     // Background
     Rectangle {
         id: barBackground
-        readonly property bool auroraEverywhere: Appearance.auroraEverywhere
+        readonly property bool auroraEverywhere: root.surfaceDialect === "aurora" || root.angelEverywhere
         readonly property bool gameModeMinimal: Appearance.gameModeMinimal
         readonly property int cornerStyle: Config.options?.bar?.cornerStyle ?? 0
         readonly property bool zzzGlassActive: root.zzzEverywhere
@@ -560,7 +608,7 @@ Item { // Bar content region
             }
             if (root.angelEverywhere) {
                 const base = blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
-                if (Appearance.compositorBlurActive)
+                if (root.nativeBlurActive)
                     return ColorUtils.transparentize(base, Appearance.angel.compositorPanelTransparentize)
                 return ColorUtils.applyAlpha(base, 1)
             }
@@ -569,7 +617,7 @@ Item { // Bar content region
             }
             if (auroraEverywhere) {
                 const base = blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
-                if (Appearance.compositorBlurActive)
+                if (root.nativeBlurActive)
                     return ColorUtils.transparentize(base, Appearance.aurora.compositorOverlayTransparentize)
                 return ColorUtils.applyAlpha(base, 1)
             }
@@ -734,7 +782,7 @@ Item { // Bar content region
             y: barBackground.isBottom ? -(root.screen?.height ?? 1080) + barBackground.height + barBackground.barMargin : -barBackground.barMargin
             width: root.screen?.width ?? 1920
             height: root.screen?.height ?? 1080
-            visible: barBackground.auroraEverywhere && !root.inirEverywhere && !root.zzzEverywhere && !barBackground.gameModeMinimal && !Appearance.compositorBlurActive && root.barAppearance === "classic"
+            visible: barBackground.auroraEverywhere && !root.inirEverywhere && !root.zzzEverywhere && !barBackground.gameModeMinimal && !root.nativeBlurActive && root.barAppearance === "classic"
             // An invisible Image still downloads and decodes its source, so gating
             // only `visible` on the style left a screen-sized wallpaper bitmap
             // resident for every user NOT on aurora. Gate the source too.
@@ -747,7 +795,7 @@ Item { // Bar content region
 
             // Skip QML blur when the compositor is already blurring this layer
             // (avoids double-blur and the FBO cost). See #159.
-            layer.enabled: Appearance.effectsEnabled && barBackground.auroraEverywhere && !root.inirEverywhere && !Appearance.compositorBlurActive
+            layer.enabled: Appearance.effectsEnabled && barBackground.auroraEverywhere && !root.inirEverywhere && !root.nativeBlurActive
             layer.effect: MultiEffect {
                 source: blurredWallpaper
                 anchors.fill: source
@@ -832,6 +880,7 @@ Item { // Bar content region
 
         // Islands: one capsule wraps the whole left section content.
         EdgeIsland {
+            id: leftEdgeIsland
             visible: root.isIslands && leftSectionRowLayout.implicitWidth > 1
             anchors.verticalCenter: parent.verticalCenter
             x: leftSectionRowLayout.anchors.leftMargin - root.islandPad
@@ -881,6 +930,8 @@ Item { // Bar content region
 
         BarGroup {
             id: middleCenterGroup
+            nativeBlurActive: root.nativeBlurActive
+            screen: root.screen
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
             padding: 4
@@ -916,6 +967,8 @@ Item { // Bar content region
 
         BarGroup {
             id: leftCenterGroup
+            nativeBlurActive: root.nativeBlurActive
+            screen: root.screen
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: (Config.options?.bar.borderless ?? false) ? leftSeparator.left : middleCenterGroup.left
             anchors.rightMargin: root.isIslands ? 8 : 4
@@ -971,6 +1024,8 @@ Item { // Bar content region
             // sizes to natural content and centers it the same way.
             BarGroup {
                 id: rightCenterGroupPill
+                nativeBlurActive: root.nativeBlurActive
+                screen: root.screen
                 anchors.verticalCenter: parent.verticalCenter
                 visible: !empty
                 // Islands: each capsule hugs its own content (no symmetric mirroring,
@@ -1081,6 +1136,7 @@ Item { // Bar content region
         // Islands: one capsule wraps the whole right section content (RTL — the
         // content sits flush against the right margin).
         EdgeIsland {
+            id: rightEdgeIsland
             visible: root.isIslands && rightSectionRowLayout.implicitWidth > 1
             anchors.verticalCenter: parent.verticalCenter
             x: parent.width - rightSectionRowLayout.anchors.rightMargin - rightSectionRowLayout.implicitWidth - root.islandPad
@@ -1183,18 +1239,18 @@ Item { // Bar content region
             // plain rounded fill let it poke out past the ZzzPlate's chamfer.
             colBackground: buttonHovered
                 ? (root.zzzEverywhere ? "transparent"
-                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover)
+                : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover)
                 : "transparent"
             colBackgroundHover: root.zzzEverywhere ? "transparent"
-                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
+                : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
             colRipple: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.20)
-                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
+                : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
             colBackgroundToggled: root.zzzEverywhere ? "transparent"
-                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer
+                : root.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer
             colBackgroundToggledHover: root.zzzEverywhere ? "transparent"
-                : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover
+                : root.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover
             colRippleToggled: root.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.20)
-                : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive
+                : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive
 
             // Same chamfer-grows-on-hover language as LeftSidebarButton.qml —
             // the right sidebar button previously had no zzz plate at all.

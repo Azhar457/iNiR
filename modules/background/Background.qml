@@ -227,9 +227,9 @@ Scope {
 
         // Zone occupancy: map zone name → array of widget names
         readonly property var _builtinWidgets: [
-            { key: "weather",        defaultOn: true,  icon: "cloud" },
+            { key: "weather",        defaultOn: false, icon: "cloud" },
             { key: "clock",          defaultOn: true,  icon: "schedule" },
-            { key: "mediaControls",  defaultOn: true,  icon: "album" },
+            { key: "mediaControls",  defaultOn: false, icon: "album" },
             { key: "visualizer",     defaultOn: false, icon: "graphic_eq" },
             { key: "systemMonitor",  defaultOn: false, icon: "monitor_heart" },
             { key: "battery",        defaultOn: false, icon: "battery_full" },
@@ -878,6 +878,17 @@ Scope {
                     && !bgRoot.wallpaperIsVideo
                     && !bgRoot.externalMainWallpaperActive
                 readonly property bool showInternalStaticWallpaper: !bgRoot.externalMainWallpaperActive
+                readonly property bool localBlurNeedsStaticTexture: Appearance.effectsEnabled
+                    && bgRoot.blurProgress > 0
+                    && (bgRoot.effectsOptions.enableBlur ?? false)
+                    && !Config.options?.performance?.lowPower
+                    && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
+                readonly property bool lockBlurNeedsStaticTexture: (bgRoot.lockBlurOptions.enable ?? false)
+                    && (GlobalStates.screenLocked || scaleAnim.running)
+                readonly property bool needsStaticTexture: !bgRoot.backdropActive
+                    && !bgRoot.wallpaperIsGif && !bgRoot.wallpaperIsVideo
+                    && (showInternalStaticWallpaper || localBlurNeedsStaticTexture
+                        || lockBlurNeedsStaticTexture)
                 readonly property real panOffsetX: bgRoot.effectiveHasPan ? (bgRoot.panX * (bgRoot.parallaxTotalX / 2)) : 0
                 readonly property real panOffsetY: bgRoot.effectiveHasPan ? (bgRoot.panY * (bgRoot.parallaxTotalY / 2)) : 0
                 readonly property real targetX: useParallax
@@ -976,8 +987,10 @@ Scope {
                     // the ShaderEffectSource texture). Nothing consumes it, so drop
                     // the source instead of holding a decoded fullscreen bitmap —
                     // an Image with a source decodes whether or not it is visible.
-                    layer.enabled: !wallpaperContainer.showInternalStaticWallpaper && !bgRoot.backdropActive
-                    source: (bgRoot.wallpaperSafetyTriggered || bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif || bgRoot.backdropActive) ? "" : bgRoot.wallpaperPath
+                    layer.enabled: wallpaperContainer.needsStaticTexture
+                        && !wallpaperContainer.showInternalStaticWallpaper
+                    source: (bgRoot.wallpaperSafetyTriggered || !wallpaperContainer.needsStaticTexture)
+                        ? "" : bgRoot.wallpaperPath
                     // NEVER use crossfader transitions when awww is active — awww handles all transitions.
                     // When parallax is on, the crossfader fades out to reveal awww's native transition.
                     enableTransitions: !AwwwBackend.active
@@ -1584,18 +1597,23 @@ Scope {
                     }
 
                     // ── Floating Edit Controls Bar ────────────────────
-                    Rectangle {
+                    Item {
                         id: editControlsBar
                         anchors {
                             horizontalCenter: parent.horizontalCenter
                             bottom: parent.bottom
                             bottomMargin: 24
                         }
-                        width: editBarRow.implicitWidth + 24
-                        height: 44
-                        radius: Appearance.rounding.full
-                        color: Appearance.colors.colLayer2
-                        border { width: 1; color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12) }
+                        width: Math.min(parent.width - 32, editBarRow.implicitWidth + 24)
+                        height: 48
+
+                        Toolbar {
+                            anchors.fill: parent
+                            padding: 6
+                            spacing: 4
+                            screenX: editControlsBar.x
+                            screenY: editControlsBar.y
+                        }
 
                         // Prevent clicks from falling through
                         MouseArea {
@@ -1679,15 +1697,44 @@ Scope {
                                 color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
                             }
 
-                            // Quick widget toggles
-                            Repeater {
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "widgets"
+                                iconSize: 16
+                                color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.62)
+                            }
+
+                            Flickable {
+                                id: widgetToggleRail
+                                width: Math.max(72, Math.min(420,
+                                    editControlsOverlay.width - 330,
+                                    widgetToggleRow.implicitWidth))
+                                height: 36
+                                contentWidth: widgetToggleRow.implicitWidth
+                                contentHeight: height
+                                clip: true
+                                interactive: contentWidth > width
+                                boundsBehavior: Flickable.StopAtBounds
+                                flickableDirection: Flickable.HorizontalFlick
+
+                                Row {
+                                    id: widgetToggleRow
+                                    spacing: 2
+
+                                    Repeater {
                                 model: [
-                                    { key: "weather", icon: "cloud", label: "Weather", defaultOn: true },
+                                    { key: "weather", icon: "cloud", label: "Weather", defaultOn: false },
                                     { key: "clock", icon: "schedule", label: "Clock", defaultOn: true },
-                                    { key: "mediaControls", icon: "album", label: "Media", defaultOn: true },
+                                    { key: "mediaControls", icon: "album", label: "Media", defaultOn: false },
+                                    { key: "japaneseTypography", icon: "translate", label: "Japanese Typography", defaultOn: false },
                                     { key: "visualizer", icon: "graphic_eq", label: "Visualizer", defaultOn: false },
                                     { key: "systemMonitor", icon: "monitor_heart", label: "System Monitor", defaultOn: false },
-                                    { key: "battery", icon: "battery_full", label: "Battery", defaultOn: false }
+                                    { key: "battery", icon: "battery_full", label: "Battery", defaultOn: false },
+                                    { key: "notes", icon: "sticky_note_2", label: "Notes", defaultOn: false },
+                                    { key: "calendarUpcoming", icon: "event", label: "Upcoming Events", defaultOn: false },
+                                    { key: "uptime", icon: "avg_pace", label: "System Uptime", defaultOn: false },
+                                    { key: "mascot", icon: "pets", label: "Mascot", defaultOn: false },
+                                    { key: "newsTicker", icon: "newspaper", label: "News Ticker", defaultOn: false }
                                 ]
                                 RippleButton {
                                     id: quickWidgetButton
@@ -1735,6 +1782,8 @@ Scope {
                                         color: customWidgetButton.toggled ? Appearance.colors.colPrimary : CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.5)
                                     }
                                     StyledToolTip { text: customWidgetButton.modelData.name }
+                                }
+                            }
                                 }
                             }
 
@@ -1822,8 +1871,8 @@ Scope {
                         active: shown
                         visible: shown
                         z: 150
-                        x: Math.round(parent.width - width - 24)
-                        y: Math.round(parent.height - (editControlsBar.height + 24) - height - 12)
+                        x: Math.max(16, Math.round(parent.width - width - 24))
+                        y: Math.max(16, Math.round(parent.height - (editControlsBar.height + 24) - height - 12))
                         sourceComponent: WidgetManagerPanel {
                             canvasWidth: widgetManagerPanel.parent?.width ?? 800
                             canvasHeight: widgetManagerPanel.parent?.height ?? 600
@@ -1832,7 +1881,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("weather", true)
+                    shown: bgRoot._widgetEnabled("weather", false)
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask : null
                     Item { id: _hitMask; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
                     sourceComponent: WeatherWidget {
@@ -1871,7 +1920,7 @@ Scope {
                 }
 
                 FadeLoader {
-                    shown: bgRoot._widgetEnabled("mediaControls", true)
+                    shown: bgRoot._widgetEnabled("mediaControls", false)
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask3 : null
                     Item { id: _hitMask3; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
                     sourceComponent: MediaControlsWidget {

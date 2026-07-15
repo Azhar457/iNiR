@@ -13,13 +13,14 @@ AbstractBackgroundWidget {
 
     configEntryName: "weather"
     defaultConfig: ({
-        placementStrategy: "leastBusy", preset: "default", style: "pill", shape: "pill",
+        placementStrategy: "free", preset: "default", style: "pill", shape: "pill",
         size: 200, tempSize: 80, iconSize: 80,
         showTemp: true, showIcon: true, showCondition: false,
+        padding: 20, tempFontWeight: 500, conditionOpacity: 0.7,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         showBackground: true, useBlur: false, showBorder: true,
         backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1,
-        x: 100, y: 100
+        x: 100, y: 200
     })
 
     readonly property string weatherStyle: Config.getNestedValue("background.widgets.weather.style", "pill")
@@ -34,6 +35,12 @@ AbstractBackgroundWidget {
     readonly property int weatherPadding: Math.round((Config.getNestedValue("background.widgets.weather.padding", 20)) * scaleFactor)
     readonly property int tempFontWeight: Config.getNestedValue("background.widgets.weather.tempFontWeight", 500)
     readonly property real conditionOpacity: Config.getNestedValue("background.widgets.weather.conditionOpacity", 0.7)
+    readonly property string temperatureText: {
+        const raw = String(Weather.data?.temp ?? "--°");
+        if (raw.endsWith("°C") || raw.endsWith("°F")) return raw.slice(0, -1);
+        if (raw.endsWith("°")) return raw;
+        return raw + "°";
+    }
 
     implicitHeight: shapeSize
     implicitWidth: shapeSize
@@ -44,9 +51,6 @@ AbstractBackgroundWidget {
     // it so ensureVisible() and the region-aware halo can make the shape read on any
     // wallpaper instead of dissolving into a same-tone background.
     needsColText: true
-    // Card mode forces a minimum plate opacity — accents sit on the plate.
-    accentBackdrop: widgetPlateColor
-
     // ── Shape name → enum mapping ──
     readonly property var _shapeMap: ({
         "pill": MaterialShape.Shape.Pill, "circle": MaterialShape.Shape.Circle,
@@ -69,15 +73,12 @@ AbstractBackgroundWidget {
         : Appearance.colors.colOnPrimaryContainer
     readonly property color shapeFill: root.accentPrimaryContainer
     readonly property color shapeInk: ColorUtils.ensureReadable(root.accentOnPrimaryContainer, root.shapeFill, 4.5)
-    // Card text sits on the region-aware plate (the surface below forces a
-    // minimum opacity) — widgetSurfaceInk already opposes that plate; checking
-    // against the theme layer let dark ink land on the dark plate.
-    readonly property color cardInk: root.widgetSurfaceInk
+    // Card text follows the real backdrop: widget ink uses the configured
+    // surface when present and wallpaper-region ink when the card is disabled.
+    readonly property color cardInk: root.widgetInk
 
     // ── Style tokens ──
-    readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property real cardRadius: root.widgetCardRadius
 
     // Shape options for popover
     readonly property var _shapeOptions: [
@@ -90,7 +91,7 @@ AbstractBackgroundWidget {
     ]
 
     editPopoverContent: Component {
-        Column {
+        ColumnLayout {
             spacing: 6
             // Style mode
             GridLayout {
@@ -179,22 +180,13 @@ AbstractBackgroundWidget {
         }
     }
 
-    // Dim factor (0..1)
-    property real dimFactor: {
-        const v = Config.getNestedValue("background.widgets.weather.dim", 0);
-        const n = Number(v);
-        return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
-    }
-
-    // Derived colors per style mode. Dim toward the luminance opposite of what
-    // the ink actually sits on — the card plate (dimming away from the REGION
-    // walked text into the plate's own tone). Pill ink is shapeInk, no dim.
-    readonly property color _cardDimTarget: ColorUtils.contrastColor(root.widgetPlateColor)
+    // Derived colors per style mode. Shared widget dimming is applied once by
+    // AbstractBackgroundWidget, so these roles keep their intended contrast.
     readonly property color weatherIconColor: weatherStyle === "pill"
-        ? root.shapeInk : ColorUtils.mix(root.widgetAccentVisible, root._cardDimTarget, dimFactor * 0.35)
+        ? root.shapeInk : root.widgetAccentVisible
     readonly property color weatherConditionColor: weatherStyle === "pill"
         ? ColorUtils.applyAlpha(root.shapeInk, root.conditionOpacity)
-        : ColorUtils.applyAlpha(ColorUtils.mix(root.cardInk, root._cardDimTarget, dimFactor * 0.5), root.conditionOpacity)
+        : ColorUtils.applyAlpha(root.cardInk, root.conditionOpacity)
 
     // ── Pill/shape mode ──
     // Soft contact shadow detaches the pill from the wallpaper (shell shadow
@@ -240,14 +232,16 @@ AbstractBackgroundWidget {
         regionBrightness: root.regionBrightness
         id: cardBackground
         visible: root.weatherStyle === "card"
+            && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
-        surfaceOpacity: Math.max(root.backgroundOpacity, 0.16)
-        surfaceBorderWidth: Math.max(root.borderWidth, 1)
-        surfaceBorderOpacity: Math.max(root.borderOpacity, 0.12)
+        surfaceOpacity: root.backgroundOpacity
+        surfaceBorderWidth: root.borderWidth
+        surfaceBorderOpacity: root.borderOpacity
         surfaceColor: root.cardInk
+        colorMode: root.colorMode
         surfaceAccent: root.widgetAccent
-        surfaceUseBlur: root.useBlur
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
@@ -256,7 +250,6 @@ AbstractBackgroundWidget {
 
     Item {
         anchors.fill: parent
-        opacity: 1.0 - root.dimFactor * 0.6
 
         MaterialSymbol {
             visible: root.visibleContentCount === 0
@@ -277,7 +270,7 @@ AbstractBackgroundWidget {
             // unit in both modes, instead of the icon being tinted and the number
             // staying flat ink like it did before.
             color: root.weatherIconColor
-            text: Weather.data?.temp.substring(0,Weather.data?.temp.length - 1) ?? "--°"
+            text: root.temperatureText
             anchors {
                 right: parent.right
                 top: parent.top

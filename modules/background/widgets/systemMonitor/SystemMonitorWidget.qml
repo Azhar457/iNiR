@@ -15,7 +15,18 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "systemMonitor"
-    defaultConfig: ({ placementStrategy: "free", preset: "default", displayMode: "bars", showCpu: true, showMemory: true, showGpu: true, showTemp: false, showDisk: false, showLabels: true, contentWidth: 320, contentHeight: 120, dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true, showBorder: true, colorMode: "auto", x: 50, y: 400 })
+    defaultConfig: ({
+        placementStrategy: "free", preset: "default", displayMode: "bars",
+        barCount: 32, barSpacing: 2, trackAlpha: 0.08,
+        fillOpacity: 0.7, graphFillOpacity: 0.3,
+        showCpu: true, showMemory: true, showGpu: true,
+        showTemp: false, showDisk: false, showLabels: true,
+        contentWidth: 320, contentHeight: 120, dim: 0,
+        widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
+        showBackground: true, useBlur: false, showBorder: true,
+        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
+        cornerRadius: -1, x: 50, y: 400
+    })
 
     implicitWidth: Math.round((Config.getNestedValue("background.widgets.systemMonitor.contentWidth", 320)) * scaleFactor)
     implicitHeight: Math.round((Config.getNestedValue("background.widgets.systemMonitor.contentHeight", 120)) * scaleFactor)
@@ -26,7 +37,7 @@ AbstractBackgroundWidget {
 
     // ── Popover: mode + resource toggles ──
     editPopoverContent: Component {
-        Column {
+        ColumnLayout {
             spacing: 6
             GridLayout {
                 columns: 2
@@ -91,12 +102,6 @@ AbstractBackgroundWidget {
     readonly property real fillOpacity: Config.getNestedValue("background.widgets.systemMonitor.fillOpacity", 0.7)
     readonly property real graphFillOpacity: Config.getNestedValue("background.widgets.systemMonitor.graphFillOpacity", 0.3)
 
-    property real dimFactor: {
-        const v = Config.getNestedValue("background.widgets.systemMonitor.dim", 0);
-        const n = Number(v);
-        return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
-    }
-
     // ── Static resource model (metadata only — no live values) ──
     readonly property var _resourceModel: {
         const items = [];
@@ -137,9 +142,7 @@ AbstractBackgroundWidget {
     }
 
     // ── Style tokens ──
-    readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property real cardRadius: root.widgetCardRadius
     readonly property int _innerMargin: Appearance.angelEverywhere || Appearance.inirEverywhere ? 6 : 2
 
     // Shared desktop-widget identity (AbstractBackgroundWidget) so every metric reads
@@ -148,18 +151,31 @@ AbstractBackgroundWidget {
     readonly property color cpuColor: root.widgetAccentVisible
     readonly property color memColor: root.widgetAccent2Visible
     readonly property color gpuColor: root.widgetAccent3Visible
-    readonly property color tempColor: root.widgetSignal
-    readonly property color diskColor: Appearance.zzzEverywhere ? Appearance.zzz.sticker
-        : Appearance.colors.colTertiaryContainer
+    readonly property color tempColor: root.widgetRoleColor(root.widgetSignal, 3.0, 0.50)
+    readonly property color diskColor: root.widgetRoleColor(
+        ColorUtils.mix(root.widgetAccent2, root.widgetAccent3, 0.55), 3.0, 0.42)
 
     // Animation duration for smooth value transitions
     readonly property int _animDuration: Appearance.animation.elementMove.duration
 
-    Component.onCompleted: if (root._active) ResourceUsage.keepAlive()
-    Component.onDestruction: if (root._active) ResourceUsage.releaseKeepAlive()
-    on_ActiveChanged: {
-        if (_active) ResourceUsage.keepAlive();
-        else ResourceUsage.releaseKeepAlive();
+    property bool _holdingResourceUsage: false
+    function _syncResourceUsage(): void {
+        const shouldHold = root._active && root.visible && root.powerActive;
+        if (shouldHold && !root._holdingResourceUsage) {
+            root._holdingResourceUsage = true;
+            ResourceUsage.keepAlive();
+        } else if (!shouldHold && root._holdingResourceUsage) {
+            root._holdingResourceUsage = false;
+            ResourceUsage.releaseKeepAlive();
+        }
+    }
+    on_ActiveChanged: root._syncResourceUsage()
+    onVisibleChanged: root._syncResourceUsage()
+    onPowerActiveChanged: root._syncResourceUsage()
+    Component.onCompleted: root._syncResourceUsage()
+    Component.onDestruction: if (root._holdingResourceUsage) {
+        root._holdingResourceUsage = false;
+        ResourceUsage.releaseKeepAlive();
     }
 
     WidgetSurface {
@@ -170,13 +186,14 @@ AbstractBackgroundWidget {
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
         surfaceColor: root.widgetSurfaceInk
+        colorMode: root.colorMode
         surfaceAccent: root.widgetAccent
-        surfaceUseBlur: root.useBlur
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0
+        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     // ══════════════════════════════════════════════════════════
@@ -186,7 +203,6 @@ AbstractBackgroundWidget {
         anchors.fill: parent
         anchors.margins: root._innerMargin
         spacing: Appearance.sizes.spacingSmall ?? 4
-        opacity: 1.0 - root.dimFactor * 0.6
         visible: root.displayMode === "bars"
 
         Repeater {
@@ -257,7 +273,6 @@ AbstractBackgroundWidget {
     Item {
         anchors.fill: parent
         anchors.margins: root._innerMargin
-        opacity: 1.0 - root.dimFactor * 0.6
         visible: root.displayMode === "graph"
 
         readonly property int _legendH: root.showLabels ? 16 : 0
@@ -356,7 +371,6 @@ AbstractBackgroundWidget {
     Row {
         anchors.centerIn: parent
         spacing: Appearance.sizes.spacingNormal ?? 8
-        opacity: 1.0 - root.dimFactor * 0.6
         visible: root.displayMode === "rings"
 
         Repeater {
@@ -390,6 +404,11 @@ AbstractBackgroundWidget {
                         implicitSize: parent.width
                         lineWidth: Math.max(3, Math.round(parent.width * 0.09))
                         value: ringCol._animatedValue
+                        // `_animatedValue` already owns the transition. Letting
+                        // CircularProgress animate `degree` again chained two
+                        // full animations per sample and kept five Shape layers
+                        // rendering for most of every 3-second polling cycle.
+                        enableAnimation: false
                         colPrimary: ringCol._liveColor
                         colSecondary: ColorUtils.applyAlpha(ringCol._liveColor, root.trackAlpha + 0.04)
                     }
@@ -435,7 +454,6 @@ AbstractBackgroundWidget {
     Flow {
         anchors.centerIn: parent
         spacing: Appearance.sizes.spacingSmall ?? 4
-        opacity: 1.0 - root.dimFactor * 0.6
         visible: root.displayMode === "text"
         width: parent.width - root._innerMargin * 2
 

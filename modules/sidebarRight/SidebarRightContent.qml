@@ -140,13 +140,15 @@ Item {
         implicitHeight: Math.max(0, parent.height - Appearance.sizes.hyprlandGapsOut * 2)
         implicitWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut * 2
         property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
-        // Island: the panel wears the Ricelin gradient card (IslandPanel) and the
-        // flat fill/border step aside. Explicit island opt-in outranks the zzz
-        // chrome (same rule as the islands bar and dock).
-        readonly property bool islandStyle: (Config.options?.sidebar?.style ?? "panel") === "island"
-        readonly property bool angelEverywhere: Appearance.angelEverywhere
-        readonly property bool auroraEverywhere: Appearance.auroraEverywhere
-        readonly property bool inirEverywhere: Appearance.inirEverywhere
+        // Resolve one owner for the complete surface. Explicit Ricelin islands
+        // override the global worldview; otherwise the selected global style owns it.
+        readonly property string surfaceDialect: Appearance.surfaceDialectFor(
+            (Config.options?.sidebar?.style ?? "panel") === "island" ? "island" : "")
+        readonly property bool islandStyle: surfaceDialect === "island"
+        readonly property bool zzzEverywhere: surfaceDialect === "zzz"
+        readonly property bool angelEverywhere: surfaceDialect === "angel"
+        readonly property bool auroraEverywhere: surfaceDialect === "aurora" || angelEverywhere
+        readonly property bool inirEverywhere: surfaceDialect === "inir"
         readonly property bool gameModeMinimal: Appearance.gameModeMinimal
         readonly property string wallpaperUrl: {
             const _dep1 = WallpaperListener.multiMonitorEnabled
@@ -162,7 +164,7 @@ Item {
 
         ColorQuantizer {
             id: sidebarRightWallpaperQuantizer
-            source: (Appearance.auroraEverywhere || Appearance.angelEverywhere) ? sidebarRightBackground.wallpaperUrl : ""
+            source: sidebarRightBackground.auroraEverywhere ? sidebarRightBackground.wallpaperUrl : ""
             depth: 0
             rescaleSize: 10
         }
@@ -173,16 +175,16 @@ Item {
         }
 
         color: (gameModeMinimal || islandStyle) ? "transparent"
-            : Appearance.zzzEverywhere ? Appearance.zzz.chrome
+            : zzzEverywhere ? Appearance.zzz.chrome
             : inirEverywhere ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
             : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
             : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
-        border.width: (gameModeMinimal || islandStyle) ? 0 : (Appearance.zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
-        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+        border.width: (gameModeMinimal || islandStyle) ? 0 : (zzzEverywhere ? 1 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
+        border.color: zzzEverywhere ? Appearance.zzz.hairline
             : angelEverywhere ? Appearance.angel.colPanelBorder
             : inirEverywhere ? Appearance.inir.colBorder
             : Appearance.colors.colLayer0Border
-        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+        radius: zzzEverywhere ? Appearance.zzz.panelRadius
             : angelEverywhere ? Appearance.angel.roundingNormal
             : inirEverywhere ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
             : cardStyle ? Appearance.rounding.normal : (Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1)
@@ -280,13 +282,14 @@ Item {
 
         // Angel partial border — elegant half-borders
         AngelPartialBorder {
+            visible: sidebarRightBackground.angelEverywhere
             targetRadius: sidebarRightBackground.radius
             z: 10
         }
 
         ZzzPanelBackdrop {
             anchors.fill: parent
-            visible: opacity > 0 && !sidebarRightBackground.islandStyle
+            visible: sidebarRightBackground.zzzEverywhere && opacity > 0
             label: "SYSTEM"
             index: "R"
             ghostText: "RIGHT"
@@ -306,7 +309,7 @@ Item {
         // so chrome + ghost marks still breathe.
         Rectangle {
             anchors.fill: parent
-            visible: Appearance.zzzEverywhere && !sidebarRightBackground.islandStyle
+            visible: sidebarRightBackground.zzzEverywhere
             color: ColorUtils.applyAlpha(Appearance.zzz.tile, 0.55)
             z: 0
             Behavior on color {

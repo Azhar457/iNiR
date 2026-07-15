@@ -15,6 +15,9 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
+    property bool _presentedOpen: false
+    Component.onCompleted: if (GlobalStates.sessionOpen)
+        Qt.callLater(() => { root._presentedOpen = GlobalStates.sessionOpen })
     property var focusedScreen: {
         if (CompositorService.isNiri && typeof NiriService !== "undefined" && NiriService.currentOutput) {
             const name = NiriService.currentOutput;
@@ -71,10 +74,12 @@ Scope {
             target: GlobalStates
             function onSessionOpenChanged() {
                 if (GlobalStates.sessionOpen) {
+                    Qt.callLater(() => { root._presentedOpen = GlobalStates.sessionOpen })
                     _sessionCloseTimer.stop()
                     sessionLoader._sessionClosing = false
                     SessionWarnings.refresh()
                 } else {
+                    root._presentedOpen = false
                     sessionLoader._sessionClosing = true
                     _sessionCloseTimer.restart()
                 }
@@ -229,8 +234,8 @@ Scope {
 
                 // Subtle open animation for the session dialog
                 transformOrigin: Item.Center
-                scale: GlobalStates.sessionOpen ? 1.0 : 0.97
-                opacity: GlobalStates.sessionOpen ? 1.0 : 0.0
+                scale: root._presentedOpen ? 1.0 : 0.97
+                opacity: root._presentedOpen ? 1.0 : 0.0
                 Behavior on scale {
                     animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
                 }
@@ -414,54 +419,6 @@ Scope {
                             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                         }
                     }
-                }
-            }
-        }
-    }
-
-    IpcHandler {
-        target: "session"
-        enabled: Config.options?.panelFamily !== "waffle"
-
-        function toggle(): void {
-            GlobalStates.sessionOpen = !GlobalStates.sessionOpen;
-        }
-
-        function close(): void {
-            GlobalStates.sessionOpen = false
-        }
-
-        function open(): void {
-            GlobalStates.sessionOpen = true
-        }
-    }
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "sessionToggle"
-                description: "Toggles session screen on press"
-
-                onPressed: {
-                    GlobalStates.sessionOpen = !GlobalStates.sessionOpen;
-                }
-            }
-
-            GlobalShortcut {
-                name: "sessionOpen"
-                description: "Opens session screen on press"
-
-                onPressed: {
-                    GlobalStates.sessionOpen = true
-                }
-            }
-
-            GlobalShortcut {
-                name: "sessionClose"
-                description: "Closes session screen on press"
-
-                onPressed: {
-                    GlobalStates.sessionOpen = false
                 }
             }
         }

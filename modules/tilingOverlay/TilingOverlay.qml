@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import "root:"
 import "root:services"
@@ -12,8 +13,8 @@ import "root:services"
 Scope {
     id: root
 
-    property bool showPicker: false
-    property bool showOsd: false
+    readonly property bool showPicker: GlobalStates.tilingOverlayPickerOpen
+    readonly property bool showOsd: GlobalStates.tilingOverlayOsdOpen
 
     readonly property string currentLayout: NiriService.currentLayout
     readonly property int windowCount: NiriService.tilingWindowCount
@@ -31,33 +32,8 @@ Scope {
         return 0
     }
 
-    Timer {
-        id: osdTimer
-        interval: 1500
-        onTriggered: root.showOsd = false
-    }
-
-    Timer {
-        id: pickerTimer
-        interval: 2500
-        onTriggered: root.showPicker = false
-    }
-
-    Connections {
-        target: NiriService
-        function onLayoutApplied(layout, count) {
-            root.showOsd = true
-            osdTimer.restart()
-        }
-    }
-
     function applyLayout(id): void {
         NiriService.applyLayout(id)
-        pickerTimer.restart()
-    }
-
-    function cycle(): void {
-        NiriService.cycleLayout()
     }
 
     // Panel
@@ -91,7 +67,7 @@ Scope {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: root.showPicker = false
+                    onClicked: GlobalStates.tilingOverlayPickerOpen = false
                 }
             }
 
@@ -330,7 +306,7 @@ Scope {
                     }
                 }
 
-                Keys.onEscapePressed: root.showPicker = false
+                Keys.onEscapePressed: GlobalStates.tilingOverlayPickerOpen = false
                 Keys.onPressed: (e) => {
                     const idx = root.layoutIndex(root.currentLayout)
                     if (e.key === Qt.Key_Right || e.key === Qt.Key_Tab) {
@@ -354,39 +330,4 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "tiling"
-
-        function toggle(): void {
-            root.showPicker = !root.showPicker
-            if (root.showPicker) pickerTimer.stop()
-        }
-
-        function open(): void {
-            root.showPicker = true
-            pickerTimer.stop()
-        }
-
-        function hide(): void {
-            root.showPicker = false
-            root.showOsd = false
-        }
-
-        function cycle(): void {
-            root.cycle()
-            root.showOsd = true
-            root.showPicker = false
-            osdTimer.restart()
-        }
-
-        function showOsd(): void {
-            root.showOsd = true
-            root.showPicker = false
-            osdTimer.restart()
-        }
-
-        function promote(): void {
-            NiriService.promoteToMaster()
-        }
-    }
 }

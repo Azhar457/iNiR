@@ -14,7 +14,6 @@ Item {
     property int margin: 10
 
     Component.onCompleted: ResourceUsage.ensureRunning()
-    Component.onDestruction: ResourceUsage.stop()
 
     // Style tokens
     readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText

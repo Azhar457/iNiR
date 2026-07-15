@@ -53,8 +53,26 @@ AbstractWidget {
         const v = Number(root._readConfigKey("widgetOpacity") ?? 100);
         return Math.max(0, Math.min(1, Number.isFinite(v) ? v / 100 : 1.0));
     }
+    // One dim contract for every desktop widget. Stored config remains
+    // 0 = no dim, 100 = strongest dim. The shared root attenuation replaces
+    // per-widget color/opacity implementations that disagreed or did nothing.
+    readonly property real dimAmount: {
+        const v = Number(root._readConfigKey("dim") ?? 0);
+        return Math.max(0, Math.min(1, Number.isFinite(v) ? v / 100 : 0));
+    }
+    readonly property real dimOpacity: 1.0 - root.dimAmount * 0.6
     readonly property bool showBackground: root._readConfigKey("showBackground") ?? true
     readonly property bool useBlur: root._readConfigKey("useBlur") ?? false
+    readonly property bool _widgetIslandStyle: !Appearance.zzzEverywhere && !Appearance.cookieEverywhere
+        && !Appearance.angelEverywhere && !Appearance.auroraEverywhere && !Appearance.inirEverywhere
+        && (Config.options?.background?.widgets?.style ?? "panel") === "island"
+    readonly property bool blurAvailable: Appearance.effectsEnabled
+        && (Appearance.angelEverywhere
+            || (Appearance.auroraEverywhere && !Appearance.inirEverywhere)
+            || (root._widgetIslandStyle
+                && (Config.options?.appearance?.island?.glass ?? true)
+                && (Config.options?.appearance?.island?.opacity ?? 1) < 0.999))
+    readonly property bool effectiveBlur: root.showBackground && root.useBlur && root.blurAvailable
     readonly property bool showBorder: root._readConfigKey("showBorder") ?? true
     // Granular card controls — override booleans when present
     readonly property real backgroundOpacity: {
@@ -376,7 +394,8 @@ AbstractWidget {
     }
 
     visible: opacity > 0
-    opacity: ((GlobalStates.screenLocked && !visibleWhenLocked) ? 0 : 1) * widgetOpacity
+    opacity: ((GlobalStates.screenLocked && !visibleWhenLocked) ? 0 : 1)
+        * root.widgetOpacity * root.dimOpacity
     enabled: !GlobalStates.screenLocked
     Behavior on opacity {
         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -460,26 +479,35 @@ AbstractWidget {
         const margin = root._editScreenMargin;
         const safeX = Math.max(0, Math.min(root.scaledScreenWidth - root.width, widgetX));
         const safeY = Math.max(0, Math.min(root.scaledScreenHeight - root.height, widgetY));
-        const stackHeight = editToolbar.height + root._editToolbarGap
-            + (popoverVisible ? editPopoverPanel.height + root._editPopoverGap : 0);
-        const spaceAbove = Math.max(0, safeY - margin);
+        const popoverHeight = popoverVisible ? editPopoverPanel.height : 0;
+        const stackHeight = editToolbar.height
+            + (popoverVisible ? popoverHeight + root._editPopoverGap : 0);
+        const spaceAbove = Math.max(0, safeY - margin - root._editToolbarGap);
         const spaceBelow = Math.max(0,
-            root.scaledScreenHeight - margin - safeY - root.height);
+            root.scaledScreenHeight - margin - safeY - root.height - root._editToolbarGap);
         const fitsAbove = spaceAbove >= stackHeight;
         const fitsBelow = spaceBelow >= stackHeight;
         const below = fitsAbove ? false : fitsBelow ? true : spaceBelow > spaceAbove;
-        const toolbarX = Math.max(margin, Math.min(
-            root.scaledScreenWidth - margin - editToolbar.width,
+        const toolbarMaxX = Math.max(margin,
+            root.scaledScreenWidth - margin - editToolbar.width);
+        const toolbarX = Math.max(margin, Math.min(toolbarMaxX,
             safeX + (root.width - editToolbar.width) / 2));
-        const toolbarY = below
+        const preferredStackY = below
             ? safeY + root.height + root._editToolbarGap
-            : safeY - editToolbar.height - root._editToolbarGap;
-        const popoverX = Math.max(margin, Math.min(
-            root.scaledScreenWidth - margin - editPopoverPanel.width,
+            : safeY - root._editToolbarGap - stackHeight;
+        const stackMaxY = Math.max(margin,
+            root.scaledScreenHeight - margin - stackHeight);
+        const stackY = Math.max(margin, Math.min(stackMaxY, preferredStackY));
+        const toolbarY = below
+            ? stackY
+            : stackY + (popoverVisible ? popoverHeight + root._editPopoverGap : 0);
+        const popoverMaxX = Math.max(margin,
+            root.scaledScreenWidth - margin - editPopoverPanel.width);
+        const popoverX = Math.max(margin, Math.min(popoverMaxX,
             toolbarX + (editToolbar.width - editPopoverPanel.width) / 2));
         const popoverY = below
             ? toolbarY + editToolbar.height + root._editPopoverGap
-            : toolbarY - editPopoverPanel.height - root._editPopoverGap;
+            : stackY;
         const toolbarInBounds = toolbarX >= margin && toolbarY >= margin
             && toolbarX + editToolbar.width <= root.scaledScreenWidth - margin
             && toolbarY + editToolbar.height <= root.scaledScreenHeight - margin;
@@ -499,14 +527,14 @@ AbstractWidget {
     }
 
     readonly property var _editControlsGeometry: root._resolveEditControlsGeometry(
-        root.x, root.y, editPopoverPanel.visible)
+        root.x, root.y, editPopoverPanel.open)
     readonly property bool _editControlsBelow: root._editControlsGeometry.below
 
     readonly property string editControlsGeometryReport: {
         const requestedX = root.debugLayoutProbeActive ? root.debugLayoutProbeX : root.x;
         const requestedY = root.debugLayoutProbeActive ? root.debugLayoutProbeY : root.y;
         const geometry = root._resolveEditControlsGeometry(
-            requestedX, requestedY, editPopoverPanel.visible);
+            requestedX, requestedY, editPopoverPanel.open);
         return JSON.stringify({
             widget: root.configEntryName,
             screen: { width: root.scaledScreenWidth, height: root.scaledScreenHeight },
@@ -515,14 +543,23 @@ AbstractWidget {
             position: { x: Math.round(geometry.widgetX), y: Math.round(geometry.widgetY) },
             below: geometry.below,
             toolbar: { x: Math.round(geometry.toolbarX), y: Math.round(geometry.toolbarY), width: Math.round(editToolbar.width), height: Math.round(editToolbar.height) },
-            popover: { visible: editPopoverPanel.visible, x: Math.round(geometry.popoverX), y: Math.round(geometry.popoverY), width: Math.round(editPopoverPanel.width), height: Math.round(editPopoverPanel.height) },
+            popover: { visible: editPopoverPanel.open, x: Math.round(geometry.popoverX), y: Math.round(geometry.popoverY), width: Math.round(editPopoverPanel.width), height: Math.round(editPopoverPanel.height) },
             inBounds: geometry.inBounds
         });
     }
 
     onDebugQuickControlsOpenChanged: {
         if (Quickshell.env("INIR_REGION_DEBUG") === "1")
-            editPopoverPanel.visible = root.debugQuickControlsOpen;
+            editPopoverPanel.open = root.debugQuickControlsOpen;
+    }
+    onLockedChanged: if (root.locked) editPopoverPanel.open = false
+
+    Connections {
+        target: GlobalStates
+        function onWidgetEditModeChanged(): void {
+            if (!GlobalStates.widgetEditMode)
+                editPopoverPanel.open = false;
+        }
     }
 
     function _snapToGrid(value: real): real {
@@ -555,8 +592,8 @@ AbstractWidget {
         opacity: GlobalStates.widgetEditMode ? 1 : 0
         x: root._editControlsGeometry.toolbarX - root.x
         y: root._editControlsGeometry.toolbarY - root.y
-        width: toolbarRow.implicitWidth + 12
-        height: 36
+        width: toolbarRow.implicitWidth + 16
+        height: 40
 
         Behavior on x {
             enabled: Appearance.animationsEnabled
@@ -628,7 +665,7 @@ AbstractWidget {
             RippleButton {
                 id: snapZoneBtn
                 visible: !root.locked
-                width: 32; height: 32
+                width: placementStateRow.implicitWidth + 16; height: 32
                 buttonRadius: Appearance.rounding.full
                 toggled: root._isZonePlacement
                 colBackground: "transparent"
@@ -639,31 +676,65 @@ AbstractWidget {
                 colRippleToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                 downAction: () => { root._toggleZonePlacement() }
                 altAction: () => { root._cycleSnapZone() }
-                contentItem: MaterialSymbol {
+                contentItem: Row {
+                    id: placementStateRow
                     anchors.centerIn: parent
-                    text: root._isZonePlacement ? "grid_on" : "grid_view"
-                    iconSize: 18
-                    color: root._isZonePlacement ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+                    spacing: 4
+                    MaterialSymbol {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root._isZonePlacement ? "grid_on" : "open_with"
+                        iconSize: 16
+                        color: root._isZonePlacement ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+                    }
+                    StyledText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root._isZonePlacement ? Translation.tr("Zone") : Translation.tr("Free")
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.weight: Font.Medium
+                        color: root._isZonePlacement ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+                    }
                 }
-                StyledToolTip { text: root._isZonePlacement ? Translation.tr("Zone placement active — click for free placement, right-click to cycle") : Translation.tr("Use nearest snap zone") }
+                StyledToolTip { text: root._isZonePlacement ? Translation.tr("Zone placement active — click for free placement, right-click to cycle") : Translation.tr("Attach this widget to the nearest screen zone") }
             }
 
             RippleButton {
                 id: resetBtn
+                property bool armed: false
                 visible: !root.locked
                 width: 32; height: 32
                 buttonRadius: Appearance.rounding.full
+                toggled: armed
                 colBackground: "transparent"
                 colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.08)
+                colBackgroundToggled: ColorUtils.applyAlpha(root.widgetSignal, 0.16)
+                colBackgroundToggledHover: ColorUtils.applyAlpha(root.widgetSignal, 0.24)
                 colRipple: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                downAction: () => { root.resetToDefaults() }
+                downAction: () => {
+                    if (resetBtn.armed) {
+                        resetBtn.armed = false
+                        resetConfirmTimer.stop()
+                        root.resetToDefaults()
+                    } else {
+                        resetBtn.armed = true
+                        resetConfirmTimer.restart()
+                    }
+                }
+                Timer {
+                    id: resetConfirmTimer
+                    interval: 2500
+                    onTriggered: resetBtn.armed = false
+                }
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
-                    text: "restart_alt"
+                    text: resetBtn.armed ? "warning" : "restart_alt"
                     iconSize: 18
-                    color: Appearance.colors.colOnLayer2
+                    color: resetBtn.armed ? root.widgetSignal : Appearance.colors.colOnLayer2
                 }
-                StyledToolTip { text: Translation.tr("Reset to defaults") }
+                StyledToolTip {
+                    text: resetBtn.armed
+                        ? Translation.tr("Click again to reset this widget")
+                        : Translation.tr("Reset to defaults")
+                }
             }
 
             Rectangle {
@@ -678,13 +749,13 @@ AbstractWidget {
                 visible: root._effectivePopover !== null && !root.locked
                 width: 32; height: 32
                 buttonRadius: Appearance.rounding.full
-                toggled: editPopoverPanel.visible
+                toggled: editPopoverPanel.open
                 colBackground: "transparent"
                 colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.08)
                 colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                 colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
                 colRipple: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                downAction: () => { editPopoverPanel.visible = !editPopoverPanel.visible }
+                downAction: () => { editPopoverPanel.open = !editPopoverPanel.open }
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "tune"
@@ -722,13 +793,24 @@ AbstractWidget {
         // Inline popover panel follows the toolbar to whichever side has room.
         Item {
             id: editPopoverPanel
-            visible: false
+            property bool open: false
+            visible: opacity > 0
+            enabled: open
+            opacity: open ? 1 : 0
             x: root._editControlsGeometry.popoverX - root._editControlsGeometry.toolbarX
             y: root._editControlsGeometry.popoverY - root._editControlsGeometry.toolbarY
             width: Math.min(root.scaledScreenWidth - 2 * root._editScreenMargin,
                 popoverLoader.item ? popoverLoader.item.implicitWidth + 16 : 200)
             height: popoverLoader.item ? popoverLoader.item.implicitHeight + 16 : 0
 
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveFast.duration
+                    easing.type: Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                }
+            }
             Behavior on x {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation {
@@ -775,12 +857,18 @@ AbstractWidget {
     Row {
         z: 200
         visible: GlobalStates.widgetEditMode
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            top: parent.bottom
-            topMargin: 6
-        }
+        x: Math.round((root.width - width) / 2)
+        y: root._editControlsBelow ? -height - 6 : root.height + 6
         spacing: 4
+
+        Behavior on y {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveFast.duration
+                easing.type: Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Appearance.animationCurves.standardDecel
+            }
+        }
 
         // Placement strategy badge
         Rectangle {
@@ -1095,9 +1183,16 @@ AbstractWidget {
     function resetToDefaults(): void {
         const prefix = root._configPath;
         const defaults = root.defaultConfig;
+        const updates = {};
         for (const key in defaults) {
-            Config.setNestedValue(prefix + "." + key, defaults[key]);
+            // Resetting a visible widget must not make it disappear or change
+            // the lock state that guards this action. Those are lifecycle and
+            // interaction controls, not visual defaults.
+            if (key === "enable" || key === "locked")
+                continue;
+            updates[prefix + "." + key] = defaults[key];
         }
+        Config.setNestedValues(updates);
         syncFreePositionFromConfig();
         refreshPlacementIfNeeded();
     }
@@ -1143,6 +1238,8 @@ AbstractWidget {
     readonly property color _inkDark: ColorUtils.boostInkSaturation(
         Appearance.m3colors.darkmode ? Appearance.m3colors.m3inverseOnSurface : Appearance.colors.colOnLayer0,
         Appearance.m3colors.m3primary)
+    readonly property bool forceLightInk: root.colorMode === "light"
+    readonly property bool forceDarkInk: root.colorMode === "dark"
     property color colText: {
         if (root.colorMode === "light") return root._inkLight;
         if (root.colorMode === "dark") return root._inkDark;
@@ -1174,7 +1271,7 @@ AbstractWidget {
     readonly property color widgetSignal:
         Appearance.zzzEverywhere ? Appearance.zzz.signal
         : Appearance.colors.colError
-    readonly property bool widgetHasSurface: root.backgroundOpacity > 0 || root.useBlur
+    readonly property bool widgetHasSurface: root.backgroundOpacity > 0 || root.effectiveBlur
 
     // ── Region-aware plate ──────────────────────────────────────────────────
     // A widget plate must oppose the wallpaper region behind it, not the shell
@@ -1198,15 +1295,22 @@ AbstractWidget {
     // near-black derivative everywhere. Light theme gets a hue-tinted paper plate,
     // EXCEPT over a bright wallpaper region, where a light card reads as glare (the
     // original reason plates were pinned to black) — there it falls back to black.
-    readonly property bool widgetPlateIsDark: Appearance.m3colors.darkmode || root.regionIsBright
+    readonly property bool widgetPlateIsDark: root.forceLightInk ? true
+        : root.forceDarkInk ? false
+        : Appearance.m3colors.darkmode || root.regionIsBright
     readonly property color _plateAuto: root.widgetPlateIsDark ? root._plateDark : root._plateLight
-    readonly property color widgetPlateColor: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+    readonly property color widgetPlateColor: root.forceLightInk || root.forceDarkInk
+        ? root._plateAuto
+        : Appearance.zzzEverywhere ? Appearance.zzz.chrome
+        : Appearance.cookieEverywhere ? Appearance.colors.colLayer2
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : root._plateAuto
 
     // Ink opposes the plate it sits on, not the theme.
-    readonly property color widgetSurfaceInk: Appearance.zzzEverywhere
-        ? Appearance.zzz.onBg
+    readonly property color widgetSurfaceInk: root.forceLightInk ? root._inkLight
+        : root.forceDarkInk ? root._inkDark
+        : Appearance.zzzEverywhere ? Appearance.zzz.onBg
+        : Appearance.cookieEverywhere ? Appearance.cookie.onColor
         : !Appearance.angelEverywhere
         ? (root.widgetPlateIsDark ? root._inkLight : root._inkDark)
         : Appearance.colors.colOnLayer1
@@ -1214,6 +1318,7 @@ AbstractWidget {
     readonly property color widgetInkMuted: ColorUtils.applyAlpha(root.widgetInk, 0.66)
     readonly property color widgetInkSubtle: ColorUtils.applyAlpha(root.widgetInk, 0.58)
     readonly property real widgetCardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+        : Appearance.cookieEverywhere ? Appearance.cookie.roundLarge
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
@@ -1230,9 +1335,23 @@ AbstractWidget {
     // DISPLAYED over the backdrop. adaptAccent is a clamp (early-out when the
     // raw accent already reads), so the usual dark-theme case is byte-identical
     // and a re-tone can only happen in the same repaint that flips the plate.
-    readonly property color widgetAccentVisible: ColorUtils.adaptAccent(root.widgetAccent, root.accentBackdrop)
-    readonly property color widgetAccent2Visible: ColorUtils.adaptAccent(root.widgetAccent2, root.accentBackdrop)
-    readonly property color widgetAccent3Visible: ColorUtils.adaptAccent(root.widgetAccent3, root.accentBackdrop)
+    function widgetRoleColor(seed, targetContrast = 4.0, minSaturation = 0.45) {
+        const source = Qt.color(seed);
+        if (!source.valid)
+            return root.widgetInk;
+        if (root.forceLightInk || root.forceDarkInk) {
+            return Qt.hsla(source.hslHue,
+                Math.max(minSaturation, source.hslSaturation),
+                root.forceLightInk ? 0.82 : 0.20,
+                source.a);
+        }
+        return ColorUtils.adaptAccent(source, root.accentBackdrop,
+            targetContrast, minSaturation, 0.12, 0.90);
+    }
+
+    readonly property color widgetAccentVisible: root.widgetRoleColor(root.widgetAccent)
+    readonly property color widgetAccent2Visible: root.widgetRoleColor(root.widgetAccent2)
+    readonly property color widgetAccent3Visible: root.widgetRoleColor(root.widgetAccent3)
 
     // Legibility shadow placed BEHIND text and plate-less elements so they
     // detach from any wallpaper without a visible card. Always dark (a true

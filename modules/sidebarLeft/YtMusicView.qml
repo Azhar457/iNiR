@@ -1057,7 +1057,7 @@ Item {
                     RotationAnimation on rotation {
                         from: 0; to: 360; duration: 1000
                         loops: Animation.Infinite
-                        running: YtMusic.searching
+                        running: YtMusic.searching && GlobalStates.sidebarLeftOpen
                     }
 
                     // Reset rotation to 0 when search ends so icon doesn't stay tilted
@@ -1367,7 +1367,7 @@ Item {
                             RotationAnimation on rotation {
                                 from: 0; to: 360; duration: 1000
                                 loops: Animation.Infinite
-                                running: YtMusic.syncingLiked
+                                running: YtMusic.syncingLiked && GlobalStates.sidebarLeftOpen
                             }
                         }
                         StyledToolTip { text: Translation.tr("Sync library") }

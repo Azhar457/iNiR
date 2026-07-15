@@ -239,7 +239,7 @@ Item {
                                 color: root.colPrimary
                                 
                                 SequentialAnimation on height {
-                                    running: root.isPlaying
+                                    running: root.isPlaying && GlobalStates.sidebarLeftOpen && root.visible
                                     loops: Animation.Infinite
                                     NumberAnimation { to: 4 + index * 2; duration: 200 + index * 100; easing.type: Easing.InOutQuad }
                                     NumberAnimation { to: 10 - index; duration: 300 + index * 50; easing.type: Easing.InOutQuad }

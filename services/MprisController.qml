@@ -318,6 +318,20 @@ Singleton {
 			const trackUrl = player.metadata?.["xesam:url"] ?? "";
 			const hasProgress = (player.position ?? 0) > 0 || (player.length ?? 0) > 0;
 			if (!player.isPlaying && !hasProgress) return false;
+
+			// KDE can leave a generic paused bridge (for example "(1) YouTube")
+			// beside Chromium's real, actively playing MPRIS object. Keeping both
+			// creates a duplicate media card and an extra effects tree. Drop only
+			// that generic bridge while another browser player is actually playing.
+			const genericTitle = root._normTitle(player.trackTitle)
+				.replace(/^\(\d+\)\s*/, "")
+			const genericBridge = genericTitle === "youtube"
+				|| genericTitle === "chromium"
+				|| genericTitle === "google chrome"
+				|| genericTitle === "firefox"
+			if (!player.isPlaying && genericBridge && root._hasOtherPlayingBrowserPlayer(player))
+				return false;
+
 			if (_isStreamingSite(trackUrl)) return true;
 			if ((player.length ?? 0) >= 30) return true;
 			// Live streams/TV never report position/length — isPlaying is enough
@@ -428,18 +442,31 @@ Singleton {
 		return (s ?? "").toLowerCase().replace(/[\t\r\n|•·]+/g, " ").replace(/\s+/g, " ").trim();
 	}
 
-	function _isBrowserYoutubePlayer(player): bool {
+	function _isBrowserPlayer(player): bool {
 		if (!player) return false;
 		const name = (player.dbusName ?? "").toLowerCase();
 		const identity = (player.identity ?? "").toLowerCase();
 		const entry = (player.desktopEntry ?? "").toLowerCase();
-		const isBrowser = name.includes("plasma-browser-integration") || name.includes("firefox") ||
+		return name.includes("plasma-browser-integration") || name.includes("firefox") ||
 			name.includes("chrome") || name.includes("chromium") || name.includes("brave") ||
 			name.includes("vivaldi") || name.includes("opera") || identity.includes("firefox") ||
 			identity.includes("zen") || entry.includes("zen") || entry.includes("firefox");
+	}
+
+	function _hasOtherPlayingBrowserPlayer(excludedPlayer): bool {
+		for (const candidate of Mpris.players.values) {
+			if (candidate !== excludedPlayer && candidate?.isPlaying && root._isBrowserPlayer(candidate))
+				return true;
+		}
+		return false;
+	}
+
+	function _isBrowserYoutubePlayer(player): bool {
+		if (!player) return false;
 		const url = (player.metadata?.["xesam:url"] ?? "").toLowerCase();
 		const title = (player.trackTitle ?? "").toLowerCase();
-		return isBrowser && (url.includes("youtube.com") || url.includes("youtu.be") || title.includes("youtube"));
+		return root._isBrowserPlayer(player)
+			&& (url.includes("youtube.com") || url.includes("youtu.be") || title.includes("youtube"));
 	}
 
 	function _matchingBrowserWindow(player) {

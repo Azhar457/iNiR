@@ -23,6 +23,7 @@ Scope {
         PanelWindow {
             id: root
             required property var modelData
+            property bool _presentedOpen: false
             property string searchingText: ""
             readonly property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(root.screen) : null
             property bool monitorIsFocused: CompositorService.isHyprland 
@@ -32,7 +33,31 @@ Scope {
             readonly property bool shouldShow: GlobalStates.overviewOpen && (!activeScreenOnly || monitorIsFocused)
             screen: modelData
 
-            Component.onCompleted: visible = root.shouldShow
+            Component.onCompleted: {
+                visible = root.shouldShow
+                if (root.shouldShow) {
+                    Qt.callLater(() => { root._presentedOpen = root.shouldShow })
+                    Qt.callLater(() => {
+                        const prefix = GlobalStates.overviewSearchPrefix
+                        if (prefix.length > 0) {
+                            overviewScope.dontAutoCancelSearch = true
+                            root.setSearchingText(prefix)
+                        } else {
+                            searchWidget.cancelSearch()
+                        }
+                        searchWidget.focusSearchInput()
+                        root.maybeSwitchWorkspaceOnOpen()
+                        delayedGrabTimer.start()
+                    })
+                }
+            }
+
+            onShouldShowChanged: {
+                if (shouldShow)
+                    Qt.callLater(() => { root._presentedOpen = root.shouldShow })
+                else
+                    root._presentedOpen = false
+            }
 
             Connections {
                 target: root
@@ -78,7 +103,7 @@ Scope {
                     const a = clamped / 100
                     return ColorUtils.transparentize(Appearance.colors.colLayer0Base, 1 - a)
                 }
-                opacity: GlobalStates.overviewOpen ? 1 : 0
+                opacity: root._presentedOpen ? 1 : 0
                 visible: opacity > 0.001
 
                 Behavior on opacity {
@@ -154,6 +179,7 @@ Scope {
                         searchWidget.cancelSearch();
                         searchWidget.disableExpandAnimation();
                         overviewScope.dontAutoCancelSearch = false;
+                        GlobalStates.overviewSearchPrefix = "";
                     } else {
                         if (!overviewScope.dontAutoCancelSearch) {
                             searchWidget.cancelSearch();
@@ -213,11 +239,11 @@ Scope {
                 layer.enabled: Appearance.shouldDesaturate("overlays") && columnLayout.visible
                 layer.effect: ShellDesaturationEffect {}
 
-                property real animTranslateY: GlobalStates.overviewOpen ? 0 : -16
-                opacity: GlobalStates.overviewOpen ? 1 : 0
+                property real animTranslateY: root._presentedOpen ? 0 : -16
+                opacity: root._presentedOpen ? 1 : 0
                 visible: opacity > 0.001
                 transformOrigin: Item.Top
-                scale: GlobalStates.overviewOpen ? 1.0 : 0.95
+                scale: root._presentedOpen ? 1.0 : 0.95
                 transform: Translate { y: columnLayout.animTranslateY }
                 
                 // Always center the overview vertically - this is the default behavior.
@@ -362,7 +388,7 @@ Scope {
                     anchors.horizontalCenter: parent.horizontalCenter
                     panelVisible: root.visible
                     visible: (root.searchingText == "") && (Config.options?.overview?.dashboard?.enable ?? false)
-                    opacity: GlobalStates.overviewOpen ? 1 : 0
+                    opacity: root._presentedOpen ? 1 : 0
 
                     Behavior on opacity {
                         enabled: Appearance.animationsEnabled
@@ -377,80 +403,4 @@ Scope {
         }
     }
 
-    function getFocusedMonitorName() {
-        if (CompositorService.isNiri) return NiriService.currentOutput
-        if (CompositorService.isHyprland && Hyprland.focusedMonitor) return Hyprland.focusedMonitor.name
-        return ""
-    }
-
-    function openWithPrefix(prefix) {
-        const focusedName = getFocusedMonitorName()
-        for (let i = 0; i < overviewVariants.instances.length; i++) {
-            let panelWindow = overviewVariants.instances[i];
-            if (panelWindow.modelData.name == focusedName) {
-                overviewScope.dontAutoCancelSearch = true;
-                panelWindow.setSearchingText(prefix);
-                GlobalStates.overviewOpen = true;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function toggleClipboard() {
-        if (GlobalStates.overviewOpen && overviewScope.dontAutoCancelSearch) {
-            GlobalStates.overviewOpen = false;
-            return;
-        }
-        overviewScope.openWithPrefix(Config.options?.search?.prefix?.clipboard ?? ";");
-    }
-
-    function toggleEmojis() {
-        if (GlobalStates.overviewOpen && overviewScope.dontAutoCancelSearch) {
-            GlobalStates.overviewOpen = false;
-            return;
-        }
-        overviewScope.openWithPrefix(Config.options?.search?.prefix?.emojis ?? ":");
-    }
-
-    IpcHandler {
-        target: "overview"
-
-        function toggle(): void {
-            // In Waffle mode, open Start Menu instead
-            if (Config.options?.panelFamily === "waffle") {
-                GlobalStates.searchOpen = !GlobalStates.searchOpen;
-            } else {
-                GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
-            }
-        }
-        function close(): void {
-            if (Config.options?.panelFamily === "waffle") {
-                GlobalStates.searchOpen = false;
-            } else {
-                GlobalStates.overviewOpen = false;
-            }
-        }
-        function open(): void {
-            if (Config.options?.panelFamily === "waffle") {
-                GlobalStates.searchOpen = true;
-            } else {
-                GlobalStates.overviewOpen = true;
-            }
-        }
-        function toggleReleaseInterrupt(): void {
-            GlobalStates.superReleaseMightTrigger = false;
-        }
-        function clipboardToggle(): void {
-            overviewScope.toggleClipboard();
-        }
-        function actionOpen(): void {
-            if (Config.options?.panelFamily === "waffle") {
-                LauncherSearch.ensurePrefix(Config.options?.search?.prefix?.action ?? "/")
-                GlobalStates.searchOpen = true;
-            } else {
-                overviewScope.openWithPrefix(Config.options?.search?.prefix?.action ?? "/");
-            }
-        }
-    }
 }

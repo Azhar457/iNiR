@@ -24,9 +24,9 @@ AbstractBackgroundWidget {
         showLocation: false,
         groupByDay: true,
         widgetScale: 100, widgetOpacity: 100,
-        showBackground: true, showBorder: true,
-        backgroundOpacity: 0.10, borderOpacity: 0.12,
-        colorMode: "auto", dim: 0,
+        showBackground: true, useBlur: false, showBorder: true,
+        backgroundOpacity: 0.10, borderWidth: 1, borderOpacity: 0.12,
+        cornerRadius: -1, colorMode: "auto", dim: 0,
         x: 80, y: 80
     })
 
@@ -47,12 +47,7 @@ AbstractBackgroundWidget {
     readonly property bool showLocation: Config.getNestedValue("background.widgets.calendarUpcoming.showLocation", false)
     readonly property bool groupByDay: Config.getNestedValue("background.widgets.calendarUpcoming.groupByDay", true)
 
-    property real dimFactor: {
-        const v = Number(Config.getNestedValue("background.widgets.calendarUpcoming.dim", 0));
-        return Math.max(0, Math.min(1, Number.isFinite(v) ? v / 100 : 0));
-    }
-
-    readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
+    readonly property real cardRadius: root.widgetCardRadius
 
     // ── Refresh trigger when events change ────────────────────
     property int _refreshTrigger: 0
@@ -113,14 +108,13 @@ AbstractBackgroundWidget {
 
     // ── Edit popover: max events + toggles ────────────────────
     editPopoverContent: Component {
-        Column {
+        ColumnLayout {
             spacing: 6
 
             // Max events spinner
             Row {
                 spacing: 6
                 Layout.alignment: Qt.AlignHCenter
-                anchors.horizontalCenter: parent.horizontalCenter
                 StyledText {
                     anchors.verticalCenter: parent.verticalCenter
                     text: Translation.tr("Show:")
@@ -142,7 +136,7 @@ AbstractBackgroundWidget {
             // Toggles
             Row {
                 spacing: 4
-                anchors.horizontalCenter: parent.horizontalCenter
+                Layout.alignment: Qt.AlignHCenter
                 SelectionGroupButton {
                     leftmost: true; rightmost: true
                     buttonIcon: "schedule"
@@ -184,13 +178,14 @@ AbstractBackgroundWidget {
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
         surfaceColor: root.widgetSurfaceInk
+        colorMode: root.colorMode
         surfaceAccent: root.widgetAccent
-        surfaceUseBlur: root.useBlur
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0
+        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     // ── Content ────────────────────────────────────────────────
@@ -198,7 +193,6 @@ AbstractBackgroundWidget {
         anchors.fill: parent
         anchors.margins: Math.round(12 * root.scaleFactor)
         spacing: Math.round(4 * root.scaleFactor)
-        opacity: 1.0 - root.dimFactor * 0.5
 
         // Header
         RowLayout {
@@ -321,7 +315,10 @@ AbstractBackgroundWidget {
             Item { Layout.fillHeight: true }
         }
 
-        Item { Layout.fillHeight: true }
+        Item {
+            visible: root.upcomingEvents.length > 0
+            Layout.fillHeight: true
+        }
     }
 
     // Format date/time relative to today/tomorrow

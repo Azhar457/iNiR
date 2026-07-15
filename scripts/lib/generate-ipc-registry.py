@@ -22,6 +22,8 @@ QML_DIRS = [
     REPO_ROOT / "services",
     REPO_ROOT / "GlobalStates.qml",
     REPO_ROOT / "shell.qml",
+    REPO_ROOT / "ShellIiPanels.qml",
+    REPO_ROOT / "ShellWafflePanels.qml",
 ]
 IPC_MD = REPO_ROOT / "docs" / "IPC.md"
 OUTPUT = REPO_ROOT / "scripts" / "lib" / "ipc-registry.sh"
@@ -38,7 +40,12 @@ WAFFLE_PATH_MARKERS = ("modules/waffle/",)
 
 # Known duplicate targets (both families register the same target name).
 # LazyLoader prevents both from loading at runtime.
-KNOWN_DUPLICATES = {"bar", "session", "clipboard"}
+KNOWN_DUPLICATES = {
+    "bar", "session", "clipboard",
+    # Lightweight shell-owned routers are intentionally mirrored so the IPC
+    # contract survives family switches while their visual roots stay unloaded.
+    "cheatsheet", "osk", "overlay", "overview",
+}
 # Targets implemented outside either family subtree and loaded by both shells.
 # Some of their docs predate the family sections and may physically appear below
 # the waffle heading, so source location is the authoritative scope.
@@ -511,7 +518,6 @@ def generate_bash(targets: list[IpcTarget], aliases: dict[str, str]) -> str:
     for kebab, camel in sorted(aliases.items()):
         lines.append(f"  [{kebab}]={camel}")
     lines.append(")")
-    lines.append("")
 
     return "\n".join(lines) + "\n"
 

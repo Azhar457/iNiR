@@ -1514,8 +1514,10 @@ check_niri_config() {
     
     if command -v niri &>/dev/null; then
         local output
-        output=$(niri validate 2>&1)
-        if echo "$output" | grep -qi "valid"; then
+        # Current niri releases are silent on successful validation. The exit
+        # status is the contract; grepping for the word "valid" turns every
+        # silent success into a false failure.
+        if output=$(niri validate 2>&1); then
             doctor_pass "Niri config valid"
         else
             doctor_fail "Niri config has errors"

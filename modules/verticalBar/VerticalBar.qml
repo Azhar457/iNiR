@@ -82,6 +82,11 @@ Scope {
                 }
                 color: "transparent"
 
+                BackgroundEffect.blurRegion: Region {
+                    item: barContent.nativeBlurActive ? barContent.backgroundItem : null
+                    radius: barContent.backgroundItem.radius
+                }
+
                 anchors {
                     left: !(Config.options?.bar?.bottom ?? false)
                     right: (Config.options?.bar?.bottom ?? false)
@@ -272,7 +277,7 @@ Scope {
                                             asynchronous: true
 
                                             // See #159 — skip QML blur when compositor blur covers this layer
-                                            layer.enabled: Appearance.effectsEnabled && Appearance.auroraEverywhere && !Appearance.compositorBlurActive
+                                            layer.enabled: Appearance.effectsEnabled && Appearance.auroraEverywhere && !barContent.nativeBlurActive
                                             layer.effect: MultiEffect {
                                                 source: blurImg
                                                 anchors.fill: source

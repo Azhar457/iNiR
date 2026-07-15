@@ -10,6 +10,7 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
+    property bool _presentedOpen: false
     readonly property real screenWidth: panelRoot.screen?.width ?? 1920
     readonly property real screenHeight: panelRoot.screen?.height ?? 1080
     readonly property real safePadding: Math.max(
@@ -30,7 +31,11 @@ Scope {
     PanelWindow {
         id: panelRoot
 
-        Component.onCompleted: visible = GlobalStates.dashboardOpen
+        Component.onCompleted: {
+            visible = GlobalStates.dashboardOpen
+            if (GlobalStates.dashboardOpen)
+                Qt.callLater(() => { root._presentedOpen = GlobalStates.dashboardOpen })
+        }
 
         Connections {
             target: GlobalStates
@@ -38,7 +43,9 @@ Scope {
                 if (GlobalStates.dashboardOpen) {
                     _closeTimer.stop()
                     panelRoot.visible = true
+                    Qt.callLater(() => { root._presentedOpen = GlobalStates.dashboardOpen })
                 } else {
+                    root._presentedOpen = false
                     _closeTimer.restart()
                 }
             }
@@ -102,7 +109,7 @@ Scope {
             states: [
                 State {
                     name: "open"
-                    when: GlobalStates.dashboardOpen
+                    when: root._presentedOpen
                     PropertyChanges {
                         target: contentLoader
                         opacity: 1
@@ -112,7 +119,7 @@ Scope {
                 },
                 State {
                     name: "closed"
-                    when: !GlobalStates.dashboardOpen
+                    when: !root._presentedOpen
                     PropertyChanges {
                         target: contentLoader
                         opacity: 0
@@ -203,31 +210,4 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "dashboard"
-
-        function toggle(): void {
-            GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen
-        }
-
-        function close(): void {
-            GlobalStates.dashboardOpen = false
-        }
-
-        function open(): void {
-            GlobalStates.dashboardOpen = true
-        }
-    }
-
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: GlobalShortcut {
-            name: "dashboardToggle"
-            description: "Toggles the dashboard on press"
-
-            onPressed: {
-                GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen
-            }
-        }
-    }
 }

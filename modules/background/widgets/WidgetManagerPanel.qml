@@ -15,6 +15,21 @@ Item {
     // Canvas bounds for clamping
     property real canvasWidth: 800
     property real canvasHeight: 600
+    readonly property bool _widgetBlurAvailable: Appearance.effectsEnabled
+        && (Appearance.angelEverywhere
+            || (Appearance.auroraEverywhere && !Appearance.inirEverywhere)
+            || (!Appearance.zzzEverywhere && !Appearance.cookieEverywhere
+                && !Appearance.angelEverywhere && !Appearance.auroraEverywhere
+                && !Appearance.inirEverywhere
+                && (Config.options?.background?.widgets?.style ?? "panel") === "island"
+                && (Config.options?.appearance?.island?.glass ?? true)
+                && (Config.options?.appearance?.island?.opacity ?? 1) < 0.999))
+
+    function _manifestSupportsSurface(configKeys) {
+        const keys = configKeys ?? {};
+        return ["showBackground", "backgroundOpacity", "useBlur", "showBorder",
+            "borderWidth", "borderOpacity", "cornerRadius"].some(key => keys[key] !== undefined);
+    }
 
     // Size constraints
     readonly property int _minWidth: 320
@@ -64,11 +79,12 @@ Item {
         techFrame: Appearance.zzzEverywhere
     }
 
-    // Engineering dot grid backdrop — this panel IS the edit surface, so it
-    // speaks the same drafting language as the canvas grid behind it.
+    // ZZZ alone owns the technical drafting language. Other global styles
+    // keep this utility panel quiet instead of inheriting a foreign texture.
     DotGridCanvas {
         anchors.fill: parent
         anchors.margins: 10
+        visible: Appearance.zzzEverywhere
         gridSize: 24
         dotAlpha: 0.07
     }
@@ -235,8 +251,8 @@ Item {
             }
 
             WidgetCard { widgetKey: "clock"; widgetIcon: "schedule"; widgetLabel: Translation.tr("Clock"); defaultEnabled: true }
-            WidgetCard { widgetKey: "weather"; widgetIcon: "cloud"; widgetLabel: Translation.tr("Weather"); defaultEnabled: true }
-            WidgetCard { widgetKey: "mediaControls"; widgetIcon: "album"; widgetLabel: Translation.tr("Media Controls"); defaultEnabled: true }
+            WidgetCard { widgetKey: "weather"; widgetIcon: "cloud"; widgetLabel: Translation.tr("Weather"); defaultEnabled: false }
+            WidgetCard { widgetKey: "mediaControls"; widgetIcon: "album"; widgetLabel: Translation.tr("Media Controls"); defaultEnabled: false }
             WidgetCard { widgetKey: "visualizer"; widgetIcon: "graphic_eq"; widgetLabel: Translation.tr("Visualizer"); defaultEnabled: false }
             WidgetCard { widgetKey: "systemMonitor"; widgetIcon: "monitor_heart"; widgetLabel: Translation.tr("System Monitor"); defaultEnabled: false }
             WidgetCard { widgetKey: "battery"; widgetIcon: "battery_full"; widgetLabel: Translation.tr("Battery"); defaultEnabled: false }
@@ -364,6 +380,7 @@ Item {
                     widgetLabel: modelData.name
                     defaultEnabled: false
                     isCustom: true
+                    customConfigKeys: modelData.configKeys ?? ({})
                 }
             }
 
@@ -400,6 +417,7 @@ Item {
         required property string widgetLabel
         required property bool defaultEnabled
         property bool isCustom: false
+        property var customConfigKeys: ({})
         // An extra mascot instance (Settings › Widgets › Mascot › "+"); widgetKey
         // is the instance id, config lives under background.widgets.mascotInstances.<id>
         property bool isMascotInstance: false
@@ -409,14 +427,20 @@ Item {
             : (isCustom ? ("background.widgets.custom." + widgetKey) : ("background.widgets." + widgetKey))
         readonly property bool _enabled: Boolean(Config.getNestedValue(card._cfgPrefix + ".enable", card.defaultEnabled))
         readonly property bool _locked: Boolean(Config.getNestedValue(card._cfgPrefix + ".locked", false))
-        // Whether this widget uses WidgetSurface for its background. Weather and
-        // mediaControls have custom surfaces (pill, album-art card) so the universal
-        // background/blur/border controls don't apply to them — hide that section to
-        // avoid silent setNestedValue failures (their schemas don't expose those keys).
-        readonly property bool _supportsAppearance: isMascotInstance || (!isCustom && [
-            "clock", "weather", "visualizer", "systemMonitor", "battery", "notes",
-            "calendarUpcoming", "uptime", "newsTicker", "mascot", "japaneseTypography"
-        ].indexOf(widgetKey) !== -1)
+        // Surface controls are shown only while the active renderer consumes
+        // WidgetSurface. Cookie Clock, Weather Shape and Media Controls own
+        // different backgrounds, so exposing these controls there is misleading.
+        readonly property bool _supportsAppearance: card.isMascotInstance
+            || (card.isCustom && root._manifestSupportsSurface(card.customConfigKeys))
+            || (!card.isCustom && (
+                (card.widgetKey === "clock"
+                    && Config.getNestedValue(card._cfgPrefix + ".style", "cookie") === "digital")
+                || (card.widgetKey === "weather"
+                    && Config.getNestedValue(card._cfgPrefix + ".style", "pill") === "card")
+                || ["visualizer", "systemMonitor", "battery", "notes",
+                    "calendarUpcoming", "uptime", "newsTicker", "mascot",
+                    "japaneseTypography"].indexOf(card.widgetKey) !== -1
+            ))
         readonly property bool _expanded: card._enabled && _expandToggle
         property bool _expandToggle: false
 
@@ -446,7 +470,14 @@ Item {
                 width: parent.width; height: 44
 
                 Row {
-                    anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
+                    id: _identityRow
+                    anchors {
+                        left: parent.left
+                        right: _actionsRow.left
+                        leftMargin: 12
+                        rightMargin: 8
+                        verticalCenter: parent.verticalCenter
+                    }
                     spacing: 10
 
                     Rectangle {
@@ -466,15 +497,21 @@ Item {
                     }
 
                     Column {
+                        id: _labelColumn
+                        width: Math.max(0, _identityRow.width - 40)
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 1
                         StyledText {
+                            width: parent.width
                             text: card.widgetLabel
+                            elide: Text.ElideRight
+                            wrapMode: Text.NoWrap
                             color: card._enabled ? Appearance.colors.colOnLayer1 : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.68)
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.Medium
                         }
                         Row {
+                            width: parent.width
                             spacing: 4
                             visible: card._enabled
                             MaterialSymbol {
@@ -492,16 +529,20 @@ Item {
                             }
                             StyledText {
                                 visible: !card._locked && card._enabled
+                                width: Math.max(0, parent.width - (card._locked ? 14 : 0))
                                 text: Math.round(Config.getNestedValue(card._cfgPrefix + ".widgetScale", 100)) + "%" + " · " + Math.round(Config.getNestedValue(card._cfgPrefix + ".widgetOpacity", 100)) + "% op"
                                 color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.58)
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 font.family: Appearance.font.family.numbers
+                                elide: Text.ElideRight
+                                wrapMode: Text.NoWrap
                             }
                         }
                     }
                 }
 
                 Row {
+                    id: _actionsRow
                     anchors { right: parent.right; rightMargin: 8; verticalCenter: parent.verticalCenter }
                     spacing: 4
 
@@ -643,7 +684,7 @@ Item {
 
                         MaterialSymbol { text: "contrast"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
-                            text: Translation.tr("Dim")
+                            text: Translation.tr("Dimming")
                             Layout.preferredWidth: 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
@@ -689,7 +730,8 @@ Item {
                     RowLayout {
                         width: parent.width
                         spacing: 8
-                        visible: card._supportsAppearance && (Appearance.auroraEverywhere || Appearance.angelEverywhere) && Appearance.effectsEnabled
+                        visible: card._supportsAppearance && root._widgetBlurAvailable
+                            && Config.getNestedValue(card._cfgPrefix + ".showBackground", true)
                         MaterialSymbol { text: "blur_on"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
                             Layout.fillWidth: true
@@ -713,7 +755,7 @@ Item {
                         visible: card._supportsAppearance && Config.getNestedValue(card._cfgPrefix + ".showBackground", true)
                         MaterialSymbol { text: "opacity"; iconSize: 16; color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.5) }
                         StyledText {
-                            text: Translation.tr("BG opacity")
+                            text: Translation.tr("Background")
                             Layout.preferredWidth: 80
                             color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.7)
                             font.pixelSize: Appearance.font.pixelSize.smaller
@@ -723,7 +765,11 @@ Item {
                             from: 0; to: 100; stepSize: 1
                             configuration: StyledSlider.Configuration.XS
                             stopIndicatorValues: []
-                            value: Math.round((Config.getNestedValue(card._cfgPrefix + ".backgroundOpacity", 0.06)) * 100)
+                            value: {
+                                const raw = Number(Config.getNestedValue(card._cfgPrefix + ".backgroundOpacity", 0.06));
+                                if (!Number.isFinite(raw)) return 6;
+                                return Math.max(0, Math.min(100, Math.round(raw <= 1 ? raw * 100 : raw)));
+                            }
                             tooltipContent: Math.round(value) + "%"
                             onMoved: Config.setNestedValue(card._cfgPrefix + ".backgroundOpacity", Math.round(value) / 100)
                         }

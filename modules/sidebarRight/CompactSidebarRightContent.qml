@@ -735,12 +735,12 @@ Item {
     // ─────────────────────────────────────────────────────────────
     StyledRectangularShadow {
         target: bg
-        visible: !Appearance.inirEverywhere && !Appearance.gameModeMinimal
+        visible: !bg.inirEverywhere && !Appearance.gameModeMinimal
     }
 
     ZzzPlate {
         anchors.fill: bg
-        visible: Appearance.zzzEverywhere && !Appearance.gameModeMinimal && !bg.islandStyle
+        visible: bg.zzzEverywhere && !Appearance.gameModeMinimal
         fillColor: Appearance.zzz.chrome
         strokeColor: Appearance.zzz.hairline
         strokeWidth: Appearance.zzz.hairlineThick
@@ -752,14 +752,16 @@ Item {
         anchors.fill: parent
 
         property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
-        // Explicit island opt-in outranks the zzz chrome (same rule as the
-        // islands bar and dock).
-        readonly property bool islandStyle: (Config.options?.sidebar?.style ?? "panel") === "island"
-        readonly property bool zzzEverywhere:    Appearance.zzzEverywhere
-        readonly property bool angelEverywhere:  Appearance.angelEverywhere
-        readonly property bool auroraEverywhere: Appearance.auroraEverywhere
-        readonly property bool inirEverywhere:   Appearance.inirEverywhere
-        readonly property bool gameModeMinimal:  Appearance.gameModeMinimal
+        // Resolve one owner for the complete surface. Explicit Ricelin islands
+        // override the global worldview; otherwise the selected global style owns it.
+        readonly property string surfaceDialect: Appearance.surfaceDialectFor(
+            (Config.options?.sidebar?.style ?? "panel") === "island" ? "island" : "")
+        readonly property bool islandStyle: surfaceDialect === "island"
+        readonly property bool zzzEverywhere: surfaceDialect === "zzz"
+        readonly property bool angelEverywhere: surfaceDialect === "angel"
+        readonly property bool auroraEverywhere: surfaceDialect === "aurora" || angelEverywhere
+        readonly property bool inirEverywhere: surfaceDialect === "inir"
+        readonly property bool gameModeMinimal: Appearance.gameModeMinimal
 
         readonly property string wallpaperUrl: {
             const _d1 = WallpaperListener.multiMonitorEnabled
@@ -775,7 +777,7 @@ Item {
 
         ColorQuantizer {
             id: bgQuant
-            source: (Appearance.auroraEverywhere || Appearance.angelEverywhere) ? bg.wallpaperUrl : ""
+            source: bg.auroraEverywhere ? bg.wallpaperUrl : ""
             depth: 0
             rescaleSize: 10
         }
@@ -813,17 +815,17 @@ Item {
             : ColorUtils.transparentize(Appearance.colors.colLayer1Active, 0.18)
 
         color: (gameModeMinimal || islandStyle) ? "transparent"
-             : Appearance.zzzEverywhere ? "transparent"
+             : zzzEverywhere ? "transparent"
              : inirEverywhere   ? (cardStyle ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
              : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
              : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
 
-        border.width: (gameModeMinimal || islandStyle) ? 0 : (Appearance.zzzEverywhere ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
+        border.width: (gameModeMinimal || islandStyle) ? 0 : (zzzEverywhere ? 0 : (angelEverywhere ? Appearance.angel.panelBorderWidth : 1))
         Behavior on border.width {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
-        border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
+        border.color: zzzEverywhere ? Appearance.zzz.hairline
                     : angelEverywhere  ? Appearance.angel.colPanelBorder
                     : inirEverywhere   ? Appearance.inir.colBorder
                     : Appearance.colors.colLayer0Border
@@ -832,7 +834,7 @@ Item {
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
 
-        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
+        radius: zzzEverywhere ? Appearance.zzz.panelRadius
               : angelEverywhere  ? Appearance.angel.roundingNormal
               : inirEverywhere   ? (cardStyle ? Appearance.inir.roundingLarge : Appearance.inir.roundingNormal)
               : cardStyle        ? Appearance.rounding.normal
@@ -908,11 +910,11 @@ Item {
             z: 10
         }
 
-        AngelPartialBorder { targetRadius: bg.radius; z: 10 }
+        AngelPartialBorder { visible: bg.angelEverywhere; targetRadius: bg.radius; z: 10 }
 
         ZzzPanelBackdrop {
             anchors.fill: parent
-            visible: opacity > 0 && !bg.islandStyle
+            visible: bg.zzzEverywhere && opacity > 0
             label: "SYSTEM"
             index: "RC"
             ghostText: "RIGHT"
@@ -933,16 +935,16 @@ Item {
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: root.compactPanelPadding
-            anchors.topMargin: Appearance.angelEverywhere ? root.compactPanelPadding + 4
-                : Appearance.inirEverywhere ? root.compactPanelPadding + 6 : root.compactPanelPadding
-            spacing: Appearance.angelEverywhere ? root.compactPanelPadding + 2
-                : Appearance.inirEverywhere ? root.compactPanelPadding + 4 : root.compactPanelPadding
+            anchors.topMargin: bg.angelEverywhere ? root.compactPanelPadding + 4
+                : bg.inirEverywhere ? root.compactPanelPadding + 6 : root.compactPanelPadding
+            spacing: bg.angelEverywhere ? root.compactPanelPadding + 2
+                : bg.inirEverywhere ? root.compactPanelPadding + 4 : root.compactPanelPadding
 
             Rectangle {
                 id: compactSurface
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+                radius: bg.zzzEverywhere ? Appearance.zzz.controlRadius
                     : bg.angelEverywhere ? Appearance.angel.roundingNormal
                     : bg.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
                 Behavior on radius {

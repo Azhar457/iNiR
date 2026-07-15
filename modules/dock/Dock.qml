@@ -27,7 +27,12 @@ Scope {
     readonly property bool isPillStyle:   Config.options?.dock?.style === "pill"
     readonly property bool isMacosStyle:  Config.options?.dock?.style === "macos"
     readonly property bool isIslandStyle: Config.options?.dock?.style === "island"
-    readonly property bool zzzEverywhere: Appearance.zzzEverywhere
+    // Island is a complete Ricelin material. Pill and macOS are layout modes
+    // that still inherit the selected global worldview (except ZZZ, whose shelf
+    // intentionally wins as before).
+    readonly property string surfaceDialect: Appearance.surfaceDialectFor(
+        root.isIslandStyle ? "island" : "")
+    readonly property bool zzzEverywhere: root.surfaceDialect === "zzz"
 
     // Track bar position to force dock recreation when bar changes
     readonly property bool barIsVertical: Config.options?.bar?.bottom !== undefined
@@ -90,6 +95,27 @@ Scope {
 
                 WlrLayershell.namespace: "quickshell:dock"
                 color: "transparent"
+
+                // The dock publishes one concrete Region item. Standard, macOS and
+                // island capsules are exact rounded rectangles; the morphing pill and
+                // sharp/chamfered ZZZ silhouettes keep their wallpaper material.
+                readonly property string nativeBlurTopology: !root.isPillStyle
+                    && !(root.zzzEverywhere && !Appearance.zzz.round)
+                    ? Appearance.blurTopology.roundedRectangle
+                    : Appearance.blurTopology.unsupported
+                readonly property bool nativeBlurGeometryExact: Appearance.blurTopologyExact(
+                    dockRoot.nativeBlurTopology)
+                readonly property bool nativeBlurActive: Appearance.useCompositorBlur(
+                        root.isIslandStyle ? "islands" : "dock", dockRoot.nativeBlurTopology)
+                    && (Config.options?.dock?.showBackground ?? true)
+                    && !Appearance.gameModeMinimal
+                readonly property Item nativeBlurItem: root.isMacosStyle ? macBackground
+                    : root.isIslandStyle ? dockIslandBackground : dockVisualBackground
+
+                BackgroundEffect.blurRegion: Region {
+                    item: dockRoot.nativeBlurActive ? dockRoot.nativeBlurItem : null
+                    radius: dockRoot.nativeBlurItem?.radius ?? 0
+                }
 
                 Item { id: emptyMask; width: 0; height: 0 }
                 mask: Region { item: GameMode.shouldHidePanels ? emptyMask : dockMouseArea }
@@ -187,6 +213,7 @@ Scope {
                             // hairline, top sheen) and its own shadow, exactly like
                             // the island bar. It replaces dockVisualBackground.
                             IslandPanel {
+                                id: dockIslandBackground
                                 anchors.fill: parent
                                 anchors.topMargin: root.isTop ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? 0 : Appearance.sizes.elevationMargin)
                                 anchors.bottomMargin: root.position === "bottom" ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? 0 : Appearance.sizes.elevationMargin)
@@ -194,6 +221,7 @@ Scope {
                                 anchors.rightMargin: root.position === "right" ? Appearance.sizes.hyprlandGapsOut : (root.isVertical ? Appearance.sizes.elevationMargin : 0)
                                 visible: (Config.options?.dock?.showBackground ?? true) && !Appearance.gameModeMinimal && root.isIslandStyle
                                 glassEnabled: true
+                                nativeBlurActive: dockRoot.nativeBlurActive
                                 glassScreenWidth: dockRoot.screen?.width ?? 1920
                                 glassScreenHeight: dockRoot.screen?.height ?? 1080
                                 glassScreenX: root.isVertical
@@ -213,8 +241,9 @@ Scope {
                                     readonly property bool zzzGlassActive: root.zzzEverywhere
                                         && Appearance.effectsEnabled
                                         && (Config.options?.appearance?.zzz?.glass ?? true)
-                                    readonly property bool auroraEverywhere: Appearance.auroraEverywhere
-                                    readonly property bool inirEverywhere: Appearance.inirEverywhere
+                                    readonly property bool angelEverywhere: root.surfaceDialect === "angel"
+                                    readonly property bool auroraEverywhere: root.surfaceDialect === "aurora" || angelEverywhere
+                                    readonly property bool inirEverywhere: root.surfaceDialect === "inir"
                                     readonly property bool gameModeMinimal: Appearance.gameModeMinimal
                                     readonly property string wallpaperUrl: {
                                         const _dep1 = WallpaperListener.multiMonitorEnabled
@@ -225,7 +254,7 @@ Scope {
 
                                     ColorQuantizer {
                                         id: dockWallpaperQuantizer
-                                        source: (Appearance.auroraEverywhere || Appearance.angelEverywhere) ? dockVisualBackground.wallpaperUrl : ""
+                                        source: dockVisualBackground.auroraEverywhere ? dockVisualBackground.wallpaperUrl : ""
                                         depth: 0
                                         rescaleSize: 10
                                     }
@@ -249,17 +278,19 @@ Scope {
                                 visible: (Config.options?.dock?.showBackground ?? true) && !gameModeMinimal && ((root.zzzEverywhere && !root.isIslandStyle) || (!root.isPillStyle && !root.isMacosStyle && !root.isIslandStyle))
                                 // ZZZ: the visible shelf is the chamfered ZzzPlate below.
                                 color: root.zzzEverywhere ? "transparent"
-                                    : auroraEverywhere ? ColorUtils.applyAlpha((blendedColors?.colLayer0 ?? Appearance.colors.colLayer0), 1)
+                                    : auroraEverywhere ? ColorUtils.applyAlpha(
+                                        (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0),
+                                        dockRoot.nativeBlurActive ? 0.46 : 1)
                                     : inirEverywhere ? Appearance.inir.colLayer1
                                     : (cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
                                 border.width: root.zzzEverywhere ? 0
-                                    : Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth : 1
+                                    : angelEverywhere ? Appearance.angel.panelBorderWidth : 1
                                 border.color: root.zzzEverywhere ? "transparent"
-                                    : Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
+                                    : angelEverywhere ? Appearance.angel.colPanelBorder
                                     : inirEverywhere ? Appearance.inir.colBorder
                                     : Appearance.colors.colLayer0Border
                                 radius: root.zzzEverywhere ? Appearance.zzz.panelRadius
-                                    : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
+                                    : angelEverywhere ? Appearance.angel.roundingNormal
                                     : inirEverywhere ? Appearance.inir.roundingNormal
                                     : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
                                 // Organic morph on style/shape switch (organic-transitions)
@@ -307,7 +338,8 @@ Scope {
                                 }
 
                                 clip: true
-                                layer.enabled: auroraEverywhere && !inirEverywhere && !root.zzzEverywhere && !gameModeMinimal
+                                layer.enabled: auroraEverywhere && !inirEverywhere && !root.zzzEverywhere
+                                    && !gameModeMinimal && !dockRoot.nativeBlurActive
                                 layer.effect: GE.OpacityMask {
                                     maskSource: Rectangle {
                                         width: dockVisualBackground.width
@@ -326,7 +358,11 @@ Scope {
                                         : (root.isTop ? 0 : (-(dockRoot.screen?.height ?? 1080) + dockVisualBackground.height + Appearance.sizes.hyprlandGapsOut))
                                     width: dockRoot.screen?.width ?? 1920
                                     height: dockRoot.screen?.height ?? 1080
-                                    visible: dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere && !root.zzzEverywhere && !dockVisualBackground.gameModeMinimal
+                                    visible: dockVisualBackground.auroraEverywhere
+                                        && !dockVisualBackground.inirEverywhere
+                                        && !root.zzzEverywhere
+                                        && !dockVisualBackground.gameModeMinimal
+                                        && !dockRoot.nativeBlurActive
                                     // An invisible Image still decodes its source: gate it too,
                                     // or non-aurora users keep a screen-sized wallpaper resident.
                                     source: visible ? dockVisualBackground.wallpaperUrl : ""
@@ -337,29 +373,30 @@ Scope {
                                     asynchronous: true
 
                                     // See #159 — skip QML blur when compositor blur covers this layer
-                                    layer.enabled: Appearance.effectsEnabled && dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere && !dockVisualBackground.gameModeMinimal && !Appearance.compositorBlurActive
+                                    layer.enabled: Appearance.effectsEnabled && dockVisualBackground.auroraEverywhere && !dockVisualBackground.inirEverywhere && !dockVisualBackground.gameModeMinimal && !dockRoot.nativeBlurActive
                                     layer.effect: MultiEffect {
                                         source: dockBlurredWallpaper
                                         anchors.fill: source
-                                        saturation: Appearance.angelEverywhere
+                                        saturation: dockVisualBackground.angelEverywhere
                                             ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
                                             : (Appearance.effectsEnabled ? 0.2 : 0)
                                         blurEnabled: Appearance.effectsEnabled
                                         blurMax: 64
                                         blur: Appearance.effectsEnabled
-                                            ? (Appearance.angelEverywhere ? Appearance.angel.blurIntensity : 1)
+                                            ? (dockVisualBackground.angelEverywhere ? Appearance.angel.blurIntensity : 1)
                                             : 0
                                     }
 
                                     Rectangle {
                                         anchors.fill: parent
-                                        color: Appearance.angelEverywhere
+                                        color: dockVisualBackground.angelEverywhere
                                             ? ColorUtils.transparentize((dockVisualBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.angel.overlayOpacity * Appearance.angel.panelTransparentize)
                                             : ColorUtils.transparentize((dockVisualBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0Base), Appearance.aurora.overlayTransparentize)
                                     }
                                 }
 
                                 AngelPartialBorder {
+                                    visible: dockVisualBackground.angelEverywhere
                                     targetRadius: dockVisualBackground.radius
                                 }
 
@@ -379,6 +416,8 @@ Scope {
                                    vertical:      root.isVertical
                                    wallpaperUrl:  dockVisualBackground.wallpaperUrl
                                    dockScreen:    dockRoot.screen
+                                   nativeBlurActive: dockRoot.nativeBlurActive
+                                   surfaceDialect: root.surfaceDialect
                                    blendedLayer0: dockVisualBackground.blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
                                }
 

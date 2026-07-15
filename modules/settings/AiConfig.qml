@@ -731,7 +731,7 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Default tool mode")
-                tooltip: Translation.tr("What the assistant can do. Search is only available on Gemini models; Functions lets it read/edit the shell config and run approved commands")
+                tooltip: Translation.tr("What the assistant is allowed to do.")
 
                 ConfigSelectionArray {
                     enableSettingsSearch: false
@@ -744,6 +744,11 @@ ContentPage {
                         { displayName: Translation.tr("Search"), icon: "search", value: "search" },
                         { displayName: Translation.tr("None"), icon: "block", value: "none" }
                     ]
+                }
+
+                SettingsNote {
+                    icon: "service_toolbox"
+                    text: Translation.tr("Functions can edit the shell config. Search needs a Gemini model.")
                 }
             }
 

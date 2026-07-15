@@ -26,26 +26,24 @@ AbstractBackgroundWidget {
     resizeMinWidth: 190
     resizeMinHeight: 76
     needsColText: true
-    // The surface below forces a minimum plate opacity, so accents always sit
-    // on the plate even when the user's background toggle is off.
-    accentBackdrop: widgetPlateColor
-
-    readonly property color surfaceInk: root.widgetSurfaceInk
+    readonly property color surfaceInk: root.widgetInk
 
     WidgetSurface {
         regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
-        surfaceOpacity: Math.max(root.backgroundOpacity, 0.16)
+        surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
         surfaceColor: root.surfaceInk
+        colorMode: root.colorMode
         surfaceAccent: root.widgetAccent3
-        surfaceUseBlur: root.useBlur
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
+        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     RowLayout {

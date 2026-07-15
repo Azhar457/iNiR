@@ -1,3 +1,4 @@
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -12,6 +13,7 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
+    property bool _presentedOpen: false
     property var pages: [
         {
             "icon": "keyboard",
@@ -25,50 +27,25 @@ Scope {
         },
     ]
 
-    property bool cheatsheetOpen: false
+    readonly property bool cheatsheetOpen: GlobalStates.cheatsheetOpen
     property int currentPage: Persistent.states?.cheatsheet?.tabIndex ?? 0
     onCurrentPageChanged: {
         if (Persistent.states?.cheatsheet)
             Persistent.states.cheatsheet.tabIndex = currentPage
     }
 
-    function open() { cheatsheetOpen = true; }
-    function close() { cheatsheetOpen = false; }
-    function toggle() { cheatsheetOpen = !cheatsheetOpen; }
-
-    IpcHandler {
-        target: "cheatsheet"
-        function toggle(): void { root.toggle(); }
-        function close(): void { root.close(); }
-        function open(): void { root.open(); }
-    }
-
-    // Hyprland-only shortcuts
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "cheatsheetToggle"
-                description: "Toggles cheatsheet on press"
-                onPressed: root.toggle()
-            }
-            GlobalShortcut {
-                name: "cheatsheetOpen"
-                description: "Opens cheatsheet on press"
-                onPressed: root.open()
-            }
-            GlobalShortcut {
-                name: "cheatsheetClose"
-                description: "Closes cheatsheet on press"
-                onPressed: root.close()
-            }
-        }
-    }
+    function open() { GlobalStates.cheatsheetOpen = true; }
+    function close() { GlobalStates.cheatsheetOpen = false; }
+    function toggle() { GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen; }
 
     PanelWindow {
         id: window
 
-        Component.onCompleted: visible = root.cheatsheetOpen
+        Component.onCompleted: {
+            visible = root.cheatsheetOpen
+            if (root.cheatsheetOpen)
+                Qt.callLater(() => { root._presentedOpen = root.cheatsheetOpen })
+        }
 
         Connections {
             target: root
@@ -76,7 +53,9 @@ Scope {
                 if (root.cheatsheetOpen) {
                     _closeTimer.stop()
                     window.visible = true
+                    Qt.callLater(() => { root._presentedOpen = root.cheatsheetOpen })
                 } else {
+                    root._presentedOpen = false
                     _closeTimer.restart()
                 }
             }
@@ -106,7 +85,7 @@ Scope {
             anchors.fill: parent
             z: -1
             color: ColorUtils.transparentize(Appearance.colors.colBackground, 1 - 0.85)
-            opacity: root.cheatsheetOpen ? 1 : 0
+            opacity: root._presentedOpen ? 1 : 0
 
             Behavior on color {
                 enabled: Appearance.animationsEnabled
@@ -116,11 +95,11 @@ Scope {
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation {
-                    duration: root.cheatsheetOpen
+                    duration: root._presentedOpen
                         ? (Appearance.animation.elementMoveEnter.duration)
                         : (Appearance.animation.elementMoveExit.duration)
                     easing.type: Easing.BezierSpline
-                    easing.bezierCurve: root.cheatsheetOpen
+                    easing.bezierCurve: root._presentedOpen
                         ? Appearance.animationCurves.emphasizedDecel
                         : Appearance.animationCurves.emphasizedAccel
                 }
@@ -207,8 +186,8 @@ Scope {
             }
 
             // Scale animation for open/close
-            scale: root.cheatsheetOpen ? 1.0 : 0.95
-            opacity: root.cheatsheetOpen ? 1 : 0
+            scale: root._presentedOpen ? 1.0 : 0.95
+            opacity: root._presentedOpen ? 1 : 0
             
             Behavior on scale {
                 enabled: Appearance.animationsEnabled

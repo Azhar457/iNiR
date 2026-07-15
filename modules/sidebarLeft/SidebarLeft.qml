@@ -33,13 +33,47 @@ Scope {
     // Deferred slide trigger: ensures the Wayland surface is mapped before
     // the Behavior animation starts, so Qt tracks the "from" position correctly.
     property bool _sidebarShown: false
+    property bool _presentationRequested: false
+    property int _presentationReadyFrames: 0
+
+    function requestPresentation(): void {
+        root._presentationRequested = true
+        root._presentationReadyFrames = 0
+        presentationTimer.restart()
+    }
+
+    function tryPresent(): void {
+        if (!root._presentationRequested || !GlobalStates.sidebarLeftOpen)
+            return
+        if (sidebarRoot.height <= 0 || sidebarContentLoader.height <= 0
+                || sidebarContentLoader.status !== Loader.Ready)
+            return
+        // Keep the fully initialized content in its closed pose for two frames.
+        // Otherwise a cold Loader can become Ready and open in the same frame,
+        // skipping the visible start of pop/fade/scale animations.
+        root._presentationReadyFrames++
+        if (root._presentationReadyFrames < 2)
+            return
+        root._presentationRequested = false
+        presentationTimer.stop()
+        root._sidebarShown = true
+    }
+
+    Timer {
+        id: presentationTimer
+        interval: 16
+        repeat: true
+        onTriggered: root.tryPresent()
+    }
 
     PanelWindow {
         id: sidebarRoot
 
         Component.onCompleted: {
             visible = GlobalStates.sidebarLeftOpen
-            root._sidebarShown = GlobalStates.sidebarLeftOpen
+            root._sidebarShown = false
+            if (GlobalStates.sidebarLeftOpen)
+                root.requestPresentation()
         }
 
         Connections {
@@ -48,14 +82,17 @@ Scope {
                 if (GlobalStates.sidebarLeftOpen) {
                     _closeTimer.stop()
                     sidebarRoot.visible = true
-                    // Let the surface map for one frame before sliding in
-                    Qt.callLater(() => { root._sidebarShown = true })
+                    root.requestPresentation()
                 } else if (root.instantOpen || !Appearance.animationsEnabled) {
+                    root._presentationRequested = false
+                    presentationTimer.stop()
                     root._sidebarShown = false
                     GlobalStates.sidebarLeftExpanded = false
                     _closeTimer.stop()
                     sidebarRoot.visible = false
                 } else {
+                    root._presentationRequested = false
+                    presentationTimer.stop()
                     root._sidebarShown = false
                     GlobalStates.sidebarLeftExpanded = false
                     _closeTimer.restart()
@@ -118,7 +155,8 @@ Scope {
 
         Loader {
             id: sidebarContentLoader
-            active: GlobalStates.sidebarLeftOpen || (Config?.options?.sidebar?.keepLeftSidebarLoaded ?? true)
+            property bool _everMounted: false
+            active: GlobalStates.sidebarLeftOpen || _everMounted
 
             // Shell desaturation effect
             layer.enabled: Appearance.shouldDesaturate("sidebars") && sidebarContentLoader.visible
@@ -141,6 +179,16 @@ Scope {
                 }
             }
             height: parent.height - Appearance.sizes.hyprlandGapsOut * 2
+            onHeightChanged: {
+                if (height > 0 && status === Loader.Ready)
+                    _everMounted = true
+                root.tryPresent()
+            }
+            onStatusChanged: {
+                if (height > 0 && status === Loader.Ready)
+                    _everMounted = true
+                root.tryPresent()
+            }
 
             // Animation properties driven by states/transitions below
             property real animTranslateX: -(root.effectiveSidebarWidth + Appearance.sizes.hyprlandGapsOut)
@@ -296,9 +344,6 @@ Scope {
                 }
             ]
 
-            // Clip container for "reveal" animation — wraps the content
-            clip: sidebarContentLoader.useClip
-
             focus: GlobalStates.sidebarLeftOpen
             Keys.onPressed: (event) => {
                 if (event.key === Qt.Key_Escape) {
@@ -306,12 +351,30 @@ Scope {
                 }
             }
 
-            sourceComponent: SidebarLeftContent {
-                screenWidth: sidebarRoot.screen?.width ?? 1920
-                screenHeight: sidebarRoot.screen?.height ?? 1080
-                panelScreen: sidebarRoot.screen ?? null
-                panelVisible: sidebarRoot.visible
-                onPluginViewActiveChanged: root.pluginViewActive = pluginViewActive
+            sourceComponent: Item {
+                id: leftContentHost
+                anchors.fill: parent
+
+                // Reveal clips a fixed-width tree instead of resizing it. Text,
+                // cards and WebEngine placeholders keep their final geometry.
+                Item {
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    width: sidebarContentLoader.useClip
+                        ? sidebarContentLoader.clipWidth : parent.width
+                    clip: sidebarContentLoader.useClip
+
+                    SidebarLeftContent {
+                        width: leftContentHost.width
+                        height: leftContentHost.height
+                        screenWidth: sidebarRoot.screen?.width ?? 1920
+                        screenHeight: sidebarRoot.screen?.height ?? 1080
+                        panelScreen: sidebarRoot.screen ?? null
+                        panelVisible: sidebarRoot.visible
+                        onPluginViewActiveChanged: root.pluginViewActive = pluginViewActive
+                    }
+                }
             }
         }
     }
@@ -339,50 +402,4 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "sidebarLeft"
-
-        function toggle(): void {
-            GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
-        }
-
-        function close(): void {
-            GlobalStates.sidebarLeftOpen = false;
-        }
-
-        function open(): void {
-            GlobalStates.sidebarLeftOpen = true;
-        }
-
-        function detach(): void {
-            GlobalStates.sidebarLeftOpen = false;
-            GlobalStates.sidebarLeftExpanded = false;
-            GlobalStates.aiChatDetached = true;
-        }
-
-        function attach(): void {
-            GlobalStates.aiChatDetached = false;
-        }
-    }
-
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "sidebarLeftToggle"
-                description: "Toggles left sidebar on press"
-                onPressed: GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen
-            }
-            GlobalShortcut {
-                name: "sidebarLeftOpen"
-                description: "Opens left sidebar on press"
-                onPressed: GlobalStates.sidebarLeftOpen = true
-            }
-            GlobalShortcut {
-                name: "sidebarLeftClose"
-                description: "Closes left sidebar on press"
-                onPressed: GlobalStates.sidebarLeftOpen = false
-            }
-        }
-    }
 }

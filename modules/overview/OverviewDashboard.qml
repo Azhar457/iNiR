@@ -157,7 +157,6 @@ Item {
     implicitHeight: dashContainer.implicitHeight + Appearance.sizes.elevationMargin * 2
 
     Component.onCompleted: ResourceUsage.ensureRunning()
-    Component.onDestruction: ResourceUsage.stop()
 
     Timer {
         running: root.effectiveIsPlaying

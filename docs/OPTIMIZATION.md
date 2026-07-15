@@ -266,6 +266,25 @@ Already optimized with `asynchronous: true` by default.
 
 Use `Appearance.animationsEnabled` and `Appearance.effectsEnabled` to respect user preferences and GameMode.
 
+### Runtime performance controls
+
+On Niri 26.04 or newer, Settings › Effects can delegate supported translucent surfaces to Niri's `ext-background-effect-v1` implementation and avoid a duplicate QML blur pass. The page is shared by ii and Waffle and provides a default backend plus overrides for bars, docks, panels, islands and desktop widgets. `Auto` preserves each global style's intended material; `Wallpaper`, `Compositor` and `Off` are explicit requests.
+
+Native blur is deliberately shape-aware. Rounded rectangles publish their exact item bounds and radius, while the islands bar publishes a union of its five live cards. Complex connected decorations, pill compositions and non-rounded silhouettes use wallpaper blur when an equivalent compositor region cannot be expressed. Disabling compositor blur keeps the selected global style and resolves through its wallpaper or solid fallback.
+
+Closed sidebars, launchers, overview, wallpaper pickers and other heavy panels are created on demand. Their IPC commands remain registered through lightweight routers, so scripts and keybinds do not need to keep the visual tree resident.
+
+Thumbnail jobs launched by the wallpaper and generated-image pickers run in a transient user scope rather than the `inir.service` cgroup. `inir restart` cancels any unfinished iNiR thumbnail pool, and completed scopes are collected automatically, so their workers and page cache are not reported as shell memory.
+
+### Stateful visual lifetimes
+
+Heavy visual trees are disposable, but user context is not. Sidebars mount at their final geometry, animate by transforming or clipping that stable tree, and keep resumable state above the visual loader. Settings keeps only the current page and its immediate neighbours rendered; ii/Waffle navigation, theme filters and Gowall editor context live in persistent settings state instead of page delegates.
+
+Blur eligibility is topology-based. A surface must declare an exact `rectangle`, `rounded-rectangle` or `islands-union` region before an explicit compositor backend can be used. Unsupported or morphing silhouettes retain their wallpaper material, and `auto` remains fidelity-first. Explicit Island/Ricelin surfaces own their complete material so global ZZZ, Aurora, Angel or iNiR chrome cannot leak into the same surface.
+
+Desktop widgets keep decoded wallpaper images warm, but release their per-widget mask and blur framebuffer objects whenever the widget is hidden or the widget power manager pauses visual work. Clocks, Cava and resource sampling continue to use their own visibility and consumer gates, so returning to the desktop restores the same visuals without keeping invisible render targets active.
+
+
 ## Tools
 
 - **QML Profiler** (Qt Creator): Find slow bindings and functions

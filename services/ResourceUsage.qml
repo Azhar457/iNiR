@@ -20,6 +20,7 @@ Singleton {
     // This prevents the service from running forever after briefly opening a panel.
     // Persistent consumers (bar, vertical bar) prevent auto-stop entirely.
     readonly property int _autoStopDelayMs: Config.options?.resources?.autoStopDelay ?? 15000
+    readonly property int _diskUpdateIntervalMs: 30000
     // 0 + zero-guard avoids fake "100%" before first poll.
     property real memoryTotal: 0
     property real memoryFree: 0
@@ -226,6 +227,7 @@ Singleton {
         if (!root._primed) {
             root._primed = true;
             root._pollSensors();
+            root._pollDisk();
         }
     }
 
@@ -249,6 +251,7 @@ Singleton {
         root._runningRequested = false;
         root._primed = false;
         pollTimer.stop();
+        diskPollTimer.stop();
         autoStopTimer.stop();
     }
 
@@ -344,8 +347,11 @@ Singleton {
 
         root.updateHistories();
 
-        // Update disk usage
-        diskProc.running = true;
+    }
+
+    function _pollDisk(): void {
+        if (!diskProc.running)
+            diskProc.running = true;
     }
 
     Timer {
@@ -354,6 +360,14 @@ Singleton {
         running: root._runningRequested
         repeat: true
         onTriggered: root._pollSensors()
+    }
+
+    Timer {
+        id: diskPollTimer
+        interval: root._diskUpdateIntervalMs
+        running: root._runningRequested
+        repeat: true
+        onTriggered: root._pollDisk()
     }
 
     FileView {

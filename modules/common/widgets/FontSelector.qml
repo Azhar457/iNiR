@@ -8,6 +8,7 @@ Item {
     property string selectedFont: ""
     property string label: ""
     property string icon: "font_download"
+    signal fontChosen(string fontFamily)
     
     implicitHeight: column.implicitHeight
     implicitWidth: column.implicitWidth
@@ -143,6 +144,7 @@ Item {
 
                     onClicked: {
                         root.selectedFont = modelData
+                        root.fontChosen(modelData)
                         popup.close()
                     }
                 }

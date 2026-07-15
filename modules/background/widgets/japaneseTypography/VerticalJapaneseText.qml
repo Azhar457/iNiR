@@ -14,7 +14,10 @@ Item {
     property real letterSpacing: 0
     property real columnGap: 10
     property int maxColumns: 4
+    property bool rotateLatin: false
     property color color: Appearance.colors.colOnLayer0
+    property int textStyle: Text.Normal
+    property color styleColor: "transparent"
 
     readonly property real cellSize: Math.max(1, Math.round(root.fontPixelSize * 1.08))
     readonly property real cellAdvance: Math.max(root.cellSize, Math.round(root.cellSize + root.letterSpacing))
@@ -27,7 +30,24 @@ Item {
     clip: true
 
     function _characters(value: string): var {
-        return Array.from(String(value ?? "").replace(/\r/g, ""));
+        const points = Array.from(String(value ?? "").replace(/\r/g, ""));
+        let graphemes = [];
+        for (let i = 0; i < points.length; i++) {
+            const point = points[i];
+            const code = point.codePointAt(0);
+            const joinsPrevious = graphemes.length > 0 && (
+                point === "\u200D" || graphemes[graphemes.length - 1].endsWith("\u200D")
+                || code === 0xFE0E || code === 0xFE0F
+                || (code >= 0x0300 && code <= 0x036F)
+                || code === 0x3099 || code === 0x309A
+                || (code >= 0x1F3FB && code <= 0x1F3FF)
+            );
+            if (joinsPrevious)
+                graphemes[graphemes.length - 1] += point;
+            else
+                graphemes.push(point);
+        }
+        return graphemes;
     }
 
     function _allColumns(): var {
@@ -57,11 +77,17 @@ Item {
     }
 
     function _isCornerPunctuation(glyph: string): bool {
-        return "、。，．・：；！？゛゜".indexOf(glyph) >= 0;
+        return "、。，．・：；！？゛゜ヽヾ々〻".indexOf(glyph) >= 0;
+    }
+
+    function _isLatinGlyph(glyph: string): bool {
+        return /^[A-Za-z0-9@#%&+_=:\/.\-]$/.test(glyph);
     }
 
     function _rotatesInVertical(glyph: string): bool {
-        return "ー―—…‥〜～".indexOf(glyph) >= 0;
+        if ("ー―—…‥〜～（）〔〕［］｛｝〈〉《》「」『』【】".indexOf(glyph) >= 0)
+            return true;
+        return root.rotateLatin && root._isLatinGlyph(glyph);
     }
 
     Row {
@@ -94,6 +120,8 @@ Item {
                             anchors.fill: parent
                             text: parent.modelData
                             color: root.color
+                            style: root.textStyle
+                            styleColor: root.styleColor
                             maximumLineCount: 1
                             wrapMode: Text.NoWrap
                             horizontalAlignment: root._isCornerPunctuation(text) ? Text.AlignRight : Text.AlignHCenter

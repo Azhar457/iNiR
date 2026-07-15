@@ -27,7 +27,7 @@ AbstractBackgroundWidget {
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         showBackground: false, showBorder: false, backgroundOpacity: 0.16,
         borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1, useBlur: false,
-        pose: "reading", x: 120, y: 320
+        pose: "reading", customPath: "", anchorWidget: "", x: 120, y: 320
     })
 
     implicitWidth: Math.round((root._readConfigKey("contentWidth") ?? 200) * scaleFactor)
@@ -195,7 +195,7 @@ AbstractBackgroundWidget {
     }
 
     editPopoverContent: Component {
-        Column {
+        ColumnLayout {
             spacing: 6
             GridLayout {
                 columns: 3
@@ -315,12 +315,14 @@ AbstractBackgroundWidget {
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
         surfaceColor: root.widgetSurfaceInk
+        colorMode: root.colorMode
         surfaceAccent: root.widgetAccent3
-        surfaceUseBlur: root.useBlur
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
+        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     AnimatedImage {
@@ -350,7 +352,7 @@ AbstractBackgroundWidget {
         visible: !sprite.visible
         text: "pets"
         iconSize: Math.round(42 * root.scaleFactor)
-        color: root.widgetSurfaceInk
+        color: root.widgetInk
     }
 
     // Tapping her reacts locally (pose ladder); custom images poke the

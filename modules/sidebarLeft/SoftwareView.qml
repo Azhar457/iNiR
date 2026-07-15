@@ -226,7 +226,7 @@ Item {
                         color: root.colText
 
                         RotationAnimation on rotation {
-                            running: AppCatalog.checkingInstalled
+                            running: AppCatalog.checkingInstalled && GlobalStates.sidebarLeftOpen
                             from: 0
                             to: 360
                             duration: 1000

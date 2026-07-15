@@ -97,7 +97,13 @@ Item {
         anchors.fill: parent
         visible: !card._zzz
         radius: card._radius
-        color: Appearance.colors.colLayer0
+        // The card only signalled hover through its border and opacity, which reads
+        // as nothing under the Material style. Lift the fill with the state layer.
+        color: card.selected ? Appearance.colors.colLayer0Hover : Appearance.colors.colLayer0
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
         Behavior on radius {
             enabled: Appearance.animationsEnabled
             NumberAnimation { duration: Appearance.animation.elementResize.duration }

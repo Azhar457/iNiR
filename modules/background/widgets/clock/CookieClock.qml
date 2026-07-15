@@ -15,16 +15,16 @@ import qs.modules.background.widgets.clock.minuteMarks
 Item {
     id: root
 
-    readonly property string clockStyle: Config.getNestedValue("background.widgets.clock.style", "cookie")
+    readonly property string clockStyle: Config.getNestedValue("background.widgets.clock.style", "digital")
     readonly property bool aiStyling: Config.getNestedValue("background.widgets.clock.cookie.aiStyling", false)
     readonly property bool constantlyRotate: Config.getNestedValue("background.widgets.clock.cookie.constantlyRotate", false)
-    readonly property int sides: Config.getNestedValue("background.widgets.clock.cookie.sides", 14)
+    readonly property int sides: Config.getNestedValue("background.widgets.clock.cookie.sides", 15)
     readonly property bool hourMarks: Config.getNestedValue("background.widgets.clock.cookie.hourMarks", false)
-    readonly property bool timeIndicators: Config.getNestedValue("background.widgets.clock.cookie.timeIndicators", true)
-    readonly property string dialNumberStyle: Config.getNestedValue("background.widgets.clock.cookie.dialNumberStyle", "none")
-    readonly property string minuteHandStyle: Config.getNestedValue("background.widgets.clock.cookie.minuteHandStyle", "medium")
-    readonly property string hourHandStyle: Config.getNestedValue("background.widgets.clock.cookie.hourHandStyle", "fill")
-    readonly property string secondHandStyle: Config.getNestedValue("background.widgets.clock.cookie.secondHandStyle", "dot")
+    readonly property bool timeIndicators: Config.getNestedValue("background.widgets.clock.cookie.timeIndicators", false)
+    readonly property string dialNumberStyle: Config.getNestedValue("background.widgets.clock.cookie.dialNumberStyle", "full")
+    readonly property string minuteHandStyle: Config.getNestedValue("background.widgets.clock.cookie.minuteHandStyle", "hide")
+    readonly property string hourHandStyle: Config.getNestedValue("background.widgets.clock.cookie.hourHandStyle", "hollow")
+    readonly property string secondHandStyle: Config.getNestedValue("background.widgets.clock.cookie.secondHandStyle", "hide")
     readonly property string dateStyle: Config.getNestedValue("background.widgets.clock.cookie.dateStyle", "bubble")
 
     property real scaleFactor: 1.0

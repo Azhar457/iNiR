@@ -28,7 +28,13 @@ Item {
     // Maximum height for vertical mode (-1 = no limit, 0+ = cap)
     property real maximumHeight: -1
 
-    readonly property real barSize: vertical ? Appearance.sizes.baseVerticalBarWidth : Appearance.sizes.baseBarHeight
+    // Height the host grants us. Islands hand over the capsule's inner height, so
+    // the buttons size to the surface they sit on instead of the whole bar.
+    property real slotSize: -1
+
+    readonly property real barSize: vertical
+        ? Appearance.sizes.baseVerticalBarWidth
+        : (slotSize > 0 ? Math.min(slotSize, Appearance.sizes.baseBarHeight) : Appearance.sizes.baseBarHeight)
     property real iconSize: vertical ? Math.round(barSize * 0.58) : Math.round(barSize * 0.68)
 
     readonly property bool isOverflowing: vertical && maximumHeight > 0 && listView.contentHeight > (maximumHeight - 8)
@@ -414,6 +420,7 @@ Item {
             taskbarRoot: root
             iconSize: root.iconSize
             vertical: root.vertical
+            barSize: root.barSize
             barPosition: root.barPosition
         }
     }

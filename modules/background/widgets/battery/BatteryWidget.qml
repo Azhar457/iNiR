@@ -15,7 +15,15 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "battery"
-    defaultConfig: ({ placementStrategy: "free", preset: "default", displayMode: "ring", showTime: true, ringSize: 72, ringLineWidth: 6, barCount: 20, pillHeight: 12, dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true, showBorder: true, colorMode: "auto", x: 50, y: 50 })
+    defaultConfig: ({
+        placementStrategy: "free", preset: "default", displayMode: "ring",
+        showTime: true, ringSize: 72, ringLineWidth: 6,
+        barCount: 20, barSpacing: 2, barRadius: 2, pillHeight: 12,
+        dim: 0, widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
+        showBackground: true, useBlur: false, showBorder: true,
+        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
+        cornerRadius: -1, x: 50, y: 50
+    })
 
     implicitWidth: Math.round(160 * scaleFactor)
     implicitHeight: Math.round(104 * scaleFactor)
@@ -27,7 +35,7 @@ AbstractBackgroundWidget {
     resizeMinHeight: 40
 
     editPopoverContent: Component {
-        Column {
+        ColumnLayout {
             spacing: 6
             GridLayout {
                 columns: 3
@@ -62,7 +70,6 @@ AbstractBackgroundWidget {
         }
     }
 
-    readonly property bool _active: (Config.getNestedValue("background.widgets.battery.enable", false)) && Battery.available
     readonly property string displayMode: Config.getNestedValue("background.widgets.battery.displayMode", "ring")
     readonly property bool showTimeEstimate: Config.getNestedValue("background.widgets.battery.showTime", true)
     readonly property int ringSize: Math.round((Config.getNestedValue("background.widgets.battery.ringSize", 72)) * scaleFactor)
@@ -72,16 +79,8 @@ AbstractBackgroundWidget {
     readonly property int barRadius: Config.getNestedValue("background.widgets.battery.barRadius", 2)
     readonly property int pillHeight: Math.round((Config.getNestedValue("background.widgets.battery.pillHeight", 12)) * scaleFactor)
 
-    property real dimFactor: {
-        const v = Config.getNestedValue("background.widgets.battery.dim", 0);
-        const n = Number(v);
-        return Math.max(0, Math.min(1, Number.isFinite(n) ? n / 100 : 0));
-    }
-
     // ── Style tokens ──────────────────────────────────────────
-    readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property real cardRadius: root.widgetCardRadius
 
     // Shared desktop-widget identity (AbstractBackgroundWidget): low = signal,
     // charging = tertiary accent, normal = primary accent. Same family everywhere.
@@ -95,8 +94,10 @@ AbstractBackgroundWidget {
         root.trackColor)
 
     // Region-aware shared plate (dark on bright wallpaper regions).
-    readonly property color trackColor: root.regionIsBright && !Appearance.zzzEverywhere && !Appearance.angelEverywhere
+    readonly property color trackColor: root.regionIsBright && !Appearance.zzzEverywhere
+        && !Appearance.cookieEverywhere && !Appearance.angelEverywhere
         ? root.widgetPlateColor
+        : Appearance.cookieEverywhere ? Appearance.colors.colLayer3
         : Appearance.zzzEverywhere ? Appearance.zzz.chrome
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
@@ -128,20 +129,20 @@ AbstractBackgroundWidget {
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
         surfaceColor: root.widgetSurfaceInk
+        colorMode: root.colorMode
         surfaceAccent: root.widgetAccent
-        surfaceUseBlur: root.useBlur
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0
+        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     // ── Ring mode ─────────────────────────────────────────────
     Item {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
-        opacity: 1.0 - root.dimFactor * 0.6
         visible: root.displayMode === "ring"
 
         Column {
@@ -187,7 +188,6 @@ AbstractBackgroundWidget {
     Item {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
-        opacity: 1.0 - root.dimFactor * 0.6
         visible: root.displayMode === "bars"
 
         Row {
@@ -266,7 +266,6 @@ AbstractBackgroundWidget {
     Item {
         anchors.fill: parent
         anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 8 : 4
-        opacity: 1.0 - root.dimFactor * 0.6
         visible: root.displayMode === "pill"
 
         // Percentage + time above pill

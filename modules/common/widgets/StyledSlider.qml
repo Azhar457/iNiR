@@ -247,18 +247,13 @@ Slider {
                 fullLength: root.width
                 color: root.highlightColor
                 amplitudeMultiplier: root.wavy ? 0.5 : 0
+                animate: root.animateWave
                 width: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (handle.implicitWidth / 2 + root.handleMargins)
                 height: root.trackWidth
                 Connections {
                     target: root
                     function onValueChanged() { wavyFill.requestPaint(); }
                     function onHighlightColorChanged() { wavyFill.requestPaint(); }
-                }
-                FrameAnimation {
-                    running: root.animateWave
-                    onTriggered: {
-                        wavyFill.requestPaint()
-                    }
                 }
             }
         }

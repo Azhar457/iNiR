@@ -1017,6 +1017,17 @@ Singleton {
             property JsonObject performance: JsonObject {
                 property bool lowPower: false
                 property bool reduceAnimations: false
+                // Delegate shaped panel blur to Niri via ext-background-effect-v1.
+                // The request is only activated on Niri; QML blur remains the fallback.
+                property bool compositorBlur: true
+                property string blurBackend: "auto" // auto | wallpaper | compositor | off
+                property JsonObject blurAreas: JsonObject {
+                    property string bar: "inherit"
+                    property string dock: "inherit"
+                    property string panels: "inherit"
+                    property string islands: "inherit"
+                    property string widgets: "inherit"
+                }
             }
 
             property JsonObject powerProfiles: JsonObject {
@@ -1128,11 +1139,11 @@ Singleton {
                     property JsonObject clock: JsonObject {
                         property bool enable: true
                         property bool locked: false
-                        property string placementStrategy: "leastBusy" // "free", "leastBusy", "mostBusy"
+                        property string placementStrategy: "free" // "free", "leastBusy", "mostBusy"
                         property real x: 100
                         property real y: 100
-                        property string style: "cookie" // Options: "cookie", "digital"
-                        property int dim: 0 // Extra dim for clock text (0-100)
+                        property string style: "digital" // Options: "cookie", "digital"
+                        property int dim: 70 // Extra dim for clock text (0-100)
                         property string fontFamily: "Space Grotesk"
                         property string timeFormat: "system" // "system", "24h", "12h"
                         property string dateStyle: "long" // "long", "minimal", "weekday", "numeric"
@@ -1153,13 +1164,13 @@ Singleton {
                         property string colorMode: "auto"
                         property JsonObject cookie: JsonObject {
                             property bool aiStyling: false
-                            property int sides: 14
+                            property int sides: 15
                             property string dialNumberStyle: "full"   // Options: "dots" , "numbers", "full" , "none"
-                            property string hourHandStyle: "fill"     // Options: "classic", "fill", "hollow", "hide"
-                            property string minuteHandStyle: "medium" // Options "classic", "thin", "medium", "bold", "hide"
-                            property string secondHandStyle: "dot"    // Options: "dot", "line", "classic", "hide"
+                            property string hourHandStyle: "hollow"   // Options: "classic", "fill", "hollow", "hide"
+                            property string minuteHandStyle: "hide"   // Options "classic", "thin", "medium", "bold", "hide"
+                            property string secondHandStyle: "hide"   // Options: "dot", "line", "classic", "hide"
                             property string dateStyle: "bubble"       // Options: "border", "rect", "bubble" , "hide"
-                            property bool timeIndicators: true
+                            property bool timeIndicators: false
                             property bool hourMarks: false
                             property bool dateInClock: true
                             property bool constantlyRotate: false
@@ -1183,8 +1194,8 @@ Singleton {
                         property bool enable: false
                         property bool locked: false
                         property string placementStrategy: "free" // "free", "leastBusy", "mostBusy"
-                        property real x: 400
-                        property real y: 100
+                        property real x: 100
+                        property real y: 200
                         property int size: 200
                         property int tempSize: 80
                         property int iconSize: 80
@@ -1353,11 +1364,41 @@ Singleton {
                         property bool showSecondary: true
                         property bool showSeal: true
                         property bool showFooter: true
+                        property bool showRule: true
+                        property string fontPreset: "mincho"
                         property string fontFamily: "serif"
+                        property string secondaryFontFamily: ""
+                        property string latinFontFamily: ""
+                        property int primaryWeight: 500
+                        property int secondaryWeight: 400
+                        property int latinWeight: 600
                         property int primarySize: 72
                         property int secondarySize: 18
+                        property int footerSize: 14
+                        property int dateSize: 12
+                        property int primaryColumns: 2
+                        property int secondaryColumns: 2
                         property int columnGap: 14
                         property int letterSpacing: 2
+                        property int secondaryLetterSpacing: 1
+                        property bool mirrorLayout: false
+                        property bool rotateLatin: false
+                        property string paletteMode: "adaptive"
+                        property string palettePreset: "adaptive"
+                        property string primaryColor: "#E7D4B2"
+                        property string secondaryColor: "#CDB48D"
+                        property string sealColor: "#A64B39"
+                        property string detailColor: "#D0B996"
+                        property string ruleColor: "#C18A53"
+                        property int primaryOpacity: 100
+                        property int secondaryOpacity: 78
+                        property int sealOpacity: 100
+                        property int detailOpacity: 72
+                        property int ruleOpacity: 78
+                        property real sealFillOpacity: 0
+                        property int ruleThickness: 1
+                        property string outlineColor: "#000000"
+                        property int outlineOpacity: 0
                         property int shadowStrength: 35
                         property int contentWidth: 330
                         property int contentHeight: 600

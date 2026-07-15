@@ -406,7 +406,8 @@ Item {
             property bool _marqueeHovered: false
 
             function _startHoldTimer() {
-                if (!titleScroller.overflowing || !Appearance.animationsEnabled || _marqueeHovered) return
+                if (!titleScroller.visible || !titleScroller.overflowing
+                        || !Appearance.animationsEnabled || _marqueeHovered) return
                 holdTimer.start()
             }
 
@@ -446,6 +447,17 @@ Item {
                     scrollAnim.stop()
                     titleScroller._marqueeHolding = true
                     titleScroller._startHoldTimer()
+                }
+            }
+
+            onVisibleChanged: {
+                if (!visible) {
+                    holdTimer.stop()
+                    scrollAnim.stop()
+                    marqueeRow.x = 0
+                    _marqueeHolding = true
+                } else if (overflowing && !_marqueeHovered) {
+                    _startHoldTimer()
                 }
             }
 

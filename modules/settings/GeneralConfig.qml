@@ -248,7 +248,7 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Generate translation with Gemini")
-                tooltip: Translation.tr("You'll need to enter your Gemini API key first.\nType /key on the sidebar for instructions.")
+                tooltip: Translation.tr("Needs a Gemini API key — type /key in the sidebar.")
                 
                 ConfigRow {
                     MaterialTextArea {
@@ -760,7 +760,7 @@ ContentPage {
                         Config.setNestedValue("lock.security.requirePasswordToPower", checked);
                     }
                     StyledToolTip {
-                        text: Translation.tr("Remember that on most devices one can always hold the power button to force shutdown\nThis only makes it a tiny bit harder for accidents to happen")
+                        text: Translation.tr("Guards against accidents only — holding the power button still forces a shutdown.")
                     }
                 }
 
@@ -772,7 +772,7 @@ ContentPage {
                         Config.setNestedValue("lock.security.unlockKeyring", checked);
                     }
                     StyledToolTip {
-                        text: Translation.tr("This is usually safe and needed for your browser and AI sidebar anyway\nMostly useful for those who use lock on startup instead of a display manager that does it (GDM, SDDM, etc.)")
+                        text: Translation.tr("Safe, and needed by your browser and the AI sidebar. Mostly for lock-on-startup setups.")
                     }
                 }
             }
@@ -825,7 +825,7 @@ ContentPage {
             ContentSubsection {
                 visible: Config.options?.lock?.notifications?.enable ?? false
                 title: Translation.tr("Notification position")
-                tooltip: Translation.tr("Where notifications appear on the lock screen. Auto uses center for Material and right for Waffle.")
+                tooltip: Translation.tr("Auto centres on Material, right-aligns on Waffle.")
 
                 ConfigSelectionArray {
                     currentValue: Config.options?.lock?.notifications?.position ?? "auto"
@@ -952,7 +952,7 @@ ContentPage {
                     checked: Config.options?.lock?.enableAnimation ?? false
                     onCheckedChanged: Config.setNestedValue("lock.enableAnimation", checked)
                     StyledToolTip {
-                        text: Translation.tr("Play video and GIF wallpapers on the lock screen instead of showing a still frame. May increase GPU/battery usage.")
+                        text: Translation.tr("Animated wallpapers on the lock screen. Costs GPU and battery.")
                     }
                 }
             }

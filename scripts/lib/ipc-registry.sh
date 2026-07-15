@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 40306281dd2b7386
+# IPC.md hash: f2c20b99fe334588
 # Targets: 57
 
 declare -gA IPC_TARGET_DESC=(
@@ -96,7 +96,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [osd]="waffle"
   [osdVolume]="shared"
   [osk]="shared"
-  [overlay]="ii"
+  [overlay]="shared"
   [overview]="shared"
   [packageSearch]="shared"
   [panelFamily]="shared"
@@ -211,11 +211,11 @@ declare -gA IPC_FUNCTION_DESC=(
   ["autostart:reload"]="Force re-read the startup file"
   ["background:toggleEditMode"]="Toggle widget edit mode (drag, resize, configure desktop widgets)"
   ["background:setWidgetEnabled"]="Enable or disable a built-in desktop widget"
-  ["background:clockDebugState"]="Report bounded clock palette and quick-control geometry diagnostics"
-  ["background:clockDebugSetMode"]="Set a temporary clock diagnostic mode (requires INIR_REGION_DEBUG=1)"
-  ["background:clockDebugSetRegion"]="Inject a temporary wallpaper-region sample (requires INIR_REGION_DEBUG=1)"
-  ["background:clockDebugSetLayout"]="Probe quick-control geometry at a hypothetical clock position (requires INIR_REGION_DEBUG=1)"
-  ["background:clockDebugRestore"]="Restore clock config captured by diagnostics"
+  ["background:clockDebugState"]="Report clock palette, renderer and quick-control geometry diagnostics"
+  ["background:clockDebugSetMode"]="cookie adaptToWallpaper\`"
+  ["background:clockDebugSetRegion"]="Inject a temporary wallpaper-region sample"
+  ["background:clockDebugSetLayout"]="Probe quick-control geometry at a hypothetical clock position without moving the widget"
+  ["background:clockDebugRestore"]="Restore the config captured by clock diagnostics"
   ["bar:toggle"]="Show/hide bar"
   ["bar:close"]="Hide bar"
   ["bar:open"]="Show bar"
@@ -399,7 +399,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["autostart:addCommand"]="<cmd>"
   ["autostart:addApp"]="<desktopId>"
   ["background:setWidgetEnabled"]="<widgetName> <enabled>"
-  ["background:clockDebugSetMode"]="<digital|cookie> <adaptToWallpaper>"
+  ["background:clockDebugSetMode"]="<style> <adaptToWallpaper>"
   ["background:clockDebugSetRegion"]="<color> <brightness> <spread>"
   ["background:clockDebugSetLayout"]="<x> <y> <quickControlsOpen>"
   ["customWidgets:create"]="<name>"
@@ -452,8 +452,8 @@ bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
 )
 
 IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overview packageSearch panelFamily pill region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
-IPC_II_TARGETS=(overlay)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_II_TARGETS=()
 IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 
 declare -gA IPC_KEBAB_ALIASES=(

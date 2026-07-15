@@ -201,7 +201,7 @@ Item {
                                 color: root.colPrimary
 
                                 SequentialAnimation on opacity {
-                                    running: emptyState.visible && Appearance.animationsEnabled
+                                    running: emptyState.visible && GlobalStates.sidebarRightOpen && Appearance.animationsEnabled
                                     loops: Animation.Infinite
                                     NumberAnimation { to: 0.5; duration: 2000; easing.type: Easing.InOutSine }
                                     NumberAnimation { to: 1.0; duration: 2000; easing.type: Easing.InOutSine }

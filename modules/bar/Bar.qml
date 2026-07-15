@@ -18,6 +18,23 @@ Scope {
     property bool showBarBackground: Config.options?.bar?.showBackground ?? true
     // Note: Vignette effect moved to Backdrop.qml (backdrop wallpaper layer)
 
+    // Global style and bar appearance decide which surfaces, decorators and insets
+    // the bar window is built with, and several of them are Loaders that only
+    // evaluate at creation. Rebuilding the window is what moving the bar and moving
+    // it back used to do by hand — do it here instead.
+    readonly property string rebuildKey: `${Config.options?.appearance?.globalStyle ?? "material"}_${Config.options?.bar?.appearanceStyle ?? "classic"}`
+    property bool rebuilding: false
+    onRebuildKeyChanged: {
+        bar.rebuilding = true;
+        barRebuildTimer.restart();
+    }
+
+    Timer {
+        id: barRebuildTimer
+        interval: 50
+        onTriggered: bar.rebuilding = false
+    }
+
     Variants {
         // For each monitor
         model: {
@@ -35,7 +52,7 @@ Scope {
         }
         LazyLoader {
             id: barLoader
-            active: GlobalStates.barOpen && !GlobalStates.screenLocked && !GlobalStates.widgetEditMode
+            active: !bar.rebuilding && GlobalStates.barOpen && !GlobalStates.screenLocked && !GlobalStates.widgetEditMode
             required property ShellScreen modelData
             component: PanelWindow { // Bar window
                 id: barRoot
@@ -49,10 +66,13 @@ Scope {
                 readonly property real panelSurfaceHeight: zzzDetachedRounded
                     ? (Appearance.sizes.baseBarHeight + Appearance.sizes.elevationMargin * 2)
                     : Appearance.sizes.barHeight
-                readonly property real roundDecoratorAllowance: (!zzzDetachedRounded
-                    && bar.showBarBackground
+                // Hug corners belong to the classic bar surface. Islands, scenic,
+                // frame and pill draw their own, so the decorators must go with it.
+                readonly property bool hugCorners: bar.showBarBackground
                     && (Config.options?.bar?.cornerStyle ?? 0) === 0
-                    && !Appearance.zzzEverywhere)
+                    && (Config.options?.bar?.appearanceStyle ?? "classic") === "classic"
+                    && !Appearance.zzzEverywhere
+                readonly property real roundDecoratorAllowance: (!zzzDetachedRounded && hugCorners)
                     ? Appearance.rounding.screenRounding : 0
                 readonly property bool rightDeadPixelWorkaround: (Config.options?.interactions?.deadPixelWorkaround?.enable ?? false)
                     && barRoot.anchors.right
@@ -104,6 +124,41 @@ Scope {
                 }
                 color: "transparent"
 
+                // Shaped compositor blur; Niri applies the request only inside the
+                // actual bar content rather than across the whole layer surface.
+                BackgroundEffect.blurRegion: Region {
+                    Region {
+                        item: barContent.nativeBlurActive && !barContent.isIslands
+                            ? barContent.backgroundItem : emptyMask
+                        radius: barContent.backgroundItem.radius
+                    }
+                    Region {
+                        item: barContent.nativeBlurActive && barContent.isIslands
+                            ? barContent.nativeBlurLeftIsland : emptyMask
+                        radius: barContent.nativeBlurLeftIsland?.radius ?? 0
+                    }
+                    Region {
+                        item: barContent.nativeBlurActive && barContent.isIslands
+                            ? barContent.nativeBlurCenterLeftIsland : emptyMask
+                        radius: barContent.nativeBlurCenterLeftIsland?.radius ?? 0
+                    }
+                    Region {
+                        item: barContent.nativeBlurActive && barContent.isIslands
+                            ? barContent.nativeBlurCenterIsland : emptyMask
+                        radius: barContent.nativeBlurCenterIsland?.radius ?? 0
+                    }
+                    Region {
+                        item: barContent.nativeBlurActive && barContent.isIslands
+                            ? barContent.nativeBlurCenterRightIsland : emptyMask
+                        radius: barContent.nativeBlurCenterRightIsland?.radius ?? 0
+                    }
+                    Region {
+                        item: barContent.nativeBlurActive && barContent.isIslands
+                            ? barContent.nativeBlurRightIsland : emptyMask
+                        radius: barContent.nativeBlurRightIsland?.radius ?? 0
+                    }
+                }
+
                 anchors {
                     top: !(Config.options?.bar?.bottom ?? false)
                     bottom: (Config.options?.bar?.bottom ?? false)
@@ -137,6 +192,7 @@ Scope {
 
                     BarContent {
                         id: barContent
+                        nativeBlurAllowed: !barRoot.hugCorners
                         
                         implicitHeight: barRoot.panelSurfaceHeight
                         anchors {
@@ -187,7 +243,7 @@ Scope {
                             bottom: undefined
                         }
                         height: Appearance.rounding.screenRounding
-                        active: showBarBackground && (Config.options?.bar?.cornerStyle ?? 0) === 0 && !Appearance.zzzEverywhere
+                        active: barRoot.hugCorners
 
                         states: State {
                             name: "bottom"
@@ -304,7 +360,7 @@ Scope {
                                             asynchronous: true
                                             
                                             // See #159 — skip QML blur when compositor blur covers this layer
-                                            layer.enabled: Appearance.effectsEnabled && Appearance.auroraEverywhere && !Appearance.compositorBlurActive
+                                            layer.enabled: Appearance.effectsEnabled && Appearance.auroraEverywhere && !barContent.nativeBlurActive
                                             layer.effect: MultiEffect {
                                                 source: blurImg
                                                 anchors.fill: source

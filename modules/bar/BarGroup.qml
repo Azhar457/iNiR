@@ -7,6 +7,9 @@ import QtQuick.Layouts
 
 Item {
     id: root
+    readonly property alias islandSurface: islandSurface
+    property bool nativeBlurActive: false
+    property var screen: null
     property bool vertical: false
     // Islands: the capsule needs real breathing room around content (matches
     // the edge islands' inner padding); classic groups keep the tight fit and
@@ -55,6 +58,7 @@ Item {
     // stay transparent" doctrine (which left the centre groups naked over the
     // wallpaper) does not apply here.
     IslandPanel {
+        id: islandSurface
         readonly property int inset: Config.options?.bar?.islands?.inset ?? 4
         anchors {
             fill: parent
@@ -64,6 +68,19 @@ Item {
             rightMargin: root.vertical ? inset : 0
         }
         visible: root.islandStyle && !root.bare
+        glassEnabled: true
+        nativeBlurActive: root.nativeBlurActive
+        screen: root.screen
+        glassScreenX: {
+            const geometryDependency = root.x + root.width + islandSurface.x
+            return islandSurface.mapToItem(null, 0, 0).x
+        }
+        glassScreenY: {
+            const geometryDependency = root.y + root.height + islandSurface.y
+            return islandSurface.mapToItem(null, 0, 0).y
+        }
+        glassScreenWidth: root.screen?.width ?? 1920
+        glassScreenHeight: root.screen?.height ?? 1080
     }
 
     GridLayout {

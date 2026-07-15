@@ -15,6 +15,20 @@ import Quickshell.Hyprland
 Scope {
     id: root
     property bool visible: false
+    property bool _presentedOpen: false
+    Component.onCompleted: {
+        if (GlobalStates.mediaControlsOpen)
+            Qt.callLater(() => { root._presentedOpen = GlobalStates.mediaControlsOpen })
+    }
+    Connections {
+        target: GlobalStates
+        function onMediaControlsOpenChanged() {
+            if (GlobalStates.mediaControlsOpen)
+                Qt.callLater(() => { root._presentedOpen = GlobalStates.mediaControlsOpen })
+            else
+                root._presentedOpen = false
+        }
+    }
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
     // Use displayPlayers - includes title/position dedup to prevent duplicates (e.g. plasma-browser-integration)
     readonly property var allPlayers: MprisController.displayPlayers
@@ -140,7 +154,7 @@ Scope {
 
                     states: State {
                         name: "visible"
-                        when: GlobalStates.mediaControlsOpen
+                        when: root._presentedOpen
                         PropertyChanges {
                             target: cardArea
                             y: cardArea.targetY
@@ -275,61 +289,4 @@ Scope {
         }
     }
 
-    IpcHandler {
-        target: "mediaControls"
-
-        function toggle(): void {
-            GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
-            if (GlobalStates.mediaControlsOpen)
-                Notifications.timeoutAll();
-        }
-
-        function close(): void {
-            GlobalStates.mediaControlsOpen = false;
-        }
-
-        function open(): void {
-            GlobalStates.mediaControlsOpen = true;
-            Notifications.timeoutAll();
-        }
-    }
-    Loader {
-        active: CompositorService.isHyprland
-        sourceComponent: Item {
-            GlobalShortcut {
-                name: "mediaControlsToggle"
-                description: "Toggles media controls on press"
-
-                onPressed: {
-                    GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen;
-                }
-            }
-            GlobalShortcut {
-                name: "mediaControlsOpen"
-                description: "Opens media controls on press"
-
-                onPressed: {
-                    GlobalStates.mediaControlsOpen = true;
-                }
-            }
-            GlobalShortcut {
-                name: "mediaControlsClose"
-                description: "Closes media controls on press"
-
-                onPressed: {
-                    GlobalStates.mediaControlsOpen = false;
-                }
-            }
-            GlobalShortcut {
-                name: "mediaControlsPlayPause"
-                description: "Toggles play/pause when media controls are open"
-
-                onPressed: {
-                    if (GlobalStates.mediaControlsOpen && activePlayer?.canTogglePlaying) {
-                        activePlayer.togglePlaying();
-                    }
-                }
-            }
-        }
-    }
 }

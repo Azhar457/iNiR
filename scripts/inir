@@ -2003,6 +2003,26 @@ cleanup_orphans() {
         [[ "$_cgroup" == *"inir.service"* ]] || continue
         kill "$_pid" 2>/dev/null || true
     done < <(pgrep -f 'keyboard_lock_state_daemon\.py|nmcli monitor' 2>/dev/null || true)
+
+    # Phase 6: Thumbnail generation uses a multiprocessing pool. Older runs
+    # could outlive qs because KillMode=process intentionally preserves apps
+    # launched from the shell. Limit cleanup to iNiR's own thumbnail commands
+    # inside this service cgroup; never match arbitrary Python or user jobs.
+    local _thumb_pattern='scripts/thumbnails/(thumbgen-venv\.sh|thumbgen\.py|generate-thumbnails-magick\.sh)'
+    local _thumb_pids=()
+    while IFS= read -r _pid; do
+        [[ -n "$_pid" ]] || continue
+        _thumb_pids+=("$_pid")
+        kill "$_pid" 2>/dev/null || true
+    done < <(pgrep -f "$_thumb_pattern" 2>/dev/null || true)
+
+    if (( ${#_thumb_pids[@]} > 0 )); then
+        sleep 0.2
+        for _pid in "${_thumb_pids[@]}"; do
+            kill -0 "$_pid" 2>/dev/null || continue
+            kill -KILL "$_pid" 2>/dev/null || true
+        done
+    fi
 }
 
 kill_shell() {

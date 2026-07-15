@@ -1795,13 +1795,38 @@ Scope {
 
     // ── Page definitions (same as settings.qml) ──
     property int overlayCurrentPage: 0
+    property bool _navigationInitialized: false
     property int _prevPage: 0
     property int _slideDir: 1
 
-    onOverlayCurrentPageChanged: {
-        _slideDir = (overlayCurrentPage > _prevPage) ? 1 : -1;
-        _prevPage = overlayCurrentPage;
+    function _persistOverlayPage(): void {
+        if (root._navigationInitialized && Persistent.ready && Persistent.states?.settings)
+            Persistent.states.settings.iiPage = Math.max(0,
+                Math.min(root.overlayCurrentPage, root.overlayPages.length - 1))
     }
+
+    function initializeNavigation(): void {
+        if (root._navigationInitialized || !Persistent.ready)
+            return
+        const persisted = Persistent.states?.settings?.iiPage ?? 0
+        root.overlayCurrentPage = Math.max(0, Math.min(persisted, root.overlayPages.length - 1))
+        root._prevPage = root.overlayCurrentPage
+        root._navigationInitialized = true
+        root._persistOverlayPage()
+    }
+
+    onOverlayCurrentPageChanged: {
+        root._slideDir = root.overlayCurrentPage > root._prevPage ? 1 : -1
+        root._prevPage = root.overlayCurrentPage
+        root._persistOverlayPage()
+    }
+
+    Connections {
+        target: Persistent
+        function onReadyChanged() { root.initializeNavigation() }
+    }
+
+    Component.onCompleted: root.initializeNavigation()
 
     // Categories + pages come from the shared registry; the overlay resolves
     // component paths against the shell root.

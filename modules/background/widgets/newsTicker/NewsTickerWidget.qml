@@ -31,23 +31,33 @@ AbstractBackgroundWidget {
     resizeMinWidth: 220
     resizeMinHeight: 72
     needsColText: true
-    // The surface below forces a minimum plate opacity, so accents always sit
-    // on the plate even when the user's background toggle is off.
-    accentBackdrop: widgetPlateColor
-
     property int headlineIndex: 0
     readonly property var article: (NewsService.articles.length > 0)
         ? NewsService.articles[root.headlineIndex % NewsService.articles.length] : null
+    property var displayedArticle: null
 
-    Component.onCompleted: NewsService.fetch(
-        Config.options?.sidebar?.news?.mode ?? "local",
-        Config.options?.sidebar?.news?.topic ?? "WORLD")
+    onArticleChanged: {
+        if (!root.displayedArticle || !Appearance.animationsEnabled) {
+            root.displayedArticle = root.article;
+            headlineText.opacity = 1;
+            return;
+        }
+        headlineText.opacity = 0;
+        swapTimer.restart();
+    }
+
+    Component.onCompleted: {
+        root.displayedArticle = root.article;
+        NewsService.fetch(
+            Config.options?.sidebar?.news?.mode ?? "local",
+            Config.options?.sidebar?.news?.topic ?? "WORLD");
+    }
 
     // Raw-ms rotation timer (never calcEffectiveDuration — not a visual Behavior).
     Timer {
         interval: 12000
         repeat: true
-        running: root.powerActive && NewsService.articles.length > 1
+        running: root.visible && root.powerActive && NewsService.articles.length > 1
         onTriggered: root.headlineIndex = (root.headlineIndex + 1) % NewsService.articles.length
     }
 
@@ -55,23 +65,25 @@ AbstractBackgroundWidget {
         regionBrightness: root.regionBrightness
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
-        surfaceOpacity: Math.max(root.backgroundOpacity, 0.16)
+        surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
         surfaceColor: root.widgetSurfaceInk
+        colorMode: root.colorMode
         surfaceAccent: root.widgetAccent
-        surfaceUseBlur: root.useBlur
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
+        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     MouseArea {
         anchors.fill: parent
-        cursorShape: root.article ? Qt.PointingHandCursor : Qt.ArrowCursor
+        cursorShape: root.displayedArticle ? Qt.PointingHandCursor : Qt.ArrowCursor
         enabled: !GlobalStates.widgetEditMode
-        onClicked: if (root.article) NewsService.openArticle(root.article)
+        onClicked: if (root.displayedArticle) NewsService.openArticle(root.displayedArticle)
     }
 
     RowLayout {
@@ -95,7 +107,7 @@ AbstractBackgroundWidget {
             StyledText {
                 id: headlineText
                 Layout.fillWidth: true
-                text: root.article?.title ?? Translation.tr("No news")
+                text: root.displayedArticle?.title ?? Translation.tr("No news")
                 color: root.widgetInk
                 wrapMode: Text.WordWrap
                 maximumLineCount: 2
@@ -107,28 +119,23 @@ AbstractBackgroundWidget {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
-                // Fade out → swap → fade in when the rotated headline changes.
-                property string pendingText: ""
-                Connections {
-                    target: root
-                    function onArticleChanged() {
-                        if (!Appearance.animationsEnabled) return;
-                        headlineText.opacity = 0;
-                        swapTimer.restart();
-                    }
-                }
+                // Fade out the currently displayed headline, swap only after
+                // the fade completes, then reveal the new article.
                 Timer {
                     id: swapTimer
-                    interval: Appearance.animation.elementMoveFast.duration
-                    onTriggered: headlineText.opacity = 1
+                    interval: Math.max(1, Appearance.animation.elementMoveFast.duration)
+                    onTriggered: {
+                        root.displayedArticle = root.article;
+                        headlineText.opacity = 1;
+                    }
                 }
             }
 
             StyledText {
                 Layout.fillWidth: true
                 visible: text.length > 0
-                text: root.article
-                    ? [root.article.source, NewsService.formatTime(root.article.timestamp)].filter(s => s && s.length > 0).join(" • ")
+                text: root.displayedArticle
+                    ? [root.displayedArticle.source, NewsService.formatTime(root.displayedArticle.timestamp)].filter(s => s && s.length > 0).join(" • ")
                     : ""
                 color: root.widgetInkMuted
                 elide: Text.ElideRight

@@ -63,16 +63,12 @@ ContentPage {
                     }
                 }
 
-            SettingsSwitch {
-                buttonIcon: "memory"
-                text: Translation.tr('Keep right sidebar loaded')
-                checked: Config.options.sidebar.keepRightSidebarLoaded
-                onCheckedChanged: {
-                    Config.setNestedValue("sidebar.keepRightSidebarLoaded", checked);
-                }
-                StyledToolTip {
-                    text: Translation.tr("When enabled keeps the content of the right sidebar loaded to reduce the delay when opening,\nat the cost of around 15MB of consistent RAM usage. Delay significance depends on your system's performance.\nUsing a custom kernel like linux-cachyos might help")
-                }
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Sidebar content is preserved after first use so searches, conversations and navigation resume where you left them.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
             }
 
             SettingsSwitch {
@@ -81,7 +77,7 @@ ContentPage {
                 checked: Config.options.sidebar?.instantOpen ?? false
                 onCheckedChanged: Config.setNestedValue("sidebar.instantOpen", checked)
                 StyledToolTip {
-                    text: Translation.tr("Disable the sidebar slide animation and open or close it instantly to reduce stutter under load")
+                    text: Translation.tr("Skips the slide animation to reduce stutter under load.")
                 }
             }
 
@@ -277,7 +273,7 @@ ContentPage {
                     checked: Config.options.sidebar?.ytmusic?.autoConnect ?? true
                     onCheckedChanged: Config.setNestedValue("sidebar.ytmusic.autoConnect", checked)
                     StyledToolTip {
-                        text: Translation.tr("If you've signed in before, silently re-read your browser's YouTube session on startup so a stale login heals itself. Sign in and import cookies from the account screen (avatar) in the YT Music tab.")
+                        text: Translation.tr("Re-reads your browser's YouTube session on startup so a stale login heals itself.")
                     }
                 }
 

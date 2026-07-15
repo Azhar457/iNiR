@@ -23,9 +23,9 @@ AbstractBackgroundWidget {
         fontFamily: "sans",
         textAlign: "left",
         widgetScale: 100, widgetOpacity: 100,
-        showBackground: true, showBorder: true,
-        backgroundOpacity: 0.10, borderOpacity: 0.12,
-        colorMode: "auto", dim: 0,
+        showBackground: true, useBlur: false, showBorder: true,
+        backgroundOpacity: 0.10, borderWidth: 1, borderOpacity: 0.12,
+        cornerRadius: -1, colorMode: "auto", dim: 0,
         x: 80, y: 80
     })
 
@@ -48,16 +48,11 @@ AbstractBackgroundWidget {
     readonly property string fontFamily: Config.getNestedValue("background.widgets.notes.fontFamily", "sans")
     readonly property string textAlign: Config.getNestedValue("background.widgets.notes.textAlign", "left")
 
-    property real dimFactor: {
-        const v = Number(Config.getNestedValue("background.widgets.notes.dim", 0));
-        return Math.max(0, Math.min(1, Number.isFinite(v) ? v / 100 : 0));
-    }
-
-    readonly property real cardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.normal
+    readonly property real cardRadius: root.widgetCardRadius
 
     // ── Edit popover: font + alignment ─────────────────────────
     editPopoverContent: Component {
-        Column {
+        ColumnLayout {
             spacing: 8
 
             RowLayout {
@@ -127,13 +122,14 @@ AbstractBackgroundWidget {
         surfaceBorderWidth: root.borderWidth
         surfaceBorderOpacity: root.borderOpacity
         surfaceColor: root.widgetSurfaceInk
+        colorMode: root.colorMode
         surfaceAccent: root.widgetAccent
-        surfaceUseBlur: root.useBlur
+        surfaceUseBlur: root.effectiveBlur
         screenX: root.x
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0
+        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
     // ── Editor (TextEdit + Flickable, no built-in context menu) ────
@@ -144,7 +140,6 @@ AbstractBackgroundWidget {
         clip: true
         contentWidth: width
         contentHeight: textEdit.contentHeight
-        opacity: 1.0 - root.dimFactor * 0.5
         boundsBehavior: Flickable.StopAtBounds
 
         // When in edit mode, disable text interaction so widget can be dragged.
@@ -204,14 +199,22 @@ AbstractBackgroundWidget {
 
         // Placeholder text when empty
         StyledText {
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.leftMargin: 2
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                leftMargin: 2
+                rightMargin: 2
+            }
             visible: textEdit.text.length === 0 && !textEdit.activeFocus
             text: Translation.tr("Write a note…")
             color: root.widgetInkSubtle
             font.pixelSize: root.fontSize
             font.family: textEdit.font.family
+            horizontalAlignment: root.textAlign === "center" ? Text.AlignHCenter
+                : root.textAlign === "right" ? Text.AlignRight : Text.AlignLeft
+            wrapMode: Text.NoWrap
+            elide: Text.ElideRight
         }
     }
 }

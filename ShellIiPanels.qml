@@ -30,6 +30,8 @@ import "modules/clipboard" as ClipboardModule
 
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Wayland
 import qs.services
 import qs.modules.common
@@ -58,6 +60,49 @@ Item {
         activeAsync: Config.ready && GlobalStates.deferredPanelsReady && (Config.options?.enabledPanels ?? []).includes(identifier) && extraCondition
     }
 
+    // Interaction panels keep their tiny router here and instantiate the
+    // fullscreen visual tree only while open (plus its exit animation).
+    component OnDemandPanelLoader: LazyLoader {
+        id: onDemandLoader
+        required property string identifier
+        required property bool open
+        property bool keepLoaded: false
+        // Resumable surfaces stay resident only after their first real use.
+        // This preserves in-session work without paying their boot cost.
+        property bool retainAfterUse: false
+        property bool used: false
+        property int closeGraceMs: 300
+        property bool resident: open || keepLoaded
+        property Timer closeGrace: Timer {
+            interval: onDemandLoader.closeGraceMs
+            onTriggered: onDemandLoader.resident = onDemandLoader.open || onDemandLoader.keepLoaded
+        }
+        readonly property bool enabledPanel: Config.ready
+            && (Config.options?.enabledPanels ?? []).includes(identifier)
+
+        onOpenChanged: {
+            if (open) {
+                used = true
+                closeGrace.stop()
+                resident = true
+            } else if (!keepLoaded && !(retainAfterUse && used)) {
+                closeGrace.restart()
+            }
+        }
+        onKeepLoadedChanged: {
+            if (keepLoaded) {
+                closeGrace.stop()
+                resident = true
+            } else if (!open) {
+                if (!(retainAfterUse && used))
+                    closeGrace.restart()
+            }
+        }
+
+        loading: enabledPanel && resident
+        activeAsync: enabledPanel && GlobalStates.deferredPanelsReady && resident
+    }
+
     // === Immediate panels (first frame + early event capture) ===
     // bar.appearanceStyle picks the horizontal bar's look. classic/islands/scenic/
     // frame are variants of Bar.qml itself; "pill" swaps in a different bar
@@ -80,28 +125,281 @@ Item {
 
     // === Deferred panels (user-triggered or non-critical at boot) ===
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }
-    DeferredPanelLoader { identifier: "iiCheatsheet"; component: Cheatsheet {} }
-    DeferredPanelLoader { identifier: "iiControlPanel"; component: ControlPanel {} }
-    DeferredPanelLoader { identifier: "iiDashboard"; extraCondition: Config.options?.dashboard?.enable ?? true; component: Dashboard {} }
+    OnDemandPanelLoader { identifier: "iiCheatsheet"; open: GlobalStates.cheatsheetOpen; component: Cheatsheet {} }
+    OnDemandPanelLoader {
+        identifier: "iiControlPanel"
+        open: GlobalStates.controlPanelOpen
+        keepLoaded: Config.options?.controlPanel?.keepLoaded ?? false
+        component: ControlPanel {}
+    }
+    OnDemandPanelLoader {
+        identifier: "iiDashboard"
+        open: GlobalStates.dashboardOpen
+        keepLoaded: Config.options?.dashboard?.keepLoaded ?? false
+        component: Dashboard {}
+    }
     DeferredPanelLoader { identifier: "iiLock"; component: Lock {} }
-    DeferredPanelLoader { identifier: "iiMediaControls"; component: MediaControls {} }
-    DeferredPanelLoader { identifier: "iiOnScreenKeyboard"; component: OnScreenKeyboard {} }
-    DeferredPanelLoader { identifier: "iiOverlay"; component: Overlay {} }
-    DeferredPanelLoader { identifier: "iiOverview"; component: Overview {} }
+    OnDemandPanelLoader {
+        identifier: "iiMediaControls"
+        open: GlobalStates.mediaControlsOpen
+        closeGraceMs: 400
+        component: MediaControls {}
+    }
+    OnDemandPanelLoader { identifier: "iiOnScreenKeyboard"; open: GlobalStates.oskOpen; component: OnScreenKeyboard {} }
+    OnDemandPanelLoader {
+        identifier: "iiOverlay"
+        open: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets
+        component: Overlay {}
+    }
+    OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; retainAfterUse: true; closeGraceMs: 300; component: Overview {} }
     DeferredPanelLoader { identifier: "iiPolkit"; component: Polkit {} }
-    DeferredPanelLoader { identifier: "iiRegionSelector"; component: RegionSelector {} }
+    RegionSelectorRouter {}
+    OnDemandPanelLoader { identifier: "iiRegionSelector"; open: GlobalStates.regionSelectorOpen || GlobalStates.annotationEditorOpen; closeGraceMs: 250; component: RegionSelector {} }
     DeferredPanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
-    DeferredPanelLoader { identifier: "iiSessionScreen"; component: SessionScreen {} }
-    DeferredPanelLoader { identifier: "iiSidebarLeft"; component: SidebarLeft {} }
-    DeferredPanelLoader { identifier: "iiSidebarRight"; component: SidebarRight {} }
-    DeferredPanelLoader { identifier: "iiTilingOverlay"; component: TilingOverlay {} }
-    DeferredPanelLoader { identifier: "iiWallpaperSelector"; component: WallpaperSelector {} }
-    DeferredPanelLoader { identifier: "iiCoverflowSelector"; component: WallpaperCoverflow {} }
-    DeferredPanelLoader { identifier: "iiClipboard"; component: ClipboardModule.ClipboardPanel {} }
-    DeferredPanelLoader { identifier: "iiShellUpdate"; component: ShellUpdateOverlay {} }
-    DeferredPanelLoader { identifier: "iiRecordingOsd"; component: RecordingOsd {} }
+    OnDemandPanelLoader { identifier: "iiSessionScreen"; open: GlobalStates.sessionOpen; component: SessionScreen {} }
+    OnDemandPanelLoader {
+        identifier: "iiSidebarLeft"
+        open: GlobalStates.sidebarLeftOpen || GlobalStates.aiChatDetached
+        // Sidebars are resumable workspaces: instantiate lazily, then preserve searches,
+        // conversations and navigation state while their hidden work remains gated.
+        retainAfterUse: true
+        closeGraceMs: 350
+        component: SidebarLeft {}
+    }
+    OnDemandPanelLoader {
+        identifier: "iiSidebarRight"
+        open: GlobalStates.sidebarRightOpen
+        retainAfterUse: true
+        closeGraceMs: 350
+        component: SidebarRight {}
+    }
+    TilingOverlayRouter {}
+    OnDemandPanelLoader {
+        identifier: "iiTilingOverlay"
+        open: GlobalStates.tilingOverlayPickerOpen || GlobalStates.tilingOverlayOsdOpen
+        closeGraceMs: 250
+        component: TilingOverlay {}
+    }
+    WallpaperSelectorRouter {}
+    OnDemandPanelLoader { identifier: "iiWallpaperSelector"; open: GlobalStates.wallpaperSelectorOpen; retainAfterUse: true; closeGraceMs: 250; component: WallpaperSelector {} }
+    OnDemandPanelLoader { identifier: "iiCoverflowSelector"; open: GlobalStates.coverflowSelectorOpen; retainAfterUse: true; closeGraceMs: 300; component: WallpaperCoverflow {} }
+    OnDemandPanelLoader { identifier: "iiClipboard"; open: GlobalStates.clipboardOpen; retainAfterUse: true; closeGraceMs: 250; component: ClipboardModule.ClipboardPanel {} }
+    OnDemandPanelLoader { identifier: "iiShellUpdate"; open: ShellUpdates.overlayOpen; closeGraceMs: 250; component: ShellUpdateOverlay {} }
+    OnDemandPanelLoader { identifier: "iiRecordingOsd"; open: RecorderStatus.isRecording; closeGraceMs: 250; component: RecordingOsd {} }
     DeferredPanelLoader { identifier: "iiWorkspaceStrip"; component: WorkspaceStrip {} }
     DeferredPanelLoader { identifier: "iiMascotCompanion"; extraCondition: Config.options?.mascot?.enable ?? false; component: MascotCompanion {} }
+
+    IpcHandler {
+        target: "controlPanel"
+        function toggle(): void { GlobalStates.controlPanelOpen = !GlobalStates.controlPanelOpen }
+        function close(): void { GlobalStates.controlPanelOpen = false }
+        function open(): void { GlobalStates.controlPanelOpen = true }
+    }
+
+    IpcHandler {
+        target: "dashboard"
+        function toggle(): void { GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen }
+        function close(): void { GlobalStates.dashboardOpen = false }
+        function open(): void { GlobalStates.dashboardOpen = true }
+    }
+
+    IpcHandler {
+        target: "sidebarLeft"
+        function toggle(): void { GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen }
+        function close(): void { GlobalStates.sidebarLeftOpen = false }
+        function open(): void { GlobalStates.sidebarLeftOpen = true }
+        function detach(): void {
+            GlobalStates.sidebarLeftOpen = false
+            GlobalStates.sidebarLeftExpanded = false
+            GlobalStates.aiChatDetached = true
+        }
+        function attach(): void { GlobalStates.aiChatDetached = false }
+    }
+
+    IpcHandler {
+        target: "sidebarRight"
+        function toggle(): void { GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen }
+        function close(): void { GlobalStates.sidebarRightOpen = false }
+        function open(): void { GlobalStates.sidebarRightOpen = true }
+    }
+
+    IpcHandler {
+        target: "mediaControls"
+        function toggle(): void {
+            GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
+            if (GlobalStates.mediaControlsOpen) Notifications.timeoutAll()
+        }
+        function close(): void { GlobalStates.mediaControlsOpen = false }
+        function open(): void {
+            GlobalStates.mediaControlsOpen = true
+            Notifications.timeoutAll()
+        }
+    }
+
+    IpcHandler {
+        target: "osk"
+        function toggle(): void { GlobalStates.oskOpen = !GlobalStates.oskOpen }
+        function close(): void { GlobalStates.oskOpen = false }
+        function open(): void { GlobalStates.oskOpen = true }
+    }
+
+    IpcHandler {
+        target: "overlay"
+        function toggle(): void { GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
+    }
+
+    IpcHandler {
+        target: "session"
+        function toggle(): void { GlobalStates.sessionOpen = !GlobalStates.sessionOpen }
+        function close(): void { GlobalStates.sessionOpen = false }
+        function open(): void { GlobalStates.sessionOpen = true }
+    }
+
+    IpcHandler {
+        target: "cheatsheet"
+        function toggle(): void { GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen }
+        function close(): void { GlobalStates.cheatsheetOpen = false }
+        function open(): void { GlobalStates.cheatsheetOpen = true }
+    }
+
+    IpcHandler {
+        target: "overview"
+        function toggle(): void {
+            GlobalStates.overviewSearchPrefix = ""
+            GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+        }
+        function close(): void { GlobalStates.overviewOpen = false }
+        function open(): void {
+            GlobalStates.overviewSearchPrefix = ""
+            GlobalStates.overviewOpen = true
+        }
+        function toggleReleaseInterrupt(): void { GlobalStates.superReleaseMightTrigger = false }
+        function clipboardToggle(): void {
+            if (GlobalStates.overviewOpen && GlobalStates.overviewSearchPrefix.length > 0) {
+                GlobalStates.overviewOpen = false
+            } else {
+                GlobalStates.overviewSearchPrefix = Config.options?.search?.prefix?.clipboard ?? ";"
+                GlobalStates.overviewOpen = true
+            }
+        }
+        function actionOpen(): void {
+            GlobalStates.overviewSearchPrefix = Config.options?.search?.prefix?.action ?? "/"
+            GlobalStates.overviewOpen = true
+        }
+    }
+
+    IpcHandler {
+        target: "clipboard"
+        function open(): void { GlobalStates.clipboardOpen = true }
+        function close(): void { GlobalStates.clipboardOpen = false }
+        function toggle(): void { GlobalStates.clipboardOpen = !GlobalStates.clipboardOpen }
+    }
+
+    Loader {
+        active: CompositorService.isHyprland
+        sourceComponent: GlobalShortcut {
+            name: "controlPanelToggle"
+            description: "Toggles control panel on press"
+            onPressed: GlobalStates.controlPanelOpen = !GlobalStates.controlPanelOpen
+        }
+    }
+
+    Loader {
+        active: CompositorService.isHyprland
+        sourceComponent: Item {
+            GlobalShortcut { name: "oskToggle"; description: "Toggles on screen keyboard on press"; onPressed: GlobalStates.oskOpen = !GlobalStates.oskOpen }
+            GlobalShortcut { name: "oskOpen"; description: "Opens on screen keyboard on press"; onPressed: GlobalStates.oskOpen = true }
+            GlobalShortcut { name: "oskClose"; description: "Closes on screen keyboard on press"; onPressed: GlobalStates.oskOpen = false }
+            GlobalShortcut { name: "overlayToggle"; description: "Toggles overlay on press"; onPressed: GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
+            GlobalShortcut { name: "sessionToggle"; description: "Toggles session screen on press"; onPressed: GlobalStates.sessionOpen = !GlobalStates.sessionOpen }
+            GlobalShortcut { name: "sessionOpen"; description: "Opens session screen on press"; onPressed: GlobalStates.sessionOpen = true }
+            GlobalShortcut { name: "sessionClose"; description: "Closes session screen on press"; onPressed: GlobalStates.sessionOpen = false }
+            GlobalShortcut { name: "cheatsheetToggle"; description: "Toggles cheatsheet on press"; onPressed: GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen }
+            GlobalShortcut { name: "cheatsheetOpen"; description: "Opens cheatsheet on press"; onPressed: GlobalStates.cheatsheetOpen = true }
+            GlobalShortcut { name: "cheatsheetClose"; description: "Closes cheatsheet on press"; onPressed: GlobalStates.cheatsheetOpen = false }
+        }
+    }
+
+    Loader {
+        active: CompositorService.isHyprland
+        sourceComponent: Item {
+            GlobalShortcut {
+                name: "mediaControlsToggle"
+                description: "Toggles media controls on press"
+                onPressed: GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
+            }
+            GlobalShortcut {
+                name: "mediaControlsOpen"
+                description: "Opens media controls on press"
+                onPressed: GlobalStates.mediaControlsOpen = true
+            }
+            GlobalShortcut {
+                name: "mediaControlsClose"
+                description: "Closes media controls on press"
+                onPressed: GlobalStates.mediaControlsOpen = false
+            }
+            GlobalShortcut {
+                name: "mediaControlsPlayPause"
+                description: "Toggles play/pause when media controls are open"
+                onPressed: {
+                    const player = MprisController.activePlayer
+                    if (GlobalStates.mediaControlsOpen && player?.canTogglePlaying)
+                        player.togglePlaying()
+                }
+            }
+        }
+    }
+
+    Loader {
+        active: CompositorService.isHyprland
+        sourceComponent: Item {
+            GlobalShortcut {
+                name: "sidebarLeftToggle"
+                description: "Toggles left sidebar on press"
+                onPressed: GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen
+            }
+            GlobalShortcut {
+                name: "sidebarLeftOpen"
+                description: "Opens left sidebar on press"
+                onPressed: GlobalStates.sidebarLeftOpen = true
+            }
+            GlobalShortcut {
+                name: "sidebarLeftClose"
+                description: "Closes left sidebar on press"
+                onPressed: GlobalStates.sidebarLeftOpen = false
+            }
+        }
+    }
+
+    Loader {
+        active: CompositorService.isHyprland
+        sourceComponent: Item {
+            GlobalShortcut {
+                name: "sidebarRightToggle"
+                description: "Toggles right sidebar on press"
+                onPressed: GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen
+            }
+            GlobalShortcut {
+                name: "sidebarRightOpen"
+                description: "Opens right sidebar on press"
+                onPressed: GlobalStates.sidebarRightOpen = true
+            }
+            GlobalShortcut {
+                name: "sidebarRightClose"
+                description: "Closes right sidebar on press"
+                onPressed: GlobalStates.sidebarRightOpen = false
+            }
+        }
+    }
+
+    Loader {
+        active: CompositorService.isHyprland
+        sourceComponent: GlobalShortcut {
+            name: "dashboardToggle"
+            description: "Toggles the dashboard on press"
+            onPressed: GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen
+        }
+    }
 
     LazyLoader {
         active: Config.ready && (Config.options?.background?.effects?.ripple?.enable ?? false)
