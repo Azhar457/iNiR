@@ -29,6 +29,16 @@ Button {
     // Expensive organic morph is explicit. Generic buttons remain familiar
     // pills; compact semantic controls can opt in and keep one persistent face.
     property bool cookieMorphing: false
+    // Cookie made EVERY button rectangle a full pill. On a compact control that
+    // is the point, but on a wide row — a clipboard entry, a list item — a
+    // height/2 radius is an enormous stadium and the content spills out of it.
+    // Pill only within CookieFace's own control aspect range; past it, cookie's
+    // plate radius.
+    readonly property real _cookieRadius: {
+        const w = Math.max(width, 1), h = Math.max(height, 1)
+        const withinControlAspect = w / h <= 2.2 && h / w <= 2.2
+        return withinControlAspect ? h / 2 : Appearance.cookie.roundNormal
+    }
     property var downAction // When left clicking (down)
     property var releaseAction // When left clicking (release)
     property var moveAction // When mouse moves while pressed (for drag support)
@@ -45,11 +55,22 @@ Button {
     property color colRippleToggled: Appearance.colors.colPrimaryActive
 
     opacity: root.enabled ? 1 : 0.4
-    property color buttonColor: ColorUtils.transparentize(root.toggled ?
-        (root.buttonHovered ? colBackgroundToggledHover :
-            colBackgroundToggled) :
-        (root.buttonHovered ? colBackgroundHover :
-            colBackground), root.enabled ? 0 : 1)
+    property color buttonColor: {
+        const hoverColor = root.toggled
+            ? root.colBackgroundToggledHover : root.colBackgroundHover
+        let targetColor = root.toggled
+            ? (root.buttonHovered ? root.colBackgroundToggledHover : root.colBackgroundToggled)
+            : (root.buttonHovered ? root.colBackgroundHover : root.colBackground)
+
+        // Qt's literal "transparent" is transparent black. Interpolating from
+        // it to a light/tinted hover first travels through black, producing the
+        // apparent two-stage hover seen across Settings. Preserve the target
+        // hue at alpha zero so only opacity changes on entry.
+        if (!root.buttonHovered && targetColor.a === 0 && hoverColor.a > 0)
+            targetColor = ColorUtils.applyAlpha(hoverColor, 0)
+
+        return ColorUtils.transparentize(targetColor, root.enabled ? 0 : 1)
+    }
     property color rippleColor: root.toggled ? colRippleToggled : colRipple
 
     Behavior on opacity {
@@ -97,7 +118,7 @@ Button {
                 return;
             }
             root.down = true
-            if (root.downAction) root.downAction();
+            if (root.downAction) root.downAction(event);
             if (!root.rippleEnabled) return;
             const {x,y} = event
             // Guard against tear-down race: when a parent Loader / popover is destroying
@@ -169,7 +190,7 @@ Button {
         implicitHeight: 30
 
         color: Appearance.cookieEverywhere && root.cookieMorphing ? "transparent" : root.buttonColor
-        radius: Appearance.cookieEverywhere ? height / 2 : root.buttonEffectiveRadius
+        radius: Appearance.cookieEverywhere ? root._cookieRadius : root.buttonEffectiveRadius
         // Cookie has no rectangular chrome: a pill focus ring fights the organic
         // silhouette. cookieMorphing surfaces still show focus through CookieFace.
         border.width: Appearance.cookieEverywhere ? 0
@@ -180,11 +201,11 @@ Button {
             : "transparent"
         Behavior on border.color {
             enabled: Appearance.animationsEnabled
-            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            animation: ColorAnimation { duration: Appearance.animation.stateChange.duration; easing.type: Appearance.animation.stateChange.type; easing.bezierCurve: Appearance.animation.stateChange.bezierCurve }
         }
         Behavior on color {
             enabled: Appearance.animationsEnabled
-            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            animation: ColorAnimation { duration: Appearance.animation.stateChange.duration; easing.type: Appearance.animation.stateChange.type; easing.bezierCurve: Appearance.animation.stateChange.bezierCurve }
         }
         scale: Appearance.cookieEverywhere && root.down ? 0.97 : 1
         Behavior on scale {
@@ -221,7 +242,7 @@ Button {
                 Rectangle {
                     anchors.fill: parent
                     visible: !Appearance.cookieEverywhere || !root.cookieMorphing
-                    radius: Appearance.cookieEverywhere ? height / 2 : root.buttonEffectiveRadius
+                    radius: Appearance.cookieEverywhere ? root._cookieRadius : root.buttonEffectiveRadius
                     color: "white"
                 }
                 Loader {

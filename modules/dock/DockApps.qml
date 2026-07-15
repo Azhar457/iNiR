@@ -791,11 +791,13 @@ Item {
             property bool _dragPrimed: false      // Timer fired, awaiting movement
             property bool _longPressTriggered: false // Drag actually started
 
-            downAction: () => {
+            downAction: event => {
                 if (!root.dragEnabled || dockDelegate.isSeparator) return
                 _longPressTriggered = false
                 _dragPrimed = false
-                _hasPressPos = false
+                _pressMouseX = event.x
+                _pressMouseY = event.y
+                _hasPressPos = true
                 _dockPrimeTimer.restart()
             }
 
@@ -803,13 +805,7 @@ Item {
                 // Only track during an active press, not hover
                 if (!dockDelegate.down) return
 
-                // Capture initial press position on first move event
-                if (!_hasPressPos) {
-                    _pressMouseX = event.x
-                    _pressMouseY = event.y
-                    _hasPressPos = true
-                    return
-                }
+                if (!_hasPressPos) return
 
                 const dx = event.x - _pressMouseX
                 const dy = event.y - _pressMouseY
@@ -823,8 +819,11 @@ Item {
                     return
                 }
 
-                // Primed but drag not yet started → start on first movement
-                if (_dragPrimed && !root.dragActive) {
+                // Priming alone must never consume a click. Start dragging only
+                // after the pointer has crossed the same movement threshold
+                // measured from the actual press position.
+                if (_dragPrimed && !root.dragActive
+                        && dist2 > root.dragThreshold * root.dragThreshold) {
                     _longPressTriggered = true
                     const listPos = dockDelegate.mapToItem(listView, _pressMouseX, _pressMouseY)
                     const appId = dockDelegate.appToplevel?.originalAppId

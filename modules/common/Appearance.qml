@@ -17,6 +17,7 @@ Singleton {
     property QtObject inir
     property QtObject angel
     property QtObject zzz
+    property QtObject cookie
     property QtObject colors
     property QtObject rounding
     property QtObject font
@@ -137,19 +138,25 @@ Singleton {
     // active global style instead of re-implementing the zzz/angel/inir/aurora/material ternary.
     // zzz promotes one fill step (paper -> paperAlt) instead of a translucent mix, per its
     // separate-by-fill doctrine (was missing here; components used to hardcode zzz.paperAlt).
-    readonly property color colLayer1Hover: zzzEverywhere ? zzz.paperAlt
+    // Cookie promotes one tonal step, like zzz: Expressive stacks plates, so a
+    // hover is the next plate up, not a translucent wash of the ink over the
+    // current one.
+    readonly property color colLayer1Hover: cookieEverywhere ? cookie.bg2
+        : zzzEverywhere ? zzz.paperAlt
         : angelEverywhere ? angel.colGlassCardHover
         : inirEverywhere ? inir.colLayer1Hover
         : auroraEverywhere ? aurora.colSubSurfaceHover
         : colors.colLayer1Hover
-    readonly property color colLayer2Hover: zzzEverywhere ? zzz.bg3
+    readonly property color colLayer2Hover: cookieEverywhere ? cookie.bg3
+        : zzzEverywhere ? zzz.bg3
         : angelEverywhere ? angel.colGlassElevatedHover
         : inirEverywhere ? inir.colLayer2Hover
         : auroraEverywhere ? aurora.colElevatedSurfaceHover
         : colors.colLayer2Hover
     // Active/pressed fills — did not exist at top level before, so click feedback
     // (RippleButton etc.) read straight from raw `colors.*`, skipping inir/zzz entirely.
-    readonly property color colLayer1Active: zzzEverywhere ? zzz.bg3
+    readonly property color colLayer1Active: cookieEverywhere ? cookie.bg3
+        : zzzEverywhere ? zzz.bg3
         : angelEverywhere ? angel.colGlassCardActive
         : inirEverywhere ? inir.colLayer1Active
         : auroraEverywhere ? aurora.colSubSurfaceActive
@@ -326,27 +333,27 @@ Singleton {
         readonly property color _baseOnSurface: m3colors.m3onSurface
         readonly property color _baseOnSurfaceVariant: m3colors.m3onSurfaceVariant
         
-        property color colSubtext: root.zzzEverywhere ? root.zzz.inkMuted : ColorUtils.readableSubtext(
+        property color colSubtext: root.cookieEverywhere ? root.cookie.inkMuted : root.zzzEverywhere ? root.zzz.inkMuted : ColorUtils.readableSubtext(
             _needsHighContrast ? _baseOnSurface : (root._auroraLightMode ? _inkSecondary : m3colors.m3outline),
             colLayer1Base,
             0.75
         )
             
         // Layer 0
-        property color colLayer0Base: root.zzzEverywhere ? root.zzz.bg0 : (m3colors.transparent ? "transparent" : ColorUtils.mix(m3colors.m3background, m3colors.m3primary, Config?.options?.appearance?.extraBackgroundTint ? 0.99 : 1))
+        property color colLayer0Base: root.cookieEverywhere ? root.cookie.bg0 : root.zzzEverywhere ? root.zzz.bg0 : (m3colors.transparent ? "transparent" : ColorUtils.mix(m3colors.m3background, m3colors.m3primary, Config?.options?.appearance?.extraBackgroundTint ? 0.99 : 1))
         property color colLayer0: ColorUtils.transparentize(colLayer0Base, root.backgroundTransparency)
-        property color colOnLayer0: root.zzzEverywhere ? root.zzz.onColor : ColorUtils.ensureReadable(
+        property color colOnLayer0: root.cookieEverywhere ? root.cookie.onColor : root.zzzEverywhere ? root.zzz.onColor : ColorUtils.ensureReadable(
             root._auroraLightMode ? _inkPrimary : _baseOnSurface,
             colLayer0Base,
             4.5
         )
-        property color colLayer0Hover: ColorUtils.transparentize(ColorUtils.mix(colLayer0, colOnLayer0, 0.9, root.contentTransparency))
-        property color colLayer0Active: ColorUtils.transparentize(ColorUtils.mix(colLayer0, colOnLayer0, 0.8, root.contentTransparency))
-        property color colLayer0Border: root.zzzEverywhere ? root.zzz.borderColor : ColorUtils.mix(root.m3colors.m3outlineVariant, colLayer0, 0.4)
+        property color colLayer0Hover: ColorUtils.transparentize(ColorUtils.mix(colLayer0, colOnLayer0, 0.9), root.contentTransparency)
+        property color colLayer0Active: ColorUtils.transparentize(ColorUtils.mix(colLayer0, colOnLayer0, 0.8), root.contentTransparency)
+        property color colLayer0Border: root.cookieEverywhere ? root.cookie.hairline : root.zzzEverywhere ? root.zzz.borderColor : ColorUtils.mix(root.m3colors.m3outlineVariant, colLayer0, 0.4)
         // Layer 1
-        property color colLayer1Base: root.zzzEverywhere ? root.zzz.bg1 : m3colors.m3surfaceContainerLow
+        property color colLayer1Base: root.cookieEverywhere ? root.cookie.bg1 : root.zzzEverywhere ? root.zzz.bg1 : m3colors.m3surfaceContainerLow
         property color colLayer1: auroraEverywhere ? ColorUtils.transparentize(m3colors.m3surfaceContainerLow, root.aurora.layerTransparentize) : ColorUtils.solveOverlayColor(colLayer0Base, colLayer1Base, 1 - root.contentTransparency)
-        property color colOnLayer1: root.zzzEverywhere ? root.zzz.onColor : ColorUtils.ensureReadable(
+        property color colOnLayer1: root.cookieEverywhere ? root.cookie.onColor : root.zzzEverywhere ? root.zzz.onColor : ColorUtils.ensureReadable(
             _needsHighContrast ? _baseOnSurface : (root._auroraLightMode ? _inkPrimary : _baseOnSurfaceVariant),
             colLayer1Base,
             4.5
@@ -355,33 +362,33 @@ Singleton {
         property color colLayer1Hover: ColorUtils.transparentize(ColorUtils.mix(colLayer1, colOnLayer1, 0.92), root.contentTransparency)
         property color colLayer1Active: ColorUtils.transparentize(ColorUtils.mix(colLayer1, colOnLayer1, 0.85), root.contentTransparency)
         // Layer 2
-        property color colLayer2Base: root.zzzEverywhere ? root.zzz.bg2 : m3colors.m3surfaceContainer
+        property color colLayer2Base: root.cookieEverywhere ? root.cookie.bg2 : root.zzzEverywhere ? root.zzz.bg2 : m3colors.m3surfaceContainer
         property color colLayer2: auroraEverywhere ? ColorUtils.transparentize(m3colors.m3surfaceContainer, root.aurora.layerTransparentize) : ColorUtils.solveOverlayColor(colLayer1Base, colLayer2Base, 1 - root.contentTransparency)
         property color colLayer2Hover: ColorUtils.solveOverlayColor(colLayer1Base, ColorUtils.mix(colLayer2Base, colOnLayer2, 0.90), 1 - root.contentTransparency)
         property color colLayer2Active: ColorUtils.solveOverlayColor(colLayer1Base, ColorUtils.mix(colLayer2Base, colOnLayer2, 0.80), 1 - root.contentTransparency)
         property color colLayer2Disabled: ColorUtils.solveOverlayColor(colLayer1Base, ColorUtils.mix(colLayer2Base, m3colors.m3background, 0.8), 1 - root.contentTransparency)
-        property color colOnLayer2: root.zzzEverywhere ? root.zzz.onColor : ColorUtils.ensureReadable(
+        property color colOnLayer2: root.cookieEverywhere ? root.cookie.onColor : root.zzzEverywhere ? root.zzz.onColor : ColorUtils.ensureReadable(
             _needsHighContrast ? _baseOnSurface : (root._auroraLightMode ? _inkPrimary : _baseOnSurface),
             colLayer2Base,
             4.5
         )
         property color colOnLayer2Disabled: ColorUtils.readableSubtext(colOnLayer2, colLayer2Base, 0.4)
         // Layer 3
-        property color colLayer3Base: root.zzzEverywhere ? root.zzz.bg3 : m3colors.m3surfaceContainerHigh
+        property color colLayer3Base: root.cookieEverywhere ? root.cookie.bg3 : root.zzzEverywhere ? root.zzz.bg3 : m3colors.m3surfaceContainerHigh
         property color colLayer3: auroraEverywhere ? ColorUtils.transparentize(m3colors.m3surfaceContainerHigh, root.aurora.layerTransparentize) : ColorUtils.solveOverlayColor(colLayer2Base, colLayer3Base, 1 - root.contentTransparency)
         property color colLayer3Hover: ColorUtils.solveOverlayColor(colLayer2Base, ColorUtils.mix(colLayer3Base, colOnLayer3, 0.90), 1 - root.contentTransparency)
         property color colLayer3Active: ColorUtils.solveOverlayColor(colLayer2Base, ColorUtils.mix(colLayer3Base, colOnLayer3, 0.80), 1 - root.contentTransparency)
-        property color colOnLayer3: root.zzzEverywhere ? root.zzz.onColor : ColorUtils.ensureReadable(
+        property color colOnLayer3: root.cookieEverywhere ? root.cookie.onColor : root.zzzEverywhere ? root.zzz.onColor : ColorUtils.ensureReadable(
             _needsHighContrast ? _baseOnSurface : (root._auroraLightMode ? _inkPrimary : _baseOnSurface),
             colLayer3Base,
             4.5
         )
         // Layer 4
-        property color colLayer4Base: root.zzzEverywhere ? root.zzz.bg4 : m3colors.m3surfaceContainerHighest
+        property color colLayer4Base: root.cookieEverywhere ? root.cookie.bg4 : root.zzzEverywhere ? root.zzz.bg4 : m3colors.m3surfaceContainerHighest
         property color colLayer4: ColorUtils.solveOverlayColor(colLayer3Base, colLayer4Base, 1 - root.contentTransparency)
         property color colLayer4Hover: ColorUtils.solveOverlayColor(colLayer3Base, ColorUtils.mix(colLayer4Base, colOnLayer4, 0.90), 1 - root.contentTransparency)
         property color colLayer4Active: ColorUtils.solveOverlayColor(colLayer3Base, ColorUtils.mix(colLayer4Base, colOnLayer4, 0.80), 1 - root.contentTransparency)
-        property color colOnLayer4: root.zzzEverywhere ? root.zzz.onColor : ColorUtils.ensureReadable(
+        property color colOnLayer4: root.cookieEverywhere ? root.cookie.onColor : root.zzzEverywhere ? root.zzz.onColor : ColorUtils.ensureReadable(
             root._auroraLightMode ? _inkPrimary : _baseOnSurface,
             colLayer4Base,
             4.5
@@ -391,45 +398,45 @@ Singleton {
         property color colOnPrimary: root.zzzEverywhere ? root.zzz.onAccent : m3colors.m3onPrimary
         property color colPrimaryHover: ColorUtils.mix(colors.colPrimary, colLayer1Hover, 0.87)
         property color colPrimaryActive: ColorUtils.mix(colors.colPrimary, colLayer1Active, 0.7)
-        property color colPrimaryContainer: root.zzzEverywhere ? ColorUtils.mix(root.zzz.bg3, root.zzz.sticker, 0.20) : m3colors.m3primaryContainer
+        property color colPrimaryContainer: root.cookieEverywhere ? root.cookie.primaryFace : root.zzzEverywhere ? ColorUtils.mix(root.zzz.bg3, root.zzz.sticker, 0.20) : m3colors.m3primaryContainer
         property color colPrimaryContainerHover: ColorUtils.mix(colors.colPrimaryContainer, colors.colOnPrimaryContainer, 0.9)
         property color colPrimaryContainerActive: ColorUtils.mix(colors.colPrimaryContainer, colors.colOnPrimaryContainer, 0.8)
-        property color colOnPrimaryContainer: root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onPrimaryContainer
+        property color colOnPrimaryContainer: root.cookieEverywhere ? root.cookie.onFace : root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onPrimaryContainer
         // Secondary
         property color colSecondary: root.zzzEverywhere ? root.zzz.secondary : m3colors.m3secondary
         property color colSecondaryHover: ColorUtils.mix(colSecondary, colLayer1Hover, 0.85)
         property color colSecondaryActive: ColorUtils.mix(colSecondary, colLayer1Active, 0.4)
         property color colOnSecondary: root.zzzEverywhere ? root.zzz.onSecondary : m3colors.m3onSecondary
-        property color colSecondaryContainer: root.zzzEverywhere ? ColorUtils.mix(root.zzz.bg3, root.zzz.secondary, 0.18) : m3colors.m3secondaryContainer
+        property color colSecondaryContainer: root.cookieEverywhere ? root.cookie.secondaryFace : root.zzzEverywhere ? ColorUtils.mix(root.zzz.bg3, root.zzz.secondary, 0.18) : m3colors.m3secondaryContainer
         property color colSecondaryContainerHover: ColorUtils.mix(colSecondaryContainer, colOnSecondaryContainer, 0.90)
         property color colSecondaryContainerActive: ColorUtils.mix(colSecondaryContainer, colOnSecondaryContainer, 0.54)
-        property color colOnSecondaryContainer: root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onSecondaryContainer
+        property color colOnSecondaryContainer: root.cookieEverywhere ? root.cookie.onFace : root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onSecondaryContainer
         // Tertiary
         property color colTertiary: root.zzzEverywhere ? root.zzz.tertiary : m3colors.m3tertiary
         property color colTertiaryHover: ColorUtils.mix(colTertiary, colLayer1Hover, 0.85)
         property color colTertiaryActive: ColorUtils.mix(colTertiary, colLayer1Active, 0.4)
-        property color colTertiaryContainer: root.zzzEverywhere ? ColorUtils.mix(root.zzz.bg3, root.zzz.tertiary, 0.18) : m3colors.m3tertiaryContainer
+        property color colTertiaryContainer: root.cookieEverywhere ? root.cookie.tertiaryFace : root.zzzEverywhere ? ColorUtils.mix(root.zzz.bg3, root.zzz.tertiary, 0.18) : m3colors.m3tertiaryContainer
         property color colTertiaryContainerHover: ColorUtils.mix(colTertiaryContainer, colOnTertiaryContainer, 0.90)
         property color colTertiaryContainerActive: ColorUtils.mix(colTertiaryContainer, colLayer1Active, 0.54)
         property color colOnTertiary: root.zzzEverywhere ? root.zzz.onAccent : m3colors.m3onTertiary
-        property color colOnTertiaryContainer: root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onTertiaryContainer
+        property color colOnTertiaryContainer: root.cookieEverywhere ? root.cookie.onFace : root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onTertiaryContainer
         // Surface
-        property color colBackgroundSurfaceContainer: root.zzzEverywhere ? root.zzz.bg2 : ColorUtils.transparentize(m3colors.m3surfaceContainer, root.backgroundTransparency)
-        property color colSurfaceContainerLow: root.zzzEverywhere ? root.zzz.bg1 : ColorUtils.solveOverlayColor(m3colors.m3background, m3colors.m3surfaceContainerLow, 1 - root.contentTransparency)
-        property color colSurfaceContainer: root.zzzEverywhere ? root.zzz.bg2 : ColorUtils.solveOverlayColor(m3colors.m3surfaceContainerLow, m3colors.m3surfaceContainer, 1 - root.contentTransparency)
-        property color colSurfaceContainerHigh: root.zzzEverywhere ? root.zzz.bg3 : ColorUtils.solveOverlayColor(m3colors.m3surfaceContainer, m3colors.m3surfaceContainerHigh, 1 - root.contentTransparency)
-        property color colSurfaceContainerHighest: root.zzzEverywhere ? root.zzz.bg4 : ColorUtils.solveOverlayColor(m3colors.m3surfaceContainerHigh, m3colors.m3surfaceContainerHighest, 1 - root.contentTransparency)
+        property color colBackgroundSurfaceContainer: root.cookieEverywhere ? root.cookie.bg2 : root.zzzEverywhere ? root.zzz.bg2 : ColorUtils.transparentize(m3colors.m3surfaceContainer, root.backgroundTransparency)
+        property color colSurfaceContainerLow: root.cookieEverywhere ? root.cookie.bg1 : root.zzzEverywhere ? root.zzz.bg1 : ColorUtils.solveOverlayColor(m3colors.m3background, m3colors.m3surfaceContainerLow, 1 - root.contentTransparency)
+        property color colSurfaceContainer: root.cookieEverywhere ? root.cookie.bg2 : root.zzzEverywhere ? root.zzz.bg2 : ColorUtils.solveOverlayColor(m3colors.m3surfaceContainerLow, m3colors.m3surfaceContainer, 1 - root.contentTransparency)
+        property color colSurfaceContainerHigh: root.cookieEverywhere ? root.cookie.bg3 : root.zzzEverywhere ? root.zzz.bg3 : ColorUtils.solveOverlayColor(m3colors.m3surfaceContainer, m3colors.m3surfaceContainerHigh, 1 - root.contentTransparency)
+        property color colSurfaceContainerHighest: root.cookieEverywhere ? root.cookie.bg4 : root.zzzEverywhere ? root.zzz.bg4 : ColorUtils.solveOverlayColor(m3colors.m3surfaceContainerHigh, m3colors.m3surfaceContainerHighest, 1 - root.contentTransparency)
         property color colSurfaceContainerHighestHover: ColorUtils.mix(colSurfaceContainerHighest, colOnSurface, 0.95)
         property color colSurfaceContainerHighestActive: ColorUtils.mix(colSurfaceContainerHighest, colOnSurface, 0.85)
-        property color colOnSurface: root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onSurface
-        property color colOnSurfaceVariant: root.zzzEverywhere ? ColorUtils.applyAlpha(root.zzz.onColor, 0.78) : m3colors.m3onSurfaceVariant
+        property color colOnSurface: root.cookieEverywhere ? root.cookie.onColor : root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onSurface
+        property color colOnSurfaceVariant: root.cookieEverywhere ? root.cookie.inkMuted : root.zzzEverywhere ? ColorUtils.applyAlpha(root.zzz.onColor, 0.78) : m3colors.m3onSurfaceVariant
         // Misc
         property color colTooltip: root.zzzEverywhere ? root.zzz.contrastPlate : m3colors.m3inverseSurface
         property color colOnTooltip: root.zzzEverywhere ? root.zzz.onContrastPlate : m3colors.m3inverseOnSurface
         property color colScrim: ColorUtils.transparentize(m3colors.m3scrim, 0.5)
         property color colShadow: m3colors.transparent ? "transparent" : ColorUtils.transparentize(m3colors.m3shadow, 0.7)
-        property color colOutline: root.zzzEverywhere ? root.zzz.borderColor : (_needsHighContrast ? ColorUtils.transparentize(m3colors.m3onSurface, 0.8) : m3colors.m3outline) // Brighter border in Aurora Dark
-        property color colOutlineVariant: root.zzzEverywhere ? root.zzz.hairlineStrong : (_needsHighContrast ? ColorUtils.transparentize(m3colors.m3onSurface, 0.9) : m3colors.m3outlineVariant)
+        property color colOutline: root.cookieEverywhere ? root.cookie.borderColor : root.zzzEverywhere ? root.zzz.borderColor : (_needsHighContrast ? ColorUtils.transparentize(m3colors.m3onSurface, 0.8) : m3colors.m3outline) // Brighter border in Aurora Dark
+        property color colOutlineVariant: root.cookieEverywhere ? root.cookie.hairline : root.zzzEverywhere ? root.zzz.hairlineStrong : (_needsHighContrast ? ColorUtils.transparentize(m3colors.m3onSurface, 0.9) : m3colors.m3outlineVariant)
         property color colError: m3colors.m3error
         property color colErrorHover: ColorUtils.mix(m3colors.m3error, colLayer1Hover, 0.85)
         property color colErrorActive: ColorUtils.mix(m3colors.m3error, colLayer1Active, 0.7)
@@ -445,13 +452,13 @@ Singleton {
         // Matrix -> 0, Zen Garden -> 1.5, Standard -> 1.0
         property real scale: root.zzzEverywhere ? 1.0 : (root._themeMeta.roundingScale ?? 1.0)
 
-        property int unsharpen: root.zzzEverywhere ? 2 : Math.max(0, Math.round(2 * scale))
-        property int unsharpenmore: root.zzzEverywhere ? 4 : Math.max(0, Math.round(6 * scale))
-        property int verysmall: root.zzzEverywhere ? root.zzz.roundSmall : Math.max(0, Math.round(8 * scale))
-        property int small: root.zzzEverywhere ? root.zzz.roundSmall : Math.max(0, Math.round(12 * scale))
-        property int normal: root.zzzEverywhere ? root.zzz.roundNormal : Math.max(0, Math.round(17 * scale))
-        property int large: root.zzzEverywhere ? root.zzz.roundLarge : Math.max(0, Math.round(23 * scale))
-        property int verylarge: root.zzzEverywhere ? root.zzz.panelRadius : Math.max(0, Math.round(30 * scale))
+        property int unsharpen: root.cookieEverywhere ? 4 : root.zzzEverywhere ? 2 : Math.max(0, Math.round(2 * scale))
+        property int unsharpenmore: root.cookieEverywhere ? 8 : root.zzzEverywhere ? 4 : Math.max(0, Math.round(6 * scale))
+        property int verysmall: root.cookieEverywhere ? root.cookie.roundVerySmall : root.zzzEverywhere ? root.zzz.roundSmall : Math.max(0, Math.round(8 * scale))
+        property int small: root.cookieEverywhere ? root.cookie.roundSmall : root.zzzEverywhere ? root.zzz.roundSmall : Math.max(0, Math.round(12 * scale))
+        property int normal: root.cookieEverywhere ? root.cookie.roundNormal : root.zzzEverywhere ? root.zzz.roundNormal : Math.max(0, Math.round(17 * scale))
+        property int large: root.cookieEverywhere ? root.cookie.roundLarge : root.zzzEverywhere ? root.zzz.roundLarge : Math.max(0, Math.round(23 * scale))
+        property int verylarge: root.cookieEverywhere ? root.cookie.panelRadius : root.zzzEverywhere ? root.zzz.panelRadius : Math.max(0, Math.round(30 * scale))
         property int full: root.zzzEverywhere ? (root.zzz.round ? 9999 : root.zzz.controlRadius) : 9999
         property int screenRounding: large
         property int windowRounding: root.zzzEverywhere ? root.zzz.panelRadius : Math.max(0, Math.round(18 * scale))
@@ -546,6 +553,11 @@ Singleton {
         // presets only when globalStyle === "zzz".
         readonly property list<real> zzzOvershoot: [0.34, 1.56, 0.64, 1.0, 1, 1]
         readonly property list<real> zzzSnap: [0.22, 1.0, 0.36, 1.0, 1, 1]
+        // Cookie's spring. ShapeCanvas already overshoots at 1.67 when a
+        // silhouette morphs; this is the same gesture pushed out to everything
+        // else, so the shell moves like the shapes do instead of a bouncy shape
+        // landing inside a shell that eases like material.
+        readonly property list<real> cookieSpring: [0.34, 1.75, 0.36, 1.0, 1, 1]
         readonly property real expressiveFastSpatialDuration: 350
         readonly property real expressiveDefaultSpatialDuration: 500
         readonly property real expressiveSlowSpatialDuration: 650
@@ -553,6 +565,15 @@ Singleton {
     }
 
     animation: QtObject {
+        // State-layer colors must never use spatial overshoot. Overshooting a
+        // color channel creates a dark/bright intermediate flash that reads as
+        // a second hover animation, especially when entering from alpha zero.
+        property QtObject stateChange: QtObject {
+            property int duration: root.calcEffectiveDuration(180, root.animationSpeed.clickBounce)
+            property int type: Easing.BezierSpline
+            property list<real> bezierCurve: animationCurves.expressiveEffects
+        }
+
         property QtObject elementMove: QtObject {
             property int duration: root.calcEffectiveDuration(animationCurves.expressiveDefaultSpatialDuration, root.animationSpeed.movement)
             property int type: root.resolveCurveType("movement", Easing.BezierSpline)
@@ -568,9 +589,9 @@ Singleton {
         }
 
         property QtObject elementMoveEnter: QtObject {
-            property int duration: root.calcEffectiveDuration(root.zzzEverywhere ? root.zzz.overshootDuration : (root.contextualMotionProfile ? 520 : 400), root.animationSpeed.enterExit)
+            property int duration: root.calcEffectiveDuration(root.cookieEverywhere ? root.cookie.springDuration : root.zzzEverywhere ? root.zzz.overshootDuration : (root.contextualMotionProfile ? 520 : 400), root.animationSpeed.enterExit)
             property int type: root.resolveCurveType("enterExit", Easing.BezierSpline)
-            property list<real> bezierCurve: root.resolveCurveBezier("enterExit", root.zzzEverywhere ? animationCurves.zzzOvershoot : animationCurves.emphasizedDecel)
+            property list<real> bezierCurve: root.resolveCurveBezier("enterExit", root.cookieEverywhere ? animationCurves.cookieSpring : root.zzzEverywhere ? animationCurves.zzzOvershoot : animationCurves.emphasizedDecel)
             property int velocity: 650
             property Component numberAnimation: Component {
                 NumberAnimation {
@@ -596,9 +617,12 @@ Singleton {
         }
 
         property QtObject elementMoveFast: QtObject {
-            property int duration: root.calcEffectiveDuration(root.contextualMotionProfile ? 260 : animationCurves.expressiveEffectsDuration, root.animationSpeed.clickBounce)
+            // Cookie springs on click too. expressiveEffects does not overshoot,
+            // so without this a cookie button's press felt like material even
+            // while its silhouette was morphing expressively.
+            property int duration: root.calcEffectiveDuration(root.cookieEverywhere ? 300 : (root.contextualMotionProfile ? 260 : animationCurves.expressiveEffectsDuration), root.animationSpeed.clickBounce)
             property int type: root.resolveCurveType("clickBounce", Easing.BezierSpline)
-            property list<real> bezierCurve: root.resolveCurveBezier("clickBounce", animationCurves.expressiveEffects)
+            property list<real> bezierCurve: root.resolveCurveBezier("clickBounce", root.cookieEverywhere ? animationCurves.cookieSpring : animationCurves.expressiveEffects)
             property int velocity: 850
             property Component colorAnimation: Component { ColorAnimation {
                 duration: root.animation.elementMoveFast.duration
@@ -1265,6 +1289,120 @@ Singleton {
         readonly property bool  useDiagonals: true
         readonly property var   overshootCurve: [0.34, 1.56, 0.64, 1.0] // back-out punch
         readonly property int   overshootDuration: 320
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // COOKIE — Material 3 Expressive
+    //
+    // Cookie's shapes shipped before its tokens did, so it read the whole
+    // material palette and every material radius and only swapped some
+    // rectangles for organic silhouettes. Shape alone is not an identity:
+    // above CookieFace's aspect ceiling the silhouette falls back to a plain
+    // rectangle, which is most of the screen, so the style WAS material.
+    //
+    // What actually separates Expressive from material is not the polygon, it
+    // is colour and scale: tinted surfaces instead of near-neutral greys,
+    // markedly larger radii, and motion that overshoots. That lives here.
+    // ═══════════════════════════════════════════════════════════════════
+    cookie: QtObject {
+        readonly property bool dark: root.m3colors.darkmode
+
+        // ── Surfaces: dough, not grey ──
+        // Material's surfaceContainer roles are near-neutral by design. Cookie
+        // bakes the theme hue into the plates instead, which is the single
+        // change that stops it reading as material.
+        //
+        // Saturation is held well UNDER m3primaryContainer's, on purpose: the
+        // cookie faces are painted in that container role, and if the plates
+        // reached the same chroma the silhouettes would sink into their own
+        // background and the style would lose the one thing it already had.
+        readonly property real surfaceHue: root.m3colors.m3primary.hslSaturation > 0.02
+            ? root.m3colors.m3primary.hslHue : root.m3colors.m3background.hslHue
+        // Chroma is the seasoning, not the dish. The first pass ran the plates hot
+        // enough that the shell read as tinted rather than as cookie; the identity
+        // is carried by the LIGHTNESS spread below, so the tint can come down a
+        // long way without costing the style anything.
+        readonly property real surfaceSat: dark
+            ? Math.min(0.15, Math.max(0.05, root.m3colors.m3primary.hslSaturation * 0.26))
+            : Math.min(0.10, Math.max(0.035, root.m3colors.m3primary.hslSaturation * 0.19))
+
+        // The ramp is the identity. Material's dark plates sit between L=0.03 and
+        // L=0.15 — so compressed that bg0 against bg2 lands at a 1.11 contrast
+        // ratio and the layers do not visually separate at all; depth comes from
+        // borders and shadows instead. Expressive stacks tonal plates and expects
+        // you to SEE the stack, so cookie lifts the floor and spreads the steps.
+        readonly property color bg0: Qt.hsla(surfaceHue, surfaceSat * 0.80, dark ? 0.075 : 0.980, 1.0)
+        readonly property color bg1: Qt.hsla(surfaceHue, surfaceSat * 0.90, dark ? 0.130 : 0.948, 1.0)
+        readonly property color bg2: Qt.hsla(surfaceHue, surfaceSat, dark ? 0.190 : 0.912, 1.0)
+        readonly property color bg3: Qt.hsla(surfaceHue, surfaceSat * 1.10, dark ? 0.260 : 0.868, 1.0)
+        readonly property color bg4: Qt.hsla(surfaceHue, surfaceSat * 1.20, dark ? 0.330 : 0.818, 1.0)
+
+        // ── Faces: the plate a silhouette is painted on ──
+        // Lifting the ramp put the raw m3*Container roles at the same lightness as
+        // the plates they sit on — measured at a 1.10 contrast ratio against bg2,
+        // i.e. invisible. A cookie whose silhouettes sink into the panel would
+        // lose the one thing the style already had, so the containers get their
+        // own recipe: the theme's chroma at a lightness that clears the dough.
+        readonly property real _faceL: dark ? 0.38 : 0.78
+        function _face(seed: color): color {
+            return Qt.hsla(seed.hslHue,
+                Math.min(0.44, Math.max(0.20, seed.hslSaturation * 0.75)), _faceL, 1.0)
+        }
+        readonly property color primaryFace: _face(root.m3colors.m3primary)
+        readonly property color secondaryFace: _face(root.m3colors.m3secondary)
+        readonly property color tertiaryFace: _face(root.m3colors.m3tertiary)
+        // One ink for all three: they share a lightness, so one clamp covers them.
+        readonly property color onFace: ColorUtils.ensureReadable(
+            dark ? Qt.hsla(surfaceHue, 0.10, 0.97, 1.0) : Qt.hsla(surfaceHue, 0.35, 0.10, 1.0),
+            primaryFace, 4.5)
+
+        // ── Ink ──
+        readonly property real _inkL: dark ? 0.94 : 0.13
+        readonly property color onColor: Qt.hsla(surfaceHue,
+            Math.min(0.20, root.m3colors.m3onSurface.hslSaturation * 0.5), _inkL, 1.0)
+        readonly property color inkMuted: ColorUtils.applyAlpha(onColor, dark ? 0.62 : 0.58)
+
+        // ── Separation is by fill, not by outline ──
+        // Expressive stacks tonal plates; a visible border on every surface
+        // would fight the silhouettes. The hairline exists only for the cases
+        // that genuinely need an edge (inputs, focus).
+        readonly property color hairline: ColorUtils.applyAlpha(onColor, 0.08)
+        readonly property color borderColor: ColorUtils.applyAlpha(onColor, 0.14)
+
+        // ── Elevation: tonal first, short contact shadow second ──
+        // Cookie surfaces separate primarily through the bg ramp. Floating
+        // surfaces get a compact shadow so they read above the desktop without
+        // inheriting Material's wide ambient haze. Dense settings cards use the
+        // same color/offset as a cheap unblurred contact layer.
+        readonly property color shadowColor: ColorUtils.applyAlpha(
+            Qt.rgba(0, 0, 0, 1), dark ? 0.32 : 0.16)
+        readonly property color cardShadowColor: ColorUtils.applyAlpha(
+            Qt.rgba(0, 0, 0, 1), dark ? 0.18 : 0.10)
+        readonly property real shadowBlur: 6
+        readonly property real shadowOffset: 2
+        readonly property real cardShadowOffset: 1.5
+        readonly property real shadowSpread: 0
+
+        // ── Radii: pill controls, pebble plates ──
+        // Material lands on 8/12/17/23/30. Cookie is deliberately a step above
+        // at every stop, so the roundness reads as a choice rather than as
+        // material with the corners nudged.
+        readonly property int roundVerySmall: 12
+        readonly property int roundSmall: 16
+        readonly property int roundNormal: 24
+        readonly property int roundLarge: 32
+        readonly property int panelRadius: 40
+        // Controls are full pills. CookieFace already does this for the
+        // silhouettes; the rectangle fallback has to agree or a button changes
+        // shape the moment it grows past the aspect ceiling.
+        readonly property int controlRadius: 9999
+
+        // ── Motion: it has to bounce ──
+        // The 1.67 overshoot lived only inside ShapeCanvas, so a shape morphed
+        // expressively while everything around it moved on material's curves.
+        // Cookie pushes the spring out to the whole shell.
+        readonly property var spring: [0.34, 1.75, 0.36, 1.0, 1, 1]
+        readonly property int springDuration: 420
     }
 
      sizes: QtObject {

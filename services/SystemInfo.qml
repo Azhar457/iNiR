@@ -13,7 +13,10 @@ Singleton {
     property string distroName: "Unknown"
     property string distroId: "unknown"
     property string distroIcon: "linux-symbolic"
-    property string username: "user"
+    // Seed identity from the process environment so consumers do not build
+    // transient paths for the placeholder user while `id -un` is starting.
+    // The asynchronous lookup below remains the authoritative refresh.
+    property string username: Quickshell.env("USER") || "user"
     property string displayName: ""
     property string homeUrl: ""
     property string documentationUrl: ""

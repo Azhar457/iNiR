@@ -7,6 +7,7 @@ import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import Quickshell.Wayland
 
@@ -146,6 +147,34 @@ DockButton {
     property var desktopEntry: AppSearch.lookupDesktopEntry(appToplevel.originalAppId ?? appToplevel.appId)
     enabled: !isSeparator
 
+    readonly property var appTrayItem: {
+        const appKeys = [
+            appToplevel.originalAppId,
+            appToplevel.appId,
+            root.desktopEntry?.id,
+            root.desktopEntry?.name
+        ].map(value => root.normalizedAppKey(value)).filter(value => value.length >= 3)
+
+        return SystemTray.items.values.find(item => {
+            const trayKeys = [item?.id, item?.title]
+                .map(value => root.normalizedAppKey(value))
+                .filter(value => value.length >= 3)
+            return trayKeys.some(trayKey => appKeys.some(appKey => {
+                if (trayKey === appKey)
+                    return true
+                // Reverse-domain desktop ids often end in the short tray id.
+                // Require enough entropy to avoid collisions such as code/vscode.
+                return Math.min(trayKey.length, appKey.length) >= 5
+                    && (trayKey.endsWith(appKey) || appKey.endsWith(trayKey))
+            }))
+        }) ?? null
+    }
+
+    QsMenuOpener {
+        id: appTrayMenuOpener
+        menu: root.appTrayItem?.menu ?? null
+    }
+
     readonly property real dockHeight: Config.options?.dock?.height ?? 70
     readonly property real separatorSize: dockHeight - 50
 
@@ -277,8 +306,17 @@ DockButton {
         if (id === "spotify" || id === "spotify-launcher") {
             id = "spotify-launcher";
         }
+        // Tray-resident applications may ignore a second launch while hidden.
+        // Prefer their native Library/Open/Show entry when one is available.
+        if (!root.hasWindows) {
+            const restoreEntry = root.findTrayMenuEntry(["library", "open", "show"])
+            if (restoreEntry) {
+                restoreEntry.triggered()
+                return true
+            }
+        }
         if (id && id !== "" && id !== "SEPARATOR") {
-            const entry = AppSearch.lookupDesktopEntry(id);
+            const entry = root.desktopEntry ?? AppSearch.lookupDesktopEntry(id);
             if (entry && AppSearch.launchEntry(entry))
                 return true;
             ShellExec.execCmd(id);
@@ -360,32 +398,97 @@ DockButton {
         root.appListRoot.contextMenuOpen = true
         root.hoverPreviewDismissed()
         hoverDelayTimer.stop()
+        // Snapshot the entries. A live binding on `toplevels` re-evaluates on
+        // every window/title event, which resets the menu's Repeater and kills
+        // the hover state of the item under the cursor.
+        contextMenu.model = root.buildContextMenuModel()
         contextMenu.active = true
     }
 
-    Connections {
-        target: root.appListRoot
-        function onCloseAllContextMenus() {
-            contextMenu.close()
+    function desktopActionIcon(action): var {
+        const explicitIcon = String(action?.icon ?? "").trim()
+        if (explicitIcon.length > 0) {
+            return {
+                iconName: IconThemeService.smartIconName(explicitIcon,
+                    appToplevel.originalAppId ?? appToplevel.appId),
+                monochrome: false
+            }
+        }
+
+        const label = String(action?.name ?? "").toLowerCase()
+        const semanticIcons = [
+            { words: ["new window", "nueva ventana", "nouvelle fenêtre"], icon: "open_in_new" },
+            { words: ["private", "incognito", "privada", "privado"], icon: "visibility_off" },
+            { words: ["store", "tienda", "boutique"], icon: "storefront" },
+            { words: ["community", "comunidad", "communauté"], icon: "groups" },
+            { words: ["library", "biblioteca", "bibliothèque"], icon: "video_library" },
+            { words: ["server", "servidor", "serveur"], icon: "dns" },
+            { words: ["screenshot", "capture", "captura"], icon: "screenshot" },
+            { words: ["news", "noticias", "actualités"], icon: "newspaper" },
+            { words: ["setting", "preference", "parámetro", "ajuste", "paramètre"], icon: "settings" },
+            { words: ["big picture", "fullscreen", "pantalla completa"], icon: "fullscreen" },
+            { words: ["friend", "amigo", "amis"], icon: "group" },
+            { words: ["compose", "redactar", "write", "escribir"], icon: "edit_square" },
+            { words: ["quit", "exit", "salir", "cerrar"], icon: "logout" }
+        ]
+
+        for (const rule of semanticIcons) {
+            if (rule.words.some(word => label.includes(word)))
+                return { iconName: rule.icon, monochrome: true }
+        }
+
+        return {
+            iconName: IconThemeService.smartIconName(root.desktopEntry?.icon ?? "",
+                appToplevel.originalAppId ?? appToplevel.appId),
+            monochrome: false
         }
     }
 
-    DockContextMenu {
-        id: contextMenu
-        anchorItem: root
-        anchorHovered: root.buttonHovered
+    function normalizedAppKey(value): string {
+        return String(value ?? "")
+            .toLowerCase()
+            .replace(/\.desktop$/, "")
+            .replace(/[^a-z0-9]/g, "")
+    }
 
-        onActiveChanged: {
-            if (!active && root.appListRoot) root.appListRoot.contextMenuOpen = false
+    function normalizedActionKey(value): string {
+        return String(value ?? "")
+            .toLowerCase()
+            .replace(/[&_.…\s-]/g, "")
+    }
+
+    function findTrayMenuEntry(labels): var {
+        const wanted = labels.map(label => root.normalizedActionKey(label))
+            .filter(label => label.length > 0)
+        const entries = appTrayMenuOpener.children?.values ?? []
+        return entries.find(entry => entry?.enabled !== false
+            && wanted.includes(root.normalizedActionKey(entry?.text))) ?? null
+    }
+
+    function executeDesktopAction(action): void {
+        // A resident application is authoritative for its own commands. This
+        // also handles clients that ignore their desktop-action URI while hidden.
+        const trayEntry = root.findTrayMenuEntry([action?.id, action?.name])
+        if (trayEntry) {
+            trayEntry.triggered()
+            return
         }
 
-        model: [
+        action.execute()
+    }
+
+    function buildContextMenuModel(): var {
+        return [
             // Desktop actions (if available)
-            ...((root.desktopEntry?.actions?.length > 0) ? root.desktopEntry.actions.map(action => ({
-                iconName: action.icon ?? "",
-                text: action.name,
-                action: () => action.execute()
-            })).concat({ type: "separator" }) : []),
+            ...((root.desktopEntry?.actions?.length > 0) ? root.desktopEntry.actions.map(action => {
+                const resolvedIcon = root.desktopActionIcon(action)
+                return {
+                    iconName: resolvedIcon.iconName,
+                    text: action.name,
+                    monochromeIcon: resolvedIcon.monochrome,
+                    action: () => root.executeDesktopAction(action)
+                }
+            }).concat({ type: "separator" }) : []),
             // Launch new instance
             {
                 iconName: IconThemeService.smartIconName(root.desktopEntry?.icon ?? "", appToplevel.originalAppId ?? appToplevel.appId),
@@ -412,16 +515,33 @@ DockButton {
                 { type: "separator" },
                 {
                     iconName: "close",
-                    text: toplevels.length > 1 ? Translation.tr("Close all windows") : Translation.tr("Close window"),
+                    text: root.toplevels.length > 1 ? Translation.tr("Close all windows") : Translation.tr("Close window"),
                     monochromeIcon: true,
                     action: () => {
-                        for (let toplevel of toplevels) {
+                        for (let toplevel of root.toplevels) {
                             toplevel.close()
                         }
                     }
                 }
             ] : [])
         ]
+    }
+
+    Connections {
+        target: root.appListRoot
+        function onCloseAllContextMenus() {
+            contextMenu.close()
+        }
+    }
+
+    DockContextMenu {
+        id: contextMenu
+        anchorItem: root
+        anchorHovered: root.buttonHovered
+
+        onActiveChanged: {
+            if (!active && root.appListRoot) root.appListRoot.contextMenuOpen = false
+        }
     }
 
       contentItem: Loader {

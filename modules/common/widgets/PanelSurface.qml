@@ -135,6 +135,7 @@ Item {
         sourceComponent: CookieFace {
             role: "plate"
             color: root._fill
+            radius: root._radius
         }
     }
 

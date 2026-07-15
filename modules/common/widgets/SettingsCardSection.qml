@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 
 Item {
@@ -77,14 +78,15 @@ Item {
     Rectangle {
         visible: !Appearance.angelEverywhere
             && !Appearance.zzzEverywhere
-            && !Appearance.cookieEverywhere
             && Appearance.effectsEnabled
         x: card.x + 0.5
-        y: card.y + 1.5
+        y: card.y + (Appearance.cookieEverywhere
+            ? Appearance.cookie.cardShadowOffset : 1.5)
         width: card.width
         height: card.height
         radius: card.radius
-        color: Appearance.colors.colShadow
+        color: Appearance.cookieEverywhere
+            ? Appearance.cookie.cardShadowColor : Appearance.colors.colShadow
         z: -1
     }
     Loader {
@@ -146,6 +148,7 @@ Item {
         sourceComponent: CookieFace {
             role: "card"
             color: SettingsMaterialPreset.cardColor
+            radius: card.radius
         }
     }
 
@@ -204,10 +207,10 @@ Item {
                 radius: SettingsMaterialPreset.headerRadius
                 color: headerMouseArea.containsMouse && root.collapsible
                     ? SettingsMaterialPreset.headerHoverColor
-                    : "transparent"
+                    : ColorUtils.applyAlpha(SettingsMaterialPreset.headerHoverColor, 0)
 
                 Behavior on color {
-                    animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    animation: ColorAnimation { duration: Appearance.animation.stateChange.duration; easing.type: Appearance.animation.stateChange.type; easing.bezierCurve: Appearance.animation.stateChange.bezierCurve }
                 }
 
                 RowLayout {
@@ -229,7 +232,14 @@ Item {
 
                         sourceComponent: Item {
                             id: iconHost
-                            implicitWidth: Appearance.zzzEverywhere ? 26 : Appearance.font.pixelSize.larger
+                            // The cookie badge fills this host, and a scalloped
+                            // polygon inscribed in a box is SMALLER than the box —
+                            // its lobes cut inward. Sized to the glyph, the plate
+                            // came out smaller than the glyph sitting on it, so the
+                            // host has to clear the icon for the badge to contain it.
+                            implicitWidth: Appearance.zzzEverywhere ? 26
+                                : Appearance.cookieEverywhere ? Math.round(Appearance.font.pixelSize.larger * 1.75)
+                                : Appearance.font.pixelSize.larger
                             implicitHeight: implicitWidth
                             readonly property color iconColor: root.expanded
                                 ? (Appearance.cookieEverywhere
