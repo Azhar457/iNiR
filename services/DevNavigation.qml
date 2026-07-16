@@ -68,7 +68,7 @@ Singleton {
         settingsDestinations = out
     }
 
-    function entryFor(destination: string) {
+    function entryFor(destination: string): var {
         return destinations.find(entry => entry.id === destination) ?? null
     }
 

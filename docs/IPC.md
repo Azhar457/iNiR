@@ -114,7 +114,7 @@ The pill bar's morphing surfaces (only registered while Bar appearance is set to
 | `state` | Print the open surface name, or `closed` |
 
 ```kdl
-bind "Super+V" { spawn "inir" "pill" "toggle" "clipboard"; }
+bind "Super+V" repeat=false { spawn "inir" "pill" "toggle" "clipboard"; }
 ```
 
 ---
@@ -130,7 +130,7 @@ Clipboard history panel. Because Ctrl+V only remembers one thing, and that's not
 | `close` | Close panel |
 
 ```kdl
-bind "Super+V" { spawn "inir" "clipboard" "toggle"; }
+bind "Super+V" repeat=false { spawn "inir" "clipboard" "toggle"; }
 ```
 
 ---

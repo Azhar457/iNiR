@@ -213,10 +213,12 @@ Scope {
         })
     }
 
-    Component.onCompleted: if (GlobalStates.clipboardOpen) {
+    function presentOpen(): void {
         prepareOpen()
         Qt.callLater(() => { root._presentedOpen = GlobalStates.clipboardOpen })
     }
+
+    Component.onCompleted: if (GlobalStates.clipboardOpen) root.presentOpen()
 
     Connections {
         target: Cliphist
@@ -254,7 +256,7 @@ Scope {
                 // the panel just showed a stale order, so the entry you copied
                 // last appeared wherever it used to be instead of first — and a
                 // copy made outside the panel in that window did not show up.
-                root.prepareOpen()
+                root.presentOpen()
             } else {
                 root._presentedOpen = false
                 root.pendingViewReset = false

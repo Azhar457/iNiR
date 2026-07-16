@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: f9d3d6f34cd14328
+# IPC.md hash: ad4bc751464b0125
 # Targets: 58
 
 declare -gA IPC_TARGET_DESC=(
@@ -438,7 +438,7 @@ declare -gA IPC_TARGET_EXAMPLE=(
 bind "Alt+Shift+Tab" { spawn "inir" "altSwitcher" "previous"; }'
   [background]='bind "Super+W" { spawn "inir" "background" "toggleEditMode"; }'
   [cheatsheet]='bind "Super+Slash" { spawn "inir" "cheatsheet" "toggle"; }'
-  [clipboard]='bind "Super+V" { spawn "inir" "clipboard" "toggle"; }'
+  [clipboard]='bind "Super+V" repeat=false { spawn "inir" "clipboard" "toggle"; }'
   [closeConfirm]='bind "Mod+Q" repeat=false { spawn "inir" "close-window"; }'
   [gamemode]='bind "Super+F12" { spawn "inir" "gamemode" "toggle"; }'
   [globalActions]='bind "Super+Slash" { spawn "inir" "globalActions" "open"; }
@@ -451,7 +451,7 @@ bind "Mod+Alt+P" { spawn "inir" "mpris" "previous"; }'
   [overlay]='bind "Super+G" { spawn "inir" "overlay" "toggle"; }'
   [overview]='bind "Mod+Space" { spawn "inir" "overview" "toggle"; }'
   [panelFamily]='bind "Mod+Shift+W" { spawn "inir" "panelFamily" "cycle"; }'
-  [pill]='bind "Super+V" { spawn "inir" "pill" "toggle" "clipboard"; }'
+  [pill]='bind "Super+V" repeat=false { spawn "inir" "pill" "toggle" "clipboard"; }'
   [region]='bind "Super+Shift+S" { spawn "inir" "region" "screenshot"; }
 bind "Super+Shift+X" { spawn "inir" "region" "ocr"; }
 bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
