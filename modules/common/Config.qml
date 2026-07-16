@@ -2246,6 +2246,12 @@ Singleton {
 
             property JsonObject voiceSearch: JsonObject {
                 property int duration: 5
+                property string provider: "auto" // auto | local | groq | gemini | openai
+                property string language: "auto"
+                property string localModelPath: ""
+                property string groqModel: "whisper-large-v3-turbo"
+                property string geminiModel: "gemini-2.5-flash"
+                property string openaiModel: "gpt-4o-mini-transcribe"
             }
 
             property JsonObject clipboard: JsonObject {

@@ -1,5 +1,6 @@
 import qs
 import qs.services
+import qs.services.ai
 import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.widgets
@@ -14,10 +15,15 @@ import Quickshell.Io
 
 Item {
     id: root
+    clip: true
     property real padding: 4
     property var inputField: messageInputField
     property string commandPrefix: "/"
     property bool historyOpen: false
+    // The normal sidebar is the baseline. Extra information is added only
+    // after the content has enough room, never by letting compact rows grow.
+    readonly property bool compactLayout: width < 520
+    readonly property bool wideLayout: width >= 620
     readonly property bool dictating: VoiceSearch.running && VoiceSearch.mode === "dictate"
 
     property var suggestionQuery: ""
@@ -230,11 +236,12 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 Ai.addMessage(Translation.tr("Unknown command: ") + command, Ai.interfaceRole);
             }
         } else {
-            Ai.sendUserMessage(inputText);
+            const sent = Ai.sendUserMessage(inputText)
+            if (!sent) return false
         }
 
-        // Always scroll to bottom when user sends a message
-        messageListView.positionViewAtEnd();
+        messageListView.positionViewAtEnd()
+        return true
     }
 
     Process {
@@ -340,6 +347,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 // ran off both edges. It may never exceed the space it sits in.
                 readonly property real _maxWidth: Math.max(0, parent.width - 8)
                 implicitWidth: Math.min(statusRowLayout.implicitWidth + 10 * 2, _maxWidth)
+                width: root.compactLayout ? _maxWidth : implicitWidth
                 implicitHeight: Math.max(statusRowLayout.implicitHeight, 38)
                 // NO clip: the model-selector popup grows downward out of this
                 // plate, so clipping it to contain the row also swallowed the whole
@@ -360,31 +368,38 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     // Shrinks when the row is tight, never stretches past its natural size.
                     AiModelSelector {
                         Layout.fillWidth: true
-                        Layout.maximumWidth: implicitWidth
+                        Layout.minimumWidth: 0
+                        Layout.maximumWidth: root.compactLayout ? 100000 : implicitWidth
+                        containmentItem: root
                     }
-                    StatusSeparator {}
+                    StatusSeparator { visible: !root.compactLayout }
                     StatusItem {
+                        visible: !root.compactLayout
                         icon: Ai.currentModelHasApiKey ? "key" : "key_off"
                         statusText: ""
-                        description: Ai.currentModelHasApiKey ? Translation.tr("API key is set\nChange with /key YOUR_API_KEY") : Translation.tr("No API key\nSet it with /key YOUR_API_KEY")
+                        description: Ai.currentModelHasApiKey
+                            ? Translation.tr("Provider connected securely through the system keyring")
+                            : Translation.tr("Provider not connected\nOpen AI Settings to add its key")
                     }
-                    StatusSeparator {}
+                    StatusSeparator { visible: root.wideLayout }
                     StatusItem {
+                        visible: root.wideLayout
                         icon: "article"
                         statusText: Ai.currentPromptName.length > 0 ? Ai.currentPromptName : Translation.tr("default")
                         description: Translation.tr("Active personality / system prompt\nChange with /prompt NAME")
                     }
-                    StatusSeparator {}
+                    StatusSeparator { visible: root.wideLayout }
                     StatusItem {
+                        visible: root.wideLayout
                         icon: "device_thermostat"
                         statusText: Ai.temperature.toFixed(1)
                         description: Translation.tr("Temperature\nChange with /temp VALUE")
                     }
                     StatusSeparator {
-                        visible: Ai.tokenCount.total > 0
+                        visible: root.wideLayout && Ai.tokenCount.total > 0
                     }
                     StatusItem {
-                        visible: Ai.tokenCount.total > 0
+                        visible: root.wideLayout && Ai.tokenCount.total > 0
                         icon: "token"
                         statusText: Ai.tokenCount.total
                         description: Translation.tr("Total token count\nInput: %1\nOutput: %2").arg(Ai.tokenCount.input).arg(Ai.tokenCount.output)
@@ -445,7 +460,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 shown: Ai.messageIDs.length === 0 && !aiMascot.active
                 icon: "neurology"
                 text: Translation.tr("Large language models")
-                explanation: Translation.tr("Type /key to get started with online models\nCtrl+O to expand the sidebar\nCtrl+P to detach sidebar into a window")
+                explanation: Translation.tr("Choose a recommended, free or local model above. Connect providers in AI Settings — no model IDs required.\nCtrl+O expands · Ctrl+P detaches")
                 shape: MaterialShape.Shape.PixelCircle
             }
 
@@ -477,7 +492,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
-                    text: Translation.tr("Type /key to get started with online models\nCtrl+O to expand the sidebar\nCtrl+P to detach sidebar into a window")
+                    text: Translation.tr("Choose a recommended, free or local model above. Connect providers in AI Settings — no model IDs required.\nCtrl+O expands · Ctrl+P detaches")
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colSubtext
                 }
@@ -589,6 +604,66 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
             }
         }
 
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: connectionRow.implicitHeight + 12
+            visible: !Ai.currentModelReady
+            radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
+            color: ColorUtils.transparentize(Appearance.colors.colErrorContainer, 0.34)
+
+            RowLayout {
+                id: connectionRow
+                anchors.fill: parent
+                anchors.margins: 6
+                spacing: 7
+
+                MaterialSymbol {
+                    text: Ai.getModel() ? "lock" : "info"
+                    iconSize: Appearance.font.pixelSize.large
+                    color: Appearance.colors.colOnErrorContainer
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Ai.getModel()
+                        ? Translation.tr("Connect %1 before sending messages.")
+                            .arg(AiProviderCatalog.providerById(Ai.getModel()?.provider_id ?? "")?.name ?? Translation.tr("this provider"))
+                        : Translation.tr("Connect a provider or start a local model.")
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    color: Appearance.colors.colOnErrorContainer
+                    wrapMode: Text.WordWrap
+                }
+                RippleButton {
+                    implicitWidth: root.compactLayout ? 30 : connectionButtonLabel.implicitWidth + 16
+                    implicitHeight: 28
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colErrorContainer
+                    colBackgroundHover: Appearance.colors.colErrorContainerHover
+                    onClicked: {
+                        GlobalStates.settingsOverlayRequestedPage = 24
+                        GlobalStates.settingsOverlayOpen = true
+                    }
+                    contentItem: RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 4
+                        MaterialSymbol {
+                            visible: root.compactLayout
+                            text: "key"
+                            iconSize: Appearance.font.pixelSize.normal
+                            color: Appearance.colors.colOnErrorContainer
+                        }
+                        StyledText {
+                            id: connectionButtonLabel
+                            visible: !root.compactLayout
+                            text: Translation.tr("Connect")
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.weight: Font.Medium
+                            color: Appearance.colors.colOnErrorContainer
+                        }
+                    }
+                }
+            }
+        }
+
         Rectangle { // Input area
             id: inputWrapper
             property real spacing: 5
@@ -600,7 +675,13 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
             }
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
                 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
-            implicitHeight: Math.max(inputFieldRowLayout.implicitHeight + inputFieldRowLayout.anchors.topMargin + commandButtonsRow.implicitHeight + commandButtonsRow.anchors.bottomMargin + spacing, 45) + (attachedFileIndicator.implicitHeight + spacing + attachedFileIndicator.anchors.topMargin)
+            implicitHeight: Math.max(45,
+                (attachedFileIndicator.visible
+                    ? attachedFileIndicator.implicitHeight + attachedFileIndicator.anchors.margins + spacing
+                    : 0)
+                + inputFieldRowLayout.implicitHeight + inputFieldRowLayout.anchors.topMargin
+                + commandButtonsRow.implicitHeight + commandButtonsRow.anchors.bottomMargin
+                + spacing)
             clip: true
 
             Behavior on implicitHeight {
@@ -634,9 +715,13 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     id: messageInputField
                     wrapMode: TextArea.Wrap
                     Layout.fillWidth: true
+                    Layout.minimumHeight: 40
+                    Layout.maximumHeight: root.compactLayout ? 104 : 156
                     padding: 10
                     color: activeFocus ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
-                    placeholderText: Ai.getModel() ? Translation.tr("Ask %1 anything...").arg(Ai.getModel().name) : Translation.tr("Select a model to start chatting")
+                    placeholderText: Ai.currentModelReady
+                        ? Translation.tr("Ask %1 anything...").arg(Ai.getModel()?.name ?? Translation.tr("the assistant"))
+                        : Translation.tr("Connect the selected provider to start chatting")
 
                     background: null
 
@@ -658,12 +743,14 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                                 key: "name"
                             });
                             root.suggestionList = modelResults.map(model => {
+                                const resolvedModel = Ai.models[model.target]
+                                if (!resolvedModel) return null
                                 return {
                                     name: `${messageInputField.text.trim().split(" ").length == 1 ? (root.commandPrefix + "model ") : ""}${model.target}`,
-                                    displayName: `${Ai.models[model.target].name}`,
-                                    description: `${Ai.models[model.target].description}`
+                                    displayName: resolvedModel.name ?? model.target,
+                                    description: resolvedModel.description ?? ""
                                 };
-                            });
+                            }).filter(model => model !== null)
                         } else if (messageInputField.text.startsWith(`${root.commandPrefix}prompt`)) {
                             root.suggestionQuery = messageInputField.text.split(" ")[1] ?? "";
                             const promptFileResults = Fuzzy.go(root.suggestionQuery, Ai.promptFiles.map(file => {
@@ -771,11 +858,9 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                                 messageInputField.insert(messageInputField.cursorPosition, "\n");
                                 event.accepted = true;
                             } else {
-                                // Accept text
-                                const inputText = messageInputField.text;
-                                messageInputField.clear();
-                                root.handleInput(inputText);
-                                event.accepted = true;
+                                const inputText = messageInputField.text
+                                if (root.handleInput(inputText)) messageInputField.clear()
+                                event.accepted = true
                             }
                         } else if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) {
                             // Intercept Ctrl+V to handle image/file pasting
@@ -840,7 +925,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     StyledToolTip {
                         text: root.dictating
                             ? (VoiceSearch.transcribing ? Translation.tr("Transcribing…") : Translation.tr("Stop recording"))
-                            : Translation.tr("Voice input (needs a Gemini API key)")
+                            : Translation.tr("Voice input")
                     }
                 }
 
@@ -851,7 +936,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     implicitWidth: 40
                     implicitHeight: 40
                     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.rounding.small
-                    enabled: Ai.busy || messageInputField.text.length > 0
+                    enabled: Ai.busy || (messageInputField.text.length > 0 && Ai.currentModelReady)
                     toggled: enabled
                     // Active send = accent, not the default dark chrome plate.
                     colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.accent
@@ -870,9 +955,8 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                                 Ai.stopRequest();
                                 return;
                             }
-                            const inputText = messageInputField.text;
-                            root.handleInput(inputText);
-                            messageInputField.clear();
+                            const inputText = messageInputField.text
+                            if (root.handleInput(inputText)) messageInputField.clear()
                         }
                     }
 
@@ -899,26 +983,22 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 5
-                anchors.leftMargin: 10
+                anchors.leftMargin: root.compactLayout ? 5 : 10
                 anchors.rightMargin: 5
                 spacing: 4
 
                 property var commandsShown: [
-                    {
-                        name: "",
-                        sendDirectly: false,
-                        dontAddSpace: true
-                    },
-                    {
-                        name: "clear",
-                        sendDirectly: true
-                    },
+                    { name: "", sendDirectly: false, dontAddSpace: true },
+                    { name: "clear", sendDirectly: true },
                 ]
 
                 ApiInputBoxIndicator {
                     icon: "api"
                     readonly property var _model: Ai.getModel()
                     text: _model?.name ?? Translation.tr("No model")
+                    showText: !root.compactLayout
+                    showDisclosure: !root.compactLayout
+                    maximumTextWidth: root.wideLayout ? 180 : 120
                     tooltipText: _model?.name ?? Translation.tr("No model — click to select")
                     clickAction: () => {
                         messageInputField.text = root.commandPrefix + "model "
@@ -930,6 +1010,9 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 ApiInputBoxIndicator {
                     icon: "service_toolbox"
                     text: Ai.currentTool.charAt(0).toUpperCase() + Ai.currentTool.slice(1)
+                    showText: !root.compactLayout
+                    showDisclosure: !root.compactLayout
+                    maximumTextWidth: 84
                     tooltipText: Ai.currentTool
                     clickAction: () => {
                         messageInputField.text = root.commandPrefix + "tool "

@@ -2162,6 +2162,12 @@
         "preferredProfile": ""
     },
     "voiceSearch": {
-        "duration": 5
+        "duration": 5,
+        "provider": "auto",
+        "language": "auto",
+        "localModelPath": "",
+        "groqModel": "whisper-large-v3-turbo",
+        "geminiModel": "gemini-2.5-flash",
+        "openaiModel": "gpt-4o-mini-transcribe"
     }
 }

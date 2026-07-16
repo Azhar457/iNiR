@@ -11,9 +11,11 @@ ApiStrategy {
     property bool isThinking: false
 
     function buildEndpoint(model: AiModel): string {
-        const result = model.endpoint + `?key=\$\{${root.apiKeyEnvVarName}\}`
-        // console.log("[AI] Endpoint: " + result);
-        return result;
+        if ((model.auth_scheme ?? "strategy") === "bearer"
+                || (model.auth_scheme ?? "strategy") === "gemini-header")
+            return model.endpoint
+        const separator = model.endpoint.includes("?") ? "&" : "?"
+        return model.endpoint + separator + `key=\$\{${root.apiKeyEnvVarName}\}`
     }
 
     function buildRequestData(model: AiModel, messages, systemPrompt: string, temperature: real, tools: list<var>, filePath: string) {

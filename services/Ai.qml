@@ -11,10 +11,11 @@ import qs.services.ai
 import qs.services.deferred
 
 /**
- * Basic service to handle LLM chats. Supports Google's and OpenAI's API formats.
- * Supports Gemini and OpenAI models.
- * Limitations:
- * - For now functions only work with Gemini API format
+ * Multi-provider LLM chat orchestration.
+ *
+ * Conversation state and API strategies remain here. Provider health, live
+ * model discovery and normalized capability metadata live in
+ * AiProviderCatalog so the UI does not depend on hardcoded model IDs.
  */
 Singleton {
     id: root
@@ -54,12 +55,65 @@ Singleton {
                 currentModelRequiresKey: !!model?.requires_key,
                 apiKeysLoaded: !!KeyringStorage.loaded,
                 currentModelHasApiKey: !!root.currentModelHasApiKey,
+                currentModelReady: !!root.currentModelReady,
                 modelCount: (root.modelList ?? []).length,
+                runnableModelCount: (root.runnableModelList ?? []).length,
+                lockedModelCount: (root.lockedModelList ?? []).length,
                 modelList: root.modelList ?? [],
                 currentTool: root.currentTool ?? "",
+                availableTools: [...(root.availableTools ?? [])],
+                safeActionCount: root._aiSafeActions("").length,
                 temperature: root.temperature,
+                catalog: {
+                    refreshing: AiProviderCatalog.refreshing,
+                    modelCount: AiProviderCatalog.availableModelCount,
+                    freeModelCount: AiProviderCatalog.freeModelCount,
+                    localModelCount: AiProviderCatalog.localModelCount,
+                    healthyProviderCount: AiProviderCatalog.healthyProviderCount,
+                    lastRefreshEpoch: AiProviderCatalog.lastRefreshEpoch,
+                },
                 lastInterfaceMessage: root._lastInterfaceMessage ?? "",
             })
+        }
+
+        function refreshCatalog(): void {
+            root.ensureInitialized()
+            AiProviderCatalog.refreshAll()
+        }
+
+        function catalog(query: string): string {
+            root.ensureInitialized()
+            const normalizedQuery = String(query ?? "").trim().toLowerCase()
+            const matches = (AiProviderCatalog.models ?? []).filter(model => {
+                if (!normalizedQuery) return true
+                return `${model.providerId} ${model.remoteId} ${model.displayName}`
+                    .toLowerCase().includes(normalizedQuery)
+            }).slice(0, 100)
+            return JSON.stringify(matches.map(model => ({
+                providerId: model.providerId,
+                remoteId: model.remoteId,
+                displayName: model.displayName,
+                local: !!model.local,
+                free: !!model.free,
+                inputModalities: model.inputModalities ?? [],
+                capabilities: model.capabilities ?? ({}),
+                contextTokens: model.contextTokens ?? 0,
+                expiresAt: model.expiresAt ?? "",
+                endpoint: model.endpoint ?? "",
+                apiFormat: model.apiFormat ?? "openai",
+                authScheme: model.authScheme ?? "strategy",
+            })))
+        }
+
+        function providers(): string {
+            root.ensureInitialized()
+            return JSON.stringify(AiProviderCatalog.providers.map(provider => ({
+                id: provider.id,
+                name: provider.name,
+                local: !!provider.local,
+                free: !!provider.free,
+                state: AiProviderCatalog.stateFor(provider.id),
+            })))
         }
 
         function run(inputText: string): void {
@@ -169,13 +223,36 @@ Singleton {
     property bool _pendingRequest: false
     readonly property var apiKeys: KeyringStorage.keyringData?.apiKeys ?? {}
     readonly property var apiKeysLoaded: KeyringStorage.loaded
-    readonly property bool currentModelHasApiKey: {
-        const model = models[currentModelId];
-        if (!model || !model.requires_key) return true;
-        if (!apiKeysLoaded) return false;
-        const key = apiKeys[model.key_id];
-        return (key?.length > 0);
+
+    function hasApiKeyForModel(model): bool {
+        if (!model || !model.requires_key) return true
+        if (!root.apiKeysLoaded) return false
+        return (root.apiKeys[model.key_id]?.length ?? 0) > 0
     }
+
+    function publicCredentialForModel(model): string {
+        // OpenCode itself uses the literal public credential for Zen's free
+        // catalog when no private account key is configured.
+        if ((model?.provider_id ?? "") === "opencode-zen" && model?.free === true)
+            return "public"
+        return ""
+    }
+
+    function credentialForModel(model): string {
+        if (!model?.requires_key) return ""
+        if (!root.apiKeysLoaded) return ""
+        const stored = root.apiKeys[model.key_id] ?? ""
+        return stored.length > 0 ? stored : root.publicCredentialForModel(model)
+    }
+
+    function modelCanRun(model): bool {
+        if (!model) return false
+        if ((Config.options?.policies?.ai ?? 0) === 2 && !model.local) return false
+        return !model.requires_key || root.credentialForModel(model).length > 0
+    }
+
+    readonly property bool currentModelHasApiKey: root.hasApiKeyForModel(models[currentModelId])
+    readonly property bool currentModelReady: root.modelCanRun(models[currentModelId])
     property var postResponseHook
     property real temperature: Persistent.states?.ai?.temperature ?? 0.5
     property QtObject tokenCount: QtObject {
@@ -227,6 +304,16 @@ Singleton {
                     "description": "Get the desktop shell config file contents",
                 },
                 {
+                    "name": "get_shell_actions",
+                    "description": "Search iNiR's typed action registry before requesting a shell action.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": { "type": "string", "description": "Action search query" }
+                        }
+                    }
+                },
+                {
                     "name": "set_shell_config",
                     "description": "Set a field in the desktop graphical shell config file. Must only be used after `get_shell_config`.",
                     "parameters": {
@@ -242,6 +329,24 @@ Singleton {
                             }
                         },
                         "required": ["key", "value"]
+                    }
+                },
+                {
+                    "name": "run_shell_action",
+                    "description": "Run a named action from iNiR's safe action registry after user approval.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "action_id": {
+                                "type": "string",
+                                "description": "Stable action id from get_shell_actions"
+                            },
+                            "args": {
+                                "type": "string",
+                                "description": "Optional action arguments"
+                            }
+                        },
+                        "required": ["action_id"]
                     }
                 },
                 {
@@ -271,7 +376,38 @@ Singleton {
                     "function": {
                         "name": "get_shell_config",
                         "description": "Get the desktop shell config file contents",
-                        "parameters": {}
+                        "parameters": {
+                            "type": "object",
+                            "properties": {}
+                        }
+                    },
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_shell_actions",
+                        "description": "Search iNiR's typed action registry before requesting a shell action.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": { "type": "string", "description": "Action search query" }
+                            }
+                        }
+                    },
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "run_shell_action",
+                        "description": "Run a named action from iNiR's safe action registry after user approval.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "action_id": { "type": "string", "description": "Stable action id" },
+                                "args": { "type": "string", "description": "Optional action arguments" }
+                            },
+                            "required": ["action_id"]
+                        }
                     },
                 },
                 {
@@ -323,7 +459,38 @@ Singleton {
                     "function": {
                         "name": "get_shell_config",
                         "description": "Get the desktop shell config file contents",
-                        "parameters": {}
+                        "parameters": {
+                            "type": "object",
+                            "properties": {}
+                        }
+                    },
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_shell_actions",
+                        "description": "Search iNiR's typed action registry before requesting a shell action.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": { "type": "string", "description": "Action search query" }
+                            }
+                        }
+                    },
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "run_shell_action",
+                        "description": "Run a named action from iNiR's safe action registry after user approval.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "action_id": { "type": "string", "description": "Stable action id" },
+                                "args": { "type": "string", "description": "Optional action arguments" }
+                            },
+                            "required": ["action_id"]
+                        }
                     },
                 },
                 {
@@ -379,6 +546,28 @@ Singleton {
                     }
                 },
                 {
+                    "name": "get_shell_actions",
+                    "description": "Search iNiR's typed action registry before requesting a shell action.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "query": { "type": "string", "description": "Action search query" }
+                        }
+                    }
+                },
+                {
+                    "name": "run_shell_action",
+                    "description": "Run a named action from iNiR's safe action registry after user approval.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "action_id": { "type": "string", "description": "Stable action id" },
+                            "args": { "type": "string", "description": "Optional action arguments" }
+                        },
+                        "required": ["action_id"]
+                    }
+                },
+                {
                     "name": "set_shell_config",
                     "description": "Set a field in the desktop graphical shell config file. Must only be used after `get_shell_config`.",
                     "input_schema": {
@@ -421,7 +610,38 @@ Singleton {
                     "function": {
                         "name": "get_shell_config",
                         "description": "Get the desktop shell config file contents",
-                        "parameters": {}
+                        "parameters": {
+                            "type": "object",
+                            "properties": {}
+                        }
+                    },
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_shell_actions",
+                        "description": "Search iNiR's typed action registry before requesting a shell action.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": { "type": "string", "description": "Action search query" }
+                            }
+                        }
+                    },
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "run_shell_action",
+                        "description": "Run a named action from iNiR's safe action registry after user approval.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "action_id": { "type": "string", "description": "Stable action id" },
+                                "args": { "type": "string", "description": "Optional action arguments" }
+                            },
+                            "required": ["action_id"]
+                        }
                     },
                 },
                 {
@@ -467,17 +687,47 @@ Singleton {
             "none": [],
         }
     }
+    function _toolDeclarationName(apiFormat: string, declaration): string {
+        if (apiFormat === "gemini") return declaration?.name ?? ""
+        if (apiFormat === "anthropic") return declaration?.name ?? ""
+        return declaration?.function?.name ?? ""
+    }
+
+    function toolsForRequest(apiFormat: string, mode: string): var {
+        const map = root.tools[apiFormat]
+        if (!map) return []
+        if (mode === "advanced") return map.functions ?? []
+        if (mode !== "functions") return map[mode] ?? []
+
+        // Normal shell tools never expose arbitrary bash. The advanced mode is
+        // explicit and every raw command still requires user approval.
+        if (apiFormat === "gemini") {
+            const declarations = map.functions?.[0]?.functionDeclarations ?? []
+            return [{
+                functionDeclarations: declarations.filter(tool => tool.name !== "run_shell_command")
+            }]
+        }
+        return (map.functions ?? []).filter(tool =>
+            root._toolDeclarationName(apiFormat, tool) !== "run_shell_command")
+    }
+
     property list<var> availableTools: {
         const fmt = models[currentModelId]?.api_format
         const map = fmt ? root.tools[fmt] : null
         if (!map) return []
-        // Don't offer modes that are empty for this API format (e.g. "search"
-        // only exists on Gemini) — offering them just sends tools: []
-        return Object.keys(map).filter(tool => tool === "none" || map[tool].length > 0)
+        const modes = []
+        if ((map.functions?.length ?? 0) > 0) {
+            modes.push("functions")
+            modes.push("advanced")
+        }
+        if ((map.search?.length ?? 0) > 0) modes.push("search")
+        modes.push("none")
+        return modes
     }
     property var toolDescriptions: {
-        "functions": Translation.tr("Commands, edit configs, search.\nTakes an extra turn to switch to search mode if that's needed"),
-        "search": Translation.tr("Gives the model search capabilities (immediately)"),
+        "functions": Translation.tr("Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden."),
+        "advanced": Translation.tr("Also allow raw shell commands. Every command requires explicit approval."),
+        "search": Translation.tr("Use the provider's native web search when available."),
         "none": Translation.tr("Disable tools")
     }
 
@@ -496,9 +746,26 @@ Singleton {
     // Models loaded dynamically from config.json ai.extraModels
     property var models: (Config.options?.policies?.ai ?? 0) === 2 ? {} : ({})
     property var modelList: Object.keys(root.models)
-    property var currentModelId: {
-        const saved = Persistent.states?.ai?.model
-        return (saved && root.models[saved]) ? saved : modelList[0]
+    readonly property var runnableModelList: root.modelList.filter(id => root.modelCanRun(root.models[id]))
+    readonly property var lockedModelList: root.modelList.filter(id => !root.modelCanRun(root.models[id]))
+    property string currentModelId: ""
+
+    function _resolvedCurrentModelId(): string {
+        const saved = Persistent.states?.ai?.model ?? ""
+        if (saved && root.models[saved] && root.modelCanRun(root.models[saved])) return saved
+        if (root.currentModelId && root.models[root.currentModelId]
+                && root.modelCanRun(root.models[root.currentModelId])) return root.currentModelId
+        const recommended = root.recommendedModelIds("auto", 1)
+        if (recommended.length > 0) return recommended[0]
+        if (root.runnableModelList.length > 0) return root.runnableModelList[0]
+        if (saved && root.models[saved]) return saved
+        if (root.currentModelId && root.models[root.currentModelId]) return root.currentModelId
+        return root.modelList[0] ?? ""
+    }
+
+    function _syncCurrentModel(): void {
+        const resolved = root._resolvedCurrentModelId()
+        if (resolved !== root.currentModelId) root.currentModelId = resolved
     }
 
     property var apiStrategies: {
@@ -511,15 +778,31 @@ Singleton {
     property ApiStrategy currentApiStrategy: apiStrategies[models[currentModelId]?.api_format || "openai"]
 
     property var _loadedExtraModelIds: []
+    property var _loadedCatalogModelIds: []
     property string _extraModelsSignature: ""
+
+    readonly property var profileDefinitions: [
+        { id: "auto", name: Translation.tr("Auto"), icon: "auto_awesome", description: Translation.tr("Choose a compatible model for each request") },
+        { id: "fast", name: Translation.tr("Fast"), icon: "bolt", description: Translation.tr("Prefer low-latency models") },
+        { id: "quality", name: Translation.tr("Quality"), icon: "workspace_premium", description: Translation.tr("Prefer stronger reasoning and larger context") },
+        { id: "free", name: Translation.tr("Free"), icon: "money_off", description: Translation.tr("Use models currently marked free") },
+        { id: "private", name: Translation.tr("Private"), icon: "shield_lock", description: Translation.tr("Use local models only") },
+        { id: "coding", name: Translation.tr("Coding"), icon: "code", description: Translation.tr("Prefer code-focused and tool-capable models") },
+        { id: "vision", name: Translation.tr("Vision"), icon: "image", description: Translation.tr("Require image input") },
+        { id: "long-context", name: Translation.tr("Long context"), icon: "article", description: Translation.tr("Prefer the largest available context window") },
+    ]
 
     function _syncExtraModels() {
         if (!Config.ready) return
         const policy = Config.options?.policies?.ai ?? 0
         const extraModels = Config.options?.ai?.extraModels ?? []
+        const liveProviders = [...new Set((AiProviderCatalog.models ?? [])
+            .map(model => model.providerId).filter(id => id && id.length > 0))].sort()
         // onConfigChanged fires on every global save. Rebuilding on each one
-        // recreated every AiModel; skip when nothing this function reads moved.
+        // recreated every AiModel; catalog provider membership matters because
+        // a guided connection entry becomes fallback-only once live models load.
         const signature = policy + "|" + JSON.stringify(extraModels)
+            + "|" + JSON.stringify(liveProviders)
         if (signature === root._extraModelsSignature) return
         root._extraModelsSignature = signature
 
@@ -532,17 +815,145 @@ Singleton {
         root._loadedExtraModelIds = []
         extraModels.forEach(model => {
             if (policy === 2 && !(model?.endpoint ?? "").includes("localhost")) return
-            const safeModelName = root.safeModelName(model["model"])
-            root.addModel(safeModelName, model)
+            const providerId = model?.provider_id ?? ""
+            if (providerId.length > 0 && liveProviders.includes(providerId)) return
+
+            // Guided provider rows are connection records, not authoritative
+            // model definitions. Use the current preset as a safe offline
+            // fallback so old hardcoded IDs/endpoints cannot leak back in.
+            const preset = providerId.length > 0 ? AiProviderPresets.byId(providerId) : null
+            const resolvedModel = preset
+                ? Object.assign({}, model, AiProviderPresets.toModelEntry(preset), {
+                    key_id: model?.key_id ?? preset.keyId ?? "",
+                })
+                : model
+            const safeModelName = root.safeModelName(resolvedModel["model"])
+            root.addModel(safeModelName, resolvedModel)
             root._loadedExtraModelIds.push(safeModelName)
         })
         root.modelList = Object.keys(root.models)
+        root._syncCurrentModel()
+    }
+
+    function _catalogModelId(entry) {
+        const remoteId = root.safeModelName(entry?.remoteId ?? "")
+        if ((entry?.providerId ?? "") === "ollama") return remoteId
+        if ((entry?.providerId ?? "") === "openrouter") return "openrouter-" + remoteId
+        return root.safeModelName((entry?.providerId ?? "catalog") + "-" + remoteId)
+    }
+
+    function _syncCatalogModels() {
+        const policy = Config.options?.policies?.ai ?? 0
+        root._loadedCatalogModelIds.forEach(id => {
+            const old = root.models[id]
+            if (!old) return
+            delete root.models[id]
+            old.destroy()
+        })
+        root._loadedCatalogModelIds = []
+
+        const providerCounts = ({})
+        for (const entry of (AiProviderCatalog.models ?? [])) {
+            if (policy === 2 && !entry.local) continue
+            const provider = AiProviderCatalog.providerById(entry.providerId)
+            const state = AiProviderCatalog.stateFor(entry.providerId)
+            // Public catalogs stay visible even before connection. Runnable
+            // state is evaluated separately from catalog visibility.
+            const id = root._catalogModelId(entry)
+            if (!id || (root.models[id] && !root._loadedCatalogModelIds.includes(id))) continue
+            providerCounts[entry.providerId] = (providerCounts[entry.providerId] ?? 0) + 1
+            root.addModel(id, {
+                name: entry.displayName ?? entry.remoteId,
+                icon: provider?.icon ?? root.guessModelLogo(entry.remoteId ?? ""),
+                description: entry.description?.length > 0
+                    ? entry.description
+                    : Translation.tr("Live model from %1").arg(provider?.name ?? entry.providerId),
+                homepage: entry.providerId === "openrouter"
+                    ? `https://openrouter.ai/${entry.remoteId}`
+                    : (provider?.keyGetLink ?? ""),
+                endpoint: entry.endpoint,
+                model: entry.remoteId,
+                requires_key: !!entry.requiresKey,
+                key_id: entry.keyId ?? provider?.keyId ?? "",
+                key_get_link: provider?.keyGetLink ?? "",
+                key_get_description: provider?.description ?? "",
+                api_format: entry.apiFormat ?? provider?.api_format ?? "openai",
+                auth_scheme: entry.authScheme ?? provider?.authScheme ?? "strategy",
+                provider_id: entry.providerId ?? "catalog",
+                local: !!entry.local,
+                free: !!entry.free,
+                input_modalities: entry.inputModalities ?? ["text"],
+                output_modalities: entry.outputModalities ?? ["text"],
+                capabilities: entry.capabilities ?? ({}),
+                context_tokens: entry.contextTokens ?? 0,
+                max_output_tokens: entry.maxOutputTokens ?? 0,
+                pricing: entry.pricing ?? ({}),
+                expires_at: entry.expiresAt ?? "",
+                catalog_status: state.status ?? "available",
+                catalog_source: entry.source ?? "live",
+                catalog_public: !!provider?.publicCatalog,
+                refreshed_at: state.fetchedAt ?? 0,
+            })
+            root._loadedCatalogModelIds.push(id)
+        }
+        root.modelList = Object.keys(root.models)
+        // Prefer the persisted model whenever it becomes runnable, but never
+        // rewrite persistence merely because catalog discovery is still racing.
+        root._syncCurrentModel()
+    }
+
+    function _profileAllows(model, profileId) {
+        if (!model) return false
+        const caps = model.capabilities ?? ({})
+        if (profileId === "free" && !model.free) return false
+        if (profileId === "private" && !model.local) return false
+        if (profileId === "vision" && caps.vision !== "supported") return false
+        if (profileId === "coding") {
+            const label = `${model.model} ${model.name}`.toLowerCase()
+            if (!(caps.toolCalling === "supported" || /code|coder|devstral|codestral/.test(label))) return false
+        }
+        return true
+    }
+
+    function _profileScore(model, profileId) {
+        const caps = model.capabilities ?? ({})
+        const label = `${model.model} ${model.name}`.toLowerCase()
+        let score = 0
+        if (model.local) score += profileId === "private" ? 1000 : 20
+        if (model.free) score += profileId === "free" ? 1000 : 15
+        if (caps.toolCalling === "supported") score += profileId === "coding" ? 120 : 10
+        if (caps.reasoning === "supported") score += profileId === "quality" ? 100 : 8
+        if (caps.vision === "supported") score += profileId === "vision" ? 300 : 4
+        if (/flash|mini|small|nano|fast/.test(label)) score += profileId === "fast" ? 120 : 3
+        if (/code|coder|devstral|codestral/.test(label)) score += profileId === "coding" ? 160 : 0
+        const context = model.context_tokens ?? 0
+        if (profileId === "long-context") score += Math.min(500, context / 1000)
+        if (profileId === "quality") score += Math.min(200, context / 4000)
+        if (model.catalog_status === "ready" || model.catalog_status === "available") score += 10
+        return score
+    }
+
+    function recommendedModelIds(profileId = "auto", limit = 8) {
+        return root.runnableModelList
+            .map(id => ({ id, model: root.models[id] }))
+            .filter(item => root._profileAllows(item.model, profileId))
+            .sort((a, b) => root._profileScore(b.model, profileId) - root._profileScore(a.model, profileId))
+            .slice(0, Math.max(1, limit))
+            .map(item => item.id)
     }
 
     Connections {
         target: Config
         function onReadyChanged() { root._syncExtraModels() }
         function onConfigChanged() { root._syncExtraModels() }
+    }
+
+    Connections {
+        target: AiProviderCatalog
+        function onCatalogUpdated() {
+            root._syncExtraModels()
+            root._syncCatalogModels()
+        }
     }
 
     property string requestScriptFilePath: "/tmp/quickshell/ai/request.sh"
@@ -553,12 +964,9 @@ Singleton {
             return;
         root._initialized = true;
 
-        const policy = (Config.options?.policies?.ai ?? 0)
-
-        getOllamaModels.running = true
-        if (policy !== 2) {
-            getOpenRouterModels.running = true
-        }
+        root._syncExtraModels()
+        AiProviderCatalog.ensureInitialized()
+        root._syncCatalogModels()
         getDefaultPrompts.running = true
         getUserPrompts.running = true
         getSavedChats.running = true
@@ -605,104 +1013,6 @@ Singleton {
 
     function addModel(modelName, data) {
         root.models[modelName] = aiModelComponent.createObject(this, data);
-    }
-
-    Process {
-        id: getOllamaModels
-        running: false
-        command: ["/usr/bin/bash", `${Directories.scriptsPath}/ai/show-installed-ollama-models.sh`]
-        property string _stderr: ""
-        stdout: SplitParser {
-            onRead: data => {
-                try {
-                    if (data.length === 0) return;
-                    const dataJson = JSON.parse(data);
-
-                    const policy = (Config.options?.policies?.ai ?? 0)
-                    if (policy === 2 && (!dataJson || dataJson.length === 0)) {
-                        root.addMessage(
-                            Translation.tr("No local models available\n\nInstall Ollama or change `policies.ai`"),
-                            root.interfaceRole
-                        )
-                        return
-                    }
-
-                    root.modelList = [...root.modelList, ...dataJson];
-                    dataJson.forEach(model => {
-                        const safeModelName = root.safeModelName(model);
-                        root.addModel(safeModelName, {
-                            "name": guessModelName(model),
-                            "icon": guessModelLogo(model),
-                            "description": Translation.tr("Local Ollama model | %1").arg(model),
-                            "homepage": `https://ollama.com/library/${model}`,
-                            "endpoint": "http://localhost:11434/v1/chat/completions",
-                            "model": model,
-                            "requires_key": false,
-                        })
-                    });
-
-                    root.modelList = Object.keys(root.models);
-
-                } catch (e) {
-                    _log("Could not fetch Ollama models:", e);
-                }
-            }
-        }
-        stderr: StdioCollector {
-            onStreamFinished: getOllamaModels._stderr = text
-        }
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0) return
-            const policy = (Config.options?.policies?.ai ?? 0)
-            if (policy === 2) {
-                root.addMessage(
-                    Translation.tr("No local models available\n\nInstall Ollama or change `policies.ai`"),
-                    root.interfaceRole
-                )
-            }
-            if (getOllamaModels._stderr && getOllamaModels._stderr.length > 0) {
-                _log("[Ai] Ollama model loader stderr:", getOllamaModels._stderr.substring(0, 400))
-            }
-        }
-    }
-
-    Process {
-        id: getOpenRouterModels
-        running: false
-        command: ["/usr/bin/curl", "-s", "https://openrouter.ai/api/v1/models"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    if (text.length === 0) return;
-                    const response = JSON.parse(text);
-                    const freeModels = (response.data || []).filter(m => 
-                        m.pricing?.prompt === "0" && m.pricing?.completion === "0"
-                    );
-                    
-                    freeModels.forEach(model => {
-                        const safeModelName = "openrouter-" + root.safeModelName(model.id);
-                        const provider = model.id.split("/")[0] || "Unknown";
-                        root.addModel(safeModelName, {
-                            "name": model.name || model.id,
-                            "icon": root.guessModelLogo(model.id),
-                            "description": Translation.tr("Free via OpenRouter | %1").arg(provider),
-                            "homepage": `https://openrouter.ai/${model.id}`,
-                            "endpoint": "https://openrouter.ai/api/v1/chat/completions",
-                            "model": model.id,
-                            "requires_key": true,
-                            "key_id": "openrouter",
-                            "key_get_link": "https://openrouter.ai/settings/keys",
-                            "key_get_description": Translation.tr("**Pricing**: free tier model.\n\n**Instructions**: Log into OpenRouter, go to Keys, click Create API Key"),
-                        });
-                    });
-                    
-                    root.modelList = Object.keys(root.models);
-                    _log("[Ai] Loaded", freeModels.length, "free OpenRouter models");
-                } catch (e) {
-                    _log("[Ai] Could not fetch OpenRouter models:", e);
-                }
-            }
-        }
     }
 
     Process {
@@ -803,44 +1113,46 @@ Singleton {
     }
 
     function addApiKeyAdvice(model) {
+        const provider = AiProviderCatalog.providerById(model?.provider_id ?? "")
         root.addMessage(
-            Translation.tr('To set an API key, pass it with the %4 command\n\nTo view the key, pass "get" with the command<br/>\n\n### For %1:\n\n**Link**: %2\n\n%3')
-                .arg(model.name).arg(model.key_get_link).arg(model.key_get_description ?? Translation.tr("<i>No further instruction provided</i>")).arg("/key"), 
-            Ai.interfaceRole
-        );
+            Translation.tr("%1 is available in the live catalog, but %2 is not connected. Open Settings → AI to add or update its API key.\n\n%3")
+                .arg(model?.name ?? Translation.tr("This model"))
+                .arg(provider?.name ?? model?.provider_id ?? Translation.tr("the provider"))
+                .arg(model?.key_get_link ?? ""),
+            root.interfaceRole
+        )
     }
 
     function getModel() {
         return models[currentModelId];
     }
 
-    function setModel(modelId, feedback = true, setPersistentState = true) {
+    function setModel(modelId, feedback = true, setPersistentState = true): bool {
         if (!modelId) modelId = ""
         modelId = modelId.toLowerCase()
-        if (modelList.indexOf(modelId) !== -1) {
-            const model = models[modelId]
-            // See if policy prevents online models
-            if ((Config.options?.policies?.ai ?? 0) === 2 && !model.endpoint.includes("localhost")) {
-                root.addMessage(
-                    Translation.tr("Online models disallowed\n\nControlled by `policies.ai` config option"),
-                    root.interfaceRole
-                )
-                return
-            }
-            root.currentModelId = modelId;
-            if (setPersistentState && Persistent.states?.ai) {
-                Persistent.states.ai.model = modelId;
-            }
-            if (feedback) root.addMessage(Translation.tr("Model set to %1").arg(model.name), root.interfaceRole);
-            if (model.requires_key) {
-                // If key not there show advice
-                if (root.apiKeysLoaded && (!root.apiKeys[model.key_id] || root.apiKeys[model.key_id].length === 0)) {
-                    root.addApiKeyAdvice(model)
-                }
-            }
-        } else {
-            if (feedback) root.addMessage(Translation.tr("Invalid model. Supported: \n```\n") + modelList.join("\n```\n```\n"), Ai.interfaceRole) + "\n```"
+        if (root.modelList.indexOf(modelId) === -1) {
+            if (feedback) root.addMessage(Translation.tr("Model not found in the current catalog."), root.interfaceRole)
+            return false
         }
+
+        const model = root.models[modelId]
+        if ((Config.options?.policies?.ai ?? 0) === 2 && !model.local) {
+            if (feedback) root.addMessage(
+                Translation.tr("Online models are disabled by the current AI privacy policy."),
+                root.interfaceRole
+            )
+            return false
+        }
+        if (!root.modelCanRun(model)) {
+            if (feedback) root.addApiKeyAdvice(model)
+            return false
+        }
+
+        root.currentModelId = modelId
+        if (setPersistentState && Persistent.states?.ai)
+            Persistent.states.ai.model = modelId
+        if (feedback) root.addMessage(Translation.tr("Model set to %1").arg(model.name), root.interfaceRole)
+        return true
     }
 
     function setTool(tool) {
@@ -853,9 +1165,10 @@ Singleton {
             return false;
         }
         const fmt = model.api_format
-        if (!root.tools[fmt] || !(tool in root.tools[fmt])) {
-            root.addMessage(Translation.tr("Invalid tool. Supported tools:\n- %1").arg(root.availableTools ? root.availableTools.join("\n- ") : ""), root.interfaceRole);
-            return false;
+        if (!root.tools[fmt] || !root.availableTools.includes(tool)) {
+            root.addMessage(Translation.tr("Invalid tool. Supported tools:\n- %1")
+                .arg(root.availableTools ? root.availableTools.join("\n- ") : ""), root.interfaceRole)
+            return false
         }
         Config.setNestedValue(["ai", "tool"], tool)
         return true
@@ -901,8 +1214,10 @@ Singleton {
             root.addApiKeyAdvice(model)
             return;
         }
-        KeyringStorage.setNestedField(["apiKeys", model.key_id], key.trim());
-        root.addMessage(Translation.tr("API key set for %1").arg(model.name), Ai.interfaceRole);
+        KeyringStorage.setNestedField(["apiKeys", model.key_id], key.trim())
+        if ((model.provider_id ?? "").length > 0)
+            Qt.callLater(() => AiProviderCatalog.refreshProvider(model.provider_id))
+        root.addMessage(Translation.tr("API key stored for %1").arg(model.name), root.interfaceRole)
     }
 
     function printApiKey() {
@@ -915,14 +1230,29 @@ Singleton {
             return;
         }
         if (model.requires_key) {
-            const key = root.apiKeys[model.key_id];
-            if (key) {
-                root.addMessage(Translation.tr("API key:\n\n```txt\n%1\n```").arg(key), Ai.interfaceRole);
-            } else {
-                root.addMessage(Translation.tr("No API key set for %1").arg(model.name), Ai.interfaceRole);
-            }
+            const key = root.apiKeys[model.key_id]
+            root.addMessage(key
+                ? Translation.tr("An API key is stored for %1.").arg(model.name)
+                : Translation.tr("No API key is stored for %1.").arg(model.name), root.interfaceRole)
         } else {
             root.addMessage(Translation.tr("%1 does not require an API key").arg(model.name), Ai.interfaceRole);
+        }
+    }
+
+    function authorizationHeaderForModel(model, strategy): string {
+        if (!model?.requires_key) return ""
+        switch (model.auth_scheme ?? "strategy") {
+        case "none":
+        case "gemini-query":
+            return ""
+        case "bearer":
+            return `-H "Authorization: Bearer \$\{${root.apiKeyEnvVarName}\}"`
+        case "anthropic":
+            return `-H "x-api-key: \$\{${root.apiKeyEnvVarName}\}" -H "anthropic-version: 2023-06-01"`
+        case "gemini-header":
+            return `-H "x-goog-api-key: \$\{${root.apiKeyEnvVarName}\}"`
+        default:
+            return strategy.buildAuthorizationHeader(root.apiKeyEnvVarName)
         }
     }
 
@@ -950,6 +1280,7 @@ Singleton {
         property list<string> baseCommand: ["/usr/bin/bash"]
         property AiMessageData message
         property ApiStrategy currentStrategy
+        property int httpStatus: 0
 
         property bool _restartQueued: false
 
@@ -984,27 +1315,41 @@ Singleton {
                 return
             }
 
-            // Ensure API keys are loaded before making request
+            // Resolve the stored provider key first. Zen free models use the
+            // same public credential fallback as the official OpenCode client.
             if (model?.requires_key && !KeyringStorage.loaded) {
-                KeyringStorage.fetchKeyringData();
-                // Wait for keys to load, then retry
-                _pendingRequest = true;
-                return;
+                KeyringStorage.fetchKeyringData()
+                root._pendingRequest = true
+                return
             }
-            
-            requester.currentStrategy = root.currentApiStrategy;
-            requester.currentStrategy.reset(); // Reset strategy state
+            const apiKey = root.credentialForModel(model)
+            if (model?.requires_key && apiKey.length === 0) {
+                root.addApiKeyAdvice(model)
+                return
+            }
 
-            /* Put API key in environment variable */
-            if (model?.requires_key) {
-                requester.environment[`${root.apiKeyEnvVarName}`] = root.apiKeys ? (root.apiKeys[model.key_id] ?? "") : ""
+            requester.currentStrategy = root.currentApiStrategy
+            if (!requester.currentStrategy) {
+                root.addMessage(
+                    Translation.tr("The selected model uses an API protocol that iNiR does not support yet."),
+                    root.interfaceRole
+                )
+                return
             }
+            requester.currentStrategy.reset()
+            requester.httpStatus = 0
+
+            // Replace the environment object so a key from the previous model
+            // cannot survive a switch to a local or differently keyed provider.
+            requester.environment = model?.requires_key
+                ? ({ [root.apiKeyEnvVarName]: apiKey }) : ({})
 
             /* Build endpoint, request data */
             const endpoint = root.currentApiStrategy.buildEndpoint(model);
             const messageArray = root.messageIDs.map(id => root.messageByID[id]);
-            const filteredMessageArray = messageArray.filter(message => message.role !== Ai.interfaceRole);
-            const data = root.currentApiStrategy.buildRequestData(model, filteredMessageArray, root.systemPrompt, root.temperature, root.tools[model.api_format][root.currentTool], root.pendingFilePath);
+            const filteredMessageArray = messageArray.filter(message =>
+                message.role !== Ai.interfaceRole && !message.requestFailed)
+            const data = root.currentApiStrategy.buildRequestData(model, filteredMessageArray, root.systemPrompt, root.temperature, root.toolsForRequest(model.api_format, root.currentTool), root.pendingFilePath);
             // console.log("[Ai] Request data: ", JSON.stringify(data, null, 2));
 
             let requestHeaders = {
@@ -1038,9 +1383,7 @@ Singleton {
                unset and we'd send an empty `Authorization: Bearer `, which
                local/keyless endpoints (e.g. Ollama) reject with a missing-auth
                error. */
-            const authHeader = model?.requires_key
-                ? requester.currentStrategy.buildAuthorizationHeader(root.apiKeyEnvVarName)
-                : "";
+            const authHeader = root.authorizationHeaderForModel(model, requester.currentStrategy)
 
             /* Script shebang */
             const scriptShebang = "#!/usr/bin/env bash\n";
@@ -1058,11 +1401,13 @@ Singleton {
                kernel's per-argument exec limit (~128 KiB) on large payloads
                (e.g. get_shell_config output), killing the request silently. */
             let scriptRequestContent = ""
+            const curlStatusToken = String.fromCharCode(37) + "{http_code}"
             scriptRequestContent += `printf '%s' '${CF.StringUtils.shellSingleQuoteEscape(JSON.stringify(data))}'`
                 + ` | curl -sS --no-buffer "${endpoint}"`
                 + ` ${headerString}`
                 + (authHeader ? ` ${authHeader}` : "")
                 + ` --data @-`
+                + ` --write-out '\n__INIR_HTTP_STATUS__:${curlStatusToken}\n'`
                 + "\n"
             
             /* Send the request */
@@ -1078,7 +1423,11 @@ Singleton {
 
         stdout: SplitParser {
             onRead: data => {
-                if (data.length === 0) return;
+                if (data.length === 0) return
+                if (data.startsWith("__INIR_HTTP_STATUS__:")) {
+                    requester.httpStatus = Number(data.substring("__INIR_HTTP_STATUS__:".length).trim()) || 0
+                    return
+                }
                 if (requester.message.thinking) requester.message.thinking = false;
                 _log("[Ai] Raw response line: ", data.substring(0, 100));
 
@@ -1135,10 +1484,57 @@ Singleton {
                 requester.markDone();
             }
 
-            // Handle error responses
-            if (finishedMessage.content.includes("API key not valid")) {
-                root.addApiKeyAdvice(models[finishedMessage.model]);
+            // Normalize error responses
+            if (requester.httpStatus === 401 || requester.httpStatus === 403) {
+                const failedModel = root.models[finishedMessage.model]
+                const providerId = failedModel?.provider_id ?? ""
+                const providerName = AiProviderCatalog.providerById(providerId)?.name
+                    ?? providerId ?? Translation.tr("this provider")
+                const responseDetail = String(finishedMessage.rawContent ?? "").trim()
+                const summary = requester.httpStatus === 401
+                    ? Translation.tr("%1 returned HTTP 401 for this request. The credential, account/model access, or selected API route may be the cause; iNiR kept the stored key unchanged.").arg(providerName)
+                    : Translation.tr("%1 denied access to this request (HTTP 403). Check model/account permissions; iNiR kept the stored key unchanged.").arg(providerName)
+                const message = responseDetail.length > 0
+                    ? summary + "\n\n" + responseDetail.substring(0, 600)
+                    : summary
+                finishedMessage.content = message
+                finishedMessage.rawContent = message
+                finishedMessage.role = root.interfaceRole
+                finishedMessage.requestFailed = true
+                finishedMessage.thinking = false
+                finishedMessage.done = true
+            } else if (requester.httpStatus === 429) {
+                const failedModel = root.models[finishedMessage.model]
+                const providerName = AiProviderCatalog.providerById(failedModel?.provider_id ?? "")?.name
+                    ?? Translation.tr("The provider")
+                const message = Translation.tr("%1 is rate limited right now. Wait briefly or select another available model.")
+                    .arg(providerName)
+                finishedMessage.content = message
+                finishedMessage.rawContent = message
+                finishedMessage.thinking = false
+                finishedMessage.done = true
+            } else if (requester.httpStatus >= 400) {
+                const failedModel = root.models[finishedMessage.model]
+                const providerName = AiProviderCatalog.providerById(failedModel?.provider_id ?? "")?.name
+                    ?? Translation.tr("The provider")
+                const responseDetail = String(finishedMessage.rawContent ?? "").trim()
+                const summary = requester.httpStatus === 404
+                    ? Translation.tr("%1 no longer exposes this model or endpoint. Refresh the catalog and select another model.").arg(providerName)
+                    : requester.httpStatus >= 500
+                        ? Translation.tr("%1 is temporarily unavailable (HTTP %2).").arg(providerName).arg(requester.httpStatus)
+                        : Translation.tr("%1 rejected this request (HTTP %2). The response below identifies the rejected payload field or model capability.")
+                            .arg(providerName).arg(requester.httpStatus)
+                const message = responseDetail.length > 0
+                    ? summary + "\n\n" + responseDetail.substring(0, 1000)
+                    : summary
+                finishedMessage.content = message
+                finishedMessage.rawContent = message
+                finishedMessage.role = root.interfaceRole
+                finishedMessage.requestFailed = true
+                finishedMessage.thinking = false
+                finishedMessage.done = true
             }
+            if (requester.httpStatus >= 400) root.saveChat("lastSession")
         }
     }
 
@@ -1151,10 +1547,23 @@ Singleton {
         requester.signal(15);
     }
 
-    function sendUserMessage(message) {
-        if (message.length === 0) return;
-        root.addMessage(message, "user");
-        requester.makeRequest();
+    function sendUserMessage(message): bool {
+        if (message.length === 0) return false
+        const model = root.models[root.currentModelId]
+        if (!model) {
+            root.addMessage(
+                Translation.tr("Select an available model before sending a message."),
+                root.interfaceRole
+            )
+            return false
+        }
+        if (!root.modelCanRun(model)) {
+            root.addApiKeyAdvice(model)
+            return false
+        }
+        root.addMessage(message, "user")
+        requester.makeRequest()
+        return true
     }
 
     function attachFile(filePath: string) {
@@ -1197,24 +1606,62 @@ Singleton {
     }
 
     function rejectCommand(message: AiMessageData) {
-        if (!message.functionPending) return;
-        message.functionPending = false; // User decided, no more "thinking"
-        addFunctionOutputMessage(message.functionName, Translation.tr("Command rejected by user"), message.functionCall?.id ?? "")
+        if (!message.functionPending) return
+        message.functionPending = false
+        addFunctionOutputMessage(message.functionName,
+            Translation.tr("Action rejected by user"), message.functionCall?.id ?? "")
+    }
+
+    function _parseConfigToolValue(value): var {
+        if (typeof value !== "string") return value
+        const trimmed = value.trim()
+        if (trimmed.length === 0) return ""
+        try {
+            return JSON.parse(trimmed)
+        } catch (error) {
+            return value
+        }
     }
 
     function approveCommand(message: AiMessageData) {
-        if (!message.functionPending) return;
-        message.functionPending = false; // User decided, no more "thinking"
+        if (!message.functionPending) return
+        message.functionPending = false
 
-        const responseMessage = createFunctionOutputMessage(message.functionName, "", false, message.functionCall?.id ?? "");
-        const id = idForMessage(responseMessage);
-        root.messageIDs = [...root.messageIDs, id];
-        root.messageByID[id] = responseMessage;
+        if (message.functionName === "set_shell_config") {
+            const args = message.functionCall?.args ?? ({})
+            const value = root._parseConfigToolValue(args.value)
+            Config.setNestedValue(args.key, value)
+            addFunctionOutputMessage(message.functionName,
+                Translation.tr("Applied `%1` with value `%2`.")
+                    .arg(args.key).arg(JSON.stringify(value)),
+                message.functionCall?.id ?? "")
+            requester.makeRequest()
+            return
+        }
 
-        commandExecutionProc.message = responseMessage;
-        commandExecutionProc.baseMessageContent = responseMessage.content;
-        commandExecutionProc.shellCommand = message.functionCall.args.command;
-        commandExecutionProc.running = true; // Start the command execution
+        if (message.functionName === "run_shell_action") {
+            const args = message.functionCall?.args ?? ({})
+            const action = root._aiSafeActions("").find(item => item.id === args.action_id)
+            const success = action ? GlobalActions.runById(args.action_id, args.args ?? "") : false
+            addFunctionOutputMessage(message.functionName,
+                success
+                    ? Translation.tr("Shell action `%1` completed.").arg(args.action_id)
+                    : Translation.tr("Shell action `%1` is unavailable or not allowed.").arg(args.action_id),
+                message.functionCall?.id ?? "")
+            requester.makeRequest()
+            return
+        }
+
+        const responseMessage = createFunctionOutputMessage(
+            message.functionName, "", false, message.functionCall?.id ?? "")
+        const id = idForMessage(responseMessage)
+        root.messageIDs = [...root.messageIDs, id]
+        root.messageByID[id] = responseMessage
+
+        commandExecutionProc.message = responseMessage
+        commandExecutionProc.baseMessageContent = responseMessage.content
+        commandExecutionProc.shellCommand = message.functionCall.args.command
+        commandExecutionProc.running = true
     }
 
     Process {
@@ -1235,6 +1682,13 @@ Singleton {
         }
     }
 
+    function _aiSafeActions(query: string): var {
+        const allowedCategories = ["appearance", "media", "settings", "tools"]
+        const source = query && query.trim().length > 0
+            ? GlobalActions.fuzzyQuery(query) : GlobalActions.allActions
+        return source.filter(action => allowedCategories.includes(action.category)).slice(0, 40)
+    }
+
     function handleFunctionCall(name, args: var, message: AiMessageData) {
         const callId = message?.functionCall?.id ?? "";
         if (name === "switch_to_search_mode") {
@@ -1244,17 +1698,59 @@ Singleton {
             requester.makeRequest();
         } else if (name === "get_shell_config") {
             const configJson = CF.ObjectUtils.toPlainObject(Config.options)
-            addFunctionOutputMessage(name, JSON.stringify(configJson), callId);
-            requester.makeRequest();
-        } else if (name === "set_shell_config") {
-            if (!args.key || !args.value) {
-                addFunctionOutputMessage(name, Translation.tr("Invalid arguments. Must provide `key` and `value`."), callId);
-                requester.makeRequest();
-                return;
+            addFunctionOutputMessage(name, JSON.stringify(configJson), callId)
+            requester.makeRequest()
+        } else if (name === "get_shell_actions") {
+            const actions = root._aiSafeActions(args?.query ?? "").map(action => ({
+                id: action.id,
+                name: action.name,
+                description: action.description,
+                category: action.category,
+            }))
+            addFunctionOutputMessage(name, JSON.stringify(actions), callId)
+            requester.makeRequest()
+        } else if (name === "run_shell_action") {
+            const actionId = String(args?.action_id ?? "")
+            const action = root._aiSafeActions("").find(item => item.id === actionId)
+            if (!action) {
+                addFunctionOutputMessage(name,
+                    Translation.tr("Unknown or disallowed shell action: %1").arg(actionId), callId)
+                requester.makeRequest()
+                return
             }
-            Config.setNestedValue(args.key, args.value);
-            addFunctionOutputMessage(name, Translation.tr("Set `%1` to `%2`.").arg(args.key).arg(args.value), callId);
-            requester.makeRequest();
+            const preview = {
+                action: "run_shell_action",
+                id: action.id,
+                name: action.name,
+                description: action.description,
+                args: args?.args ?? "",
+            }
+            const contentToAppend = "\n\n**Shell action request**\n\n```approval\n"
+                + JSON.stringify(preview, null, 2) + "\n```"
+            message.rawContent += contentToAppend
+            message.content += contentToAppend
+            message.functionPending = true
+        } else if (name === "set_shell_config") {
+            if (!args.key || args.value === undefined) {
+                addFunctionOutputMessage(name,
+                    Translation.tr("Invalid arguments. Must provide `key` and `value`."), callId)
+                requester.makeRequest()
+                return
+            }
+            const oldValue = Config.getNestedValue(args.key, null)
+            const newValue = root._parseConfigToolValue(args.value)
+            const preview = {
+                action: "set_shell_config",
+                key: args.key,
+                previous: oldValue,
+                proposed: newValue,
+                valueType: typeof newValue,
+            }
+            const contentToAppend = "\n\n**Configuration change request**\n\n```approval\n"
+                + JSON.stringify(preview, null, 2) + "\n```"
+            message.rawContent += contentToAppend
+            message.content += contentToAppend
+            message.functionPending = true
         } else if (name === "run_shell_command") {
             if (!args.command || args.command.length === 0) {
                 addFunctionOutputMessage(name, Translation.tr("Invalid arguments. Must provide `command`."), callId);

@@ -9,6 +9,9 @@ Item {
     property string icon: "api"
     property string text: ""
     property string tooltipText: ""
+    property bool showText: true
+    property bool showDisclosure: true
+    property real maximumTextWidth: 160
     property var clickAction: null
     readonly property bool interactive: !!clickAction
     implicitHeight: rowLayout.implicitHeight + 4 * 2
@@ -36,7 +39,9 @@ Item {
         }
         StyledText {
             id: providerName
-            visible: root.text.length > 0
+            visible: root.showText && root.text.length > 0
+            Layout.minimumWidth: 0
+            Layout.maximumWidth: root.maximumTextWidth
             font.pixelSize: Appearance.font.pixelSize.smaller
             color: Appearance.colors.colOnSurface
             elide: Text.ElideRight
@@ -44,7 +49,7 @@ Item {
             animateChange: true
         }
         MaterialSymbol {
-            visible: root.interactive
+            visible: root.interactive && root.showDisclosure
             text: "expand_more"
             iconSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colOnSurfaceVariant
