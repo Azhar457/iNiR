@@ -165,30 +165,18 @@ Rectangle {
         }
     }
 
-    function setCollapsed(state) {
-        Persistent.states.sidebar.bottomGroup.collapsed = state
-        if (collapsed) {
-            bottomWidgetGroupRow.opacity = 0
-        }
-        else {
-            collapsedBottomWidgetGroupRow.opacity = 0
-        }
-        collapseCleanFadeTimer.start()
-    }
-
-    Timer {
-        id: collapseCleanFadeTimer
-        interval: Appearance.calcEffectiveDuration(Appearance.animation.elementMove.duration / 2)
-        repeat: false
-        onTriggered: {
-            if(collapsed) collapsedBottomWidgetGroupRow.opacity = 1
-            else bottomWidgetGroupRow.opacity = 1
-        }
+    function setCollapsed(state: bool): void {
+        const next = Boolean(state)
+        if ((Persistent.states?.sidebar?.bottomGroup?.collapsed ?? false) === next)
+            return
+        Persistent.states.sidebar.bottomGroup.collapsed = next
+        if (!next) Qt.callLater(root.focusActiveItem)
     }
 
     // Scroll navigation for tabs
     WheelHandler {
         target: root
+        enabled: !root.collapsed
         orientation: Qt.Vertical
         onWheel: (event) => {
             if (event.angleDelta.y < 0) {
@@ -284,6 +272,8 @@ Rectangle {
             // Collapse button (Fixed at top)
             CalendarHeaderButton {
                 id: collapseBtn
+                visible: true
+                height: implicitHeight
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
                 anchors.left: undefined
@@ -313,7 +303,7 @@ Rectangle {
             Flickable {
                 id: railFlickable
                 anchors.top: collapseBtn.bottom
-                anchors.topMargin: 10
+                anchors.topMargin: 4
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -406,11 +396,15 @@ Rectangle {
             }
         }
 
-        // Content area
+        // Content area. Height must go through Layout.preferredHeight (not a raw
+        // height binding the RowLayout fights): it feeds the row's implicitHeight,
+        // which feeds the group's implicitHeight, which sizes the whole panel when
+        // the collapse-when-empty mode shrinks the sidebar. A raw height binding
+        // painted this tall but reported ~0, so the shrunken panel clipped the group.
         StackLayout {
             id: tabStack
             Layout.fillWidth: true
-            height: (tabs.length > 0) ? Math.max(300, ...tabStack.children.map(child => child.tabLoader?.item?.implicitHeight || child.tabLoader?.implicitHeight || 0)) : 0
+            Layout.preferredHeight: (tabs.length > 0) ? Math.max(300, ...tabStack.children.map(child => child.tabLoader?.item?.implicitHeight || child.tabLoader?.implicitHeight || 0)) : 0
             Layout.alignment: Qt.AlignVCenter
             property int realIndex: root.selectedTab
             property int animationDuration: Appearance.animation.elementMoveFast.duration * 1.5

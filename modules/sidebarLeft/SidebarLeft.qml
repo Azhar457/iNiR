@@ -35,8 +35,21 @@ Scope {
     property bool _sidebarShown: false
     property bool _presentationRequested: false
     property int _presentationReadyFrames: 0
+    readonly property int closeGraceMs: Math.max(34,
+        (Appearance.animation?.elementMoveExit?.duration ?? 200) + 34)
 
-    function requestPresentation(): void {
+    function requestPresentation(warmVisible: bool): void {
+        // Reopening while the exit transition is still running should reverse
+        // immediately on the same mapped surface. The two-frame readiness gate
+        // is only necessary for a cold map.
+        if (warmVisible && sidebarContentLoader.height > 0
+                && sidebarContentLoader.status === Loader.Ready) {
+            root._presentationRequested = false
+            root._presentationReadyFrames = 0
+            presentationTimer.stop()
+            root._sidebarShown = true
+            return
+        }
         root._presentationRequested = true
         root._presentationReadyFrames = 0
         presentationTimer.restart()
@@ -45,8 +58,11 @@ Scope {
     function tryPresent(): void {
         if (!root._presentationRequested || !GlobalStates.sidebarLeftOpen)
             return
-        if (sidebarRoot.height <= 0 || sidebarContentLoader.height <= 0
-                || sidebarContentLoader.status !== Loader.Ready)
+        if (sidebarRoot.height <= 0 || sidebarContentLoader.height <= 0)
+            return
+        if (!sidebarContentLoader._everMounted)
+            sidebarContentLoader._everMounted = true
+        if (sidebarContentLoader.status !== Loader.Ready)
             return
         // Keep the fully initialized content in its closed pose for two frames.
         // Otherwise a cold Loader can become Ready and open in the same frame,
@@ -73,16 +89,17 @@ Scope {
             visible = GlobalStates.sidebarLeftOpen
             root._sidebarShown = false
             if (GlobalStates.sidebarLeftOpen)
-                root.requestPresentation()
+                root.requestPresentation(false)
         }
 
         Connections {
             target: GlobalStates
             function onSidebarLeftOpenChanged() {
                 if (GlobalStates.sidebarLeftOpen) {
+                    const warmVisible = sidebarRoot.visible
                     _closeTimer.stop()
                     sidebarRoot.visible = true
-                    root.requestPresentation()
+                    root.requestPresentation(warmVisible)
                 } else if (root.instantOpen || !Appearance.animationsEnabled) {
                     root._presentationRequested = false
                     presentationTimer.stop()
@@ -102,7 +119,7 @@ Scope {
 
         Timer {
             id: _closeTimer
-            interval: 300
+            interval: root.closeGraceMs
             onTriggered: sidebarRoot.visible = false
         }
 
@@ -113,16 +130,24 @@ Scope {
         exclusiveZone: 0
         implicitWidth: screen?.width ?? 1920
         WlrLayershell.namespace: "quickshell:sidebarLeft"
-        // While a feature holds the sidebar open (e.g. InnerTube login), yield the keyboard
-        // so an external browser can receive the device code the user must type in.
-        WlrLayershell.keyboardFocus: (GlobalStates.sidebarLeftOpen && !GlobalStates.sidebarLeftHoldOpen) ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.layer: WlrLayer.Overlay
+        // A single sidebar keeps exclusive keyboard focus. With both open,
+        // OnDemand lets the compositor focus whichever side the user clicks.
+        WlrLayershell.keyboardFocus: !GlobalStates.sidebarLeftOpen || GlobalStates.sidebarLeftHoldOpen
+            ? WlrKeyboardFocus.None
+            : GlobalStates.sidebarRightOpen ? WlrKeyboardFocus.OnDemand
+            : WlrKeyboardFocus.Exclusive
         color: "transparent"
 
         // While a feature holds the sidebar open (InnerTube login), shrink the input region
         // to just the sidebar content so the fullscreen-transparent backdrop becomes
         // click-through — the external browser stays reachable and a stray click can't close us.
-        Region { id: holdInputRegion; item: sidebarContentLoader }
-        mask: GlobalStates.sidebarLeftHoldOpen ? holdInputRegion : null
+        Region { id: sidebarInputRegion; item: sidebarContentLoader }
+        // During exit the visual surface remains mapped for animation, but the
+        // fullscreen transparent backdrop must stop blocking the desktop at once.
+        mask: (GlobalStates.sidebarLeftHoldOpen || !GlobalStates.sidebarLeftOpen
+                || GlobalStates.sidebarRightOpen)
+            ? sidebarInputRegion : null
 
         anchors {
             top: true
@@ -134,7 +159,8 @@ Scope {
         CompositorFocusGrab {
             id: grab
             windows: [ sidebarRoot ]
-            active: CompositorService.isHyprland && sidebarRoot.visible && !GlobalStates.sidebarLeftHoldOpen
+            active: CompositorService.isHyprland && sidebarRoot.visible
+                && !GlobalStates.sidebarLeftHoldOpen && !GlobalStates.sidebarRightOpen
             onCleared: () => {
                 if (!active && !GlobalStates.sidebarLeftHoldOpen) sidebarRoot.hide()
             }
@@ -143,6 +169,8 @@ Scope {
         MouseArea {
             id: backdropClickArea
             anchors.fill: parent
+            enabled: GlobalStates.sidebarLeftOpen && !GlobalStates.sidebarLeftHoldOpen
+                && !GlobalStates.sidebarRightOpen
             onClicked: mouse => {
                 if (GlobalStates.sidebarLeftHoldOpen) return
                 const localPos = mapToItem(sidebarContentLoader, mouse.x, mouse.y)
@@ -155,8 +183,10 @@ Scope {
 
         Loader {
             id: sidebarContentLoader
+            // Never instantiate the content tree against an unmapped, zero-height
+            // surface. Once the first valid mount begins, keep it alive forever.
             property bool _everMounted: false
-            active: GlobalStates.sidebarLeftOpen || _everMounted
+            active: _everMounted
 
             // Shell desaturation effect
             layer.enabled: Appearance.shouldDesaturate("sidebars") && sidebarContentLoader.visible
@@ -179,11 +209,7 @@ Scope {
                 }
             }
             height: parent.height - Appearance.sizes.hyprlandGapsOut * 2
-            onHeightChanged: {
-                if (height > 0 && status === Loader.Ready)
-                    _everMounted = true
-                root.tryPresent()
-            }
+            onHeightChanged: root.tryPresent()
             onStatusChanged: {
                 if (height > 0 && status === Loader.Ready)
                     _everMounted = true

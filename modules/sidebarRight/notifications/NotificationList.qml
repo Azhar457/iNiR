@@ -11,10 +11,16 @@ Item {
     id: root
     clip: true
 
+    // Collapsed: only the status row stays visible; the empty-state area is
+    // released so the sidebar can shrink around its remaining widgets.
+    property bool collapsed: false
+    implicitHeight: statusRow.implicitHeight
+
     Component.onCompleted: Notifications.ensureInitialized()
 
     NotificationListView { // Scrollable window
         id: listview
+        visible: !root.collapsed
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
@@ -45,7 +51,7 @@ Item {
             bottomMargin: 28
         }
         visible: opacity > 0
-        opacity: listview.count === 0 ? 1 : 0
+        opacity: (listview.count === 0 && !root.collapsed) ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation {

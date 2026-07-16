@@ -11,6 +11,8 @@ import QtQuick.Layouts
 
 Rectangle {
     id: root
+    property bool collapsed: false
+    implicitHeight: notificationList.implicitHeight + 10
     radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
@@ -44,7 +46,9 @@ Rectangle {
     AngelPartialBorder { targetRadius: root.radius; coverage: 0.5 }
 
     NotificationList {
+        id: notificationList
         anchors.fill: parent
         anchors.margins: 5
+        collapsed: root.collapsed
     }
 }

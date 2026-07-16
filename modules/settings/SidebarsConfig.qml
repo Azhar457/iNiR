@@ -63,6 +63,30 @@ ContentPage {
                     }
                 }
 
+                SettingsSwitch {
+                    buttonIcon: "unfold_less"
+                    text: Translation.tr("Collapse notifications when empty")
+                    checked: Config.options.sidebar?.collapseEmptyNotifications ?? false
+                    onCheckedChanged: Config.setNestedValue("sidebar.collapseEmptyNotifications", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Shrink the right sidebar when there are no notifications")
+                    }
+                }
+
+                SettingsSwitch {
+                    buttonIcon: "fit_screen"
+                    text: Translation.tr("Fit left sidebar to widgets")
+                    checked: Config.options.sidebar?.collapseWidgetsTab ?? false
+                    onCheckedChanged: Config.setNestedValue("sidebar.collapseWidgetsTab", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Shrink the left sidebar to its content on the Widgets tab instead of full height")
+                    }
+                }
+
+                SidebarHeightPreview {
+                    Layout.fillWidth: true
+                }
+
             StyledText {
                 Layout.fillWidth: true
                 text: Translation.tr("Sidebar content is preserved after first use so searches, conversations and navigation resume where you left them.")
@@ -134,6 +158,15 @@ ContentPage {
                     text: Translation.tr("Open file manager when downloading wallpapers from Wallhaven or Booru")
                 }
             }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Arrange")
+                tooltip: Translation.tr("Arrange sidebar sections, tab order and elastic heights")
+
+                SidebarLayoutEditor {
+                    Layout.fillWidth: true
+                }
             }
 
             ContentSubsection {

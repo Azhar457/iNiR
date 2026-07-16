@@ -18,8 +18,18 @@ Scope {
     property bool _sidebarShown: false
     property bool _presentationRequested: false
     property int _presentationReadyFrames: 0
+    readonly property int closeGraceMs: Math.max(34,
+        (Appearance.animation?.elementMoveExit?.duration ?? 200) + 34)
 
-    function requestPresentation(): void {
+    function requestPresentation(warmVisible: bool): void {
+        if (warmVisible && sidebarContentLoader.height > 0
+                && sidebarContentLoader.status === Loader.Ready) {
+            root._presentationRequested = false
+            root._presentationReadyFrames = 0
+            presentationTimer.stop()
+            root._sidebarShown = true
+            return
+        }
         root._presentationRequested = true
         root._presentationReadyFrames = 0
         presentationTimer.restart()
@@ -28,8 +38,11 @@ Scope {
     function tryPresent(): void {
         if (!root._presentationRequested || !GlobalStates.sidebarRightOpen)
             return
-        if (sidebarRoot.height <= 0 || sidebarContentLoader.height <= 0
-                || sidebarContentLoader.status !== Loader.Ready)
+        if (sidebarRoot.height <= 0 || sidebarContentLoader.height <= 0)
+            return
+        if (!sidebarContentLoader._everMounted)
+            sidebarContentLoader._everMounted = true
+        if (sidebarContentLoader.status !== Loader.Ready)
             return
         root._presentationReadyFrames++
         if (root._presentationReadyFrames < 2)
@@ -53,16 +66,17 @@ Scope {
             visible = GlobalStates.sidebarRightOpen
             root._sidebarShown = false
             if (GlobalStates.sidebarRightOpen)
-                root.requestPresentation()
+                root.requestPresentation(false)
         }
 
         Connections {
             target: GlobalStates
             function onSidebarRightOpenChanged() {
                 if (GlobalStates.sidebarRightOpen) {
+                    const warmVisible = sidebarRoot.visible
                     _closeTimer.stop()
                     sidebarRoot.visible = true
-                    root.requestPresentation()
+                    root.requestPresentation(warmVisible)
                 } else if (root.instantOpen || !Appearance.animationsEnabled) {
                     root._presentationRequested = false
                     presentationTimer.stop()
@@ -80,7 +94,7 @@ Scope {
 
         Timer {
             id: _closeTimer
-            interval: 300
+            interval: root.closeGraceMs
             onTriggered: sidebarRoot.visible = false
         }
 
@@ -91,7 +105,11 @@ Scope {
         exclusiveZone: 0
         implicitWidth: screen?.width ?? 1920
         WlrLayershell.namespace: "quickshell:sidebarRight"
-        WlrLayershell.keyboardFocus: GlobalStates.sidebarRightOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: !GlobalStates.sidebarRightOpen
+            ? WlrKeyboardFocus.None
+            : GlobalStates.sidebarLeftOpen ? WlrKeyboardFocus.OnDemand
+            : WlrKeyboardFocus.Exclusive
         color: "transparent"
 
         anchors {
@@ -101,10 +119,17 @@ Scope {
             left: true
         }
 
+        Region { id: sidebarInputRegion; item: sidebarContentLoader }
+        // Keep rendering the exit animation while immediately releasing the
+        // fullscreen transparent input region.
+        mask: (!GlobalStates.sidebarRightOpen || GlobalStates.sidebarLeftOpen)
+            ? sidebarInputRegion : null
+
         CompositorFocusGrab {
             id: grab
             windows: [ sidebarRoot ]
             active: CompositorService.isHyprland && sidebarRoot.visible
+                && !GlobalStates.sidebarLeftOpen
             onCleared: () => {
                 if (!active) sidebarRoot.hide()
             }
@@ -113,6 +138,7 @@ Scope {
         MouseArea {
             id: backdropClickArea
             anchors.fill: parent
+            enabled: GlobalStates.sidebarRightOpen && !GlobalStates.sidebarLeftOpen
             onClicked: mouse => {
                 const localPos = mapToItem(sidebarContentLoader, mouse.x, mouse.y)
                 if (localPos.x < 0 || localPos.x > sidebarContentLoader.width
@@ -181,15 +207,12 @@ Scope {
 
         Loader {
             id: sidebarContentLoader
-            // Mount only with valid geometry, then retain the workspace so closing it does not
-            // discard navigation state or turn every entrance into a cold load.
+            // This restores the first-valid-geometry latch from b6b24297. The
+            // July on-demand rewrite dropped the height gate and could construct
+            // BottomWidgetGroup against a zero-height unmapped surface.
             property bool _everMounted: false
-            onHeightChanged: {
-                if (height > 0)
-                    _everMounted = true
-                root.tryPresent()
-            }
-            active: GlobalStates.sidebarRightOpen || _everMounted
+            active: _everMounted
+            onHeightChanged: root.tryPresent()
 
             // Shell desaturation effect
             layer.enabled: Appearance.shouldDesaturate("sidebars") && sidebarContentLoader.visible

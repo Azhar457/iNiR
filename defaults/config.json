@@ -1471,6 +1471,8 @@
         "keepRightSidebarLoaded": true,
         "instantOpen": false,
         "animationType": "slide",
+        "collapseEmptyNotifications": false,
+        "collapseWidgetsTab": false,
         "layout": "default",
         "quickSliders": {
             "enable": true,
@@ -1502,6 +1504,20 @@
             },
             "style": "android"
         },
+        "left": {
+            "tabOrder": [
+                "widgets",
+                "ai",
+                "translator",
+                "anime",
+                "animeSchedule",
+                "wallhaven",
+                "news",
+                "ytmusic",
+                "tools",
+                "software"
+            ]
+        },
         "right": {
             "enabledWidgets": [
                 "dashboard",
@@ -1514,7 +1530,25 @@
                 "weather",
                 "timer",
                 "screentime"
-            ]
+            ],
+            "sectionOrder": [
+                "system",
+                "sliders",
+                "toggles",
+                "notifications",
+                "widgets"
+            ],
+            "controlsSectionOrder": [
+                "sliders",
+                "toggles",
+                "devices",
+                "media",
+                "quickActions"
+            ],
+            "sectionWeights": {
+                "notifications": 1.0,
+                "widgets": 1.0
+            }
         },
         "screenTime": {
             "enable": false,

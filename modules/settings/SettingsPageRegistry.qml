@@ -1100,6 +1100,20 @@ Singleton {
             keywords: ["sidebar", "quick", "toggles", "sliders", "corner"]
         },
         {
+            pageIndex: 23, pageName: root.pages[23].name,
+            section: Translation.tr("Arrange"),
+            label: Translation.tr("Arrange sidebar sections"),
+            description: Translation.tr("Reorder right sidebar sections and balance notifications against widgets"),
+            keywords: ["sidebar", "right", "arrange", "order", "sections", "notifications", "widgets", "resize", "height"]
+        },
+        {
+            pageIndex: 23, pageName: root.pages[23].name,
+            section: Translation.tr("Arrange"),
+            label: Translation.tr("Arrange sidebar tabs"),
+            description: Translation.tr("Reorder the tabs shown in the left sidebar"),
+            keywords: ["sidebar", "left", "arrange", "order", "tabs", "drag", "widgets", "ai"]
+        },
+        {
             pageIndex: 21, pageName: root.pages[21].name,
             section: Translation.tr("Islands"),
             label: Translation.tr("Island look"),
@@ -1112,6 +1126,20 @@ Singleton {
             label: Translation.tr("Sidebar style"),
             description: Translation.tr("Panel or island (gradient card) sidebar surface"),
             keywords: ["sidebar", "style", "island", "panel", "card", "gradient", "ricelin"]
+        },
+        {
+            pageIndex: 23, pageName: root.pages[23].name,
+            section: Translation.tr("Sidebars"),
+            label: Translation.tr("Collapse notifications when empty"),
+            description: Translation.tr("Shrink the right sidebar when there are no notifications"),
+            keywords: ["sidebar", "notifications", "collapse", "empty", "compact", "shrink"]
+        },
+        {
+            pageIndex: 23, pageName: root.pages[23].name,
+            section: Translation.tr("Sidebars"),
+            label: Translation.tr("Fit left sidebar to widgets"),
+            description: Translation.tr("Shrink the left sidebar to its content on the Widgets tab instead of full height"),
+            keywords: ["sidebar", "left", "widgets", "fit", "collapse", "compact", "shrink", "height"]
         },
         {
             pageIndex: 7, pageName: root.pages[7].name,

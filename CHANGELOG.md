@@ -36,6 +36,9 @@ The Kira mascot system, the dashboard hub, three new bar surface styles, a rebui
 - **Notification badges on the dock**: the count of an app's pending notifications sits on its icon, and clears when you dismiss them. Turn it off in Settings › Interface › Dock.
 - **Scroll an app's dock icon** to walk through that app's windows.
 - **Quiet hours** (Settings › Interface › Notifications): pick a nightly window and popups stay quiet inside it. Notifications still land in the history — you just read them in the morning. Both families.
+- **Collapse notifications when empty** (Settings › Sidebars): the right sidebar contracts into a screen-relative compact band when the notification list is empty, instead of holding a full-height blank panel. Collapsing its bottom widget group contracts it one step further; notifications reclaim the released elastic space when the group is closed.
+- **Fit left sidebar to widgets** (Settings › Sidebars): the left sidebar fits the Widgets tab inside its own proportional height band and expands back on taller tabs like AI chat. Settings previews the intentionally asymmetric left/right sizing in both panel families.
+- **Modular sidebars** (Settings › Sidebars › Arrange): reorder the normal right sidebar's system, sliders, toggles, notifications and widgets sections; resize the two flexible zones; and arrange left-sidebar tabs. The live panels offer direct drag/resize editing, while Settings uses tap-to-lift and tap-to-place in both panel families.
 - **Separate idle timeouts on battery** (Settings › Services): laptops can blank, lock and suspend sooner while unplugged, without touching the plugged-in numbers. Hidden entirely on desktops.
 - **Search the notification history** in the waffle notification center, once you have enough of it to bother.
 - **AI settings page** (both families): everything about the assistant in one place — a setup checklist that tells you what is still missing, one-click providers (Ollama, OpenRouter, Gemini, Groq and more) with API-format detection, the system prompt, tool mode, temperature, the privacy policy and voice input. Previously these controls were scattered through Settings › Services, and waffle had none of them at all.
@@ -51,7 +54,7 @@ The Kira mascot system, the dashboard hub, three new bar surface styles, a rebui
 - **Right sidebar notifications lost the search field** — it crowded the list; search stays in the waffle notification center.
 - **Settings**: directional page slides, one shared `SettingsPageRegistry` for overlay and window modes, current±1 page preloading (was warm-all 18 pages), non-essential sections start collapsed, readable centered column width.
 - **Bar settings dropped the Layout Presets grid** — each click rewrote five layout keys and could stall the shell; the module layout editor covers the same ground.
-- **Media controls popup**: player presets with cross-slide transitions.
+- **Media controls popup**: player presets keep their cross-slide transitions; Bottom overlay mode now lifts a bounded distance from its final dock edge instead of flying through the whole output, and still releases its visual tree after the close animation.
 - Style switches batch config writes through `setNestedValues`; picking aurora/angel no longer force-enables transparency.
 - Background widget plates use a contrasting scrim with a minimum opacity floor, keeping text legible on any wallpaper.
 - Nav rails across settings/sidebars are background-less with accent-pill selection.
@@ -60,6 +63,9 @@ The Kira mascot system, the dashboard hub, three new bar surface styles, a rebui
 - Docs counts and examples refreshed to match the live tree (raw `qs kill` example replaced with the `inir` CLI).
 
 ### Fixed
+- **Sidebars stay responsive through rapid close/reopen cycles and can remain open together**: closing releases fullscreen input immediately while the card finishes animating, reopening reverses the same resident surface, and simultaneous left/right sidebars use content-only input regions plus one shared center backdrop instead of blocking each other. The right sidebar waits for valid mapped geometry before its first content mount; its bottom widget workspace can collapse normally without returning empty or reserving an invisible elastic zone.
+- **The right sidebar's bottom widget group no longer under-reports its height**: its content pane sized itself outside the layout system, so height-sensitive modes (like collapse-when-empty) clipped the calendar/weather/nav rail mid-row. The pane now feeds the layout its real height.
+- **The left sidebar's Widgets tab breathes**: the clock no longer sits flush against the card's top edge, and when the enabled widgets don't fill the panel the block centers instead of pooling all leftover space at the bottom.
 - Lazy sidebar, settings and wallpaper views now load with typed fallbacks and complete singleton imports; Coverflow no longer treats a corrupt static-image thumbnail as the source image.
 - **KDE's generic paused browser bridge no longer creates a duplicate desktop media card** while Chromium or another browser is already publishing the real playing track.
 - **`inir doctor` no longer reports a valid Niri configuration as broken**: current Niri releases can exit successfully without printing the word “valid”, so the check now trusts the validator's exit status.

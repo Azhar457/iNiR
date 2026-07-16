@@ -66,7 +66,7 @@ Scope {
 
         Timer {
             id: closingTimer
-            interval: Appearance.calcEffectiveDuration(350)
+            interval: 350
         }
 
         Connections {
@@ -143,13 +143,19 @@ Scope {
                     height: playerColumnLayout.implicitHeight + zzzFrameInset * 2
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    // Use screen height for reliable off-screen position
+                    // Dock mode rises from its final edge instead of travelling
+                    // through the whole output. The bounded offset keeps the
+                    // entrance coherent for every player preset and stack height.
                     readonly property real screenH: mediaControlsRoot.screen?.height ?? 1080
-                    readonly property real targetY: screenH - height - root.dockHeight - root.dockMargin - 5
+                    readonly property real targetY: Math.max(root.dockMargin,
+                        screenH - height - root.dockHeight - root.dockMargin - 5)
+                    readonly property real revealDistance: Math.min(72,
+                        Math.max(36, height * 0.12))
+                    readonly property real hiddenY: targetY + revealDistance
 
-                    y: screenH + 50
+                    y: hiddenY
                     opacity: 0
-                    scale: 0.9
+                    scale: 0.975
                     transformOrigin: Item.Bottom
 
                     states: State {
@@ -168,15 +174,15 @@ Scope {
                             to: "visible"
                             enabled: Appearance.animationsEnabled
                             NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
-                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
+                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                         },
                         Transition {
                             from: "visible"
                             enabled: Appearance.animationsEnabled
                             NumberAnimation { properties: "y"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
-                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
-                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveExit.duration; easing.type: Appearance.animation.elementMoveExit.type; easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve }
+                            NumberAnimation { properties: "opacity"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            NumberAnimation { properties: "scale"; duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                         }
                     ]
 

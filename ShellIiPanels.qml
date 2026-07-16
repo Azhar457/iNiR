@@ -157,20 +157,57 @@ Item {
     OnDemandPanelLoader { identifier: "iiRegionSelector"; open: GlobalStates.regionSelectorOpen || GlobalStates.annotationEditorOpen; closeGraceMs: 250; component: RegionSelector {} }
     DeferredPanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
     OnDemandPanelLoader { identifier: "iiSessionScreen"; open: GlobalStates.sessionOpen; component: SessionScreen {} }
+
+    // When both sidebars are open their own fullscreen input regions shrink to
+    // the visible cards. This resident lower-layer backdrop owns the remaining
+    // center area, so one outside click closes both without either sidebar
+    // blocking input to the other.
+    PanelWindow {
+        id: dualSidebarBackdrop
+        visible: true
+        color: "transparent"
+        exclusiveZone: 0
+        WlrLayershell.namespace: "quickshell:dualSidebarBackdrop"
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
+
+        Item { id: emptyDualSidebarMask; width: 0; height: 0 }
+        mask: Region {
+            item: GlobalStates.sidebarLeftOpen && GlobalStates.sidebarRightOpen
+                ? dualSidebarBackdropArea : emptyDualSidebarMask
+        }
+
+        MouseArea {
+            id: dualSidebarBackdropArea
+            anchors.fill: parent
+            enabled: GlobalStates.sidebarLeftOpen && GlobalStates.sidebarRightOpen
+            onClicked: {
+                GlobalStates.sidebarLeftOpen = false
+                GlobalStates.sidebarRightOpen = false
+            }
+        }
+    }
+
     OnDemandPanelLoader {
         identifier: "iiSidebarLeft"
         open: GlobalStates.sidebarLeftOpen || GlobalStates.aiChatDetached
-        // Sidebars are resumable workspaces: instantiate lazily, then preserve searches,
-        // conversations and navigation state while their hidden work remains gated.
-        retainAfterUse: true
-        closeGraceMs: 350
+        // Sidebar roots own fullscreen input and animation state. Keep them
+        // resident so rapid close/open reverses the same surface instead of
+        // racing destruction against the exit transition.
+        keepLoaded: true
         component: SidebarLeft {}
     }
     OnDemandPanelLoader {
         identifier: "iiSidebarRight"
         open: GlobalStates.sidebarRightOpen
-        retainAfterUse: true
-        closeGraceMs: 350
+        keepLoaded: true
         component: SidebarRight {}
     }
     TilingOverlayRouter {}
@@ -208,12 +245,29 @@ Item {
         function toggle(): void { GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen }
         function close(): void { GlobalStates.sidebarLeftOpen = false }
         function open(): void { GlobalStates.sidebarLeftOpen = true }
+        function expand(): void {
+            GlobalStates.aiChatDetached = false
+            GlobalStates.sidebarLeftOpen = true
+            GlobalStates.sidebarLeftExpanded = true
+        }
+        function compact(): void { GlobalStates.sidebarLeftExpanded = false }
+        function status(): string {
+            return JSON.stringify({
+                open: GlobalStates.sidebarLeftOpen,
+                expanded: GlobalStates.sidebarLeftExpanded,
+                detached: GlobalStates.aiChatDetached,
+            })
+        }
         function detach(): void {
             GlobalStates.sidebarLeftOpen = false
             GlobalStates.sidebarLeftExpanded = false
             GlobalStates.aiChatDetached = true
         }
-        function attach(): void { GlobalStates.aiChatDetached = false }
+        function attach(): void {
+            GlobalStates.aiChatDetached = false
+            GlobalStates.sidebarLeftExpanded = false
+            GlobalStates.sidebarLeftOpen = true
+        }
     }
 
     IpcHandler {

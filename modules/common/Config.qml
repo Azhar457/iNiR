@@ -2292,6 +2292,8 @@ Singleton {
                 property bool keepLeftSidebarLoaded: true
                 property bool instantOpen: false
                 property string animationType: "slide" // "slide" | "fade" | "pop" | "reveal"
+                property bool collapseEmptyNotifications: false // Shrink right sidebar when there are no notifications (default layout)
+                property bool collapseWidgetsTab: false // Shrink left sidebar to its content on tabs with finite height (Widgets)
                 property bool openFolderOnDownload: false // Open file manager after wallpaper download
                 property JsonObject translator: JsonObject {
                     property bool enable: true
@@ -2541,11 +2543,27 @@ Singleton {
                     property bool showBrightness: true
                 }
 
+                property JsonObject left: JsonObject {
+                    // Stable ids keep disabled tabs in their chosen position so
+                    // re-enabling a feature restores it where the user placed it.
+                    property list<string> tabOrder: ["widgets", "ai", "translator", "anime", "animeSchedule", "wallhaven", "news", "ytmusic", "tools", "software"]
+                }
+
                 // Right sidebar widget toggles
                 property JsonObject right: JsonObject {
                     property list<string> enabledWidgets: ["calendar", "todo", "notepad", "calculator", "sysmon", "weather", "timer", "screentime"]
                     // Controls section order for compact layout (drag to reorder)
                     property list<string> controlsSectionOrder: ["sliders", "toggles", "devices", "media", "quickActions"]
+                    // Section order for the default layout (modular sidebar).
+                    // Known ids: system, sliders, toggles, notifications, widgets.
+                    // Unknown ids are ignored; missing ids append in default order.
+                    property list<string> sectionOrder: ["system", "sliders", "toggles", "notifications", "widgets"]
+                    // Relative allocation of the two elastic zones. Values are
+                    // normalized together by the live resize handle.
+                    property JsonObject sectionWeights: JsonObject {
+                        property real notifications: 1
+                        property real widgets: 1
+                    }
                 }
 
                 property JsonObject screenTime: JsonObject {

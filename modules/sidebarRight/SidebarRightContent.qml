@@ -46,7 +46,16 @@ Item {
     property bool showNightLightDialog: false
     property bool showWifiDialog: false
     property bool editMode: false
-    
+
+    readonly property bool anyDialogOpen: showAudioOutputDialog || showAudioInputDialog
+        || showBluetoothDialog || showEventsDialog || showHotspotDialog
+        || showNightLightDialog || showWifiDialog
+    // Collapse the notification zone (and the panel around it) when there is
+    // nothing to show. Dialogs re-expand so they keep their full canvas.
+    readonly property bool notifsCollapsed: (Config.options?.sidebar?.collapseEmptyNotifications ?? false)
+        && (Notifications.list?.length ?? 0) === 0
+        && !anyDialogOpen
+
     // Events dialog editing state
     property var eventsDialogEditEvent: null
     
@@ -54,9 +63,173 @@ Item {
     property bool reloadButtonEnabled: true
     property bool settingsButtonEnabled: true
 
+    // ─── Modular sections (sidebar.right.sectionOrder) ───────────────
+    // Sanitized: unknown ids dropped, missing ids appended in default order,
+    // so a stale or hand-edited config can never blank the sidebar.
+    readonly property var _sectionDefaultOrder: ["system", "sliders", "toggles", "notifications", "widgets"]
+    readonly property var sectionOrder: {
+        const def = root._sectionDefaultOrder
+        const saved = Config.options?.sidebar?.right?.sectionOrder ?? def
+        const result = []
+        for (let i = 0; i < saved.length; i++)
+            if (def.includes(saved[i]) && !result.includes(saved[i])) result.push(saved[i])
+        for (let i = 0; i < def.length; i++)
+            if (!result.includes(def[i])) result.push(def[i])
+        return result
+    }
+    // Loaded BottomWidgetGroup instance (section delegates load lazily).
+    // Its collapse state participates in the parent's elastic layout instead
+    // of being treated as an isolated visual detail.
+    property var bottomWidgetGroupItem: null
+    readonly property bool bottomGroupCollapsed: bottomWidgetGroupItem?.collapsed ?? false
+
+    // ─── Section drag-reorder (modular sidebar phase 2) ──────────────
+    // Same mechanics as DraggableWidgetContainer: cache heights, displace
+    // neighbours live, write the new order once on drop.
+    property bool sectionEditMode: false
+    property int sectionDragIndex: -1
+    property int sectionHoverIndex: -1
+    property real sectionDragStartY: 0
+    property real sectionDragCurrentY: 0
+    property var _sectionHeights: []
+    property string sectionResizeId: ""
+    property real sectionResizeStartY: 0
+    property real sectionResizeStartPrimary: 1
+    property real sectionResizeStartOther: 1
+    property var _sectionWeightPreview: ({})
+    readonly property var _flexSectionIds: ["notifications", "widgets"]
+
+    function _cacheSectionHeights(): void {
+        const heights = []
+        for (let i = 0; i < sectionRepeater.count; i++) {
+            const item = sectionRepeater.itemAt(i)
+            heights.push(item && item.visible ? item.height : 0)
+        }
+        _sectionHeights = heights
+    }
+
+    function getSectionDisplacementY(itemIndex: int): real {
+        if (sectionDragIndex < 0 || sectionHoverIndex < 0) return 0
+        if (itemIndex === sectionDragIndex) return 0
+        if (sectionDragIndex < sectionHoverIndex) {
+            if (itemIndex > sectionDragIndex && itemIndex <= sectionHoverIndex)
+                return -((_sectionHeights[sectionDragIndex] ?? 0) + contentColumn.spacing)
+        } else if (sectionDragIndex > sectionHoverIndex) {
+            if (itemIndex >= sectionHoverIndex && itemIndex < sectionDragIndex)
+                return (_sectionHeights[sectionDragIndex] ?? 0) + contentColumn.spacing
+        }
+        return 0
+    }
+
+    function getSectionDragFollowY(): real {
+        if (sectionDragIndex < 0) return 0
+        return sectionDragCurrentY - sectionDragStartY
+    }
+
+    function moveSection(fromIdx: int, toIdx: int): void {
+        if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0) return
+        const newOrder = [...root.sectionOrder]
+        const moved = newOrder.splice(fromIdx, 1)[0]
+        newOrder.splice(toIdx, 0, moved)
+        Config.setNestedValue("sidebar.right.sectionOrder", newOrder)
+    }
+
+    function startSectionDrag(index: int, mouseY: real): void {
+        _cacheSectionHeights()
+        sectionDragIndex = index
+        sectionHoverIndex = index
+        sectionDragStartY = mouseY
+        sectionDragCurrentY = mouseY
+    }
+
+    function updateSectionDrag(mouseY: real): void {
+        if (sectionDragIndex < 0) return
+        sectionDragCurrentY = mouseY
+        let lastVisibleIndex = sectionDragIndex
+        for (let i = 0; i < sectionRepeater.count; i++) {
+            const item = sectionRepeater.itemAt(i)
+            if (!item || !item.visible) continue
+            lastVisibleIndex = i
+            if (mouseY < item.y + item.height / 2) {
+                sectionHoverIndex = i
+                return
+            }
+        }
+        sectionHoverIndex = lastVisibleIndex
+    }
+
+    function endSectionDrag(): void {
+        if (sectionDragIndex >= 0 && sectionHoverIndex >= 0 && sectionDragIndex !== sectionHoverIndex)
+            moveSection(sectionDragIndex, sectionHoverIndex)
+        sectionDragIndex = -1
+        sectionHoverIndex = -1
+        sectionDragStartY = 0
+        sectionDragCurrentY = 0
+        _sectionHeights = []
+    }
+
+    function cancelSectionDrag(): void {
+        sectionDragIndex = -1
+        sectionHoverIndex = -1
+        sectionDragStartY = 0
+        sectionDragCurrentY = 0
+        _sectionHeights = []
+    }
+
+    function sectionWeight(sectionId: string): real {
+        const previewValue = root._sectionWeightPreview?.[sectionId]
+        if (previewValue !== undefined) return previewValue
+        const configured = Number(Config.options?.sidebar?.right?.sectionWeights?.[sectionId] ?? 1)
+        return Number.isFinite(configured) ? Math.max(0.35, configured) : 1
+    }
+
+    function startSectionResize(sectionId: string, mouseY: real): void {
+        if (!root._flexSectionIds.includes(sectionId)) return
+        const otherId = sectionId === "notifications" ? "widgets" : "notifications"
+        root.cancelSectionDrag()
+        sectionResizeId = sectionId
+        sectionResizeStartY = mouseY
+        sectionResizeStartPrimary = root.sectionWeight(sectionId)
+        sectionResizeStartOther = root.sectionWeight(otherId)
+        _sectionWeightPreview = ({
+            notifications: root.sectionWeight("notifications"),
+            widgets: root.sectionWeight("widgets")
+        })
+    }
+
+    function updateSectionResize(mouseY: real): void {
+        if (sectionResizeId.length === 0) return
+        const otherId = sectionResizeId === "notifications" ? "widgets" : "notifications"
+        const total = Math.max(0.7, sectionResizeStartPrimary + sectionResizeStartOther)
+        const delta = (mouseY - sectionResizeStartY) / 140
+        const primary = Math.max(0.35, Math.min(total - 0.35, sectionResizeStartPrimary + delta))
+        const other = total - primary
+        const next = ({})
+        next[sectionResizeId] = primary
+        next[otherId] = other
+        _sectionWeightPreview = next
+    }
+
+    function endSectionResize(): void {
+        if (sectionResizeId.length === 0) return
+        Config.setNestedValues({
+            "sidebar.right.sectionWeights.notifications": root.sectionWeight("notifications"),
+            "sidebar.right.sectionWeights.widgets": root.sectionWeight("widgets")
+        })
+        sectionResizeId = ""
+        sectionResizeStartY = 0
+        _sectionWeightPreview = ({})
+    }
+
+    function cancelSectionResize(): void {
+        sectionResizeId = ""
+        sectionResizeStartY = 0
+        _sectionWeightPreview = ({})
+    }
+
     function focusActiveItem() {
-        if (bottomWidgetGroup && bottomWidgetGroup.focusActiveItem) {
-            bottomWidgetGroup.focusActiveItem()
+        if (bottomWidgetGroupItem && bottomWidgetGroupItem.focusActiveItem) {
+            bottomWidgetGroupItem.focusActiveItem()
         }
     }
 
@@ -64,6 +237,9 @@ Item {
         target: GlobalStates
         function onSidebarRightOpenChanged() {
             if (!GlobalStates.sidebarRightOpen) {
+                root.sectionEditMode = false;
+                root.cancelSectionDrag();
+                root.cancelSectionResize();
                 root.showWifiDialog = false;
                 root.showBluetoothDialog = false;
                 root.showEventsDialog = false;
@@ -135,7 +311,19 @@ Item {
     Rectangle {
         id: sidebarRightBackground
 
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        readonly property real naturalCompactHeight: contentColumn.implicitHeight
+            + root.sidebarPadding * 2
+        height: root.notifsCollapsed
+            ? SidebarGeometry.rightFitHeight(parent.height,
+                naturalCompactHeight, root.bottomGroupCollapsed)
+            : parent.height
+        Behavior on height {
+            enabled: Appearance.animationsEnabled && root.panelVisible
+            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+        }
         // Clamp >= 0: preload parent.height is 0 here, raw subtraction went negative and froze layout.
         implicitHeight: Math.max(0, parent.height - Appearance.sizes.hyprlandGapsOut * 2)
         implicitWidth: sidebarWidth - Appearance.sizes.hyprlandGapsOut * 2
@@ -319,75 +507,264 @@ Item {
         }
 
         ColumnLayout {
+            id: contentColumn
             anchors.fill: parent
             anchors.margins: sidebarPadding
             spacing: sidebarPadding
 
-            SystemButtonRow {
-                Layout.fillHeight: false
-                Layout.fillWidth: true
-                // Layout.margins: 10
-                Layout.topMargin: 5
-                Layout.bottomMargin: 0
-                opacity: root._entranceCascade >= 0 ? 1 : 0
-                Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
-            }
+            // Sections render in the user-configured order. One delegate owns
+            // Layout hints, entrance cascade and dialog-signal routing for all
+            // section kinds so reordering never changes wiring.
+            Repeater {
+                id: sectionRepeater
+                model: root.sectionOrder
+                delegate: Loader {
+                    id: sectionLoader
+                    required property string modelData
+                    required property int index
+                    readonly property bool isCenter: modelData === "notifications"
+                    readonly property bool isElastic: modelData === "notifications" || modelData === "widgets"
+                    readonly property bool contentCollapsed: modelData === "widgets"
+                        && (item?.collapsed ?? false)
+                    readonly property bool usesElasticPool: isElastic
+                        && !root.notifsCollapsed && !contentCollapsed
+                    readonly property bool isBeingDragged: root.sectionDragIndex === index
+                    readonly property bool isBeingResized: root.sectionResizeId === modelData
+                    readonly property bool isDropTarget: root.sectionHoverIndex === index
+                        && root.sectionDragIndex !== index && root.sectionDragIndex >= 0
 
-            Loader {
-                id: slidersLoader
-                Layout.fillWidth: true
-                visible: active
-                active: {
-                    const configQuickSliders = Config.options?.sidebar?.quickSliders
-                    if (!configQuickSliders?.enable) return false
-                    if (!configQuickSliders?.showMic && !configQuickSliders?.showVolume && !configQuickSliders?.showBrightness) return false;
-                    return true;
-                }
-                opacity: root._entranceCascade >= 1 ? 1 : 0
-                Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
-                sourceComponent: QuickSliders {}
-            }
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    Layout.fillHeight: usesElasticPool
+                    Layout.minimumHeight: !isElastic ? -1
+                        : contentCollapsed ? implicitHeight
+                        : modelData === "widgets" ? 250
+                        : root.notifsCollapsed ? implicitHeight : 96
+                    Layout.preferredHeight: usesElasticPool
+                        ? root.sectionWeight(modelData) * 180 : implicitHeight
+                    Layout.topMargin: modelData === "system" ? 5 : 0
+                    visible: active
+                    active: {
+                        if (modelData !== "sliders") return true
+                        const configQuickSliders = Config.options?.sidebar?.quickSliders
+                        if (!configQuickSliders?.enable) return false
+                        if (!configQuickSliders?.showMic && !configQuickSliders?.showVolume && !configQuickSliders?.showBrightness) return false
+                        return true
+                    }
+                    opacity: root._entranceCascade >= index
+                        ? (root.sectionEditMode && !isBeingDragged ? 0.8 : 1) : 0
+                    Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
+                    scale: isBeingDragged ? 1.015 : isBeingResized ? 1.008 : 1
+                    Behavior on scale { enabled: Appearance.animationsEnabled; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                    z: isBeingDragged ? 5 : 0
 
-            LoaderedQuickPanelImplementation {
-                styleName: "classic"
-                opacity: root._entranceCascade >= 2 ? 1 : 0
-                Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
-                sourceComponent: ClassicQuickPanel {}
-            }
+                    // Live displacement while a sibling section is dragged over
+                    transform: Translate {
+                        y: sectionLoader.isBeingDragged
+                            ? root.getSectionDragFollowY()
+                            : root.getSectionDisplacementY(sectionLoader.index)
+                        Behavior on y {
+                            enabled: Appearance.animationsEnabled && !sectionLoader.isBeingDragged
+                            NumberAnimation { duration: 280; easing.type: Easing.OutCubic }
+                        }
+                    }
 
-            LoaderedQuickPanelImplementation {
-                styleName: "android"
-                opacity: root._entranceCascade >= 2 ? 1 : 0
-                Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
-                sourceComponent: AndroidQuickPanel {
-                    editMode: root.editMode
-                }
-            }
+                    // Drop indicator bars (same language as widget reorder)
+                    Rectangle {
+                        anchors { left: parent.left; right: parent.right; top: parent.top }
+                        anchors.topMargin: -contentColumn.spacing / 2 - height / 2
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        height: 3
+                        radius: 1.5
+                        color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                        opacity: sectionLoader.isDropTarget && root.sectionHoverIndex < root.sectionDragIndex ? 0.85 : 0
+                        visible: opacity > 0
+                        z: 10
+                        Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                    }
+                    Rectangle {
+                        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                        anchors.bottomMargin: -contentColumn.spacing / 2 - height / 2
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        height: 3
+                        radius: 1.5
+                        color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                        opacity: sectionLoader.isDropTarget && root.sectionHoverIndex > root.sectionDragIndex ? 0.85 : 0
+                        visible: opacity > 0
+                        z: 10
+                        Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                    }
 
-            CenterWidgetGroup {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillHeight: true
-                Layout.fillWidth: true
-                opacity: root._entranceCascade >= 3 ? 1 : 0
-                Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
-            }
+                    // Drag grip — only exists in edit mode, top-right of the section
+                    Rectangle {
+                        visible: root.sectionEditMode
+                        anchors.top: parent.top
+                        anchors.right: parent.right
+                        anchors.topMargin: 4
+                        anchors.rightMargin: 4
+                        width: 30
+                        height: 22
+                        z: 20
+                        radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
+                        color: sectionHandleArea.containsMouse || sectionLoader.isBeingDragged
+                            ? (Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colors.colLayer1Hover)
+                            : (Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1)
+                        border.width: Appearance.inirEverywhere ? 1 : 0
+                        border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
 
-            BottomWidgetGroup {
-                id: bottomWidgetGroup
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillHeight: false
-                Layout.fillWidth: true
-                Layout.preferredHeight: implicitHeight
-                opacity: root._entranceCascade >= 4 ? 1 : 0
-                Behavior on opacity { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic } }
-                
-                onOpenEventsDialog: (editEvent) => {
-                    root.eventsDialogEditEvent = editEvent;
-                    root.showEventsDialog = true;
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "drag_indicator"
+                            iconSize: 14
+                            color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        }
+
+                        MouseArea {
+                            id: sectionHandleArea
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            hoverEnabled: true
+                            cursorShape: sectionLoader.isBeingDragged ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                            acceptedButtons: Qt.LeftButton
+                            property bool dragStarted: false
+                            onPressed: (mouse) => {
+                                dragStarted = true
+                                root.startSectionDrag(sectionLoader.index, mapToItem(contentColumn, mouse.x, mouse.y).y)
+                            }
+                            onPositionChanged: (mouse) => {
+                                if (dragStarted)
+                                    root.updateSectionDrag(mapToItem(contentColumn, mouse.x, mouse.y).y)
+                            }
+                            onReleased: {
+                                if (dragStarted) root.endSectionDrag()
+                                dragStarted = false
+                            }
+                            onCanceled: {
+                                root.cancelSectionDrag()
+                                dragStarted = false
+                            }
+                        }
+                    }
+
+                    // Elastic-zone resize handle. Dragging the bottom edge of
+                    // either notifications or widgets reallocates the shared
+                    // vertical pool and persists both weights atomically.
+                    Rectangle {
+                        visible: root.sectionEditMode && sectionLoader.usesElasticPool
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: -height / 2
+                        width: 68
+                        height: 18
+                        z: 22
+                        radius: height / 2
+                        color: resizeHandleArea.containsMouse || sectionLoader.isBeingResized
+                            ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimaryContainer)
+                            : (Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer2)
+                        border.width: 1
+                        border.color: sectionLoader.isBeingResized
+                            ? (Appearance.inirEverywhere ? Appearance.inir.colBorderAccent : Appearance.colors.colPrimary)
+                            : (Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colOutlineVariant)
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 4
+                            MaterialSymbol {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "height"
+                                iconSize: 12
+                                color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2
+                            }
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: Math.round(root.sectionWeight(sectionLoader.modelData) * 50) + "%"
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer2
+                            }
+                        }
+
+                        MouseArea {
+                            id: resizeHandleArea
+                            anchors.fill: parent
+                            anchors.margins: -5
+                            hoverEnabled: true
+                            cursorShape: sectionLoader.isBeingResized ? Qt.ClosedHandCursor : Qt.SizeVerCursor
+                            acceptedButtons: Qt.LeftButton
+                            property bool resizeStarted: false
+                            onPressed: (mouse) => {
+                                resizeStarted = true
+                                root.startSectionResize(sectionLoader.modelData,
+                                    mapToItem(contentColumn, mouse.x, mouse.y).y)
+                            }
+                            onPositionChanged: (mouse) => {
+                                if (resizeStarted)
+                                    root.updateSectionResize(mapToItem(contentColumn, mouse.x, mouse.y).y)
+                            }
+                            onReleased: {
+                                if (resizeStarted) root.endSectionResize()
+                                resizeStarted = false
+                            }
+                            onCanceled: {
+                                root.cancelSectionResize()
+                                resizeStarted = false
+                            }
+                        }
+                    }
+
+                    sourceComponent: {
+                        switch (modelData) {
+                            case "system": return systemSectionComponent
+                            case "sliders": return slidersSectionComponent
+                            case "toggles":
+                                return (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
+                                    ? androidTogglesComponent : classicTogglesComponent
+                            case "notifications": return centerSectionComponent
+                            case "widgets": return widgetsSectionComponent
+                            default: return null
+                        }
+                    }
+                    onLoaded: {
+                        if (modelData === "widgets") root.bottomWidgetGroupItem = item
+                    }
+
+                    Connections {
+                        target: sectionLoader.item
+                        ignoreUnknownSignals: true
+                        function onOpenAudioOutputDialog() { root.showAudioOutputDialog = true }
+                        function onOpenAudioInputDialog() { root.showAudioInputDialog = true }
+                        function onOpenBluetoothDialog() { root.showBluetoothDialog = true }
+                        function onOpenNightLightDialog() { root.showNightLightDialog = true }
+                        function onOpenHotspotDialog() { root.showHotspotDialog = true }
+                        function onOpenWifiDialog() { root.showWifiDialog = true }
+                        function onOpenEventsDialog(editEvent) {
+                            root.eventsDialogEditEvent = editEvent
+                            root.showEventsDialog = true
+                        }
+                    }
                 }
             }
         }
 
+        Component { id: systemSectionComponent; SystemButtonRow {} }
+        Component { id: slidersSectionComponent; QuickSliders {} }
+        Component { id: classicTogglesComponent; ClassicQuickPanel {} }
+        Component { id: androidTogglesComponent; AndroidQuickPanel { editMode: root.editMode } }
+        Component { id: centerSectionComponent; CenterWidgetGroup { collapsed: root.notifsCollapsed } }
+        Component { id: widgetsSectionComponent; BottomWidgetGroup {} }
+
+    }
+
+    // With the panel collapsed the window still spans full height; clicks on
+    // the vacated strip below the panel should dismiss like the backdrop does.
+    MouseArea {
+        anchors.top: sidebarRightBackground.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        enabled: sidebarRightBackground.height < root.height - 1
+        onClicked: GlobalStates.sidebarRightOpen = false
     }
 
     ToggleDialog {
@@ -487,36 +864,6 @@ Item {
             target: toggleDialogLoader.item
             function onDismiss() {
                 root[toggleDialogLoader.shownPropertyString] = false;
-            }
-        }
-    }
-
-    component LoaderedQuickPanelImplementation: Loader {
-        id: quickPanelImplLoader
-        required property string styleName
-        Layout.alignment: item?.Layout.alignment ?? Qt.AlignHCenter
-        Layout.fillWidth: item?.Layout.fillWidth ?? false
-        visible: active
-        active: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === styleName
-        Connections {
-            target: quickPanelImplLoader.item
-            function onOpenAudioOutputDialog() {
-                root.showAudioOutputDialog = true;
-            }
-            function onOpenAudioInputDialog() {
-                root.showAudioInputDialog = true;
-            }
-            function onOpenBluetoothDialog() {
-                root.showBluetoothDialog = true;
-            }
-            function onOpenNightLightDialog() {
-                root.showNightLightDialog = true;
-            }
-            function onOpenHotspotDialog() {
-                root.showHotspotDialog = true;
-            }
-            function onOpenWifiDialog() {
-                root.showWifiDialog = true;
             }
         }
     }
@@ -624,6 +971,21 @@ Item {
                 StyledToolTip {
                     position: "left"
                     text: Translation.tr("Edit quick toggles") + (root.editMode ? Translation.tr("\nLMB to enable/disable\nRMB to toggle size\nScroll to swap position") : "")
+                }
+            }
+            QuickToggleButton {
+                toggled: root.sectionEditMode
+                buttonIcon: "swap_vert"
+                onClicked: {
+                    root.sectionEditMode = !root.sectionEditMode
+                    if (!root.sectionEditMode) {
+                        root.cancelSectionDrag()
+                        root.cancelSectionResize()
+                    }
+                }
+                StyledToolTip {
+                    position: "left"
+                    text: Translation.tr("Reorder sections\nDrag the grips to rearrange the sidebar")
                 }
             }
             QuickToggleButton {

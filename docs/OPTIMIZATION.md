@@ -272,13 +272,13 @@ On Niri 26.04 or newer, Settings › Effects can delegate supported translucent 
 
 Native blur is deliberately shape-aware. Rounded rectangles publish their exact item bounds and radius, while the islands bar publishes a union of its five live cards. Complex connected decorations, pill compositions and non-rounded silhouettes use wallpaper blur when an equivalent compositor region cannot be expressed. Disabling compositor blur keeps the selected global style and resolves through its wallpaper or solid fallback.
 
-Closed sidebars, launchers, overview, wallpaper pickers and other heavy panels are created on demand. Their IPC commands remain registered through lightweight routers, so scripts and keybinds do not need to keep the visual tree resident.
+Launchers, overview, wallpaper pickers and most other heavy panels are created on demand. Their IPC commands remain registered through lightweight routers. Sidebars are the deliberate exception: their fullscreen roots load in the deferred phase, their content waits for the first valid mapped geometry, and both remain resident afterward so rapid close/reopen can reverse one surface without rebuilding its workspace.
 
 Thumbnail jobs launched by the wallpaper and generated-image pickers run in a transient user scope rather than the `inir.service` cgroup. `inir restart` cancels any unfinished iNiR thumbnail pool, and completed scopes are collected automatically, so their workers and page cache are not reported as shell memory.
 
 ### Stateful visual lifetimes
 
-Heavy visual trees are disposable, but user context is not. Sidebars mount at their final geometry, animate by transforming or clipping that stable tree, and keep resumable state above the visual loader. Settings keeps only the current page and its immediate neighbours rendered; ii/Waffle navigation, theme filters and Gowall editor context live in persistent settings state instead of page delegates.
+Most heavy visual trees are disposable, but sidebar workspaces are resident by design. They mount at final geometry, animate by transforming or clipping the same tree, release the fullscreen backdrop input as soon as closing begins, and preserve navigation, searches and bottom-widget state. Settings keeps only the current page and its immediate neighbours rendered; ii/Waffle navigation, theme filters and Gowall editor context live in persistent settings state instead of page delegates.
 
 Blur eligibility is topology-based. A surface must declare an exact `rectangle`, `rounded-rectangle` or `islands-union` region before an explicit compositor backend can be used. Unsupported or morphing silhouettes retain their wallpaper material, and `auto` remains fidelity-first. Explicit Island/Ricelin surfaces own their complete material so global ZZZ, Aurora, Angel or iNiR chrome cannot leak into the same surface.
 

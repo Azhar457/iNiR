@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import qs
 import qs.services
 import qs.modules.common
@@ -38,8 +40,15 @@ Item {
     property bool toolsEnabled: Config.options?.sidebar?.tools?.enable ?? false
     property bool softwareEnabled: Config.options?.sidebar?.software?.enable ?? false
     property bool ytMusicEnabled: Config.options?.sidebar?.ytmusic?.enable ?? false
-    // DISABLED: webapps — requires quickshell-webengine rebuild
+    // DISABLED: webapps — requires quickshell-webengine
     property bool pluginsEnabled: false // Config.options?.sidebar?.plugins?.enable ?? false
+
+    // Tabs exposing contentPreferredHeight (Widgets) can let the panel hug
+    // their content instead of reserving the full output height.
+    readonly property real activeTabContentHeight: swipeView.currentItem?.item?.contentPreferredHeight ?? -1
+    readonly property bool activeTabEditing: swipeView.currentItem?.item?.editMode ?? false
+    readonly property bool fitToContent: (Config.options?.sidebar?.collapseWidgetsTab ?? false)
+        && !pluginViewActive && !activeTabEditing && activeTabContentHeight > 0
 
     // ─── WebApp state — DISABLED (requires quickshell-webengine) ─────
     property string _activeWebAppId: ""
@@ -67,21 +76,42 @@ Item {
     function _tryRestoreLastPlugin(): void {}
     function _doRestoreLastPlugin(): void {}
 
-    // Tab button list - simple static order
+    readonly property var _tabDefaultOrder: [
+        "widgets", "ai", "translator", "anime", "animeSchedule",
+        "wallhaven", "news", "ytmusic", "tools", "software"
+    ]
+    readonly property var resolvedTabOrder: {
+        const result = []
+        const saved = Config.options?.sidebar?.left?.tabOrder ?? root._tabDefaultOrder
+        for (let i = 0; i < saved.length; i++) {
+            const id = saved[i]
+            if (root._tabDefaultOrder.includes(id) && !result.includes(id)) result.push(id)
+        }
+        for (let i = 0; i < root._tabDefaultOrder.length; i++) {
+            const id = root._tabDefaultOrder[i]
+            if (!result.includes(id)) result.push(id)
+        }
+        return result
+    }
+    property string selectedTabId: ""
+    property bool tabEditMode: false
+
+    // Enabled tabs rendered in the user's stable-id order.
     property var tabButtonList: {
         const result = []
-        if (root.widgetsEnabled) result.push({ icon: "widgets", name: Translation.tr("Widgets") })
-        if (root.aiChatEnabled) result.push({ icon: "neurology", name: Translation.tr("Intelligence") })
-        if (root.translatorEnabled) result.push({ icon: "translate", name: Translation.tr("Translator") })
-        if (root.animeEnabled && !root.animeCloset) result.push({ icon: "bookmark_heart", name: Translation.tr("Anime") })
-        if (root.animeScheduleEnabled) result.push({ icon: "calendar_month", name: Translation.tr("Schedule") })
-        if (root.wallhavenEnabled) result.push({ icon: "collections", name: Translation.tr("Wallhaven") })
-        if (root.newsEnabled) result.push({ icon: "newspaper", name: Translation.tr("News") })
-        if (root.ytMusicEnabled) result.push({ icon: "library_music", name: Translation.tr("YT Music") })
-        if (root.toolsEnabled) result.push({ icon: "build", name: Translation.tr("Tools") })
-        if (root.softwareEnabled) result.push({ icon: "store", name: Translation.tr("Software") })
+        if (root.widgetsEnabled) result.push({ id: "widgets", icon: "widgets", name: Translation.tr("Widgets") })
+        if (root.aiChatEnabled) result.push({ id: "ai", icon: "neurology", name: Translation.tr("Intelligence") })
+        if (root.translatorEnabled) result.push({ id: "translator", icon: "translate", name: Translation.tr("Translator") })
+        if (root.animeEnabled && !root.animeCloset) result.push({ id: "anime", icon: "bookmark_heart", name: Translation.tr("Anime") })
+        if (root.animeScheduleEnabled) result.push({ id: "animeSchedule", icon: "calendar_month", name: Translation.tr("Schedule") })
+        if (root.wallhavenEnabled) result.push({ id: "wallhaven", icon: "collections", name: Translation.tr("Wallhaven") })
+        if (root.newsEnabled) result.push({ id: "news", icon: "newspaper", name: Translation.tr("News") })
+        if (root.ytMusicEnabled) result.push({ id: "ytmusic", icon: "library_music", name: Translation.tr("YT Music") })
+        if (root.toolsEnabled) result.push({ id: "tools", icon: "build", name: Translation.tr("Tools") })
+        if (root.softwareEnabled) result.push({ id: "software", icon: "store", name: Translation.tr("Software") })
         // DISABLED: webapps — requires quickshell-webengine rebuild
-        // if (root.pluginsEnabled) result.push({ icon: "extension", name: Translation.tr("Web Apps") })
+        // if (root.pluginsEnabled) result.push({ id: "plugins", icon: "extension", name: Translation.tr("Web Apps") })
+        result.sort((a, b) => root.resolvedTabOrder.indexOf(a.id) - root.resolvedTabOrder.indexOf(b.id))
         return result
     }
 
@@ -95,6 +125,28 @@ Item {
 
     function focusActiveItem() {
         swipeView.currentItem?.forceActiveFocus()
+    }
+
+    function persistTabMove(fromIndex: int, toIndex: int): void {
+        if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return
+        const movedTab = root.tabButtonList[fromIndex]
+        const targetTab = root.tabButtonList[toIndex]
+        if (!movedTab || !targetTab) return
+
+        const order = [...root.resolvedTabOrder]
+        const fromOrderIndex = order.indexOf(movedTab.id)
+        const toOrderIndex = order.indexOf(targetTab.id)
+        if (fromOrderIndex < 0 || toOrderIndex < 0) return
+
+        const movedId = order.splice(fromOrderIndex, 1)[0]
+        order.splice(toOrderIndex, 0, movedId)
+        Config.setNestedValue("sidebar.left.tabOrder", order)
+    }
+
+    function syncSelectedTabIndex(): void {
+        if (!root.selectedTabId) return
+        const index = root.tabButtonList.findIndex(tab => tab.id === root.selectedTabId)
+        if (index >= 0 && swipeView.currentIndex !== index) swipeView.currentIndex = index
     }
 
     function applyDevDestination(): void {
@@ -111,10 +163,23 @@ Item {
         if (index >= 0) swipeView.currentIndex = index
     }
 
-    Component.onCompleted: root.applyDevDestination()
+    onTabButtonListChanged: Qt.callLater(root.syncSelectedTabIndex)
+
+    Component.onCompleted: {
+        root.applyDevDestination()
+        Qt.callLater(() => {
+            root.selectedTabId = root.tabButtonList[swipeView.currentIndex]?.id ?? ""
+        })
+    }
     Connections {
         target: DevNavigation
         function onCurrentDestinationChanged(): void { root.applyDevDestination() }
+    }
+    Connections {
+        target: GlobalStates
+        function onSidebarLeftOpenChanged(): void {
+            if (!GlobalStates.sidebarLeftOpen) root.tabEditMode = false
+        }
     }
 
     StyledRectangularShadow {
@@ -124,7 +189,22 @@ Item {
     Rectangle {
         id: sidebarLeftBackground
 
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        readonly property real naturalFitHeight: contentColumn.implicitHeight
+            + contentColumn.anchors.topMargin + root.sidebarPadding
+        height: root.fitToContent
+            ? SidebarGeometry.leftFitHeight(parent.height, naturalFitHeight)
+            : parent.height
+        Behavior on height {
+            enabled: Appearance.animationsEnabled && root.panelVisible
+            NumberAnimation {
+                duration: Appearance.animation.elementResize.duration
+                easing.type: Appearance.animation.elementResize.type
+                easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+            }
+        }
         property bool cardStyle: Config.options?.sidebar?.cardStyle ?? false
         // Resolve one owner for the complete surface. Explicit Ricelin islands
         // override the global worldview; otherwise the selected global style owns it.
@@ -304,10 +384,11 @@ Item {
         }
 
         ColumnLayout {
+            id: contentColumn
             anchors.fill: parent
             anchors.margins: sidebarPadding
             anchors.topMargin: sidebarLeftBackground.angelEverywhere ? sidebarPadding + 4
-                : sidebarLeftBackground.inirEverywhere ? sidebarPadding + 6 : sidebarPadding
+                : sidebarLeftBackground.inirEverywhere ? sidebarPadding + 6 : sidebarPadding - 4
             spacing: sidebarLeftBackground.angelEverywhere ? sidebarPadding + 2
                 : sidebarLeftBackground.inirEverywhere ? sidebarPadding + 4 : sidebarPadding
 
@@ -316,21 +397,53 @@ Item {
                 id: toolbarContainer
                 Layout.alignment: Qt.AlignHCenter
                 enableShadow: false
+                padding: 6
+                implicitHeight: tabBar.implicitHeight + padding * 2
                 transparent: Appearance.zzzEverywhere || Appearance.auroraEverywhere || Appearance.inirEverywhere
                 visible: !root.pluginViewActive
+
                 ToolbarTabBar {
                     id: tabBar
                     Layout.alignment: Qt.AlignHCenter
-                    maxWidth: Math.max(0, root.width - (root.sidebarPadding * 2) - 16)
+                    maxWidth: Math.max(0, root.width - (root.sidebarPadding * 2) - 64)
                     tabButtonList: root.tabButtonList
+                    reorderEnabled: root.tabEditMode
+                    onReorderRequested: (fromIndex, toIndex) => root.persistTabMove(fromIndex, toIndex)
                     // Don't bind to swipeView - let tabBar be the source of truth
                     onCurrentIndexChanged: swipeView.currentIndex = currentIndex
+                }
+
+                ToolbarButton {
+                    id: tabEditButton
+                    Layout.preferredWidth: 38
+                    visible: root.tabButtonList.length > 1
+                    toggled: root.tabEditMode
+                    downAction: () => root.tabEditMode = !root.tabEditMode
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: root.tabEditMode ? "done" : "edit"
+                        iconSize: 19
+                        color: tabEditButton.toggled
+                            ? Appearance.colors.colOnPrimary
+                            : Appearance.colors.colOnLayer2
+                    }
+                    StyledToolTip {
+                        text: root.tabEditMode
+                            ? Translation.tr("Finish arranging tabs")
+                            : Translation.tr("Arrange sidebar tabs")
+                    }
                 }
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.fillHeight: !root.fitToContent
+                implicitHeight: {
+                    if (root.activeTabContentHeight <= 0) return 0
+                    const chromeHeight = contentColumn.anchors.topMargin + root.sidebarPadding
+                        + (toolbarContainer.visible ? toolbarContainer.implicitHeight + contentColumn.spacing : 0)
+                    return Math.max(0, Math.min(root.activeTabContentHeight, root.height - chromeHeight))
+                }
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                     : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
@@ -361,11 +474,14 @@ Item {
                     onCurrentIndexChanged: {
                         tabBar.setCurrentIndex(currentIndex)
                         const currentTab = root.tabButtonList[currentIndex]
+                        root.selectedTabId = currentTab?.id ?? ""
                         if (currentTab?.icon === "neurology") {
                             Ai.ensureInitialized()
                         }
                     }
-                    interactive: !(currentItem?.item?.editMode ?? false) && !(currentItem?.item?.dragPending ?? false)
+                    interactive: !root.tabEditMode
+                        && !(currentItem?.item?.editMode ?? false)
+                        && !(currentItem?.item?.dragPending ?? false)
 
                     clip: true
                     layer.enabled: !Appearance.gameModeMinimal
@@ -443,6 +559,11 @@ Item {
 
         Keys.onPressed: (event) => {
             if (event.key === Qt.Key_Escape) {
+                if (root.tabEditMode) {
+                    root.tabEditMode = false
+                    event.accepted = true
+                    return
+                }
                 // If webapp is open, close it first (go back to list)
                 if (root.pluginViewActive) {
                     root.closeWebApp()
@@ -472,6 +593,17 @@ Item {
                 }
             }
         }
+    }
+
+    // The panel window remains output-height while fit-to-content is active.
+    // Treat the vacated strip as backdrop so clicks there still dismiss it.
+    MouseArea {
+        anchors.top: sidebarLeftBackground.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        enabled: sidebarLeftBackground.height < root.height - 1
+        onClicked: GlobalStates.sidebarLeftOpen = false
     }
 
     // ── Restore last active plugin (DISABLED — webapps) ────────────
