@@ -83,7 +83,7 @@ I wanted my desktop to look and work a certain way and nothing else did exactly 
 ## Screenshots
 
 <details open>
-<summary><b>Material ii</b> — floating bar, sidebars, Material Design aesthetic</summary>
+<summary><b>Material ii</b>: floating bar, sidebars, Material Design aesthetic</summary>
 
 | | |
 |:---:|:---:|
@@ -94,7 +94,7 @@ I wanted my desktop to look and work a certain way and nothing else did exactly 
 </details>
 
 <details>
-<summary><b>Waffle</b> — bottom taskbar, action center, Windows 11 vibes</summary>
+<summary><b>Waffle</b>: bottom taskbar, action center, Windows 11 vibes</summary>
 
 | | |
 |:---:|:---:|
@@ -110,85 +110,82 @@ I wanted my desktop to look and work a certain way and nothing else did exactly 
 
 ## Features
 
-### New in 2.26
-
-- Modular bar layout with a drag editor in Settings
-- Screen Time widget, local-only and opt-in
-- World Clock sidebar widget with timezone management
-- Smoother media title scrolling in the bar
-- Wallpaper shuffle controls in Settings
-- Better dock/taskbar app icon matching
-
 **Two panel families**, switchable on the fly with `Super+Shift+W`:
-- **Material ii** — floating bar, sidebars, dock, 6 visual styles (material, cards, aurora, inir, angel, zzz)
-- **Waffle** — Windows 11-inspired taskbar, start menu, action center, notification center
+- **Material ii**: floating bar, sidebars, dock, and 7 visual styles (Material, Cards, Aurora, iNiR, Angel, ZZZ, Cookie Shapes)
+- **Waffle**: Windows 11-inspired taskbar, start menu, action center, notification center
 
-**Automatic theming** — pick a wallpaper and everything adapts:
+**Automatic theming**. Pick a wallpaper and everything adapts:
 - Shell colors via Material You, propagated to GTK3/4, Qt, terminals, Firefox, Discord, SDDM
-- 10 terminal tools auto-themed (foot, kitty, alacritty, starship, fuzzel, btop, lazygit, yazi)
+- 10 theming targets covering terminals, editors, browsers, Spicetify, Steam, Cava and more
 - Theme presets: Gruvbox, Catppuccin, Rosé Pine, and custom
 
-**Compositor** — built for Niri.
+**Built for Niri.** Hyprland code survives from the fork but is not tested.
 
 <details>
 <summary><b>Full feature list</b></summary>
 
-### Theming & Appearance
+### Theming and appearance
 
-Pick a wallpaper and the entire system follows — shell, GTK/Qt apps, terminals, Firefox, Discord, SDDM login screen. All automatic.
+- **7 visual styles**: Material (solid), Cards, Aurora (glass blur), iNiR (TUI-inspired), Angel (neo-brutalism), ZZZ (poster plates), Cookie Shapes (animated shape morphing)
+- **Dynamic wallpaper colors** via Material You, propagated system-wide
+- **10 terminal and TUI tools auto-themed**: foot, kitty, alacritty, ghostty, wezterm, starship, fuzzel, btop, lazygit, yazi
+- **App theming**: GTK3/4, Qt (via plasma-integration and darkly), Firefox (MaterialFox), Discord/Vesktop (System24), Zed, Spicetify, Steam, SDDM
+- **Theme presets**: Gruvbox, Catppuccin, Rosé Pine, and more, or create your own
+- **Video wallpapers**: mp4/webm/gif with optional blur, or frozen first frame for performance
+- **Desktop widgets**: clock (multiple styles), weather, media controls on the wallpaper layer
 
-- **5 visual styles** — Material (solid), Cards, Aurora (glass blur), iNiR (TUI-inspired), Angel (neo-brutalism)
-- **Dynamic wallpaper colors** via Material You — propagated system-wide
-- **10 terminal tools auto-themed** — foot, kitty, alacritty, starship, fuzzel, pywalfox, btop, lazygit, yazi
-- **App theming** — GTK3/4, Qt (via plasma-integration + darkly), Firefox (MaterialFox), Discord/Vesktop (System24)
-- **Theme presets** — Gruvbox, Catppuccin, Rosé Pine, and more — or create your own
-- **Video wallpapers** — mp4/webm/gif with optional blur, or frozen first frame for performance
-- **SDDM login theme** — Material You colors synced to your wallpaper
-- **Desktop widgets** — clock (multiple styles), weather, media controls on the wallpaper layer
+### Bar
 
-### Sidebars & Widgets (Material ii)
+- **Bar surface styles**: classic, islands, scenic and frame, plus a layout preset gallery
+- **Modular bar layout** with a drag editor in Settings
+- **Pill bar**: a morphing centre island that expands on hover into workspaces, launcher, mixer, media, calendar and a screen recorder
+
+### Sidebars and widgets (Material ii)
 
 Left sidebar (app drawer):
-- **AI Chat** — Gemini, Mistral, OpenRouter, or local models via Ollama
-- **YT Music** — full player with search, queue, and controls
-- **Wallhaven browser** — search and apply wallpapers directly
-- **Anime tracker** — AniList integration with schedule view
-- **Translator** — via Gemini or translate-shell
-- **Draggable widgets** — crypto, media player, quick notes, status rings, weekly calendar
+- **AI Chat**: live model catalogs across Ollama, LM Studio, OpenRouter, Gemini, Groq, Mistral, Cerebras, Anthropic, OpenAI and OpenCode
+- **YT Music**: cookie-less InnerTube player with search, queue, radio and synced lyrics
+- **Wallhaven browser**: search and apply wallpapers directly
+- **Anime tracker**: AniList integration with schedule view
+- **Translator**: via Gemini or translate-shell
+- **Draggable widgets**: crypto, media player, quick notes, status rings, weekly calendar
 
 Right sidebar:
 - **Calendar** with event integration
 - **Notification center**
-- **Quick toggles** — WiFi, Bluetooth, night light, DND, power profiles, WARP VPN, EasyEffects
-- **Volume mixer** — per-app control
-- **Bluetooth & WiFi** device management
+- **Quick toggles**: WiFi, Bluetooth, night light, DND, power profiles, WARP VPN, EasyEffects
+- **Volume mixer** with per-app control
+- **Bluetooth and WiFi** device management
 - **Pomodoro timer**, **todo list**, **calculator**, **notepad**
-- **System monitor** — CPU, RAM, temperature
+- **System monitor**: CPU, RAM, temperature
 
 ### Tools
 
-- **Workspace overview** — adapted for Niri's scrolling model, with app search and calculator
-- **Window switcher** — Alt+Tab across all workspaces
-- **Clipboard manager** — history with search and image preview
-- **Region tools** — screenshots, screen recording, OCR, reverse image search
-- **Cheatsheet** — keybind viewer pulled from your Niri config
-- **Media controls** — full MPRIS player with multiple layout presets
-- **On-screen display** — volume, brightness, and media OSD
-- **Song recognition** — Shazam-style identification via SongRec
-- **Voice search** — record and search via Gemini
+- **Workspace overview**: adapted for Niri's scrolling model, with app search and calculator
+- **Dashboard hub**: configurable three-column overlay with agenda, notifications, todo, notes, media and weather
+- **Workspace edge strip**: hover rail with live workspace previews and drag-to-reorder
+- **Window switcher**: Alt+Tab across all workspaces
+- **Clipboard manager**: history with search and image preview
+- **Region tools**: screenshots, screen recording, OCR, reverse image search
+- **Cheatsheet**: keybind viewer pulled from your Niri config
+- **Media controls**: full MPRIS player with multiple layout presets
+- **On-screen display**: volume, brightness, and media OSD
+- **Song recognition**: Shazam-style identification via SongRec
+- **Voice input**: local whisper.cpp when installed, or a connected Groq, Gemini or OpenAI backend
 
 ### System
 
-- **GUI settings** — configure everything without touching files
-- **GameMode** — auto-disables effects for fullscreen apps
-- **Auto-updates** — `inir update` with rollback, migrations, and user change preservation
+- **GUI settings**: configure everything without touching files
+- **GameMode**: auto-disables effects for fullscreen apps
+- **Auto-updates**: `inir update` with rollback, migrations, and user change preservation
 - **Lock screen** and **session screen** (logout/reboot/shutdown/suspend)
-- **Polkit agent**, **on-screen keyboard**, **autostart manager**
-- **9 languages** — auto-detection, with AI-assisted translation generation
-- **Night light** — scheduled or manual
-- **Weather** — Open-Meteo, supports GPS, manual coordinates, or city name
-- **Battery management** — configurable thresholds, auto-suspend on critical
-- **Shell update checker** — notifies when new versions are available
+- **Polkit agent**, **on-screen keyboard**, **autostart manager** backed by niri's own startup file
+- **15 languages** with auto-detection
+- **Night light**: scheduled or manual
+- **Weather**: Open-Meteo, supports GPS, manual coordinates, or city name
+- **Battery management**: configurable thresholds, auto-suspend on critical
+- **Custom event sounds** with a master volume and per-event audio files
+- **Shell update checker**: notifies when new versions are available
 
 </details>
 
@@ -199,11 +196,11 @@ Right sidebar:
 ```bash
 git clone https://github.com/snowarch/inir.git
 cd inir
-./setup install       # interactive — asks before each step
-./setup install -y    # automatic — no questions asked
+./setup install       # interactive, asks before each step
+./setup install -y    # automatic, no questions asked
 ```
 
-The installer handles dependencies, system config, theming — everything. After install, run `inir run` to start the shell, or log out and back in.
+The installer handles dependencies, system config and theming. After install, run `inir run` to start the shell, or log out and back in.
 
 ```bash
 inir run                        # launch the shell
@@ -213,7 +210,7 @@ inir doctor                     # auto-diagnose and fix
 inir update                     # pull + migrate + restart
 ```
 
-**Supported distros:** Arch (automated installer). Other distros can install manually — see [PACKAGES.md](docs/PACKAGES.md).
+**Supported distros:** Arch (automated installer). Other distros can install manually, see [PACKAGES.md](docs/PACKAGES.md).
 
 | Method | Command |
 |--------|---------|
@@ -227,7 +224,7 @@ inir update                     # pull + migrate + restart
 
 | Key | Action |
 |-----|--------|
-| `Super+Space` | Overview — search apps, navigate workspaces |
+| `Super+Space` | Overview: search apps, navigate workspaces |
 | `Alt+Tab` | Window switcher |
 | `Super+V` | Clipboard history |
 | `Super+Shift+S` | Screenshot region |
@@ -241,7 +238,7 @@ Full list: [docs/KEYBINDS.md](docs/KEYBINDS.md)
 
 ## Wallpapers
 
-15 wallpapers ship bundled. For more, check [iNiR-Walls](https://github.com/snowarch/iNiR-Walls) — a curated collection that works well with the Material You pipeline.
+15 wallpapers ship bundled. For more, check [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), a curated collection that works well with the Material You pipeline.
 
 ---
 
@@ -250,7 +247,7 @@ Full list: [docs/KEYBINDS.md](docs/KEYBINDS.md)
 | | |
 |---|---|
 | [INSTALL.md](docs/INSTALL.md) | Installation guide |
-| [SETUP.md](docs/SETUP.md) | Setup commands — updates, migrations, rollback |
+| [SETUP.md](docs/SETUP.md) | Setup commands: updates, migrations, rollback |
 | [KEYBINDS.md](docs/KEYBINDS.md) | All keyboard shortcuts |
 | [IPC.md](docs/IPC.md) | IPC targets for scripting and keybinds |
 | [PACKAGES.md](docs/PACKAGES.md) | Every dependency and why it's there |
@@ -281,7 +278,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code patterns, and
 
 ## Credits
 
-- [**end-4**](https://github.com/end-4/dots-hyprland): original illogical-impulse for Hyprland
+- [**end-4**](https://github.com/end-4/dots-hyprland): original illogical-impulse for Hyprland, which iNiR started as a fork of
+- [**Ricelin**](https://github.com/Gakuseei/Ricelin) by [**Gakuseei**](https://github.com/Gakuseei): the shell whose pill bar and "washi and flame" design language iNiR adapted into its Ricelin dialect (pill bar, island surfaces, kanji headers)
 - [**Quickshell**](https://quickshell.outfoxxed.me/): the framework powering this shell
 - [**Niri**](https://github.com/YaLTeR/niri): the scrolling tiling Wayland compositor
 

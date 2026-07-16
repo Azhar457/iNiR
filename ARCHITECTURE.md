@@ -49,23 +49,23 @@ Style dispatch priority: **zzz > angel > inir > aurora > material** (`Appearance
 
 ```
 shell.qml                     # Root entry — loads services, selects panel family
-ShellIiPanels.qml             # Material Design family (29 panels)
-ShellWafflePanels.qml         # Windows 11 family (25 panels)
+ShellIiPanels.qml             # Material Design family (30 panels)
+ShellWafflePanels.qml         # Windows 11 family (27 panels)
 GlobalStates.qml              # Runtime UI state (panel open/closed booleans)
 FamilyTransitionOverlay.qml   # Animated family switch
 settings.qml                  # Settings GUI (separate Quickshell config)
 welcome.qml                   # First-run wizard
 killDialog.qml                # Process kill confirmation
 
-modules/                      # 33 UI module directories
+modules/                      # 35 UI module directories
 ├── common/                   # Shared infrastructure
-│   ├── Appearance.qml        # ii visual tokens (1233 lines)
-│   ├── Config.qml            # Central config (JsonAdapter, 2329 lines)
-│   └── widgets/              # 154 reusable widgets + qmldir
+│   ├── Appearance.qml        # ii visual tokens (1537 lines)
+│   ├── Config.qml            # Central config (JsonAdapter, 2944 lines)
+│   └── widgets/              # 167 reusable widgets + qmldir
 ├── bar/                      # Top bar (ii family, 35 files)
-├── sidebarLeft/              # AI chat, YT Music, widgets (70 files incl. subdirs)
-├── sidebarRight/             # Toggles, calendar, tools (74 files incl. subdirs)
-├── settings/                 # All config UI pages (30 files)
+├── sidebarLeft/              # AI chat, YT Music, widgets (78 files incl. subdirs)
+├── sidebarRight/             # Toggles, calendar, tools (82 files incl. subdirs)
+├── settings/                 # All config UI pages (37 files)
 ├── dock/                     # App dock (all 4 positions)
 ├── overview/                 # Workspace overview + app search
 ├── waffle/                   # Windows 11 family
@@ -75,9 +75,9 @@ modules/                      # 33 UI module directories
 │   ├── notificationCenter/   # Notification list + calendar
 │   ├── looks/Looks.qml       # Waffle visual tokens
 │   └── [13 more subdirs]
-└── [25 more modules]
+└── [27 more modules]
 
-services/                     # 61 top-level runtime singletons (+ services/deferred/)
+services/                     # 64 top-level runtime singletons (+ services/deferred/)
 ├── qmldir                    # Service module registration
 ├── Audio.qml                 # PipeWire volume, mute, per-app mixer
 ├── NiriService.qml           # Niri compositor IPC (1574 lines)
@@ -89,7 +89,7 @@ services/                     # 61 top-level runtime singletons (+ services/defe
 ├── DevNavigation.qml         # Session-only semantic UI navigation + dev IPC
 └── [more services]
 
-scripts/                      # Shell/fish/python helpers (26 top-level entries)
+scripts/                      # Shell/fish/python helpers (25 scripts, 23 subdirs)
 ├── inir                      # CLI launcher (bash, IPC + lifecycle commands)
 ├── colors/                   # Color generation pipeline
 │   ├── applycolor.sh         # Orchestrator
@@ -100,12 +100,12 @@ scripts/                      # Shell/fish/python helpers (26 top-level entries)
 
 sdata/                        # Install/update lifecycle
 ├── lib/                      # Shared bash libraries
-├── migrations/               # Numbered scripts (001–031)
+├── migrations/               # Numbered scripts (001–032)
 ├── subcmd-install/           # Install phases
 └── subcmd-uninstall/         # Uninstall phases
 
 defaults/                     # Shipped defaults
-├── config.json               # Default config (1762 lines, 62 top-level keys)
+├── config.json               # Default config (2173 lines, 64 top-level keys)
 ├── niri/                     # Niri config templates
 └── [GTK, KDE, fuzzel, etc.]
 
@@ -160,8 +160,9 @@ Handlers registered via `IpcHandler { target: "name" }` in QML.
 Called externally: `inir <target> <function> [args]`
 
 The always-instantiated `dev` target provides session-only semantic navigation
-for lazy UI. `inir dev audit --all-families` uses that inventory to instantiate
-safe destinations, inspect fresh logs, and restore the original panel family.
+for lazy UI. `inir dev audit` scopes that inventory to changed UI areas or
+explicit destinations, inspects fresh logs, and restores the original panel
+family. `--all --all-families` requests the exhaustive two-family audit.
 
 All functions must declare return types (`string`, `int`, `bool`, `real`, `color`, `void`).
 
