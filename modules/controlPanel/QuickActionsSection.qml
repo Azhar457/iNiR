@@ -87,7 +87,9 @@ PanelSurface {
             icon: "screenshot_monitor"
             onClicked: {
                 GlobalStates.controlPanelOpen = false
-                GlobalStates.regionSelectorOpen = true
+                // Resolve action/mode explicitly — a bare regionSelectorOpen=true
+                // inherits whatever a previous record/lens use left behind.
+                GlobalStates.openRegionScreenshot()
             }
         }
 

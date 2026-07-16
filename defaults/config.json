@@ -1375,6 +1375,9 @@
         "weeb": 0
     },
     "regionSelector": {
+        "rememberSnipChoice": true,
+        "lastAction": 0,
+        "lastMode": 0,
         "circle": {
             "padding": 10,
             "strokeWidth": 6

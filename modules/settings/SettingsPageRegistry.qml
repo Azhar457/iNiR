@@ -1086,7 +1086,7 @@ Singleton {
             keywords: ["notification", "margin", "edge", "spacing", "gap"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
+            pageIndex: 6, pageName: root.pages[6].name,
             section: Translation.tr("Region selector (screen snipping/Google Lens)"),
             label: Translation.tr("Region selector"),
             description: Translation.tr("Screen snipping target regions and Lens behaviour"),
@@ -1140,6 +1140,13 @@ Singleton {
             label: Translation.tr("Fit left sidebar to widgets"),
             description: Translation.tr("Shrink the left sidebar to its content on the Widgets tab instead of full height"),
             keywords: ["sidebar", "left", "widgets", "fit", "collapse", "compact", "shrink", "height"]
+        },
+        {
+            pageIndex: 6, pageName: root.pages[6].name,
+            section: Translation.tr("Region selector (screen snipping/Google Lens)"),
+            label: Translation.tr("Remember last snip choice"),
+            description: Translation.tr("Reopen the unified snip menu with the last action and shape picked in its toolbar"),
+            keywords: ["screenshot", "snip", "remember", "region", "rectangle", "default", "action", "shape"]
         },
         {
             pageIndex: 7, pageName: root.pages[7].name,

@@ -39,6 +39,15 @@ Toolbar {
         return 0;
     }
 
+    function persistSnipChoice(): void {
+        if (!(Config.options?.regionSelector?.rememberSnipChoice ?? true)) return
+        const isRecord = root.action === RegionSelection.SnipAction.Record
+            || root.action === RegionSelection.SnipAction.RecordWithSound
+        const updates = { "regionSelector.lastMode": root.selectionMode }
+        if (!isRecord) updates["regionSelector.lastAction"] = root.action
+        Config.setNestedValues(updates)
+    }
+
     // Action selector
     ToolbarTabBar {
         id: actionBar
@@ -48,6 +57,7 @@ Toolbar {
             const a = root.actionList[currentIndex]?.action;
             if (a !== undefined && a !== root.action) root.action = a;
         }
+        onUserSelected: root.persistSnipChoice()
     }
 
     // Region shape (applies when drawing a region)
@@ -61,6 +71,7 @@ Toolbar {
         onCurrentIndexChanged: {
             root.selectionMode = currentIndex === 0 ? RegionSelection.SelectionMode.RectCorners : RegionSelection.SelectionMode.Circle;
         }
+        onUserSelected: root.persistSnipChoice()
     }
 
     // Instant tools (no region selection needed)

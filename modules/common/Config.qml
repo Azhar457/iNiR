@@ -2204,6 +2204,11 @@ Singleton {
             property JsonObject regionSelector: JsonObject {
                 property int borderSize: 4
                 property int numSize: 48
+                // Remember the snip action/shape picked in the overlay toolbar,
+                // so the screenshot keybind reopens with the same choice.
+                property bool rememberSnipChoice: true
+                property int lastAction: 0 // SnipAction ordinal: 0 Shot, 1 Edit, 2 Search, 3 OCR (Record never persists)
+                property int lastMode: 0 // SelectionMode ordinal: 0 rectangle, 1 circle
                 property JsonObject targetRegions: JsonObject {
                     property bool windows: true
                     property bool layers: false

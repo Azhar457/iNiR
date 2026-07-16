@@ -601,6 +601,20 @@ ContentPage {
 
         SettingsGroup {
             ContentSubsection {
+                title: Translation.tr("Snip behavior")
+
+                SettingsSwitch {
+                    buttonIcon: "history"
+                    text: Translation.tr("Remember last snip choice")
+                    checked: Config.options?.regionSelector?.rememberSnipChoice ?? true
+                    onCheckedChanged: Config.setNestedValue("regionSelector.rememberSnipChoice", checked)
+                    StyledToolTip {
+                        text: Translation.tr("The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.")
+                    }
+                }
+            }
+
+            ContentSubsection {
                 title: Translation.tr("Hint target regions")
                 ConfigRow {
                     uniform: true

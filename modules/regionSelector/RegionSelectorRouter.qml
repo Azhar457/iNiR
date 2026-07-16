@@ -16,7 +16,9 @@ Scope {
         GlobalStates.regionSelectorMode = mode
         GlobalStates.regionSelectorOpen = true
     }
-    function screenshot(): void { open(RegionSelection.SnipAction.Copy, RegionSelection.SelectionMode.RectCorners) }
+    // Dedicated screenshot calls are always a rectangular capture. The unified
+    // menu is the only entry point allowed to restore a previous toolbar choice.
+    function screenshot(): void { GlobalStates.openRegionScreenshot() }
     function search(): void {
         open(RegionSelection.SnipAction.Search,
             (Config.options?.search?.imageSearch?.useCircleSelection ?? false)
@@ -25,7 +27,7 @@ Scope {
     function ocr(): void { open(RegionSelection.SnipAction.CharRecognition, RegionSelection.SelectionMode.RectCorners) }
     function record(): void { open(RegionSelection.SnipAction.Record, RegionSelection.SelectionMode.RectCorners) }
     function recordWithSound(): void { open(RegionSelection.SnipAction.RecordWithSound, RegionSelection.SelectionMode.RectCorners) }
-    function menu(): void { screenshot() }
+    function menu(): void { GlobalStates.openRememberedRegionTool() }
 
     IpcHandler {
         target: "region"
@@ -36,6 +38,14 @@ Scope {
         function record(): void { root.record() }
         function recordWithSound(): void { root.recordWithSound() }
         function menu(): void { root.menu() }
+        function dismiss(): void { GlobalStates.regionSelectorOpen = false }
+        function current(): string {
+            return JSON.stringify({
+                open: GlobalStates.regionSelectorOpen,
+                action: GlobalStates.regionSelectorAction,
+                mode: GlobalStates.regionSelectorMode
+            })
+        }
     }
 
     Loader {
