@@ -43,12 +43,17 @@ inir dev list | jq -r '.[].id'
 inir dev open sidebar-left/anime-schedule
 inir dev close
 inir dev audit
+inir dev audit sidebar-left/ai settings/ai
+inir dev audit --all --all-families
 ```
 
-`inir dev audit` visits every safe destination for the active panel family,
-closes it again, and reports new QML warnings or errors against the destination
-that triggered them. Destructive actions such as locking, recording, power
-commands, and wallpaper mutation are excluded.
+`inir dev audit` selects destinations related to changed area-specific files in
+the current worktree. Destination arguments select an exact scope, while
+`--all` requests every safe destination and `--all-families` includes both ii
+and waffle. Each visited destination is closed again and new QML warnings or
+errors are attributed to the destination that triggered them. Destructive
+actions such as locking, recording, power commands, and wallpaper mutation are
+excluded.
 
 ---
 
@@ -160,30 +165,36 @@ Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done.
 
 | Function | Description |
 |----------|-------------|
-| `screenshot` | Take a region screenshot |
+| `screenshot` | Take a rectangular region screenshot |
 | `search` | Image search (Google Lens) |
 | `googleLens` | Start a region capture for Google Lens |
 | `ocr` | OCR text recognition |
 | `record` | Record region (no audio) |
 | `recordWithSound` | Record region with audio |
+| `menu` | Open the unified snip menu, optionally restoring its last toolbar choice |
+| `dismiss` | Close the selector overlay |
+| `current` | Return the selector state (open/action/mode) as JSON |
 
 ```kdl
 bind "Super+Shift+S" { spawn "inir" "region" "screenshot"; }
 bind "Super+Shift+X" { spawn "inir" "region" "ocr"; }
 bind "Super+Shift+A" { spawn "inir" "region" "search"; }
+bind "Ctrl+Shift+S" { spawn "inir" "region" "menu"; }
 ```
 
 ---
 
 ### voiceSearch
 
-Voice search using Gemini API. Records from microphone, transcribes with Gemini, opens Google search.
+Provider-neutral voice input for web search and AI dictation. Auto prefers local whisper.cpp, then connected Groq, Gemini and OpenAI speech backends. Keys stay in the system keyring and are passed to adapters through the process environment.
 
 | Function | Description |
 |----------|-------------|
-| `start` | Start recording |
-| `stop` | Stop recording |
+| `start` | Start recording for voice web search |
+| `stop` | Stop the active recording or transcription |
 | `toggle` | Toggle recording |
+| `refresh` | Re-detect local and connected speech backends |
+| `status` | Return backend, local detection, recording and error state as JSON |
 
 ```kdl
 bind "Super+Shift+V" { spawn "inir" "voiceSearch" "toggle"; }
@@ -370,6 +381,11 @@ Left sidebar (AI chat, apps).
 | `toggle` | Open/close left sidebar |
 | `open` | Show left sidebar |
 | `close` | Hide left sidebar |
+| `expand` | Open the sidebar in its wide Ctrl+O layout |
+| `compact` | Return the sidebar to its normal width |
+| `status` | Return open, expanded and detached state as JSON |
+| `detach` | Move AI chat into its Ctrl+P standalone window |
+| `attach` | Return AI chat from the standalone window to the sidebar |
 
 ---
 
@@ -556,14 +572,17 @@ Clipboard history service. The backend that makes clipboard panel work. You prob
 
 ### ai
 
-AI chat service. Multi-provider (Gemini, OpenAI, Mistral) with tool support.
+Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode.
 
 | Function | Description |
 |----------|-------------|
-| `ensureInitialized` | Force-load models and API keys |
-| `diagnose` | Dump current AI state (model, keys, config) as JSON |
-| `run <text>` | Send a message or `/command` to the AI chat |
-| `runGet <text>` | Run AI command and return the last response |
+| `ensureInitialized` | Force-load models, provider catalogs and API keys |
+| `diagnose` | Dump current AI, catalog and tool state as JSON |
+| `refreshCatalog` | Refresh every live provider model catalog |
+| `catalog <query>` | Search up to 100 normalized live model records |
+| `providers` | Return provider health, key state and live model counts |
+| `run <text>` | Send a message or compatibility `/command` to AI chat |
+| `runGet <text>` | Run an AI command and return the last response |
 
 ---
 

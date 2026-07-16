@@ -2,11 +2,11 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: ad4bc751464b0125
+# IPC.md hash: 0867007e6976de40
 # Targets: 58
 
 declare -gA IPC_TARGET_DESC=(
-  [ai]="AI chat service. Multi-provider (Gemini, OpenAI, Mistral) with tool support."
+  [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
   [altSwitcher]="Alt+Tab window switcher. Works across workspaces, unlike some other implementations we won't name."
   [appCatalog]="App catalog service. Browse, search, and install curated applications."
   [audio]="Volume and mute control."
@@ -53,7 +53,7 @@ declare -gA IPC_TARGET_DESC=(
   [sidebarRight]="Right sidebar (quick toggles, notepad, settings)."
   [taskview]="Waffle task view (Win+Tab style)."
   [tiling]="Tiling layout overlay. Pick or cycle through tiling presets for the current workspace."
-  [voiceSearch]="Voice search using Gemini API. Records from microphone, transcribes with Gemini, opens Google search."
+  [voiceSearch]="Provider-neutral voice input for web search and AI dictation. Auto prefers local whisper.cpp, then connected Groq, Gemini and OpenAI speech backends. Keys stay in the system keyring and are passed to adapters through the process environment."
   [wactionCenter]="Waffle action center (quick settings)."
   [waffleAltSwitcher]="Waffle Alt+Tab window switcher. Separate from the ii \`altSwitcher\`, supports quick-switch (first tab switches instantly, second opens UI) and no-visual-UI mode."
   [wallpaperSelector]="Wallpaper picker grid."
@@ -165,17 +165,17 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [panelFamily]="cycle set"
   [pill]="open close toggle state"
   [recordingOsd]="toggle show hide"
-  [region]="screenshot search googleLens ocr record recordWithSound menu"
+  [region]="screenshot search googleLens ocr record recordWithSound menu dismiss current"
   [search]="toggle close open"
   [session]="toggle close open"
   [settings]="open toggle"
   [settingsNav]="page count current"
   [shellUpdate]="toggle open close check performUpdate dismiss undismiss diagnose"
-  [sidebarLeft]="toggle close open detach attach"
+  [sidebarLeft]="toggle close open expand compact status detach attach"
   [sidebarRight]="toggle close open"
   [taskview]="toggle close open"
   [tiling]="toggle open hide cycle showOsd promote"
-  [voiceSearch]="start stop toggle"
+  [voiceSearch]="start stop toggle refresh status"
   [wactionCenter]="toggle"
   [waffleAltSwitcher]="open close toggle next previous"
   [wallpaperSelector]="toggle open close toggleOnMonitor random"
@@ -189,13 +189,13 @@ declare -gA IPC_TARGET_FUNCTIONS=(
 )
 
 declare -gA IPC_FUNCTION_DESC=(
-  ["ai:ensureInitialized"]="Force-load models and API keys"
-  ["ai:diagnose"]="Dump current AI state (model, keys, config) as JSON"
-  ["ai:refreshCatalog"]=""
-  ["ai:catalog"]=""
-  ["ai:providers"]=""
-  ["ai:run"]="Send a message or \`/command\` to the AI chat"
-  ["ai:runGet"]="Run AI command and return the last response"
+  ["ai:ensureInitialized"]="Force-load models, provider catalogs and API keys"
+  ["ai:diagnose"]="Dump current AI, catalog and tool state as JSON"
+  ["ai:refreshCatalog"]="Refresh every live provider model catalog"
+  ["ai:catalog"]="Search up to 100 normalized live model records"
+  ["ai:providers"]="Return provider health, key state and live model counts"
+  ["ai:run"]="Send a message or compatibility \`/command\` to AI chat"
+  ["ai:runGet"]="Run an AI command and return the last response"
   ["altSwitcher:open"]="Open switcher"
   ["altSwitcher:close"]="Close switcher"
   ["altSwitcher:toggle"]="Toggle switcher"
@@ -323,13 +323,15 @@ declare -gA IPC_FUNCTION_DESC=(
   ["recordingOsd:toggle"]="Stop the current recording (if active)"
   ["recordingOsd:show"]="Reveal the recording OSD pill"
   ["recordingOsd:hide"]="Collapse/hide the recording OSD pill"
-  ["region:screenshot"]="Take a region screenshot"
+  ["region:screenshot"]="Take a rectangular region screenshot"
   ["region:search"]="Image search (Google Lens)"
   ["region:googleLens"]="Start a region capture for Google Lens"
   ["region:ocr"]="OCR text recognition"
   ["region:record"]="Record region (no audio)"
   ["region:recordWithSound"]="Record region with audio"
-  ["region:menu"]=""
+  ["region:menu"]="Open the unified snip menu, optionally restoring its last toolbar choice"
+  ["region:dismiss"]="Close the selector overlay"
+  ["region:current"]="Return the selector state (open/action/mode) as JSON"
   ["search:toggle"]="Open/close start menu"
   ["search:close"]="Close start menu"
   ["search:open"]="Open start menu"
@@ -352,8 +354,11 @@ declare -gA IPC_FUNCTION_DESC=(
   ["sidebarLeft:toggle"]="Open/close left sidebar"
   ["sidebarLeft:close"]="Hide left sidebar"
   ["sidebarLeft:open"]="Show left sidebar"
-  ["sidebarLeft:detach"]=""
-  ["sidebarLeft:attach"]=""
+  ["sidebarLeft:expand"]="Open the sidebar in its wide Ctrl+O layout"
+  ["sidebarLeft:compact"]="Return the sidebar to its normal width"
+  ["sidebarLeft:status"]="Return open, expanded and detached state as JSON"
+  ["sidebarLeft:detach"]="Move AI chat into its Ctrl+P standalone window"
+  ["sidebarLeft:attach"]="Return AI chat from the standalone window to the sidebar"
   ["sidebarRight:toggle"]="Open/close right sidebar"
   ["sidebarRight:close"]="Hide right sidebar"
   ["sidebarRight:open"]="Show right sidebar"
@@ -366,9 +371,11 @@ declare -gA IPC_FUNCTION_DESC=(
   ["tiling:cycle"]="Cycle to next tiling preset (shows OSD)"
   ["tiling:showOsd"]="Flash the current tiling preset OSD"
   ["tiling:promote"]="Promote focused window to master position"
-  ["voiceSearch:start"]="Start recording"
-  ["voiceSearch:stop"]="Stop recording"
+  ["voiceSearch:start"]="Start recording for voice web search"
+  ["voiceSearch:stop"]="Stop the active recording or transcription"
   ["voiceSearch:toggle"]="Toggle recording"
+  ["voiceSearch:refresh"]="Re-detect local and connected speech backends"
+  ["voiceSearch:status"]="Return backend, local detection, recording and error state as JSON"
   ["wactionCenter:toggle"]="Open/close action center"
   ["waffleAltSwitcher:open"]="Open switcher"
   ["waffleAltSwitcher:close"]="Close switcher"
@@ -454,7 +461,8 @@ bind "Mod+Alt+P" { spawn "inir" "mpris" "previous"; }'
   [pill]='bind "Super+V" repeat=false { spawn "inir" "pill" "toggle" "clipboard"; }'
   [region]='bind "Super+Shift+S" { spawn "inir" "region" "screenshot"; }
 bind "Super+Shift+X" { spawn "inir" "region" "ocr"; }
-bind "Super+Shift+A" { spawn "inir" "region" "search"; }'
+bind "Super+Shift+A" { spawn "inir" "region" "search"; }
+bind "Ctrl+Shift+S" { spawn "inir" "region" "menu"; }'
   [session]='bind "Super+Shift+E" { spawn "inir" "session" "toggle"; }'
   [settings]='bind "Super+Comma" { spawn "inir" "settings"; }'
   [voiceSearch]='bind "Super+Shift+V" { spawn "inir" "voiceSearch" "toggle"; }'

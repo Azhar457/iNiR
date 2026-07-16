@@ -3023,21 +3023,24 @@ run_ipc_target_command() {
 }
 
 run_dev_audit() {
-    local include_all=false
+    local include_all_families=false include_all_destinations=false
+    local -a requested_destinations=()
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --all-families) include_all=true; shift ;;
+            --all-families) include_all_families=true; shift ;;
+            --all) include_all_destinations=true; shift ;;
             -h|--help)
                 cat <<'EOF'
-Usage: inir dev audit [--all-families]
+Usage: inir dev audit [--all] [--all-families] [DESTINATION...]
 
-Visit every safe development destination through IPC, close it again, and
-attribute new QML warnings or errors to the destination that triggered them.
-The active panel family is audited by default.
+Audit destinations related to changed worktree files, or the destinations
+named explicitly. --all restores the exhaustive audit. The active panel
+family is used by default; --all-families audits both ii and waffle.
 EOF
                 return 0
                 ;;
-            *) echo "Unknown option: $1" >&2; return 1 ;;
+            --*) echo "Unknown option: $1" >&2; return 1 ;;
+            *) requested_destinations+=("$1"); shift ;;
         esac
     done
 
@@ -3062,11 +3065,116 @@ EOF
         return 1
     fi
 
+    local -A selected_ids=()
+    local destination changed_path area normalized_area normalized_id
+    select_destination() {
+        local candidate="$1"
+        if ! jq -e --arg id "$candidate" '.[] | select(.id == $id and .safe == true)' >/dev/null <<<"$inventory"; then
+            echo "Unknown or unsafe development destination: $candidate" >&2
+            return 1
+        fi
+        selected_ids["$candidate"]=1
+    }
+    select_prefix() {
+        local prefix="$1"
+        while IFS= read -r destination; do
+            [[ -n "$destination" ]] && selected_ids["$destination"]=1
+        done < <(jq -r --arg prefix "$prefix" '.[] | select(.safe == true and (.id == $prefix or (.id | startswith($prefix + "/")))) | .id' <<<"$inventory")
+        return 0
+    }
+    select_all_destinations() {
+        while IFS= read -r destination; do
+            [[ -n "$destination" ]] && selected_ids["$destination"]=1
+        done < <(jq -r '.[] | select(.safe == true) | .id' <<<"$inventory")
+        return 0
+    }
+    select_settings_area() {
+        normalized_area="$(tr '[:upper:]' '[:lower:]' <<<"$1" | tr -cd '[:alnum:]')"
+        while IFS= read -r destination; do
+            normalized_id="$(tr '[:upper:]' '[:lower:]' <<<"${destination#settings/}" | tr -cd '[:alnum:]')"
+            [[ "$normalized_id" == "$normalized_area" ]] && selected_ids["$destination"]=1
+        done < <(jq -r '.[] | select(.safe == true and (.id | startswith("settings/"))) | .id' <<<"$inventory")
+        return 0
+    }
+
+    if [[ ${#requested_destinations[@]} -gt 0 ]]; then
+        for destination in "${requested_destinations[@]}"; do
+            select_destination "$destination" || return 1
+        done
+    elif [[ "$include_all_destinations" == true ]]; then
+        select_all_destinations
+    elif git -C "$launcher_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        while IFS= read -r -d '' changed_path; do
+            case "$changed_path" in
+                GlobalStates.qml|ShellIiPanels.qml|ShellWafflePanels.qml|shell.qml|settings.qml|waffleSettings.qml|defaults/config.json|modules/common/Config.qml|modules/common/Appearance.qml|modules/common/Looks.qml|modules/common/widgets/*)
+                    : ;; # Broad files do not turn a focused audit into an exhaustive one.
+                modules/sidebarLeft/aiChat/*|modules/sidebarLeft/AiChat.qml|modules/sidebarLeft/ApiInputBoxIndicator.qml|services/Ai.qml|services/ai/*)
+                    select_prefix "sidebar-left/ai"; select_prefix "settings/ai" ;;
+                modules/sidebarLeft/widgets/*|modules/sidebarLeft/WidgetsView.qml)
+                    select_prefix "sidebar-left/widgets" ;;
+                modules/sidebarLeft/*)
+                    area="${changed_path#modules/sidebarLeft/}"
+                    area="${area%%/*}"
+                    case "$area" in
+                        *AnimeSchedule*) select_prefix "sidebar-left/anime-schedule" ;;
+                        *Anime*) select_prefix "sidebar-left/anime" ;;
+                        *News*) select_prefix "sidebar-left/news" ;;
+                        *Software*) select_prefix "sidebar-left/software" ;;
+                        *YtMusic*|innertune) select_prefix "sidebar-left/ytmusic" ;;
+                        *Translator*) select_prefix "sidebar-left/translator" ;;
+                        *Wallhaven*) select_prefix "sidebar-left/wallhaven" ;;
+                        *Tools*|plugins) select_prefix "sidebar-left/tools" ;;
+                        *) : ;;
+                    esac ;;
+                modules/sidebarRight/notifications/*) select_prefix "sidebar-right/notifications" ;;
+                modules/sidebarRight/events/*) select_prefix "sidebar-right/events" ;;
+                modules/sidebarRight/todo/*) select_prefix "sidebar-right/todo" ;;
+                modules/sidebarRight/notepad/*) select_prefix "sidebar-right/notepad" ;;
+                modules/sidebarRight/calculator/*) select_prefix "sidebar-right/calculator" ;;
+                modules/sidebarRight/weather/*) select_prefix "sidebar-right/weather" ;;
+                modules/sidebarRight/*) : ;;
+                modules/controlPanel/*) select_prefix "control-panel" ;;
+                modules/dashboard/*) select_prefix "dashboard" ;;
+                modules/mediaControls/*) select_prefix "media-controls" ;;
+                modules/clipboard/*) select_prefix "clipboard"; select_prefix "overview/clipboard" ;;
+                modules/cheatsheet/*) select_prefix "cheatsheet" ;;
+                modules/overview/*) select_prefix "overview" ;;
+                modules/wallpaperSelector/*) select_prefix "wallpaper" ;;
+                modules/tilingAssistance/*) select_prefix "tiling" ;;
+                modules/waffle/startMenu/*) select_prefix "waffle/start"; select_prefix "waffle/all-apps"; select_prefix "waffle/search" ;;
+                modules/waffle/actionCenter/*) select_prefix "waffle/action-center" ;;
+                modules/waffle/notificationCenter/*) select_prefix "waffle/notification-center" ;;
+                modules/waffle/widgets/*) select_prefix "waffle/widgets" ;;
+                modules/waffle/taskView/*) select_prefix "waffle/taskview" ;;
+                modules/settings/SettingsOverlay.qml|modules/settings/SettingsPageRegistry.qml)
+                    : ;;
+                modules/settings/*Config.qml)
+                    area="${changed_path##*/}"; area="${area%Config.qml}"; select_settings_area "$area" ;;
+                modules/waffle/settings/pages/W*Page.qml)
+                    area="${changed_path##*/}"; area="${area#W}"; area="${area%Page.qml}"; select_settings_area "$area" ;;
+                services/Notifications.qml) select_prefix "sidebar-right/notifications"; select_prefix "waffle/notification-center" ;;
+                services/Weather.qml) select_prefix "sidebar-right/weather"; select_prefix "dashboard" ;;
+                services/Events.qml|services/Calendar*.qml) select_prefix "sidebar-right/calendar"; select_prefix "sidebar-right/events"; select_prefix "dashboard" ;;
+                services/Todo.qml) select_prefix "sidebar-right/todo"; select_prefix "dashboard" ;;
+                services/*) : ;;
+            esac
+        done < <({ git -C "$launcher_root" diff --name-only -z HEAD; git -C "$launcher_root" ls-files --others --exclude-standard -z; } | sort -zu)
+    fi
+
+    if [[ ${#selected_ids[@]} -eq 0 ]]; then
+        echo "No changed UI areas were detected. Pass a destination or use --all."
+        return 0
+    fi
+
+    local selected_json
+    selected_json="$(printf '%s\n' "${!selected_ids[@]}" | sort | jq -Rsc 'split("\n") | map(select(length > 0))')"
+    printf 'Scope: %s\n' "$(jq -r 'join(", ")' <<<"$selected_json")"
+
     local error_pattern='WARN scene:|ReferenceError|TypeError|Unable to assign|Binding loop|Cannot assign|Cannot open|Failed to load|Error loading'
     trap '"$qs_bin" -p "$config_dir" ipc call dev close >/dev/null 2>&1 || true; current_family="$(jq -r '\''.panelFamily // "ii"'\'' "$config_file" 2>/dev/null)"; if [[ "$current_family" != "$original_family" ]]; then "$qs_bin" -p "$config_dir" ipc call panelFamily set "$original_family" >/dev/null 2>&1 || true; fi' INT TERM
 
     local families=("$family")
-    $include_all && families=(ii waffle)
+    $include_all_families && families=(ii waffle)
     for family in "${families[@]}"; do
         if [[ "$(jq -r '.panelFamily // "ii"' "$config_file" 2>/dev/null)" != "$family" ]]; then
             response="$("$qs_bin" -p "$config_dir" ipc call panelFamily set "$family" 2>&1 || true)"
@@ -3114,7 +3222,7 @@ EOF
             fi
             "$qs_bin" -p "$config_dir" ipc call dev close >/dev/null 2>&1 || true
             rm -f "$log_before" "$log_after" "$fresh"
-        done < <(jq -r --arg family "$family" '.[] | select(.safe == true and (.family == "shared" or .family == $family)) | [.id, (.settleMs // 350)] | @tsv' <<<"$inventory")
+        done < <(jq -r --arg family "$family" --argjson selected "$selected_json" '.[] | select(.safe == true and (.family == "shared" or .family == $family) and (.id as $id | $selected | index($id))) | [.id, (.settleMs // 350)] | @tsv' <<<"$inventory")
     done
 
     "$qs_bin" -p "$config_dir" ipc call dev close >/dev/null 2>&1 || true
