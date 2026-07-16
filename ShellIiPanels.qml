@@ -154,7 +154,10 @@ Item {
     OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; retainAfterUse: true; closeGraceMs: 300; component: Overview {} }
     DeferredPanelLoader { identifier: "iiPolkit"; component: Polkit {} }
     RegionSelectorRouter {}
-    OnDemandPanelLoader { identifier: "iiRegionSelector"; open: GlobalStates.regionSelectorOpen || GlobalStates.annotationEditorOpen; closeGraceMs: 250; component: RegionSelector {} }
+    // Keep the lightweight selector root resident. The root already lazily
+    // instantiates RegionSelection/AnnotationEditor; wrapping it in a second
+    // on-demand loader races the first cold IPC invocation and dismisses it.
+    DeferredPanelLoader { identifier: "iiRegionSelector"; component: RegionSelector {} }
     DeferredPanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
     OnDemandPanelLoader { identifier: "iiSessionScreen"; open: GlobalStates.sessionOpen; component: SessionScreen {} }
 

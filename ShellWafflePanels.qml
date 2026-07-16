@@ -107,7 +107,9 @@ Item {
     OnDemandPanelLoader { identifier: "iiOverlay"; open: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets; component: Overlay {} }
     OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; retainAfterUse: true; closeGraceMs: 300; component: Overview {} }
     RegionSelectorRouter {}
-    OnDemandPanelLoader { identifier: "iiRegionSelector"; open: GlobalStates.regionSelectorOpen || GlobalStates.annotationEditorOpen; closeGraceMs: 250; component: RegionSelector {} }
+    // RegionSelector owns its own lazy content. Keep this root resident so a
+    // first cold IPC call cannot race two nested on-demand loaders.
+    DeferredPanelLoader { identifier: "iiRegionSelector"; component: RegionSelector {} }
     DeferredPanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
     WallpaperSelectorRouter {}
     OnDemandPanelLoader { identifier: "iiWallpaperSelector"; open: GlobalStates.wallpaperSelectorOpen; retainAfterUse: true; closeGraceMs: 250; component: WallpaperSelector {} }
