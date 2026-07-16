@@ -32,7 +32,14 @@ Item {
         id: card
         anchors.centerIn: parent
         width: parent.width
-        implicitHeight: stack.implicitHeight + 16
+        // StackLayout's implicitHeight is the MAX across all views, so weather
+        // mode used to reserve the taller timer view's height as a ghost gap
+        // below the visible content. Size to the current view instead.
+        implicitHeight: (stack.children[stack.currentIndex]?.implicitHeight ?? stack.implicitHeight) + 16
+        Behavior on implicitHeight {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+        }
         radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
             : Appearance.rounding.normal

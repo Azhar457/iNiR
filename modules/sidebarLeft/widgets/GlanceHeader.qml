@@ -8,7 +8,7 @@ import qs.services
 
 Item {
     id: root
-    implicitHeight: col.implicitHeight
+    implicitHeight: col.implicitHeight + col.anchors.topMargin
 
     readonly property var locale: {
         const env = Quickshell.env("LC_TIME") || Quickshell.env("LC_ALL") || Quickshell.env("LANG") || ""
@@ -21,7 +21,9 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 16
         anchors.rightMargin: 16
-        anchors.topMargin: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 12 : 0
+        // Breathing room between the clock and the card's top edge in every
+        // style — the header used to sit flush against the border in material.
+        anchors.topMargin: 12
         spacing: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 2 : 4
 
         RowLayout {

@@ -85,7 +85,9 @@ Item {
                     anchors.left: parent.left
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
-                    anchors.margins: Appearance.sizes.elevationMargin
+                    anchors.leftMargin: 0
+                    anchors.topMargin: Appearance.sizes.elevationMargin
+                    anchors.bottomMargin: Appearance.sizes.elevationMargin
                     width: 3
                     radius: 2
                     color: isActive
@@ -104,7 +106,8 @@ Item {
                 
                 PlayerControl {
                     anchors.fill: parent
-                    anchors.leftMargin: root._visiblePlayers.length > 1 ? 6 : 0
+                    anchors.leftMargin: root._visiblePlayers.length > 1
+                        ? Appearance.sizes.elevationMargin : 0
                     player: modelData
                     visualizerPoints: []
                     radius: root.popupRounding
