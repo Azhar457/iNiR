@@ -1316,14 +1316,12 @@ ApplicationWindow {
                     id: pagesStack
                     anchors { top: windowPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
 
-                    // Bounded retention: only the current page and its immediate
-                    // neighbours stay instantiated. Search never forces pages alive —
-                    // static index entries navigate to an unloaded page and the
-                    // spotlight retry waits for it to register its controls.
-                    property int keepRadius: 1
-
+                    // Keep only the visible page alive. Pre-incubating neighbour
+                    // pages created thousands of short-lived delegates and then
+                    // cancelled them on ordinary navigation, flooding qslog with
+                    // "Object or context destroyed during incubation" messages.
                     function _pageActive(index) {
-                        return Math.abs(index - root.currentPage) <= keepRadius
+                        return index === root.currentPage
                     }
 
                     // Direction of the last nav change, so pages slide in from the
@@ -1373,9 +1371,9 @@ ApplicationWindow {
                             required property int index
                             anchors.fill: parent
                             active: Config.ready && pagesStack._pageActive(index)
-                            // Current page loads sync (instant content, async incubation of
-                            // huge pages is far slower); neighbours load async.
-                            asynchronous: index !== root.currentPage
+                            // Only the current page is active, so load it
+                            // synchronously and never leave cancellable incubators.
+                            asynchronous: false
                             source: root.pages[index].component
                             visible: index === root.currentPage && status === Loader.Ready
                             opacity: visible ? 1 : 0

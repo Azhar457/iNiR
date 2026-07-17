@@ -1451,14 +1451,12 @@ Scope {
                                 id: overlayPagesStack
                                 anchors { top: overlayPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
 
-                                property int keepRadius: 1        // current ± keepRadius stay loaded
-
-                                // Bounded retention: only the current page and its immediate
-                                // neighbours stay instantiated. Search never forces pages alive —
-                                // static index entries navigate to an unloaded page and the
-                                // spotlight retry waits for it to register its controls.
+                                // Keep only the visible page alive. Neighbour-page
+                                // pre-incubation was cancelled on ordinary navigation
+                                // and flooded qslog with lifecycle noise from every
+                                // nested settings delegate.
                                 function _pageActive(index) {
-                                    return Math.abs(index - overlayCurrentPage) <= keepRadius
+                                    return index === overlayCurrentPage
                                 }
 
                                 Repeater {
@@ -1469,10 +1467,9 @@ Scope {
                                         required property int index
                                         anchors.fill: parent
                                         active: Config.ready && overlayPagesStack._pageActive(index)
-                                        // Current page loads sync (instant content, async incubation
-                                        // of huge pages is far slower); neighbours inside the
-                                        // retention window load async so they don't block the frame.
-                                        asynchronous: index !== overlayCurrentPage
+                                        // Only the current page is active. A synchronous
+                                        // load avoids cancellable background incubators.
+                                        asynchronous: false
                                         source: overlayPages[index].component
 
                                         readonly property bool isCurrentPage: index === overlayCurrentPage && status === Loader.Ready
