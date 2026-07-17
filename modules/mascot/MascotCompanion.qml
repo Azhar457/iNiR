@@ -31,7 +31,6 @@ Scope {
     // she leans out of the edge varies too.
     property real _slideScale: 1
     property bool _bouncyIn: false
-    property bool _doubleTake: false
     property real _peekDepth: 0.07
     function _rollEntrance() {
         const r = Math.random()
@@ -39,10 +38,6 @@ Scope {
                     : r < 0.36 ? 1.6 + Math.random() * 0.6
                     : 0.85 + Math.random() * 0.3
         _bouncyIn = Math.random() < 0.22
-        // Double-take: she pops out, ducks back as if she saw something, then
-        // commits. Mutually exclusive with the bouncy overshoot; both at once
-        // reads as a glitch.
-        _doubleTake = !_bouncyIn && Math.random() < 0.12
         _peekDepth = 0.04 + Math.random() * 0.07
     }
 
@@ -156,6 +151,7 @@ Scope {
     // which is most of what "she feels scripted" was.
     property var _recentLines: []
     property var _recentPoses: []
+    property var _recentContexts: []
     function _remember(list, item, cap) {
         list.push(item)
         while (list.length > cap) list.shift()
@@ -383,8 +379,10 @@ Scope {
             out.push({ key: "volume-blast", pose: "volume-wave-rider", edge: "right" })
         if (commentaryOn && hour >= 1 && hour < 5)
             out.push({ key: "deep-night", pose: "yawn-stretch", edge: "bottom" })
-        // Never the same commentary twice in a row
-        return out.filter(c => c.key !== root._lastContext)
+        // Keep several recent themes out of rotation. Remembering only the
+        // immediately previous key made small candidate sets alternate.
+        const fresh = out.filter(c => !root._recentContexts.includes(c.key))
+        return fresh.length ? fresh : out.filter(c => c.key !== root._lastContext)
     }
 
     function _showWithLine(poseName, edgeName, lineText) {
@@ -403,7 +401,7 @@ Scope {
         }
         const ctxs = _smartCandidates()
         const ctxLines = _manifest.contextLines ?? ({})
-        if (ctxs.length && Math.random() < 0.7) {
+        if (ctxs.length && Math.random() < 0.35) {
             const c = ctxs[Math.floor(Math.random() * ctxs.length)]
             const pool = ctxLines[c.key] ?? []
             if (pool.length) {
@@ -411,6 +409,7 @@ Scope {
                 if (c.arg !== undefined) text = text.arg(c.arg)
                 if (_showWithLine(c.pose, c.edge, text)) {
                     root._lastContext = c.key
+                    root._remember(root._recentContexts, c.key, 6)
                     _remember(_recentPoses, c.pose, 10)
                     return true
                 }
@@ -423,9 +422,11 @@ Scope {
         return show(pick[0], pick[1])
     }
 
-    // Event reactions share one cooldown so she never spams
+    // Independent detectors share one long cooldown so they cannot take turns
+    // interrupting the user while each appears individually rate-limited.
+    readonly property int _reactionCooldownMs: 8 * 60 * 1000
     function _showReaction(poseName, edgeName, sourceWidget) {
-        if (Date.now() - _lastShownAt < 120 * 1000) {
+        if (Date.now() - _lastShownAt < _reactionCooldownMs) {
             console.log(`[MascotCompanion] reaction '${poseName}' swallowed by cooldown`)
             root._pendingLineArg = ""
             return false
@@ -576,7 +577,7 @@ Scope {
             if (Notifications.silent) root.reactEvent("dnd")
         }
         // Nosy: sometimes she comes to read your notifications. Chance-gated
-        // on top of the shared 120s cooldown so it stays a treat, not a pest.
+        // on top of the shared long cooldown so it stays a treat, not a pest.
         function onNotify(notification) {
             if (Notifications.silent) return
             if (Math.random() > 0.3) return
@@ -596,7 +597,7 @@ Scope {
     }
 
     // She notices screenshots: after the region selector closes she may show
-    // up asking to be in the picture. Chance-gated + shared 120s cooldown, and
+    // up asking to be in the picture. Chance-gated + shared long cooldown, and
     // delayed so she never appears while the capture is still happening.
     property bool _regionWasOpen: false
     Connections {
@@ -748,9 +749,10 @@ Scope {
         if (Math.random() > 0.25) return
 
         _lastSystemChaosAt = Date.now()
-        if (_showWithLine(pose, panelEdge, Translation.tr(_pickFrom(lines))))
+        if (_showWithLine(pose, panelEdge, Translation.tr(_pickFrom(lines)))) {
             _remember(_recentPoses, pose, 10)
-        systemChaosFollowup.restart()
+            systemChaosFollowup.restart()
+        }
     }
     // The peek needs a beat on screen before the romp window steals focus,
     // but the peek itself must be torn down first or the romp window opens
@@ -893,23 +895,6 @@ Scope {
                 readonly property bool peekedOut: root.showing && onStage
 
                 Component.onCompleted: Qt.callLater(() => onStage = true)
-
-                // Double-take entrance: shortly after arriving she ducks back
-                // off-screen, hesitates, then commits to the peek.
-                Timer {
-                    running: root._doubleTake && mascotItem.onStage && root.showing
-                    interval: 550 + Math.random() * 350
-                    onTriggered: {
-                        root._doubleTake = false
-                        mascotItem.onStage = false
-                        reappearTimer.restart()
-                    }
-                }
-                Timer {
-                    id: reappearTimer
-                    interval: Math.max(240, root.slideMs * root._slideScale * 0.7)
-                    onTriggered: if (root.showing) mascotItem.onStage = true
-                }
 
                 width: size
                 height: size

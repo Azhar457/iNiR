@@ -2200,14 +2200,18 @@
   "reactions": {
     "battery": {
       "poses": [
-        "power-cord-yank"
+        "power-cord-yank",
+        "low-angle-guard",
+        "hand-on-hip"
       ],
       "edge": "left",
       "source": "battery"
     },
     "update": {
       "poses": [
-        "package-lifter"
+        "package-lifter",
+        "clipboard-librarian",
+        "thought-spark"
       ],
       "edge": "top",
       "source": "update"
@@ -2239,7 +2243,9 @@
     },
     "wallpaper": {
       "poses": [
-        "wallpaper-color-sweep-loop"
+        "wallpaper-color-sweep-loop",
+        "thought-spark",
+        "notice-think-wink-loop"
       ],
       "edge": "right",
       "source": ""
@@ -2271,7 +2277,9 @@
     },
     "music": {
       "poses": [
-        "headphone-groove-full-loop"
+        "headphone-groove-full-loop",
+        "notice-think-wink-loop",
+        "over-shoulder-toe-tap"
       ],
       "edge": "right",
       "source": "media"
