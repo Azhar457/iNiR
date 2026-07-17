@@ -50,8 +50,10 @@ Item {
     component DeferredPanelLoader: LazyLoader {
         required property string identifier
         property bool extraCondition: true
-        // Pre-load async when Config is ready (in spare frame time)
-        loading: Config.ready && (Config.options?.enabledPanels ?? []).includes(identifier) && extraCondition
+        // Start spare-frame incubation only after the immediate shell has
+        // produced its entry frame. Activation remains in the deferred phase.
+        loading: Config.ready && GlobalStates.shellEntryReady
+            && (Config.options?.enabledPanels ?? []).includes(identifier) && extraCondition
         // Activate async when deferred phase is ready (doesn't block UI)
         activeAsync: Config.ready && GlobalStates.deferredPanelsReady && (Config.options?.enabledPanels ?? []).includes(identifier) && extraCondition
     }
@@ -128,7 +130,8 @@ Item {
 
     // Waffle Clipboard - handles IPC when panelFamily === "waffle"
     LazyLoader {
-        loading: Config.ready && Config.options?.panelFamily === "waffle"
+        loading: Config.ready && GlobalStates.shellEntryReady
+            && Config.options?.panelFamily === "waffle"
         activeAsync: Config.ready && GlobalStates.deferredPanelsReady && Config.options?.panelFamily === "waffle"
         component: WaffleClipboardModule.WaffleClipboard {}
     }
@@ -199,8 +202,13 @@ Item {
 
     // Waffle AltSwitcher - handles IPC when panelFamily === "waffle"
     LazyLoader {
-        loading: Config.ready && Config.options?.panelFamily === "waffle"
+        loading: Config.ready && GlobalStates.shellEntryReady
+            && Config.options?.panelFamily === "waffle"
         activeAsync: Config.ready && GlobalStates.deferredPanelsReady && Config.options?.panelFamily === "waffle"
         component: WaffleAltSwitcherModule.WaffleAltSwitcher {}
     }
+
+    // Dedicated editor overlay, created after Waffle panels so its HUD remains
+    // above the taskbar and other persistent surfaces.
+    WaffleBackgroundModule.WaffleShellEditHud {}
 }

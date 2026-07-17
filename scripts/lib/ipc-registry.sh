@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 0867007e6976de40
-# Targets: 58
+# IPC.md hash: 9783aedbb23bd822
+# Targets: 59
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -48,6 +48,7 @@ declare -gA IPC_TARGET_DESC=(
   [session]="Power menu. Logout, suspend, reboot, shutdown. The \"I'm done for today\" buttons."
   [settings]="Open or toggle the settings window. GUI config so you don't have to edit JSON by hand."
   [settingsNav]="Navigate the settings overlay to a specific page (same as clicking the nav rail). Opening the window itself is the \`inir settings\` CLI command (target \`settings\` above)."
+  [shellLayout]="Dedicated persistent-shell layout editing and diagnostics. It is independent from desktop widget edit mode. It moves the ii bar and dock, swaps semantic ii sidebars between physical edges, resizes sidebar roles, and moves the Waffle taskbar through validated operations over canonical Config keys."
   [shellUpdate]="Shell update checker. Monitors the git repo for new commits and shows an update overlay."
   [sidebarLeft]="Left sidebar (AI chat, apps)."
   [sidebarRight]="Right sidebar (quick toggles, notepad, settings)."
@@ -109,6 +110,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [session]="shared"
   [settings]="shared"
   [settingsNav]="shared"
+  [shellLayout]="shared"
   [shellUpdate]="shared"
   [sidebarLeft]="shared"
   [sidebarRight]="shared"
@@ -170,6 +172,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [session]="toggle close open"
   [settings]="open toggle"
   [settingsNav]="page count current"
+  [shellLayout]="toggle open openOn close select lift preview place cancel dragStart dragUpdate dragEnd reset setProperty handleEscape status validate"
   [shellUpdate]="toggle open close check performUpdate dismiss undismiss diagnose"
   [sidebarLeft]="toggle close open expand compact status detach attach"
   [sidebarRight]="toggle close open"
@@ -343,6 +346,23 @@ declare -gA IPC_FUNCTION_DESC=(
   ["settingsNav:page"]=""
   ["settingsNav:count"]="Number of settings pages"
   ["settingsNav:current"]="Current page index"
+  ["shellLayout:toggle"]="Enter or leave shell edit mode"
+  ["shellLayout:open"]="Enter shell edit mode on the focused output"
+  ["shellLayout:openOn"]="Enter shell edit mode on a named output"
+  ["shellLayout:close"]="Leave shell edit mode and clear transient selection"
+  ["shellLayout:select"]="Select a surface for deterministic editing or diagnostics"
+  ["shellLayout:lift"]="Select and lift a surface for placement"
+  ["shellLayout:preview"]="Preview a legal slot without writing Config"
+  ["shellLayout:place"]="Commit the lifted surface to a validated slot; occupied sidebar edges require the same call twice"
+  ["shellLayout:cancel"]="Cancel the current lift, preview, confirmation or gesture"
+  ["shellLayout:dragStart"]="Lift a surface and start a pointer-style drag"
+  ["shellLayout:dragUpdate"]="Feed screen coordinates to the active drag; previews the nearest legal edge"
+  ["shellLayout:dragEnd"]="Drop the dragged surface: commits the previewed edge (occupied sidebar edges swap directly) or cancels in the center"
+  ["shellLayout:reset"]="Restore one surface to its default placement and supported dimensions"
+  ["shellLayout:setProperty"]="Set a supported surface property (\`sizeMode\`, sidebar \`height\`, sidebar \`thickness\`, or dock \`thickness\`)"
+  ["shellLayout:handleEscape"]="Apply editor Escape priority: cancel pending work, then leave edit mode"
+  ["shellLayout:status"]="Return edit-session, host diagnostics and active-family surface descriptors as JSON"
+  ["shellLayout:validate"]="Validate a surface and slot combination without changing Config"
   ["shellUpdate:toggle"]="Open/close update overlay"
   ["shellUpdate:open"]="Open update overlay"
   ["shellUpdate:close"]="Close update overlay"
@@ -437,6 +457,16 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["pill:open"]="<surface>"
   ["pill:toggle"]="<surface>"
   ["settingsNav:page"]="<index>"
+  ["shellLayout:openOn"]="<outputName>"
+  ["shellLayout:select"]="<surfaceId>"
+  ["shellLayout:lift"]="<surfaceId>"
+  ["shellLayout:preview"]="<slot>"
+  ["shellLayout:place"]="<slot>"
+  ["shellLayout:dragStart"]="<surfaceId>"
+  ["shellLayout:dragUpdate"]="<x> <y>"
+  ["shellLayout:reset"]="<surfaceId>"
+  ["shellLayout:setProperty"]="<surfaceId> <key> <value>"
+  ["shellLayout:validate"]="<surfaceId> <slot>"
   ["wallpaperSelector:toggleOnMonitor"]="<monitorName>"
 )
 
@@ -465,14 +495,15 @@ bind "Super+Shift+A" { spawn "inir" "region" "search"; }
 bind "Ctrl+Shift+S" { spawn "inir" "region" "menu"; }'
   [session]='bind "Super+Shift+E" { spawn "inir" "session" "toggle"; }'
   [settings]='bind "Super+Comma" { spawn "inir" "settings"; }'
+  [shellLayout]='bind "Super+W" { spawn "inir" "shellLayout" "toggle"; }'
   [voiceSearch]='bind "Super+Shift+V" { spawn "inir" "voiceSearch" "toggle"; }'
   [wallpaperSelector]='bind "Ctrl+Alt+T" { spawn "inir" "wallpaperSelector" "toggle"; }'
   [workspaceStrip]='bind "Super+Tab" { spawn "inir" "workspaceStrip" "toggle"; }'
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=()
 IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 
@@ -492,6 +523,7 @@ declare -gA IPC_KEBAB_ALIASES=(
   [panel-family]=panelFamily
   [recording-osd]=recordingOsd
   [settings-nav]=settingsNav
+  [shell-layout]=shellLayout
   [shell-update]=shellUpdate
   [sidebar-left]=sidebarLeft
   [sidebar-right]=sidebarRight

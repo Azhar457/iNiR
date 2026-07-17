@@ -52,7 +52,7 @@ Scope {
     IpcHandler {
         target: "background"
         function toggleEditMode(): string {
-            GlobalStates.widgetEditMode = !GlobalStates.widgetEditMode;
+            GlobalStates.setWidgetEditMode(!GlobalStates.widgetEditMode);
             return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off";
         }
 
@@ -133,7 +133,7 @@ Scope {
             backgroundScope.clockDebugLayoutProbeX = x;
             backgroundScope.clockDebugLayoutProbeY = y;
             backgroundScope.clockDebugLayoutProbeActive = true;
-            GlobalStates.widgetEditMode = true;
+            GlobalStates.setWidgetEditMode(true);
             backgroundScope.clockDebugQuickControlsOpen = quickControlsOpen;
             return "layout probe requested";
         }
@@ -147,7 +147,7 @@ Scope {
                 backgroundScope._clockDebugSnapshot = null;
             }
             if (backgroundScope._clockDebugEditModeSnapshotValid) {
-                GlobalStates.widgetEditMode = backgroundScope._clockDebugEditModeSnapshot;
+                GlobalStates.setWidgetEditMode(backgroundScope._clockDebugEditModeSnapshot);
                 backgroundScope._clockDebugEditModeSnapshotValid = false;
             }
             return "clock diagnostics restored";
@@ -509,8 +509,9 @@ Scope {
                 if (CompositorService.isNiri && typeof NiriService !== "undefined" && NiriService.windows && NiriService.workspaces) {
                     const allWs = Object.values(NiriService.workspaces);
                     if (!allWs || allWs.length === 0) return false;
-                    const currentNumber = NiriService.getCurrentWorkspaceNumber();
-                    const currentWs = allWs.find(ws => ws.idx === currentNumber);
+                    const outputName = bgRoot.modelData?.name ?? "";
+                    const currentWs = allWs.find(ws => ws.output === outputName
+                        && ws.is_active);
                     if (!currentWs) return false;
                     return NiriService.windows.some(w => w.workspace_id === currentWs.id);
                 }
@@ -1323,7 +1324,9 @@ Scope {
                     { text: Translation.tr("Change wallpaper"), iconName: "image", monochromeIcon: true,
                         action: () => { GlobalActions.runLauncher(["wallpaperSelector", "toggle"]) } },
                     { text: Translation.tr("Edit widgets"), iconName: "edit", monochromeIcon: true,
-                        action: () => { GlobalStates.widgetEditMode = !GlobalStates.widgetEditMode } },
+                        action: () => { GlobalStates.setWidgetEditMode(!GlobalStates.widgetEditMode) } },
+                    { text: Translation.tr("Edit shell layout"), iconName: "dashboard_customize", monochromeIcon: true,
+                        action: () => { ShellEditSession.toggle() } },
                     { type: "separator" },
                     { text: Translation.tr("Reload shell"), iconName: "refresh", monochromeIcon: true,
                         action: () => { Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")]) } }
@@ -1334,6 +1337,7 @@ Scope {
                 id: widgetCanvas
                 z: 20
                 visible: {
+                    if (GlobalStates.shellLayoutEditMode) return false;
                     const list = Config.options?.background?.widgets?.screenList ?? [];
                     if (!list || list.length === 0) return true;
                     return list.includes(modelData?.name ?? "");
@@ -1852,7 +1856,7 @@ Scope {
                                 colBackground: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.12)
                                 colBackgroundHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.20)
                                 colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
-                                downAction: () => { widgetManagerPanel.shown = false; GlobalStates.widgetEditMode = false }
+                                downAction: () => { widgetManagerPanel.shown = false; GlobalStates.setWidgetEditMode(false) }
                                 contentItem: MaterialSymbol {
                                     anchors.centerIn: parent
                                     text: "check"

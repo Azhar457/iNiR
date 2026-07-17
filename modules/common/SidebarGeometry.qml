@@ -30,20 +30,23 @@ Singleton {
         const content = Math.max(0, Number(contentHeight) || 0)
         const minHeight = screen * minRatio
         const maxHeight = screen * maxRatio
-        return Math.min(screen, Math.max(minHeight, Math.min(maxHeight, content)))
+        return Math.round(Math.min(screen,
+            Math.max(minHeight, Math.min(maxHeight, content))))
     }
 
     function leftFitHeight(screenHeight: real, contentHeight: real): real {
+        // Fit means content-sized, not "stop at an arbitrary visual band".
+        // The content owns scrolling when it genuinely exceeds the output.
         return fitHeight(screenHeight, contentHeight,
-            leftFitMinRatio, leftFitMaxRatio)
+            leftFitMinRatio, 1)
     }
 
     function rightFitHeight(screenHeight: real, contentHeight: real,
             bottomCollapsed: bool): real {
         return bottomCollapsed
             ? fitHeight(screenHeight, contentHeight,
-                rightFitCollapsedMinRatio, rightFitCollapsedMaxRatio)
+                rightFitCollapsedMinRatio, 1)
             : fitHeight(screenHeight, contentHeight,
-                rightFitExpandedMinRatio, rightFitExpandedMaxRatio)
+                rightFitExpandedMinRatio, 1)
     }
 }

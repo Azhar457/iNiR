@@ -964,7 +964,7 @@ ContentPage {
                     buttonIcon: "edit"
                     buttonText: Translation.tr("Edit mode")
                     active: GlobalStates.widgetEditMode
-                    toggleAction: checked => GlobalStates.widgetEditMode = checked
+                    toggleAction: checked => GlobalStates.setWidgetEditMode(checked)
                     StyledToolTip { text: Translation.tr("Show widget handles and desktop placement controls") }
                 }
             }
@@ -3593,7 +3593,7 @@ ContentPage {
                             buttonText: Translation.tr("Edit on desktop")
                             onClicked: {
                                 Config.setNestedValue("background.widgets.custom." + cwDelegate.modelData.id + ".enable", true);
-                                GlobalStates.widgetEditMode = true;
+                                GlobalStates.setWidgetEditMode(true);
                             }
                         }
                     }

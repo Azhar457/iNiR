@@ -36,6 +36,7 @@ ShellRoot {
     property var _idleService: Idle
     property var _powerProfilePersistence: PowerProfilePersistence
     property var _devNavigationService: DevNavigation
+    property var _shellEditSessionService: ShellEditSession
 
     // Deferred singletons — initialized after first frame to reduce boot contention
     // Tier 3: T+500ms (display/interaction services)

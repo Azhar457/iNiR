@@ -97,8 +97,6 @@ Item {
     readonly property int readyEntryCount: entries.filter(entry => entry.ready).length
     readonly property int lockedEntryCount: entries.length - readyEntryCount
 
-    Component.onCompleted: Ai.ensureInitialized()
-
     function close(): void {
         root.expanded = false
         root.filter = ""

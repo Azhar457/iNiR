@@ -75,11 +75,62 @@ Scope {
             sourceComponent: PanelWindow {
                 id: dockRoot
                 screen: panelLoader.modelData
-                visible: !GlobalStates.screenLocked && !GameMode.shouldHidePanels && !GlobalStates.widgetEditMode
+                visible: !GlobalStates.screenLocked && !GameMode.shouldHidePanels
+                    && !GlobalStates.widgetEditMode
 
-                property bool reveal: !GlobalStates.coverflowSelectorOpen && GlobalStates.shellEntryReady && (root.pinned || (Config.options?.dock?.hoverToReveal && dockMouseArea.containsMouse) || (dockApps?.requestDockShow || dockAppsVertical?.requestDockShow) || (Config.options?.dock?.showOnDesktop !== false && !ToplevelManager.activeToplevel?.activated))
+                property bool reveal: !GlobalStates.coverflowSelectorOpen && GlobalStates.shellEntryReady && (ShellEditSession.active || root.pinned || (Config.options?.dock?.hoverToReveal && dockMouseArea.containsMouse) || (dockApps?.requestDockShow || dockAppsVertical?.requestDockShow) || (Config.options?.dock?.showOnDesktop !== false && !ToplevelManager.activeToplevel?.activated))
 
-                readonly property real dockHeight: Config.options?.dock?.height ?? 70
+                // Shell edit resize previews locally and persists once on release.
+                property real editThicknessPreview: -1
+                property real _editResizeBaseline: -1
+                readonly property real dockHeight: editThicknessPreview >= 0
+                    ? editThicknessPreview
+                    : (Config.options?.dock?.height ?? 70)
+
+                function beginDockResize(): void {
+                    const baseline = Config.options?.dock?.height ?? 70
+                    if (!ShellEditSession.beginGesture("iiDock", "resize-thickness",
+                            { thickness: baseline }))
+                        return
+                    dockRoot._editResizeBaseline = baseline
+                    dockRoot.editThicknessPreview = baseline
+                }
+
+                function updateDockResize(deltaX: real, deltaY: real): void {
+                    if (dockRoot._editResizeBaseline < 0)
+                        return
+                    const towardScreen = root.position === "bottom" ? -deltaY
+                        : root.isTop ? deltaY
+                        : root.isLeft ? deltaX : -deltaX
+                    dockRoot.editThicknessPreview = Math.max(40, Math.min(200,
+                        dockRoot._editResizeBaseline + towardScreen))
+                }
+
+                function finishDockResize(): void {
+                    if (dockRoot.editThicknessPreview >= 0)
+                        ShellLayoutController.setProperty("iiDock", "thickness",
+                            dockRoot.editThicknessPreview, dockRoot.screen?.name ?? "")
+                    dockRoot.editThicknessPreview = -1
+                    dockRoot._editResizeBaseline = -1
+                    ShellEditSession.finishGesture()
+                }
+
+                function cancelDockResize(): void {
+                    dockRoot.editThicknessPreview = -1
+                    dockRoot._editResizeBaseline = -1
+                    ShellEditSession.cancelPending()
+                }
+
+                Connections {
+                    target: ShellEditSession
+
+                    function onGestureKindChanged(): void {
+                        if (ShellEditSession.gestureKind.length > 0)
+                            return
+                        dockRoot.editThicknessPreview = -1
+                        dockRoot._editResizeBaseline = -1
+                    }
+                }
 
                 anchors {
                     top: root.isTop || root.isVertical
@@ -483,6 +534,82 @@ Scope {
                                 }
                             }
                         }
+                    }
+
+                    ShellEditSurfaceFrame {
+                        id: dockEditFrame
+                        // Hug the visible dock body, not the transparent
+                        // hover/elevation region around it.
+                        readonly property Item visualTarget: dockRoot.nativeBlurItem
+                            ?? dockBackground
+                        // Keep every dependency explicit. mapToItem() hides the
+                        // target's anchor changes from QML's binding tracker and
+                        // left stale frame origins after dock content reflowed.
+                        x: Math.round(dockBackground.x + visualTarget.x)
+                        y: Math.round(dockBackground.y + visualTarget.y)
+                        width: Math.round(visualTarget.width)
+                        height: Math.round(visualTarget.height)
+                        surfaceId: "iiDock"
+                        label: Translation.tr("Dock")
+                        active: ShellEditSession.blocksNormalActions(surfaceId)
+                        selected: ShellEditSession.selectedSurfaceId === surfaceId
+                        lifted: ShellEditSession.liftedSurfaceId === surfaceId
+                        slotHint: Config.options?.dock?.position ?? "bottom"
+                        screenWidth: dockRoot.screen?.width ?? 0
+                        screenHeight: dockRoot.screen?.height ?? 0
+                        onDragStarted: surface => ShellEditSession.beginDrag(surface)
+                        onDragMoved: (surface, screenX, screenY) =>
+                            ShellEditSession.updateDrag(screenX, screenY)
+                        onDragEnded: () => ShellEditSession.endDrag()
+                        onDragCanceled: () => ShellEditSession.cancelDrag()
+                        accentColor: Appearance.colors.colPrimary
+                        surfaceColor: Appearance.colors.colLayer2
+                        textColor: Appearance.colors.colOnLayer2
+                        frameRadius: Appearance.rounding.small
+                        fontFamily: Appearance.font.family.main
+                        fontPixelSize: Appearance.font.pixelSize.smaller
+                        animationDuration: Appearance.animationsEnabled
+                            ? Appearance.animation.elementMoveFast.duration : 0
+                        onActivated: surface => ShellEditSession.selectSurface(surface)
+                    }
+
+                    ShellEditResizeHandle {
+                        z: 11000
+                        width: root.isVertical ? 20 : 96
+                        height: root.isVertical ? 96 : 20
+                        anchors {
+                            horizontalCenter: root.isVertical
+                                ? (root.isLeft ? dockEditFrame.right : dockEditFrame.left)
+                                : dockEditFrame.horizontalCenter
+                            verticalCenter: root.isVertical
+                                ? dockEditFrame.verticalCenter
+                                : (root.isTop ? dockEditFrame.bottom : dockEditFrame.top)
+                        }
+                        axis: root.isVertical ? "horizontal" : "vertical"
+                        active: ShellEditSession.active
+                            && ShellEditSession.selectedSurfaceId === "iiDock"
+                            && ShellEditSession.liftedSurfaceId.length === 0
+                        accentColor: Appearance.colors.colPrimary
+                        surfaceColor: Appearance.colors.colLayer2
+                        animationsEnabled: Appearance.animationsEnabled
+                        radius: Appearance.rounding.full
+                        onDragStarted: dockRoot.beginDockResize()
+                        onDragged: (axis, deltaX, deltaY) =>
+                            dockRoot.updateDockResize(deltaX, deltaY)
+                        onDragFinished: dockRoot.finishDockResize()
+                        onDragCanceled: dockRoot.cancelDockResize()
+                    }
+
+                    ShellEditSizeBadge {
+                        z: 12000
+                        anchors.centerIn: dockEditFrame
+                        active: dockRoot.editThicknessPreview >= 0
+                        valueText: Math.round(dockRoot.dockHeight) + " px"
+                        accentColor: Appearance.colors.colPrimary
+                        surfaceColor: Appearance.colors.colLayer2
+                        textColor: Appearance.colors.colOnLayer2
+                        fontFamily: Appearance.font.family.main
+                        fontPixelSize: Appearance.font.pixelSize.smaller
                     }
                 }
             }

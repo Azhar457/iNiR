@@ -24,8 +24,8 @@ Singleton {
     property string bugReportUrl: ""
     property string privacyPolicyUrl: ""
     property string logo: ""
-    property string desktopEnvironment: ""
-    property string windowingSystem: ""
+    property string desktopEnvironment: Quickshell.env("XDG_CURRENT_DESKTOP").trim()
+    property string windowingSystem: Quickshell.env("WAYLAND_DISPLAY").trim().length > 0 ? "Wayland" : "X11"
 
     function refreshIdentity(): void {
         if (getUsername.running || getDisplayName.running)
@@ -40,7 +40,6 @@ Singleton {
         repeat: false
         onTriggered: {
             refreshIdentity()
-            getDesktopEnvironment.running = true
             fileOsRelease.reload()
             const textOsRelease = fileOsRelease.text()
 
@@ -123,20 +122,6 @@ Singleton {
                 const gecosField = fields.length >= 5 ? fields[4] : ""
                 const name = gecosField.split(",")[0].trim()
                 root.displayName = name.length > 0 ? name : root.username
-            }
-        }
-    }
-
-    Process {
-        id: getDesktopEnvironment
-        running: false
-        command: ["/usr/bin/bash", "-c", "echo $XDG_CURRENT_DESKTOP,$WAYLAND_DISPLAY"]
-        stdout: StdioCollector {
-            id: deCollector
-            onStreamFinished: {
-                const [desktop, wayland] = deCollector.text.split(",")
-                root.desktopEnvironment = desktop.trim()
-                root.windowingSystem = wayland.trim().length > 0 ? "Wayland" : "X11" // Are there others? 🤔
             }
         }
     }

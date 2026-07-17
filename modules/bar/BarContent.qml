@@ -861,7 +861,7 @@ Item { // Bar content region
         onMovedAway: root.closeOSD(root.leftAction)
         onPressed: event => {
             if (event.button === Qt.LeftButton)
-                GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
+                ShellLayoutController.toggleSidebarAtSlot("left");
             else if (event.button === Qt.RightButton)
                 root.openBarContextMenu(event.x, event.y, barLeftSideMouseArea)
         }
@@ -1057,7 +1057,7 @@ Item { // Bar content region
                     if (event.button === Qt.RightButton) {
                         GlobalStates.controlPanelOpen = !GlobalStates.controlPanelOpen;
                     } else {
-                        GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                        ShellLayoutController.toggleSidebarAtSlot("right");
                         rightCenterGroup._tapSeq++; _tapSeqTimer.restart()
                         if (rightCenterGroup._tapSeq >= 3) { rightCenterGroup._confirmFx = true; rightCenterGroup._tapSeq = 0; _fxResetTimer.restart() }
                     }
@@ -1115,7 +1115,7 @@ Item { // Bar content region
         onMovedAway: root.closeOSD(root.rightAction)
         onPressed: event => {
             if (event.button === Qt.LeftButton) {
-                GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                ShellLayoutController.toggleSidebarAtSlot("right");
             } else if (event.button === Qt.RightButton) {
                 root.openBarContextMenu(event.x, event.y, barRightSideMouseArea)
             }
@@ -1266,7 +1266,7 @@ Item { // Bar content region
                 z: -1
             }
 
-            toggled: GlobalStates.sidebarRightOpen
+            toggled: ShellLayoutController.sidebarOpenAtSlot("right")
             property color colText: root.zzzEverywhere
                 ? (toggled ? Appearance.zzz.onAccentSoft : Appearance.zzz.ink)
                 : toggled ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer0
@@ -1277,7 +1277,7 @@ Item { // Bar content region
             }
 
             onPressed: {
-                GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                ShellLayoutController.toggleSidebarAtSlot("right");
             }
 
             RowLayout {

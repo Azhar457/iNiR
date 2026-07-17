@@ -38,6 +38,7 @@ Item {
     property int screenHeight: 1080
     property var panelScreen: null
     property bool panelVisible: false
+    property bool geometryPreviewActive: false
     property bool showAudioOutputDialog: false
     property bool showAudioInputDialog: false
     property bool showBluetoothDialog: false
@@ -55,6 +56,16 @@ Item {
     readonly property bool notifsCollapsed: (Config.options?.sidebar?.collapseEmptyNotifications ?? false)
         && (Notifications.list?.length ?? 0) === 0
         && !anyDialogOpen
+    readonly property real preferredContentHeight: SidebarGeometry.rightFitHeight(
+        Math.max(0, root.screenHeight - Appearance.sizes.hyprlandGapsOut * 2),
+        sidebarRightBackground.naturalCompactHeight,
+        root.bottomGroupCollapsed)
+    readonly property real minimumUsefulHeight: Math.max(320,
+        root.screenHeight * (root.bottomGroupCollapsed
+            ? SidebarGeometry.rightFitCollapsedMinRatio
+            : SidebarGeometry.rightFitExpandedMinRatio))
+    readonly property real minimumUsefulWidth: 320
+    readonly property real maximumUsefulWidth: 900
 
     // Events dialog editing state
     property var eventsDialogEditEvent: null
@@ -306,7 +317,8 @@ Item {
 
     StyledRectangularShadow {
         target: sidebarRightBackground
-        visible: !Appearance.inirEverywhere && !Appearance.gameModeMinimal
+        visible: sidebarRightBackground.angelEverywhere
+            && !Appearance.gameModeMinimal
     }
     Rectangle {
         id: sidebarRightBackground
@@ -322,6 +334,7 @@ Item {
             : parent.height
         Behavior on height {
             enabled: Appearance.animationsEnabled && root.panelVisible
+                && !root.geometryPreviewActive
             NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
         }
         // Clamp >= 0: preload parent.height is 0 here, raw subtraction went negative and froze layout.
@@ -396,7 +409,9 @@ Item {
 
         clip: true
 
-        layer.enabled: !gameModeMinimal && (root.panelVisible || !auroraEverywhere)
+        layer.enabled: root.panelVisible && !gameModeMinimal
+        layer.smooth: false
+        layer.mipmap: false
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: sidebarRightBackground.width
@@ -405,9 +420,9 @@ Item {
             }
         }
 
-        // Ricelin island face: gradient card + top sheen. Outer shadow already
-        // comes from StyledRectangularShadow; the OpacityMask would clip a
-        // MultiEffect shadow anyway, so IslandPanel's own pass stays off.
+        // Ricelin island face. Tonal separation replaces the redundant outer
+        // blur shadow; the OpacityMask would clip a MultiEffect shadow anyway,
+        // so IslandPanel's own pass stays off.
         IslandPanel {
             anchors.fill: parent
             visible: sidebarRightBackground.islandStyle && !sidebarRightBackground.gameModeMinimal

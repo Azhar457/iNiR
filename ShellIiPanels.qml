@@ -54,8 +54,10 @@ Item {
     component DeferredPanelLoader: LazyLoader {
         required property string identifier
         property bool extraCondition: true
-        // Pre-load async when Config is ready (in spare frame time)
-        loading: Config.ready && (Config.options?.enabledPanels ?? []).includes(identifier) && extraCondition
+        // Start spare-frame incubation only after the immediate shell has
+        // produced its entry frame. Activation remains in the deferred phase.
+        loading: Config.ready && GlobalStates.shellEntryReady
+            && (Config.options?.enabledPanels ?? []).includes(identifier) && extraCondition
         // Activate async when deferred phase is ready (doesn't block UI)
         activeAsync: Config.ready && GlobalStates.deferredPanelsReady && (Config.options?.enabledPanels ?? []).includes(identifier) && extraCondition
     }
@@ -158,13 +160,16 @@ Item {
     DeferredPanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
     OnDemandPanelLoader { identifier: "iiSessionScreen"; open: GlobalStates.sessionOpen; component: SessionScreen {} }
 
-    // When both sidebars are open their own fullscreen input regions shrink to
-    // the visible cards. This resident lower-layer backdrop owns the remaining
-    // center area, so one outside click closes both without either sidebar
-    // blocking input to the other.
+    // One input-only backdrop owns outside clicks for either sidebar. It maps
+    // only while needed: the surface is fully transparent and sits below the
+    // sidebar hosts, so keeping a fullscreen swapchain while both are closed
+    // has no visual or interaction value.
     PanelWindow {
         id: dualSidebarBackdrop
-        visible: true
+        visible: GlobalStates.sidebarLeftOpen
+            || GlobalStates.sidebarRightOpen
+        updatesEnabled: GlobalStates.sidebarLeftOpen
+            || GlobalStates.sidebarRightOpen
         color: "transparent"
         exclusiveZone: 0
         WlrLayershell.namespace: "quickshell:dualSidebarBackdrop"
@@ -180,14 +185,14 @@ Item {
 
         Item { id: emptyDualSidebarMask; width: 0; height: 0 }
         mask: Region {
-            item: GlobalStates.sidebarLeftOpen && GlobalStates.sidebarRightOpen
+            item: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
                 ? dualSidebarBackdropArea : emptyDualSidebarMask
         }
 
         MouseArea {
             id: dualSidebarBackdropArea
             anchors.fill: parent
-            enabled: GlobalStates.sidebarLeftOpen && GlobalStates.sidebarRightOpen
+            enabled: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
             onClicked: {
                 GlobalStates.sidebarLeftOpen = false
                 GlobalStates.sidebarRightOpen = false
@@ -195,21 +200,11 @@ Item {
         }
     }
 
-    OnDemandPanelLoader {
-        identifier: "iiSidebarLeft"
-        open: GlobalStates.sidebarLeftOpen || GlobalStates.aiChatDetached
-        // Sidebar roots own fullscreen input and animation state. Keep them
-        // resident so rapid close/open reverses the same surface instead of
-        // racing destruction against the exit transition.
-        keepLoaded: true
-        component: SidebarLeft {}
-    }
-    OnDemandPanelLoader {
-        identifier: "iiSidebarRight"
-        open: GlobalStates.sidebarRightOpen
-        keepLoaded: true
-        component: SidebarRight {}
-    }
+    // Sidebar windows stay mapped as transparent, input-empty hosts. Niri can
+    // otherwise animate each layer-shell map before the configured QML entrance
+    // begins, making a bar click look unrelated to the selected preset.
+    DeferredPanelLoader { identifier: "iiSidebarLeft"; component: SidebarLeft {} }
+    DeferredPanelLoader { identifier: "iiSidebarRight"; component: SidebarRight {} }
     TilingOverlayRouter {}
     OnDemandPanelLoader {
         identifier: "iiTilingOverlay"
@@ -531,5 +526,26 @@ Item {
                 }
             }
         }
+    }
+
+    // Dedicated shell-layout editor. It is intentionally created after the ii
+    // panel tree so its overlay window stays above bar, dock and sidebars.
+    ShellLayoutEditorWindow {
+        family: "ii"
+        styleKey: Appearance.globalStyle
+        accentColor: Appearance.colors.colPrimary
+        surfaceColor: Appearance.colors.colLayer1
+        elevatedSurfaceColor: Appearance.colors.colLayer2
+        textColor: Appearance.colors.colOnLayer1
+        secondaryTextColor: Appearance.colors.colSubtext
+        borderColor: Appearance.colors.colLayer0Border
+        fontFamily: Appearance.font.family.main
+        titlePixelSize: Appearance.font.pixelSize.normal
+        bodyPixelSize: Appearance.font.pixelSize.smaller
+        smallPixelSize: Appearance.font.pixelSize.smallest
+        panelRadius: Appearance.rounding.large
+        controlRadius: Appearance.rounding.full
+        animationDuration: Appearance.animationsEnabled
+            ? Appearance.animation.elementMoveFast.duration : 0
     }
 }

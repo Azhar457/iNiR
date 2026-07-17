@@ -107,8 +107,9 @@ A simplified map of what lives where:
 | `defaults/` | Shipped default config and app configs | Medium |
 | `modules/bar/` | Top bar (ii family) | Normal |
 | `modules/waffle/` | Complete Windows 11 family | Normal |
-| `modules/sidebarLeft/` | AI chat, YT Music, widgets | Normal |
-| `modules/sidebarRight/` | Toggles, calendar, tools | Normal |
+| `modules/sidebar/` | Physical sidebar hosts and live layout behavior | High |
+| `modules/sidebarLeft/` | Semantic feature content: AI chat, YT Music, widgets | Normal |
+| `modules/sidebarRight/` | Semantic system content: toggles, calendar, tools | Normal |
 | `translations/` | i18n strings (15 languages) | Low |
 
 Full breakdown: [Project Map](PROJECT_MAP.md)

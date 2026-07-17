@@ -642,6 +642,50 @@ bind "Mod+Shift+W" { spawn "inir" "panelFamily" "cycle"; }
 
 ---
 
+### shellLayout
+
+Dedicated persistent-shell layout editing and diagnostics. It is independent
+from desktop widget edit mode. It moves the ii bar and dock, swaps semantic ii
+sidebars between physical edges, resizes sidebar roles, and moves the Waffle
+taskbar through validated operations over canonical Config keys.
+
+| Function | Description |
+|----------|-------------|
+| `toggle` | Enter or leave shell edit mode |
+| `open` | Enter shell edit mode on the focused output |
+| `openOn` | Enter shell edit mode on a named output |
+| `close` | Leave shell edit mode and clear transient selection |
+| `select` | Select a surface for deterministic editing or diagnostics |
+| `lift` | Select and lift a surface for placement |
+| `preview` | Preview a legal slot without writing Config |
+| `place` | Commit the lifted surface to a validated slot; occupied sidebar edges require the same call twice |
+| `cancel` | Cancel the current lift, preview, confirmation or gesture |
+| `dragStart` | Lift a surface and start a pointer-style drag |
+| `dragUpdate` | Feed screen coordinates to the active drag; previews the nearest legal edge |
+| `dragEnd` | Drop the dragged surface: commits the previewed edge (occupied sidebar edges swap directly) or cancels in the center |
+| `reset` | Restore one surface to its default placement and supported dimensions |
+| `setProperty` | Set a supported surface property (`sizeMode`, sidebar `height`, sidebar `thickness`, or dock `thickness`) |
+| `handleEscape` | Apply editor Escape priority: cancel pending work, then leave edit mode |
+| `status` | Return edit-session, host diagnostics and active-family surface descriptors as JSON |
+| `validate` | Validate a surface and slot combination without changing Config |
+
+```bash
+inir shellLayout open
+inir shellLayout lift featureSidebar
+inir shellLayout preview right
+inir shellLayout place right   # prepares the occupied-edge swap
+inir shellLayout place right   # confirms and commits it
+inir shellLayout setProperty featureSidebar sizeMode fit
+inir shellLayout reset featureSidebar
+inir shellLayout close
+```
+
+```kdl
+bind "Super+W" { spawn "inir" "shellLayout" "toggle"; }
+```
+
+---
+
 ### shellUpdate
 
 Shell update checker. Monitors the git repo for new commits and shows an update overlay.

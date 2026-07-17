@@ -583,13 +583,50 @@ AbstractWidget {
         opacity: 0.7
     }
 
+    // ── Edit engagement ──────────────────────────────────────
+    // Only the widget being pointed at (or actively manipulated) shows its
+    // heavy controls. Neighbors keep just outline and name, so stacked zone
+    // widgets stop piling toolbars and handles on top of each other. The
+    // disengage latch covers the pointer's travel across the toolbar gap.
+    readonly property bool _editEngaged: GlobalStates.widgetEditMode
+        && (widgetEditHover.hovered || toolbarEditHover.hovered
+            || root.containsPress || root.isDragging || root._isResizing
+            || root._releaseGuard || editPopoverPanel.open
+            || root.debugQuickControlsOpen)
+    property bool _editControlsShown: false
+    on_EditEngagedChanged: {
+        if (root._editEngaged) {
+            _editDisengageTimer.stop()
+            root._editControlsShown = true
+        } else {
+            _editDisengageTimer.restart()
+        }
+    }
+    onVisibleChanged: if (!root.visible) root._editControlsShown = false
+
+    Timer {
+        id: _editDisengageTimer
+        interval: 350
+        onTriggered: root._editControlsShown = false
+    }
+
+    HoverHandler {
+        id: widgetEditHover
+        enabled: GlobalStates.widgetEditMode
+    }
+
     // ── Edit mode toolbar (proper Material action bar) ─────────
     // Toolbar is in screen-pixel space (no Item.scale on widget)
     Item {
         id: editToolbar
         z: 200
         visible: opacity > 0
-        opacity: GlobalStates.widgetEditMode ? 1 : 0
+        opacity: GlobalStates.widgetEditMode && root._editControlsShown ? 1 : 0
+
+        HoverHandler {
+            id: toolbarEditHover
+            enabled: GlobalStates.widgetEditMode
+        }
         x: root._editControlsGeometry.toolbarX - root.x
         y: root._editControlsGeometry.toolbarY - root.y
         width: toolbarRow.implicitWidth + 16
@@ -857,9 +894,16 @@ AbstractWidget {
     Row {
         z: 200
         visible: GlobalStates.widgetEditMode
+        // Calm-state identity: full presence only while this widget is engaged
+        opacity: root._editControlsShown ? 1 : 0.7
         x: Math.round((root.width - width) / 2)
         y: root._editControlsBelow ? -height - 6 : root.height + 6
         spacing: 4
+
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
 
         Behavior on y {
             enabled: Appearance.animationsEnabled
@@ -920,7 +964,8 @@ AbstractWidget {
 
     // ── Edit mode resize handles ─────────────────────────────
     readonly property bool _hasResize: Object.keys(root.resizableAxes).length > 0
-    readonly property bool _resizeVisible: GlobalStates.widgetEditMode && root._hasResize && !root.locked
+    readonly property bool _resizeVisible: GlobalStates.widgetEditMode
+        && root._hasResize && !root.locked && root._editControlsShown
 
     // Resize handle component — small draggable square at edges/corners
     component ResizeHandle: Rectangle {

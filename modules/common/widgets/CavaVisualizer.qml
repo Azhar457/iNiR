@@ -29,7 +29,7 @@ Item {
 
         Repeater {
             id: barsRepeater
-            model: root.barCount
+            model: root.visible ? root.barCount : 0
 
             Item {
                 id: barWrapper
@@ -38,7 +38,7 @@ Item {
                 height: root.height
 
                 property real barValue: {
-                    if (!root.live || root.points.length === 0) return 0;
+                    if (!root.visible || !root.live || root.points.length === 0) return 0;
                     const step = Math.max(1, Math.floor(root.points.length / root.barCount));
                     const start = index * step;
                     const end = Math.min(start + step, root.points.length);

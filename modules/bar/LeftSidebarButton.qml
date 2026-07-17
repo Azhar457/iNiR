@@ -46,10 +46,11 @@ RippleButton {
         : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colSecondaryContainerActive
-    toggled: GlobalStates.sidebarLeftOpen
+    // Spatial control: addresses whatever sidebar role occupies the left slot.
+    toggled: ShellLayoutController.sidebarOpenAtSlot("left")
 
     onPressed: {
-        GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
+        ShellLayoutController.toggleSidebarAtSlot("left");
     }
 
     Connections {

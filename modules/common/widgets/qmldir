@@ -98,6 +98,12 @@ SidebarHeightPreview 1.0 SidebarHeightPreview.qml
 SidebarLayoutEditor 1.0 SidebarLayoutEditor.qml
 SelectionDialog 1.0 SelectionDialog.qml
 SelectionGroupButton 1.0 SelectionGroupButton.qml
+ShellEditDropTarget 1.0 ShellEditDropTarget.qml
+ShellEditEdgeTargets 1.0 ShellEditEdgeTargets.qml
+ShellLayoutEditorWindow 1.0 ShellLayoutEditorWindow.qml
+ShellEditResizeHandle 1.0 ShellEditResizeHandle.qml
+ShellEditSizeBadge 1.0 ShellEditSizeBadge.qml
+ShellEditSurfaceFrame 1.0 ShellEditSurfaceFrame.qml
 SettingsCardSection 1.0 SettingsCardSection.qml
 SettingsDivider 1.0 SettingsDivider.qml
 SettingsGroup 1.0 SettingsGroup.qml

@@ -2310,6 +2310,20 @@ Singleton {
                 property string animationType: "slide" // "slide" | "fade" | "pop" | "reveal"
                 property bool collapseEmptyNotifications: false // Shrink right sidebar when there are no notifications (default layout)
                 property bool collapseWidgetsTab: false // Shrink left sidebar to its content on tabs with finite height (Widgets)
+                property JsonObject shellLayout: JsonObject {
+                    property JsonObject feature: JsonObject {
+                        property string slot: "left" // "left" | "right"
+                        property string sizeMode: "full" // "full" | "fit" | "custom"
+                        property int customHeight: 720
+                        property int width: 460
+                    }
+                    property JsonObject system: JsonObject {
+                        property string slot: "right" // "left" | "right"
+                        property string sizeMode: "full" // "full" | "fit" | "custom"
+                        property int customHeight: 720
+                        property int width: 460
+                    }
+                }
                 property bool openFolderOnDownload: false // Open file manager after wallpaper download
                 property JsonObject translator: JsonObject {
                     property bool enable: true

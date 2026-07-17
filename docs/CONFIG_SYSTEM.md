@@ -127,6 +127,69 @@ Each zone is an array of module ids. Use Settings -> Bar -> Bar module layout un
 
 `bar.height` and `bar.opacity` control the bar size and background fill. They do not resize every widget independently; components still use the normal `Appearance` sizing tokens.
 
+### Live shell layout
+
+Settings -> Shell Layout and `inir shellLayout` use the same controller as the
+live desktop editor. Existing canonical keys remain authoritative:
+
+- ii bar: `bar.vertical` plus `bar.bottom`
+- ii dock: `dock.position`
+- Waffle taskbar: `waffles.bar.bottom`
+
+Semantic ii sidebar roles use:
+
+- `sidebar.shellLayout.feature.slot`
+- `sidebar.shellLayout.feature.sizeMode`
+- `sidebar.shellLayout.feature.customHeight`
+- `sidebar.shellLayout.feature.width`
+- the matching `sidebar.shellLayout.system.*` keys
+
+`feature` is the AI, media, tools and Widgets role historically opened by the
+`sidebarLeft` IPC target. `system` is the quick controls, notifications and
+utility role historically opened by `sidebarRight`. Their IPC meaning does not
+change when the roles swap physical edges.
+
+Desktop widgets keep their original free/zone editor and independent
+`widgetEditMode`. Persistent layer-shell surfaces use the separate Shell Layout
+editor and move between advertised edge slots. Enter it from the desktop
+context menu, Settings -> Shell Layout, or `inir shellLayout open`. Its own
+layer-shell HUD stays above the edited panels and does not reuse the widget
+canvas or toolbar. Drag any highlighted surface toward a screen edge: legal
+edges light up as full strips, a chip follows the pointer with the drop
+result, and releasing on a strip commits the move. Dropping a surface on an
+occupied edge performs an atomic swap: sidebars exchange sides, and the ii
+bar and dock exchange edges the same way. Releasing in the center of the
+screen cancels. The click flow remains for keyboard and scripting: select a
+surface, choose Move, then activate an edge strip, where occupied edges still
+ask for a second confirming activation. Resize handles preview locally with a
+live dimension readout and persist when released; sidebars resize height and
+width, and the dock resizes its thickness through `dock.height`.
+
+Bar corner controls are spatial: the bar's left corner and left area open
+whatever sidebar currently occupies the left edge, and the right-side
+controls open the right-edge panel, even after a swap. Feature-specific
+triggers keep opening their own semantic content.
+
+Escape cancels the current resize, lift, preview or swap confirmation first. A
+second Escape leaves shell edit mode. Done leaves the mode after already
+committed changes; there is no hidden Save step or whole-session rollback.
+
+Bar, dock and taskbar placement follow each surface's existing `screenList`
+semantics. A position change applies to every enabled output for that surface.
+Desktop-widget placement remains owned by its separate editor. The Shell Layout
+HUD and Settings page show the broader mutation scope. Per-output geometry
+profiles are not part of this version.
+
+Valid sidebar slots are `left` and `right`. Both roles must occupy different
+slots, so moving one onto the other performs an atomic swap. Valid size modes
+are `full`, `fit` and `custom`. Fit uses the active role content: finite feature
+tabs can contract while unbounded tabs return to full height.
+
+These keys are append-only additions. Existing configs without them retain the
+historical feature-left and system-right layout, so no migration script is
+needed. `collapseWidgetsTab` and `collapseEmptyNotifications` remain legacy
+content-aware compatibility options.
+
 ### Right sidebar widgets
 
 `sidebar.right.enabledWidgets` controls the widgets shown in the right sidebar bottom group and compact sidebar.

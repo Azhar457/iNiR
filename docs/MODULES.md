@@ -27,8 +27,9 @@ Users can disable any panel from Settings without touching config files.
 
 | Module | Panel ID | Description |
 |--------|----------|-------------|
-| `sidebarLeft/` | `iiSidebarLeft` | AI chat (Gemini/OpenAI/Ollama), YT Music player, Wallhaven browser, anime tracker, translator, draggable widgets, World Clock. |
-| `sidebarRight/` | `iiSidebarRight` | Quick toggles, calendar with external sync, notification center, volume mixer, Bluetooth/WiFi management, pomodoro timer, todo, calculator, notepad, system monitor, Screen Time. |
+| `sidebar/` | shared host | Physical left/right layer-shell hosts. They resolve semantic feature/system roles, own focus, masks, animations and live layout resize handles. |
+| `sidebarLeft/` | `iiSidebarLeft` | Feature-role content: AI chat (Gemini/OpenAI/Ollama), YT Music player, Wallhaven browser, anime tracker, translator, draggable widgets and World Clock. The role can occupy either physical edge. |
+| `sidebarRight/` | `iiSidebarRight` | System-role content: quick toggles, calendar with external sync, notification center, volume mixer, Bluetooth/WiFi management, pomodoro timer, todo, calculator, notepad, system monitor and Screen Time. The role can occupy either physical edge. |
 
 ### Overlays
 

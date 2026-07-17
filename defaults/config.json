@@ -1479,6 +1479,20 @@
         "animationType": "slide",
         "collapseEmptyNotifications": false,
         "collapseWidgetsTab": false,
+        "shellLayout": {
+            "feature": {
+                "slot": "left",
+                "sizeMode": "full",
+                "customHeight": 720,
+                "width": 460
+            },
+            "system": {
+                "slot": "right",
+                "sizeMode": "full",
+                "customHeight": 720,
+                "width": 460
+            }
+        },
         "layout": "default",
         "quickSliders": {
             "enable": true,

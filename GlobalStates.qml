@@ -83,6 +83,19 @@ Singleton {
     property bool superReleaseMightTrigger: true
     property bool wallpaperSelectorOpen: false
     property bool widgetEditMode: false
+    property bool shellLayoutEditMode: false
+
+    function setWidgetEditMode(enabled: bool): void {
+        if (enabled)
+            shellLayoutEditMode = false
+        widgetEditMode = enabled
+    }
+
+    function setShellLayoutEditMode(enabled: bool): void {
+        if (enabled)
+            widgetEditMode = false
+        shellLayoutEditMode = enabled
+    }
     // Navigate sidebar right to a specific widget by type (e.g. "notepad", "calendar")
     property string sidebarRightRequestedWidget: ""
     // Dialog requests from other panels (e.g. left sidebar → right sidebar)

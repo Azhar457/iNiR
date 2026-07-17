@@ -52,7 +52,8 @@ Scope {
         }
         LazyLoader {
             id: barLoader
-            active: !bar.rebuilding && GlobalStates.barOpen && !GlobalStates.screenLocked && !GlobalStates.widgetEditMode
+            active: !bar.rebuilding && GlobalStates.barOpen && !GlobalStates.screenLocked
+                && !GlobalStates.widgetEditMode
             required property ShellScreen modelData
             component: PanelWindow { // Bar window
                 id: barRoot
@@ -107,7 +108,7 @@ Scope {
                     }
                 }
                 property bool superShow: false
-                property bool mustShow: hoverRegion.containsMouse || superShow
+                property bool mustShow: hoverRegion.containsMouse || superShow || ShellEditSession.active
                 exclusionMode: ExclusionMode.Ignore
                 exclusiveZone: GameMode.shouldHidePanels ? 0 :
                     (GlobalStates.coverflowSelectorOpen || (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows))) ? 0 :
@@ -231,6 +232,32 @@ Scope {
                                 anchors.bottomMargin: ((Config?.options.bar.autoHide.enable && !mustShow) || GlobalStates.coverflowSelectorOpen || !GlobalStates.shellEntryReady) ? -barRoot.panelSurfaceHeight : 0
                             }
                         }
+                    }
+
+                    ShellEditSurfaceFrame {
+                        anchors.fill: barContent
+                        surfaceId: "iiBar"
+                        label: Translation.tr("Bar")
+                        active: ShellEditSession.blocksNormalActions(surfaceId)
+                        selected: ShellEditSession.selectedSurfaceId === surfaceId
+                        lifted: ShellEditSession.liftedSurfaceId === surfaceId
+                        slotHint: (Config.options?.bar?.bottom ?? false) ? "bottom" : "top"
+                        screenWidth: barRoot.screen?.width ?? 0
+                        screenHeight: barRoot.screen?.height ?? 0
+                        onDragStarted: surface => ShellEditSession.beginDrag(surface)
+                        onDragMoved: (surface, screenX, screenY) =>
+                            ShellEditSession.updateDrag(screenX, screenY)
+                        onDragEnded: () => ShellEditSession.endDrag()
+                        onDragCanceled: () => ShellEditSession.cancelDrag()
+                        accentColor: Appearance.colors.colPrimary
+                        surfaceColor: Appearance.colors.colLayer2
+                        textColor: Appearance.colors.colOnLayer2
+                        frameRadius: Appearance.rounding.small
+                        fontFamily: Appearance.font.family.main
+                        fontPixelSize: Appearance.font.pixelSize.smaller
+                        animationDuration: Appearance.animationsEnabled
+                            ? Appearance.animation.elementMoveFast.duration : 0
+                        onActivated: surface => ShellEditSession.selectSurface(surface)
                     }
 
                     // Round decorators

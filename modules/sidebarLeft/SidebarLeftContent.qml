@@ -28,6 +28,8 @@ Item {
     property int screenHeight: 1080
     property var panelScreen: null
     property bool panelVisible: false
+    property bool geometryPreviewActive: false
+    property string outerSizeMode: "full"
 
     property bool aiChatEnabled: (Config.options?.policies?.ai ?? 0) !== 0
     property bool translatorEnabled: (Config.options?.sidebar?.translator?.enable ?? false)
@@ -47,8 +49,20 @@ Item {
     // their content instead of reserving the full output height.
     readonly property real activeTabContentHeight: swipeView.currentItem?.item?.contentPreferredHeight ?? -1
     readonly property bool activeTabEditing: swipeView.currentItem?.item?.editMode ?? false
-    readonly property bool fitToContent: (Config.options?.sidebar?.collapseWidgetsTab ?? false)
+    readonly property bool fitToContent:
+        ((Config.options?.sidebar?.collapseWidgetsTab ?? false)
+            || root.outerSizeMode === "fit")
         && !pluginViewActive && !activeTabEditing && activeTabContentHeight > 0
+    readonly property real availableContentHeight: Math.max(0,
+        root.screenHeight - Appearance.sizes.hyprlandGapsOut * 2)
+    readonly property real preferredContentHeight: root.fitToContent
+        ? SidebarGeometry.leftFitHeight(root.availableContentHeight,
+            sidebarLeftBackground.naturalFitHeight)
+        : root.availableContentHeight
+    readonly property real minimumUsefulHeight: Math.max(320,
+        root.screenHeight * SidebarGeometry.leftFitMinRatio)
+    readonly property real minimumUsefulWidth: 320
+    readonly property real maximumUsefulWidth: 900
 
     // ─── WebApp state — DISABLED (requires quickshell-webengine) ─────
     property string _activeWebAppId: ""
@@ -149,6 +163,12 @@ Item {
         if (index >= 0 && swipeView.currentIndex !== index) swipeView.currentIndex = index
     }
 
+    function ensureActiveTabReady(): void {
+        if (!GlobalStates.sidebarLeftOpen) return
+        const currentTab = root.tabButtonList[swipeView.currentIndex]
+        if (currentTab?.id === "ai") Ai.ensureInitialized()
+    }
+
     function applyDevDestination(): void {
         if (!DevNavigation.currentDestination.startsWith("sidebar-left/")) return
         const view = DevNavigation.currentDestination.substring("sidebar-left/".length)
@@ -178,13 +198,15 @@ Item {
     Connections {
         target: GlobalStates
         function onSidebarLeftOpenChanged(): void {
-            if (!GlobalStates.sidebarLeftOpen) root.tabEditMode = false
+            if (GlobalStates.sidebarLeftOpen) root.ensureActiveTabReady()
+            else root.tabEditMode = false
         }
     }
 
     StyledRectangularShadow {
         target: sidebarLeftBackground
-        visible: !Appearance.gameModeMinimal
+        visible: sidebarLeftBackground.angelEverywhere
+            && !Appearance.gameModeMinimal
     }
     Rectangle {
         id: sidebarLeftBackground
@@ -199,6 +221,7 @@ Item {
             : parent.height
         Behavior on height {
             enabled: Appearance.animationsEnabled && root.panelVisible
+                && !root.geometryPreviewActive
             NumberAnimation {
                 duration: Appearance.animation.elementResize.duration
                 easing.type: Appearance.animation.elementResize.type
@@ -275,7 +298,10 @@ Item {
 
         // Mask to the rounded panel shape in ZZZ so NO child (backdrop grid,
         // corner ticks, cards) can re-square the corners — surfaces must never break.
-        layer.enabled: useWallpaperBackdrop || (zzzEverywhere && !gameModeMinimal)
+        layer.enabled: root.panelVisible
+            && (useWallpaperBackdrop || (zzzEverywhere && !gameModeMinimal))
+        layer.smooth: false
+        layer.mipmap: false
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: sidebarLeftBackground.width
@@ -284,7 +310,8 @@ Item {
             }
         }
 
-        // Ricelin island face — outer shadow comes from StyledRectangularShadow.
+        // Ricelin island face. Tonal separation replaces the redundant outer
+        // blur shadow; Angel keeps its signature stepped shadow above.
         IslandPanel {
             glassEnabled: true
             glassScreenX: Appearance.sizes.hyprlandGapsOut
@@ -440,9 +467,13 @@ Item {
                 Layout.fillHeight: !root.fitToContent
                 implicitHeight: {
                     if (root.activeTabContentHeight <= 0) return 0
+                    if (root.fitToContent)
+                        return Math.round(root.activeTabContentHeight)
                     const chromeHeight = contentColumn.anchors.topMargin + root.sidebarPadding
                         + (toolbarContainer.visible ? toolbarContainer.implicitHeight + contentColumn.spacing : 0)
-                    return Math.max(0, Math.min(root.activeTabContentHeight, root.height - chromeHeight))
+                    return Math.round(Math.max(0,
+                        Math.min(root.activeTabContentHeight,
+                            root.height - chromeHeight)))
                 }
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
@@ -475,16 +506,16 @@ Item {
                         tabBar.setCurrentIndex(currentIndex)
                         const currentTab = root.tabButtonList[currentIndex]
                         root.selectedTabId = currentTab?.id ?? ""
-                        if (currentTab?.icon === "neurology") {
-                            Ai.ensureInitialized()
-                        }
+                        root.ensureActiveTabReady()
                     }
                     interactive: !root.tabEditMode
                         && !(currentItem?.item?.editMode ?? false)
                         && !(currentItem?.item?.dragPending ?? false)
 
                     clip: true
-                    layer.enabled: !Appearance.gameModeMinimal
+                    layer.enabled: root.panelVisible && !Appearance.gameModeMinimal
+                    layer.smooth: false
+                    layer.mipmap: false
                     layer.effect: GE.OpacityMask {
                         maskSource: Rectangle {
                             width: swipeView.width

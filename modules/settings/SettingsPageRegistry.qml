@@ -223,6 +223,14 @@ Singleton {
             desc: Translation.tr("Blur, glass, motion and rendering policy"),
             essential: true,
             component: "modules/settings/EffectsConfig.qml"
+        },
+        {
+            key: "shell-layout",
+            name: Translation.tr("Shell Layout"),
+            icon: "dashboard_customize",
+            desc: Translation.tr("Move and resize persistent shell surfaces"),
+            essential: true,
+            component: "modules/settings/ShellLayoutConfig.qml"
         }
     ]
 
@@ -231,7 +239,7 @@ Singleton {
     readonly property var defaultCategories: [
         { label: Translation.tr("Essentials"), pages: [0] },
         { label: Translation.tr("Appearance"), pages: [4, 25, 3, 14, 21] },
-        { label: Translation.tr("Shell"), pages: [2, 5, 22, 23, 16, 10, 11, 18, 19, 20] },
+        { label: Translation.tr("Shell"), pages: [2, 26, 5, 22, 23, 16, 10, 11, 18, 19, 20] },
         { label: Translation.tr("System"), pages: [1, 24, 7, 6, 12, 15, 8, 17] },
         { label: Translation.tr("Reference"), pages: [9, 13] }
     ]
@@ -279,6 +287,20 @@ Singleton {
     }
 
     readonly property var staticSearchIndex: [
+        {
+            pageIndex: 26, pageName: root.pages[26].name,
+            section: Translation.tr("Live shell layout"),
+            label: Translation.tr("Edit live"),
+            description: Translation.tr("Move bar, dock and sidebars directly on the desktop"),
+            keywords: ["layout", "move", "position", "sidebar", "bar", "dock", "output", "edit", "live"]
+        },
+        {
+            pageIndex: 26, pageName: root.pages[26].name,
+            section: Translation.tr("Live shell layout"),
+            label: Translation.tr("Sidebar size"),
+            description: Translation.tr("Full, fit and custom sidebar height and width"),
+            keywords: ["layout", "sidebar", "size", "height", "width", "fit", "custom", "resize", "reset"]
+        },
         // =====================================================================
         // Quick (page 0)
         // =====================================================================

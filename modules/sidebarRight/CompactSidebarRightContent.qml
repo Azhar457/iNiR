@@ -56,6 +56,7 @@ Item {
     property int screenHeight: 1080
     property var panelScreen: null
     property bool panelVisible: false
+    property bool geometryPreviewActive: false
 
     property bool showAudioOutputDialog: false
     property bool showAudioInputDialog: false
@@ -69,6 +70,12 @@ Item {
     property var eventsDialogEditEvent: null
     property bool reloadButtonEnabled: true
     property bool settingsButtonEnabled: true
+    readonly property real preferredContentHeight: Math.max(520,
+        root.screenHeight * SidebarGeometry.rightFitExpandedPreferredRatio)
+    readonly property real minimumUsefulHeight: Math.max(420,
+        root.screenHeight * SidebarGeometry.rightFitExpandedMinRatio)
+    readonly property real minimumUsefulWidth: 360
+    readonly property real maximumUsefulWidth: 900
     readonly property bool compactTightHeight: height > 0 && height < 760
     readonly property bool compactNarrowWidth: width > 0 && width < 420
     readonly property int compactPanelPadding: Math.max(6, Math.min(sidebarPadding, Math.round(Math.min(width || sidebarWidth, height || screenHeight) * 0.018)))
@@ -735,7 +742,7 @@ Item {
     // ─────────────────────────────────────────────────────────────
     StyledRectangularShadow {
         target: bg
-        visible: !bg.inirEverywhere && !Appearance.gameModeMinimal
+        visible: bg.angelEverywhere && !Appearance.gameModeMinimal
     }
 
     ZzzPlate {
@@ -845,14 +852,14 @@ Item {
         }
         clip: true
 
-        layer.enabled: !gameModeMinimal && (root.panelVisible || !auroraEverywhere)
+        layer.enabled: root.panelVisible && !gameModeMinimal
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
                 width: bg.width; height: bg.height; radius: bg.radius
             }
         }
 
-        // Ricelin island face — outer shadow handled by the panel's own shadow.
+        // Ricelin island face. Angel alone keeps the outer stepped shadow.
         IslandPanel {
             anchors.fill: parent
             visible: bg.islandStyle && !bg.gameModeMinimal
@@ -970,7 +977,7 @@ Item {
                 }
                 clip: true
 
-                layer.enabled: !bg.gameModeMinimal
+                layer.enabled: root.panelVisible && !bg.gameModeMinimal
                 layer.effect: GE.OpacityMask {
                     maskSource: Rectangle {
                         width: compactSurface.width

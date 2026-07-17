@@ -569,7 +569,13 @@ Scope {
                     screenY: settingsCard.y
                     screenWidth: settingsPanel.width
                     screenHeight: settingsPanel.height
-                    fallbackColor: "transparent"
+                    // GameMode disables the wallpaper blur backend. Aurora's
+                    // card itself is transparent, so a transparent fallback
+                    // made the complete settings surface disappear over a
+                    // fullscreen window. Keep glass normally and use the
+                    // regular opaque surface only while effects are suspended.
+                    fallbackColor: Appearance.effectsEnabled
+                        ? "transparent" : Appearance.colors.colLayer0Base
                     auroraTransparency: Appearance.angelEverywhere
                         ? Appearance.angel.panelTransparentize
                         : Appearance.aurora.overlayTransparentize

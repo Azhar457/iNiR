@@ -233,7 +233,7 @@ Button {
             }
         }
 
-        layer.enabled: true
+        layer.enabled: ripple.opacity > 0
         layer.effect: OpacityMask {
             maskSource: Item {
                 width: buttonBackground.width

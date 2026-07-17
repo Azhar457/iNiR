@@ -230,8 +230,12 @@ Singleton {
         const focusedWindow = (Array.isArray(windows) && windows.find(w => w.is_focused))
             || NiriService.activeWindow
 
-        // Track focused window state
+        // Focus flags can lag behind WindowLayoutsChanged on Niri. The
+        // per-output path is already reactive and is what background surfaces
+        // use, so keep the focused-window fast path but never miss a fullscreen
+        // window that is visible on an active workspace.
         const isFullscreen = isWindowFullscreen(focusedWindow)
+            || root.hasVisibleFullscreenWindow
         _focusedIsFullscreen = isFullscreen
 
         if (!autoDetect) {

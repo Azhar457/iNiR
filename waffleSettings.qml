@@ -107,6 +107,11 @@ ApplicationWindow {
             name: Translation.tr("Effects"),
             icon: "eye",
             component: Qt.resolvedUrl("modules/waffle/settings/pages/WEffectsPage.qml")
+        },
+        {
+            name: Translation.tr("Shell Layout"),
+            icon: "desktop",
+            component: Qt.resolvedUrl("modules/waffle/settings/pages/WShellLayoutPage.qml")
         }
     ]
     

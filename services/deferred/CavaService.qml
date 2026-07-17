@@ -133,7 +133,14 @@ Singleton {
         }
         stdout: SplitParser {
             onRead: data => {
-                root.points = data.split(";").map(p => parseFloat(p.trim())).filter(p => !isNaN(p))
+                const fields = data.split(";")
+                const parsed = []
+                for (let i = 0; i < fields.length; ++i) {
+                    const value = parseFloat(fields[i])
+                    if (!isNaN(value))
+                        parsed.push(value)
+                }
+                root.points = parsed
             }
         }
     }
