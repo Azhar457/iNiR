@@ -194,7 +194,8 @@ Item {
 
         Timer {
             id: _barMediaCloseTimer
-            interval: 200
+            // Keep the loader alive through the complete exit transition.
+            interval: Math.max(50, Appearance.animation.elementMoveFast.duration + 40)
             onTriggered: barMediaPopupLoader._barMediaClosing = false
         }
 
@@ -222,10 +223,21 @@ Item {
                 id: mediaPopupContent
                 anchors.centerIn: parent
                 onCloseRequested: root.barMediaPopupVisible = false
-                
-                // Entry/exit animation
-                opacity: root.barMediaPopupVisible ? 1 : 0
-                scale: root.barMediaPopupVisible ? 1 : 0.9
+
+                // Defer presentation so the first visible frame can transition.
+                property bool presented: false
+                Component.onCompleted: Qt.callLater(() => {
+                    mediaPopupContent.presented = root.barMediaPopupVisible
+                })
+                Connections {
+                    target: root
+                    function onBarMediaPopupVisibleChanged() {
+                        mediaPopupContent.presented = root.barMediaPopupVisible
+                    }
+                }
+
+                opacity: presented ? 1 : 0
+                scale: presented ? 1 : 0.975
                 transformOrigin: Config.options.bar.bottom ? Item.Bottom : Item.Top
 
                 Behavior on opacity {

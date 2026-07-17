@@ -169,14 +169,14 @@ rsync_dir(){
   x mkdir -p "$2"
   local dest="$(realpath -se $2)"
   x mkdir -p "$(dirname ${INSTALLED_LISTFILE})"
-  rsync -a --exclude='AGENTS.md' --exclude='CLAUDE.md' --exclude='CODEX.md' --exclude='PI.md' --exclude='codemap.md' --exclude='skills-lock.json' --exclude='.agents/' --exclude='.claude/' --exclude='.codex/' --exclude='.factory/' --exclude='.opencode/' --exclude='.codebase-memory/' --exclude='.impeccable/' --exclude='.pi-subagents/' --exclude='graphify-out/' --exclude='assets/images/mascot/*.png' --exclude='assets/images/mascot/*.gif' --exclude='assets/images/mascot/frames/' --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
+  rsync -a --exclude='AGENTS.md' --exclude='CLAUDE.md' --exclude='CODEX.md' --exclude='PI.md' --exclude='codemap.md' --exclude='.mcp.json' --exclude='opencode.json' --exclude='skills-lock.json' --exclude='.agents/' --exclude='.claude/' --exclude='.codex/' --exclude='.factory/' --exclude='.opencode/' --exclude='.codebase-memory/' --exclude='.impeccable/' --exclude='.pi-subagents/' --exclude='graphify-out/' --exclude='assets/images/mascot/*.png' --exclude='assets/images/mascot/*.gif' --exclude='assets/images/mascot/frames/' --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
 }
 
 rsync_dir__sync(){
   x mkdir -p "$2"
   local dest="$(realpath -se $2)"
   x mkdir -p "$(dirname ${INSTALLED_LISTFILE})"
-  rsync -a --delete --exclude='AGENTS.md' --exclude='CLAUDE.md' --exclude='CODEX.md' --exclude='PI.md' --exclude='codemap.md' --exclude='skills-lock.json' --exclude='.agents/' --exclude='.claude/' --exclude='.codex/' --exclude='.factory/' --exclude='.opencode/' --exclude='.codebase-memory/' --exclude='.impeccable/' --exclude='.pi-subagents/' --exclude='graphify-out/' --exclude='assets/images/mascot/*.png' --exclude='assets/images/mascot/*.gif' --exclude='assets/images/mascot/frames/' --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
+  rsync -a --delete --exclude='AGENTS.md' --exclude='CLAUDE.md' --exclude='CODEX.md' --exclude='PI.md' --exclude='codemap.md' --exclude='.mcp.json' --exclude='opencode.json' --exclude='skills-lock.json' --exclude='.agents/' --exclude='.claude/' --exclude='.codex/' --exclude='.factory/' --exclude='.opencode/' --exclude='.codebase-memory/' --exclude='.impeccable/' --exclude='.pi-subagents/' --exclude='graphify-out/' --exclude='assets/images/mascot/*.png' --exclude='assets/images/mascot/*.gif' --exclude='assets/images/mascot/frames/' --out-format='%i %n' "$1"/ "$2"/ | awk -v d="$dest" '$1 ~ /^>/{ sub(/^[^ ]+ /,""); printf d "/" $0 "\n" }' >> "${INSTALLED_LISTFILE}"
 }
 
 function install_file(){

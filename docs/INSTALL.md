@@ -64,7 +64,7 @@ For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by categor
 >
 > **Optional content packs** (`./setup` → Extras): the iNiR-Walls wallpaper
 > pack, the ii-pixel-sddm login theme, YAMIS icons, and the Kira mascot art
-> pack (~20 MiB, the mascot feature ships disabled and does nothing until
+> pack (~27 MiB, the mascot feature ships disabled and does nothing until
 > you install the pack and enable her in Settings › Mascot).
 >
 > **Important for minimal installs (Arch base / netinstall):**

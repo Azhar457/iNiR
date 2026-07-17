@@ -49,7 +49,7 @@ PanelWindow {
     // Which behavior this window starts in ("romp" | "chase")
     property string startMode: "romp"
 
-    readonly property bool suppressed: GameMode.active || GameMode.hasAnyFullscreenWindow
+    readonly property bool suppressed: GameMode.active || GameMode.hasVisibleFullscreenWindow
         || GlobalStates.screenLocked || GlobalStates.sessionOpen
     onSuppressedChanged: if (suppressed) romp._abort()
 

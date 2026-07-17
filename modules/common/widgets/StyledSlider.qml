@@ -68,15 +68,20 @@ Slider {
     property string tooltipContent: `${Math.round(value * 100)}%`
     property bool scrollable: false
     property bool _userInteracting: false
-    property bool wavy: configuration === StyledSlider.Configuration.Wavy // If true, the progress bar will have a wavy fill effect
+    property bool wavy: configuration === StyledSlider.Configuration.Wavy
     property bool animateWave: true
     property real waveAmplitudeMultiplier: wavy ? 0.5 : 0
     property real waveFrequency: 6
-    property real waveFps: 60
+    readonly property bool usesWaveTrack: wavy || configuration === StyledSlider.Configuration.Wavy
+
+    Behavior on waveAmplitudeMultiplier {
+        enabled: Appearance.animationsEnabled
+        animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+    }
 
     leftPadding: handleMargins
     rightPadding: handleMargins
-    property real effectiveDraggingWidth: width - leftPadding - rightPadding
+    property real effectiveDraggingWidth: Math.max(0, width - leftPadding - rightPadding)
 
     Layout.fillWidth: true
     from: 0
@@ -221,9 +226,9 @@ Slider {
                 verticalCenter: parent.verticalCenter
                 left: parent.left
             }
-            width: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (handle.implicitWidth / 2 + root.handleMargins)
+            width: Math.max(0, root.visualPosition * root.effectiveDraggingWidth - handle.implicitWidth / 2)
             height: root.trackWidth
-            active: !root.wavy
+            active: !root.usesWaveTrack
             sourceComponent: Rectangle {
                 color: root.highlightColor
                 topLeftRadius: root.trackRadius
@@ -238,23 +243,17 @@ Slider {
                 verticalCenter: parent.verticalCenter
                 left: parent.left
             }
-            width: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (handle.implicitWidth / 2 + root.handleMargins)
-            height: root.height
-            active: root.wavy
+            width: Math.max(0, root.visualPosition * root.effectiveDraggingWidth - handle.implicitWidth / 2)
+            height: root.trackWidth * (1 + 2 * Math.max(0.5, Math.abs(root.waveAmplitudeMultiplier)))
+            active: root.usesWaveTrack
             sourceComponent: WavyLine {
-                id: wavyFill
+                anchors.fill: parent
                 frequency: root.waveFrequency
                 fullLength: root.width
                 color: root.highlightColor
-                amplitudeMultiplier: root.wavy ? 0.5 : 0
-                animate: root.animateWave
-                width: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (handle.implicitWidth / 2 + root.handleMargins)
-                height: root.trackWidth
-                Connections {
-                    target: root
-                    function onValueChanged() { wavyFill.requestPaint(); }
-                    function onHighlightColorChanged() { wavyFill.requestPaint(); }
-                }
+                lineWidth: root.trackWidth
+                amplitudeMultiplier: root.waveAmplitudeMultiplier
+                animate: root.animateWave && root.wavy
             }
         }
 
@@ -264,7 +263,7 @@ Slider {
                 verticalCenter: parent.verticalCenter
                 right: parent.right
             }
-            width: root.handleMargins + ((1 - root.visualPosition) * root.effectiveDraggingWidth) - (handle.implicitWidth / 2 + root.handleMargins)
+            width: Math.max(0, (1 - root.visualPosition) * root.effectiveDraggingWidth - handle.implicitWidth / 2)
             height: trackWidth
             color: root.trackColor
             topRightRadius: root.trackRadius

@@ -19,6 +19,7 @@ QtObject {
     // Required properties
     required property MprisPlayer player
     property int slideDirection: 1
+    property bool positionUpdatesActive: true
     
     // YtMusic detection
     readonly property bool isYtMusicPlayer: {
@@ -199,7 +200,8 @@ QtObject {
     }
     
     property var positionUpdateTimer: Timer {
-        running: root.player?.playbackState === MprisPlaybackState.Playing
+        running: root.positionUpdatesActive
+            && root.player?.playbackState === MprisPlaybackState.Playing
         // Four bounded updates per second are enough for a continuous timeline
         // once PlayerProgress interpolates between samples.
         interval: 250

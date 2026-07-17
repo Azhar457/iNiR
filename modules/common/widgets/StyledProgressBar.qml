@@ -21,7 +21,6 @@ ProgressBar {
     property bool animateWave: true
     property real waveAmplitudeMultiplier: wavy ? 0.5 : 0
     property real waveFrequency: 6
-    property real waveFps: 60
 
     Behavior on waveAmplitudeMultiplier {
         enabled: Appearance.animationsEnabled
@@ -75,27 +74,22 @@ ProgressBar {
                 left: parent.left
                 verticalCenter: parent.verticalCenter
             }
-            active: root.wavy && !Appearance.zzzEverywhere
+            width: Math.max(0, contentItem.width * root.visualPosition)
+            height: contentItem.height * (1 + 2 * Math.max(0.5, Math.abs(root.waveAmplitudeMultiplier)))
+            active: (root.wavy || root.waveAmplitudeMultiplier > 0) && !Appearance.zzzEverywhere
             sourceComponent: WavyLine {
-                id: wavyFill
+                anchors.fill: parent
                 frequency: root.waveFrequency
                 color: root.highlightColor
-                amplitudeMultiplier: root.wavy ? 0.5 : 0
-                animate: root.animateWave
-                height: contentItem.height * 6
-                width: contentItem.width * root.visualPosition
+                amplitudeMultiplier: root.waveAmplitudeMultiplier
+                animate: root.animateWave && root.wavy
                 lineWidth: contentItem.height
                 fullLength: root.width
-                Connections {
-                    target: root
-                    function onValueChanged() { wavyFill.requestPaint(); }
-                    function onHighlightColorChanged() { wavyFill.requestPaint(); }
-                }
             }
         }
 
         Loader {
-            active: !root.wavy && !Appearance.zzzEverywhere
+            active: !root.wavy && root.waveAmplitudeMultiplier <= 0 && !Appearance.zzzEverywhere
             sourceComponent: Rectangle {
                 anchors.left: parent.left
                 width: contentItem.width * root.visualPosition
@@ -108,7 +102,7 @@ ProgressBar {
         Rectangle { // Right remaining part fill
             visible: !Appearance.zzzEverywhere
             anchors.right: parent.right
-            width: (1 - root.visualPosition) * parent.width - valueBarGap
+            width: Math.max(0, (1 - root.visualPosition) * parent.width - valueBarGap)
             height: parent.height
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : height / 2
             color: root.trackColor

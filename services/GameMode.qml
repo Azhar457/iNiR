@@ -47,6 +47,23 @@ Singleton {
     
     // True if ANY window in ANY workspace is fullscreen (for toast suppression)
     readonly property bool hasAnyFullscreenWindow: checkAnyFullscreenWindow()
+
+    // True only when a fullscreen window sits on an ACTIVE workspace, i.e. is
+    // actually visible right now. A fullscreen-sized window parked on a
+    // background workspace (an RDP session, a paused game) keeps
+    // hasAnyFullscreenWindow true, but must not mute desktop companions that
+    // only ever appear over the workspace the user is looking at.
+    readonly property bool hasVisibleFullscreenWindow: {
+        if (!CompositorService.isNiri) return hasAnyFullscreenWindow
+        const windows = NiriService.windows
+        if (!Array.isArray(windows)) return false
+        for (let i = 0; i < windows.length; i++) {
+            if (!isWindowFullscreen(windows[i])) continue
+            const ws = NiriService.workspaces[windows[i].workspace_id]
+            if (ws?.is_active) return true
+        }
+        return false
+    }
     
     // Suppress niri reload toast briefly after GameMode changes
     property bool suppressNiriToast: false

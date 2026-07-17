@@ -162,16 +162,49 @@ extras_refresh_yamis_icons_on_update() {
   fi
 }
 
+# Resolve the latest inir-mascot release tag from the GitHub redirect
+# (no API quota involved). Empty output means offline or repo unreachable.
+extras_mascot_latest_tag() {
+  curl -fsI --max-time 10 "https://github.com/snowarch/inir-mascot/releases/latest" 2>/dev/null \
+    | tr -d '\r' | awk -F/ 'tolower($0) ~ /^location:/ { print $NF; exit }'
+}
+
+# Refresh an installed mascot pack during `./setup update`. Only acts when
+# pack art is already present, and skips repo-link checkouts (their art is
+# managed straight from the inir-mascot repo). Downloads only when the
+# latest release tag differs from the recorded one, so a no-op update costs
+# one HEAD request. The version marker lives outside the synced tree so the
+# update rsync can never wipe it.
+extras_refresh_mascot_pack_on_update() {
+  local shell_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
+  local dest="${shell_dir}/assets/images/mascot"
+  local marker="${XDG_STATE_HOME:-$HOME/.local/state}/inir/mascot-pack-version"
+  [[ -d "${shell_dir}/.git" ]] && return 0
+  local count
+  count=$(find "$dest" -maxdepth 1 \( -name 'inir-mascot-*.png' -o -name 'inir-mascot-*.gif' \) 2>/dev/null | wc -l)
+  (( count > 10 )) || return 0
+  local latest
+  latest="$(extras_mascot_latest_tag)"
+  [[ -n "$latest" ]] || return 0
+  if [[ -f "$marker" && "$latest" == "$(cat "$marker")" ]]; then
+    return 0
+  fi
+  tui_info "Mascot pack: release ${latest} available, refreshing"
+  extras_install_mascot_pack
+}
+
 # Optional mascot art pack: every Kira pose/animation the shell can use.
-# The repo ships only the manifest + base reference; the images install
-# straight into the shell's assets dir (the exact path QML resolves), and
-# `setup update`'s rsync excludes them so the pack survives updates.
+# Canonical art home is the snowarch/inir-mascot repo; its latest release
+# always carries the pack under a stable asset name, so art updates ship
+# from there without touching iNiR. The images install straight into the
+# shell's assets dir (the exact path QML resolves), and `setup update`'s
+# rsync excludes them so the pack survives updates.
 extras_install_mascot_pack() {
-  local pack_url="https://github.com/snowarch/iNiR/releases/download/mascot-pack-v1/inir-mascot-pack-v1.tar.gz"
+  local pack_url="https://github.com/snowarch/inir-mascot/releases/latest/download/inir-mascot-pack.tar.gz"
   local shell_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
   local dest="${shell_dir}/assets/images/mascot"
 
-  tui_info "Optional mascot art pack: ~160 poses/animations, ~20 MiB download."
+  tui_info "Optional mascot art pack: ~215 poses/animations, ~27 MiB download."
   tui_dim "Installs into the shell assets dir; enable her later in Settings › Mascot."
 
   if [[ ! -d "$shell_dir" ]]; then
@@ -186,6 +219,14 @@ extras_install_mascot_pack() {
      && tar -xzf "${tmp}/pack.tar.gz" -C "$dest"; then
     local count
     count=$(find "$dest" -maxdepth 1 \( -name 'inir-mascot-*.png' -o -name 'inir-mascot-*.gif' \) | wc -l)
+    # Record which release landed so `setup update` can skip refreshes
+    # until the mascot repo actually publishes something new.
+    local tag state_dir
+    tag="$(extras_mascot_latest_tag)"
+    state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/inir"
+    if [[ -n "$tag" ]]; then
+      mkdir -p "$state_dir" && printf '%s\n' "$tag" > "${state_dir}/mascot-pack-version"
+    fi
     log_success "Mascot pack installed (${count} assets in ${dest})"
   else
     log_warning "Failed to download/extract the mascot pack (network?), continuing"

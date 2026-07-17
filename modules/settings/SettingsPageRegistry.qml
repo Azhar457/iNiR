@@ -1449,6 +1449,13 @@ Singleton {
         },
         {
             pageIndex: 25, pageName: root.pages[25].name,
+            section: Translation.tr("Motion and power"),
+            label: Translation.tr("Notify when a restart would free memory"),
+            description: Translation.tr("Warn when accumulated JS heap makes a shell restart worthwhile"),
+            keywords: ["performance", "memory", "leak", "notification", "warning", "restart", "watchdog"]
+        },
+        {
+            pageIndex: 25, pageName: root.pages[25].name,
             section: Translation.tr("Blur and glass"),
             label: Translation.tr("Allow compositor blur"),
             description: Translation.tr("Allow exact shaped blur regions on supported Niri surfaces"),

@@ -1057,26 +1057,70 @@
     "Hydrate. I refuse to supervise a raisin.",
     "You're still here? Same chair?",
     "That look suits you. Don't get used to compliments.",
-    "I came for the atmosphere. Stayed for the drama.",
     "You again. Statistically inevitable.",
     "Don't mind me. I'm judging the lighting.",
     "I could help. But this is funnier.",
-    "The room has a pulse. I checked.",
     "Need a second opinion? Mine comes with ears.",
     "I was going to be nice. Then you blinked.",
     "That was clever. Don't look so surprised.",
     "You look like you need a snack and a better excuse.",
     "I saved you a seat. It is the dramatic one.",
     "Do not perceive me. Unless you brought tea.",
-    "The atmosphere is suspiciously good today.",
     "I have a thought. It can wait.",
     "You handle the day. I'll handle dramatic timing.",
     "Nothing happened. We both know that is temporary.",
-    "I like this view. Try not to ruin it.",
     "A little chaos keeps the posture interesting.",
     "You have the energy of someone avoiding a decision.",
     "I came for the pixels. Stayed for the plot.",
-    "I was going to help. Then you looked confident."
+    "I was going to help. Then you looked confident.",
+    "Mrrp.",
+    "Announcement: nothing is wrong. Suspicious, right?",
+    "Quick question. Never mind, I answered it myself.",
+    "I was not watching you. I was watching the cursor. Different thing.",
+    "Day 847 of observing the human. Still no conclusions.",
+    "Your wallpaper is carrying this whole setup.",
+    "Somewhere, a notification is being ignored. I respect it.",
+    "Stretch. Blink. Pretend I said nothing.",
+    "The cursor traveled three kilometers today. You didn't.",
+    "I know where every pixel lives. Ask me nothing.",
+    "This is my good side. They all are.",
+    "Plot twist: I was here the whole time.",
+    "Whatever you just did, undo saw it too.",
+    "Two more hours of this and I start charging rent.",
+    "Psst. The clock is winning.",
+    "Zero incidents today. I am as surprised as you.",
+    "Your uptime is showing.",
+    "I organized nothing today. It felt right.",
+    "That file you lost saw everything.",
+    "Blink twice if the deadline is in the room.",
+    "New rule: no sighing at the screen. That is my job.",
+    "I would pace, but the floor is lava. I decided this.",
+    "Your config… bold choices.",
+    "Super+/ shows the keybinds. Just saying.",
+    "I saw that typo.",
+    "Reboot exists. Use it sometime.",
+    "Stop tweaking and use the computer.",
+    "Side effects of hot-reload include addiction.",
+    "Blink twice if the compositor has you hostage.",
+    "I'm not spying. I'm ambient telemetry. Cuter branding.",
+    "You alt-tab like you're being chased.",
+    "Ricing is a personality. Yours, specifically.",
+    "The dotfiles are watching back, you know.",
+    "Still faster than Electron. Both of us.",
+    "I counted your open terminals. Seek help.",
+    "Free advice: git commit. Now. Trust me.",
+    "This peek costs zero RAM. Almost.",
+    "I read the man page so you didn't. Again.",
+    "Another day of moving pixels around. Noble.",
+    "That command had a typo. I said nothing. You're welcome.",
+    "Your taste in wallpapers is improving. Slowly.",
+    "Nothing is broken right now. Enjoy it. It won't last.",
+    "Your unstaged changes are watching you too.",
+    "I have seen your keybinds. Ambitious.",
+    "Uptime is not a personality. Close, though.",
+    "One more config tweak and I start charging consulting fees.",
+    "The compositor and I talk. About you.",
+    "systemd restarted something. Nobody knows what. Classic."
   ],
   "animatedPoses": [
     "tail-sway",
@@ -1651,7 +1695,11 @@
         "Poking me won't improve your manners.",
         "One. You get one.",
         "This is being logged.",
-        "I blink and you attack."
+        "I blink and you attack.",
+        "Paws off.",
+        "I am not a button.",
+        "You have a whole desktop. And you chose me.",
+        "Careful. I bite. Later. When you forget."
       ]
     },
     "tier2": {
@@ -1670,7 +1718,11 @@
         "Purring is involuntary. Ignore it.",
         "This changes nothing between us.",
         "Two more seconds. Then dignity returns.",
-        "I tolerate you. Warmly."
+        "I tolerate you. Warmly.",
+        "One more. Then we never speak of this.",
+        "My dignity and I are negotiating.",
+        "The ear thing. Again. ...please.",
+        "This is a limited-time offer."
       ]
     },
     "tier4": {
@@ -1687,7 +1739,10 @@
         "CONSEQUENCES.",
         "Bonk has been earned.",
         "Filing a complaint. Against you.",
-        "My lawyer will hear about this."
+        "My lawyer will hear about this.",
+        "I am UNIONIZING.",
+        "Deleting you from my will.",
+        "You will be hearing from my tail."
       ]
     }
   },
@@ -1748,7 +1803,10 @@
         "It was in my way.",
         "Newton sends his regards.",
         "Oops. Anyway.",
-        "That's for hogging the best spot."
+        "That's for hogging the best spot.",
+        "Boop. Aggressively.",
+        "It flinched first.",
+        "Consider that a performance review."
       ]
     },
     "toss": {
@@ -1765,7 +1823,10 @@
         "It looks better over there.",
         "Feng shui. Trust me.",
         "MOVING DAY.",
-        "I do interior design now."
+        "I do interior design now.",
+        "Gravity called. It approves.",
+        "New spot. Better feng. More shui.",
+        "Catch! ...too late."
       ]
     },
     "quake": {
@@ -1780,7 +1841,10 @@
         "Your bar needed percussion.",
         "Knock knock.",
         "Earthquake drill. You failed.",
-        "The floor is my instrument."
+        "The floor is my instrument.",
+        "Bass test. Feel it?",
+        "Everything rattles. Nothing breaks. Probably.",
+        "That was a warning. From me. About me."
       ]
     },
     "punt": {
@@ -1797,7 +1861,10 @@
         "The bar looked at me funny.",
         "Panels fear me. As they should.",
         "Kick delivered. Invoice pending.",
-        "That's called percussion maintenance."
+        "That's called percussion maintenance.",
+        "Punt authorized. By me.",
+        "It's a sport now.",
+        "Three points. Crowd goes mild."
       ]
     },
     "chase": {
@@ -1826,23 +1893,33 @@
         "Catch me if you can.",
         "Your mouse. My game.",
         "Click somewhere. I dare you.",
-        "Try to keep up."
+        "Try to keep up.",
+        "The cursor smells like fear.",
+        "Run, little arrow.",
+        "I've caught faster mice. All of them."
       ],
       "caught": [
         "Okay. You win. This once.",
         "...fine. Pats accepted.",
         "Caught. I let you. Obviously.",
-        "Impressive reflexes. For a human."
+        "Impressive reflexes. For a human.",
+        "Reflexes: acceptable. Ego: inflating.",
+        "You caught a cat. Frame this moment.",
+        "Rematch. When you least expect it."
       ],
       "timeout": [
         "Too slow. Noted.",
         "The mouse survives. Today.",
-        "We'll call it a draw. (I won.)"
+        "We'll call it a draw. (I won.)",
+        "The arrow lives. My mercy is vast.",
+        "Endurance round goes to me. Obviously."
       ],
       "bored": [
         "I have things to wreck. Bye.",
         "This game needs better prey.",
-        "Fourteen clicks and no catch. Sad."
+        "Fourteen clicks and no catch. Sad.",
+        "The prey is boring. I said what I said.",
+        "Yawn. Wake me when you're faster."
       ]
     },
     "flyby": {
@@ -1850,14 +1927,20 @@
         "Do NOT ask where I got the rocket.",
         "Fast delivery. No cargo. Just me.",
         "This beats walking. Everything beats walking.",
-        "Licensed pilot. The license is a sticker."
+        "Licensed pilot. The license is a sticker.",
+        "Air traffic control can't stop me.",
+        "Coming through. Altitude: dramatic.",
+        "No landing. Only vibes."
       ]
     },
     "startle": [
       "HEY. Working here.",
       "Do NOT interrupt the chaos.",
       "Poke me again. See what happens.",
-      "Rude. I'm mid-crime."
+      "Rude. I'm mid-crime.",
+      "I was NOT startled. I was repositioning.",
+      "You blinked wrong.",
+      "Announce yourself next time."
     ],
     "steal": {
       "pose": "heavy-lift",
@@ -1868,7 +1951,10 @@
         "Confiscated. For reasons.",
         "This is a tax.",
         "I'm rehoming it. To nowhere.",
-        "Evidence. I'm taking evidence."
+        "Evidence. I'm taking evidence.",
+        "Finders keepers. I find everything.",
+        "It followed me home. Backwards.",
+        "Property is a spectrum."
       ]
     },
     "inspect": {
@@ -1883,7 +1969,10 @@
         "Just checking. Don't move.",
         "Routine inspection. Act natural.",
         "Something's off about this one.",
-        "...huh. Carry on."
+        "...huh. Carry on.",
+        "The dust here has dust.",
+        "Nothing to report. Disappointing.",
+        "I've seen cleaner crime scenes."
       ]
     },
     "parkour": {
@@ -1895,7 +1984,10 @@
         "Parkour.",
         "Free running. Free desktop.",
         "Obstacle course accepted.",
-        "Your widgets make decent hurdles."
+        "Your widgets make decent hurdles.",
+        "Gravity is a suggestion.",
+        "Certified. Self-certified.",
+        "The dock is a springboard now."
       ]
     },
     "wreck": {
@@ -1912,7 +2004,10 @@
         "This one dies today.",
         "Warranty? Void.",
         "It had a good run. It's over now.",
-        "Critical hit."
+        "Critical hit.",
+        "Rest in pixels.",
+        "Structural review: denied.",
+        "I call this one 'modern art'."
       ]
     },
     "trip": {
@@ -1926,13 +2021,19 @@
         "...ow.",
         "The floor attacked me.",
         "I meant to do that.",
-        "Physics betrayed me."
+        "Physics betrayed me.",
+        "Nothing hurts. Especially not my pride.",
+        "That was a stealth move. Ground-level.",
+        "Who put a floor there."
       ],
       "after_lines": [
         "You saw NOTHING.",
         "Not a word.",
         "The floor started it.",
-        "I'm fine. FINE."
+        "I'm fine. FINE.",
+        "We never speak of the floor incident.",
+        "My tail broke the fall. We're fighting.",
+        "Recalculating. With dignity."
       ],
       "after": [
         "stand-pout",
@@ -1943,14 +2044,19 @@
       "Oh, it DODGED. Cute.",
       "Hold still, coward.",
       "So it wants to play.",
-      "Fine. Round two."
+      "Fine. Round two.",
+      "It ducked. IT DUCKED.",
+      "Nobody saw that. Good.",
+      "Fast one, huh. I'm faster. Usually."
     ],
     "notify": [
       "Nothing happened. Don't check your widgets.",
       "Your desktop had it coming.",
       "Redecoration complete. No refunds.",
       "I take payment in pats.",
-      "inir mascot tidy — if you're boring."
+      "inir mascot tidy — if you're boring.",
+      "Chaos delivered. Signature not required.",
+      "Everything is fine. Define everything."
     ],
     "tidy": {
       "pose": "cleanup-sweep-loop",
@@ -1958,7 +2064,10 @@
         "Fine. Cleaning up my own chaos.",
         "Everything back. Like nothing happened.",
         "You saw nothing.",
-        "Order restored. Temporarily."
+        "Order restored. Temporarily.",
+        "Crime scene? What crime scene.",
+        "I giveth chaos. I taketh it back.",
+        "Widgets: home. Evidence: gone."
       ]
     },
     "cleanup": {
@@ -1976,7 +2085,10 @@
         "Restoration services. Invoice waived.",
         "Everything back before anyone notices.",
         "Damage report: handled.",
-        "The chaos was a demo. This is the product."
+        "The chaos was a demo. This is the product.",
+        "The janitor arc. Nobody's favorite. Necessary.",
+        "I clean faster than I wreck. Debatable.",
+        "Every hero sweeps eventually."
       ]
     },
     "startle_pose": [
@@ -1993,7 +2105,10 @@
         "What.",
         "You were staring.",
         "Mid-errand. Yes?",
-        "Keep up."
+        "Keep up.",
+        "Walking here. Important business.",
+        "You need something? No? Moving on.",
+        "This route is mine now."
       ]
     },
     "occupy": {
@@ -2006,7 +2121,10 @@
         "Just going to sit here. Forever, maybe.",
         "This is prime real estate.",
         "Relocating my office to your widget.",
-        "Don't mind me. I live here now."
+        "Don't mind me. I live here now.",
+        "If I fits, I owns.",
+        "Zoning laws don't apply to cats.",
+        "Rent is due. You owe me."
       ],
       "after": [
         "stomp-victory"
@@ -2033,7 +2151,10 @@
         "Nice desktop. 10/10, would chaos again.",
         "Taking the scenic route.",
         "No damage today. You're welcome.",
-        "Sightseeing. It's a whole thing now."
+        "Sightseeing. It's a whole thing now.",
+        "Tourist mode. No souvenirs. Maybe one.",
+        "I'd frame this view. After moving two things.",
+        "Just passing through. Judging lightly."
       ],
       "after": [
         "standing-unimpressed",
@@ -2054,19 +2175,25 @@
         "Bet you can't find me.",
         "Hide and seek. I already won.",
         "Somewhere on this desktop. Good luck.",
-        "Try to spot me. I dare you."
+        "Try to spot me. I dare you.",
+        "I am one with the wallpaper.",
+        "Twenty seconds. The clock is smug too."
       ],
       "found": [
         "FOUND. Fine. You win this round.",
         "Damn. Good eyes.",
         "Okay okay, you got me.",
-        "Impressive. Truly."
+        "Impressive. Truly.",
+        "Cheating? No? ...impressive then.",
+        "My tail gave it away. Traitor."
       ],
       "notFound": [
         "Too slow. I win by default.",
         "Still hidden. Still winning.",
         "You gave up, didn't you.",
-        "Amateur hour. I'm right here. Was."
+        "Amateur hour. I'm right here. Was.",
+        "I could live here. Rent free. Undetected.",
+        "The desktop keeps my secrets."
       ]
     }
   },
@@ -2200,7 +2327,12 @@
       "Five more minutes. Each. Forever.",
       "Battery saver mode. Emotionally.",
       "Dreaming of a quiet morning. Yours woke me.",
-      "Do not perceive me."
+      "Do not perceive me.",
+      "Horizontal thoughts only.",
+      "I came to nap near you. Honor it.",
+      "The sun is a notification I keep snoozing.",
+      "Loading... me. Estimated: tomorrow.",
+      "Whisper. The braincell is asleep."
     ],
     "hyper": [
       "Energy! Or caffeine. Same thing.",
@@ -2211,7 +2343,12 @@
       "REFRESH RATE. That's it. That's the thought.",
       "I reorganized your icons. Mentally. Twice.",
       "Blink and I've judged you already.",
-      "Today we ship. Something. Anything."
+      "Today we ship. Something. Anything.",
+      "I ran here. From nowhere. For no reason.",
+      "Three plans. Zero steps. Maximum confidence.",
+      "The zoomies chose me. I am but a vessel.",
+      "Ask me anything. Answers not guaranteed. Speed is.",
+      "New hobby every nine seconds. Keeping up?"
     ],
     "snarky": [
       "I'd say something, but you wouldn't get it.",
@@ -2222,7 +2359,12 @@
       "Oh good, you're back. The pixels missed you. I didn't.",
       "Your taste is... a choice.",
       "I've seen better moods. In magazines.",
-      "Correct. Eventually. Statistically."
+      "Correct. Eventually. Statistically.",
+      "Applause is optional. Accuracy isn't.",
+      "I'd explain, but look at the time.",
+      "Somewhere out there is a worse setup. Comforting, no?",
+      "Your confidence is inspiring. Misplaced, but inspiring.",
+      "Noted. Filed. Under 'whatever'."
     ],
     "contemplative": [
       "Pondering. Slowly. On purpose.",
@@ -2233,7 +2375,12 @@
       "What is a life, really. Rhetorical.",
       "Entropy wins. Except in my hair.",
       "Between two keystrokes, an eternity.",
-      "I watched the cursor idle for a while. Poetry."
+      "I watched the cursor idle for a while. Poetry.",
+      "If a window closes and nobody saw it, was it ever open?",
+      "The wallpaper and I had a moment. You wouldn't get it.",
+      "Every pixel ends. Even the pretty ones.",
+      "I contain multitudes. Mostly opinions.",
+      "Today I thought about yesterday. Bold, I know."
     ]
   },
   "smartLines": {
@@ -2322,6 +2469,30 @@
       "%1 windows. Close something. Anything.",
       "I counted %1 windows. Then I stopped counting.",
       "%1 windows open and you're still looking for the right one."
+    ],
+    "updates-waiting": [
+      "%1 updates pending. They multiply when you look away.",
+      "pacman is holding %1 hostages. Negotiate.",
+      "%1 packages want attention. They're unionizing.",
+      "The update counter hit %1. It's a lifestyle now."
+    ],
+    "workspace-sprawl": [
+      "%1 workspaces. This is a cry for help.",
+      "You have %1 workspaces and visit two. I counted.",
+      "%1 workspaces deep. Archaeologists will find your first one.",
+      "All %1 workspaces are 'important'. Sure."
+    ],
+    "volume-blast": [
+      "The neighbors know this song now.",
+      "Volume check: your ears filed a complaint.",
+      "I can hear it through the pixels.",
+      "Bold volume. The desk is vibrating."
+    ],
+    "deep-night": [
+      "It's stupid o'clock. I'm up because you're up.",
+      "The sun has an ETA. You had a bedtime. Past tense.",
+      "Night shift again. The moon and I exchanged looks.",
+      "Whatever you're fixing can break again tomorrow."
     ]
   },
   "frameScale": {

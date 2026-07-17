@@ -144,7 +144,7 @@ ContentPage {
                         height: 60
                         sourceSize.width: 60
                         sourceSize.height: 60
-                        source: Quickshell.shellPath("assets/icons/sf.svg")
+                        source: Quickshell.shellPath("assets/icons/sf.jpg")
                         fillMode: Image.PreserveAspectFit
                         layer.enabled: Appearance.effectsEnabled
 

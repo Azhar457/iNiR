@@ -1017,6 +1017,11 @@ Singleton {
             property JsonObject performance: JsonObject {
                 property bool lowPower: false
                 property bool reduceAnimations: false
+                // JSGCHeap watchdog (#164). Stats stay on `inir memory`;
+                // the restart notification is opt-in.
+                property bool memoryMonitoring: true
+                property int jsgcThreshold: 300
+                property bool memoryWarningNotification: false
                 // Delegate shaped panel blur to Niri via ext-background-effect-v1.
                 // The request is only activated on Niri; QML blur remains the fallback.
                 property bool compositorBlur: true

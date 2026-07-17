@@ -137,7 +137,9 @@ AbstractBackgroundWidget {
     implicitWidth: widgetWidth
     implicitHeight: playerColumnLayout.implicitHeight
 
-    readonly property bool visualizerActive: selectedPreset === "visualizer"
+    // Every preset can render the configured visualizer. Keep the shared Cava
+    // subscription alive whenever a visible preset actually needs points.
+    readonly property bool visualizerActive: root.vizPosition !== "none"
         && (Config.options?.background?.widgets?.mediaControls?.enable ?? false)
         && root.visible && root.powerActive && MprisController.isPlaying
 

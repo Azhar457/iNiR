@@ -94,6 +94,12 @@ ContentPage {
                 checked: Config.options?.performance?.lowPower ?? false
                 onCheckedChanged: Config.setNestedValue("performance.lowPower", checked)
             }
+            SettingsSwitch {
+                buttonIcon: "memory"
+                text: Translation.tr("Notify when a restart would free memory")
+                checked: Config.options?.performance?.memoryWarningNotification ?? false
+                onCheckedChanged: Config.setNestedValue("performance.memoryWarningNotification", checked)
+            }
         }
     }
 }

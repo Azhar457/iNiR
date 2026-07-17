@@ -154,7 +154,6 @@ Rectangle {
 
             // Action buttons - smaller, inline
             RowLayout {
-                Layout.maximumWidth: parent.width
                 spacing: 2
 
                 AiMessageControlButton {

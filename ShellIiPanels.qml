@@ -139,12 +139,9 @@ Item {
         component: Dashboard {}
     }
     DeferredPanelLoader { identifier: "iiLock"; component: Lock {} }
-    OnDemandPanelLoader {
-        identifier: "iiMediaControls"
-        open: GlobalStates.mediaControlsOpen
-        closeGraceMs: 400
-        component: MediaControls {}
-    }
+    // MediaControls already gates its heavy tree; a second on-demand loader
+    // races the same open state and can skip the entrance transition.
+    DeferredPanelLoader { identifier: "iiMediaControls"; component: MediaControls {} }
     OnDemandPanelLoader { identifier: "iiOnScreenKeyboard"; open: GlobalStates.oskOpen; component: OnScreenKeyboard {} }
     OnDemandPanelLoader {
         identifier: "iiOverlay"

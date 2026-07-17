@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import qs.modules.common
 import QtQuick
 
@@ -30,7 +31,8 @@ Item {
     Canvas {
         id: waveCanvas
         height: root.height
-        width: root.width + root.wavelength + root.lineWidth
+        // Paint the complete track once; the parent clips progress changes.
+        width: Math.max(1, root.fullLength) + root.wavelength + root.lineWidth
         x: 0
 
         onPaint: {
@@ -86,10 +88,6 @@ Item {
         function onColorChanged() { waveCanvas.requestPaint() }
         function onLineWidthChanged() { waveCanvas.requestPaint() }
         function onFullLengthChanged() {
-            waveCanvas.x = 0
-            waveCanvas.requestPaint()
-        }
-        function onWidthChanged() {
             waveCanvas.x = 0
             waveCanvas.requestPaint()
         }

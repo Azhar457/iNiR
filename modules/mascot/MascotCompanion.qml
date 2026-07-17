@@ -25,6 +25,26 @@ Scope {
     readonly property string placement: Config.options?.mascot?.companion?.placement ?? "peek"
     readonly property int visibleSeconds: Config.options?.mascot?.companion?.visibleSeconds ?? 8
     readonly property int slideMs: Config.options?.mascot?.companion?.slideMs ?? 400
+    // Per-peek entrance profile, re-rolled on every show so arrivals stop
+    // feeling metronomic: sometimes she zips out, sometimes she creeps in
+    // warily, sometimes the slide lands with an eager overshoot, and how far
+    // she leans out of the edge varies too.
+    property real _slideScale: 1
+    property bool _bouncyIn: false
+    property bool _doubleTake: false
+    property real _peekDepth: 0.07
+    function _rollEntrance() {
+        const r = Math.random()
+        _slideScale = r < 0.18 ? 0.45 + Math.random() * 0.15
+                    : r < 0.36 ? 1.6 + Math.random() * 0.6
+                    : 0.85 + Math.random() * 0.3
+        _bouncyIn = Math.random() < 0.22
+        // Double-take: she pops out, ducks back as if she saw something, then
+        // commits. Mutually exclusive with the bouncy overshoot; both at once
+        // reads as a glitch.
+        _doubleTake = !_bouncyIn && Math.random() < 0.12
+        _peekDepth = 0.04 + Math.random() * 0.07
+    }
 
     // Only peek from edges the user allows; fall back to any edge if all are off
     function _edgeAllowed(e) {
@@ -43,7 +63,7 @@ Scope {
             if (_edgeAllowed(alt)) return alt
         return e
     }
-    readonly property bool suppressed: GameMode.active || GameMode.hasAnyFullscreenWindow
+    readonly property bool suppressed: GameMode.active || GameMode.hasVisibleFullscreenWindow
         || GlobalStates.screenLocked || GlobalStates.sessionOpen
 
     // Where the user's main panel actually lives — contextual reactions and
@@ -293,6 +313,10 @@ Scope {
         _pendingLineArg = ""
         _peekTouched = false
         _clickCount = 0
+        _rollEntrance()
+        // Dwell jitter: quick drive-by peeks and lingering stays instead of a
+        // fixed on-screen time (re-rolled per peek, so the binding is moot).
+        hideTimer.interval = Math.max(3, visibleSeconds) * 1000 * (0.7 + Math.random() * 0.6)
         _lastShownAt = Date.now()
         showing = true
         hideTimer.restart()
@@ -349,6 +373,16 @@ Scope {
         // heavy-lift is full-body art and read wrong from a bust-crop peek.
         if (commentaryOn && winCount >= 12)
             out.push({ key: "window-pileup", pose: "package-lifter", edge: "left", arg: winCount })
+        if (Updates.available && Updates.count >= 25)
+            out.push({ key: "updates-waiting", pose: "package-lifter", edge: "right", arg: Updates.count })
+        const wsCount = Object.keys(NiriService.workspaces ?? ({})).length
+        if (commentaryOn && wsCount >= 6)
+            out.push({ key: "workspace-sprawl", pose: "workspace-portal", edge: "left", arg: wsCount })
+        if (_eventEnabled("music") && MprisController.isPlaying
+            && (Audio.sink?.audio?.volume ?? 0) >= 0.85 && !(Audio.sink?.audio?.muted ?? false))
+            out.push({ key: "volume-blast", pose: "volume-wave-rider", edge: "right" })
+        if (commentaryOn && hour >= 1 && hour < 5)
+            out.push({ key: "deep-night", pose: "yawn-stretch", edge: "bottom" })
         // Never the same commentary twice in a row
         return out.filter(c => c.key !== root._lastContext)
     }
@@ -369,7 +403,7 @@ Scope {
         }
         const ctxs = _smartCandidates()
         const ctxLines = _manifest.contextLines ?? ({})
-        if (ctxs.length && Math.random() < 0.6) {
+        if (ctxs.length && Math.random() < 0.7) {
             const c = ctxs[Math.floor(Math.random() * ctxs.length)]
             const pool = ctxLines[c.key] ?? []
             if (pool.length) {
@@ -718,10 +752,27 @@ Scope {
             _remember(_recentPoses, pose, 10)
         systemChaosFollowup.restart()
     }
-    // The peek needs a beat on screen before the romp window steals focus
+    // The peek needs a beat on screen before the romp window steals focus,
+    // but the peek itself must be torn down first or the romp window opens
+    // while peek #1 is still on screen — two Kiras visible simultaneously.
+    // The followup hides the peek; a second timer waits for peek slide-out
+    // (teardownTimer keeps the peek window alive for the exit animation)
+    // before opening the romp window.
     Timer {
         id: systemChaosFollowup
         interval: 2600
+        onTriggered: if (root.chaosEnabled && !root.rompActive && !root.suppressed) {
+            if (root.showing) {
+                root.hide()
+                systemChaosRompAfterTeardown.restart()
+            } else {
+                root.startRomp("romp")
+            }
+        }
+    }
+    Timer {
+        id: systemChaosRompAfterTeardown
+        interval: Math.max(500, root.slideMs * root._slideScale + 120)
         onTriggered: if (root.chaosEnabled && !root.rompActive && !root.suppressed) root.startRomp("romp")
     }
     Timer {
@@ -784,8 +835,9 @@ Scope {
 
         Timer {
             id: teardownTimer
-            // Keep the window alive for the slide-out animation (configurable)
-            interval: Math.max(450, root.slideMs + 50)
+            // Keep the window alive for the slide-out animation (configurable,
+            // scaled by the entrance profile so slow creeps finish their exit)
+            interval: Math.max(450, root.slideMs * root._slideScale + 50)
         }
 
         onActiveChanged: if (!active) root._clickCount = 0
@@ -812,7 +864,10 @@ Scope {
                     const map = ({ "battery": 0.85, "media": 0.30, "update": 0.92, "network": 0.80, "dnd": 0.78 })
                     return map[root._contextualSource] ?? (0.22 + Math.random() * 0.5)
                 }
-                return 0.22 + Math.random() * 0.5
+                // Mostly the comfortable middle band, but sometimes she shows
+                // up way off in a corner like she owns the whole edge.
+                return Math.random() < 0.25 ? 0.06 + Math.random() * 0.86
+                                            : 0.22 + Math.random() * 0.5
             }
 
             Item {
@@ -830,14 +885,31 @@ Scope {
                 // bounds already track bar/dock/taskbar in both families at runtime.
                 // Panel-sitter just hugs the window edge; peek mode uses a small offset.
                 readonly property bool panelSitterMode: root.placement === "panel-sitter"
-                readonly property int _peekOffset: Math.round(size * 0.07)
-                readonly property int _topPeekOffset: Math.round(size * 0.05)
+                readonly property int _peekOffset: Math.round(size * root._peekDepth)
+                readonly property int _topPeekOffset: Math.round(size * root._peekDepth * 0.75)
 
                 // Starts false so she slides in from off-screen on creation
                 property bool onStage: false
                 readonly property bool peekedOut: root.showing && onStage
 
                 Component.onCompleted: Qt.callLater(() => onStage = true)
+
+                // Double-take entrance: shortly after arriving she ducks back
+                // off-screen, hesitates, then commits to the peek.
+                Timer {
+                    running: root._doubleTake && mascotItem.onStage && root.showing
+                    interval: 550 + Math.random() * 350
+                    onTriggered: {
+                        root._doubleTake = false
+                        mascotItem.onStage = false
+                        reappearTimer.restart()
+                    }
+                }
+                Timer {
+                    id: reappearTimer
+                    interval: Math.max(240, root.slideMs * root._slideScale * 0.7)
+                    onTriggered: if (root.showing) mascotItem.onStage = true
+                }
 
                 width: size
                 height: size
@@ -865,11 +937,11 @@ Scope {
 
                 Behavior on x {
                     enabled: Appearance.animationsEnabled && !mascotItem.vertical
-                    NumberAnimation { duration: Math.max(100, root.slideMs); easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves?.emphasizedDecel ?? [0.05, 0.7, 0.1, 1, 1, 1] }
+                    NumberAnimation { duration: Math.max(100, root.slideMs * root._slideScale); easing.type: root._bouncyIn ? Easing.OutBack : Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves?.emphasizedDecel ?? [0.05, 0.7, 0.1, 1, 1, 1] }
                 }
                 Behavior on y {
                     enabled: Appearance.animationsEnabled && mascotItem.vertical
-                    NumberAnimation { duration: Math.max(100, root.slideMs); easing.type: Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves?.emphasizedDecel ?? [0.05, 0.7, 0.1, 1, 1, 1] }
+                    NumberAnimation { duration: Math.max(100, root.slideMs * root._slideScale); easing.type: root._bouncyIn ? Easing.OutBack : Easing.BezierSpline; easing.bezierCurve: Appearance.animationCurves?.emphasizedDecel ?? [0.05, 0.7, 0.1, 1, 1, 1] }
                 }
 
                 AnimatedImage {

@@ -1367,7 +1367,10 @@
         },
         "blurBackend": "auto",
         "compositorBlur": true,
+        "jsgcThreshold": 300,
         "lowPower": false,
+        "memoryMonitoring": true,
+        "memoryWarningNotification": false,
         "reduceAnimations": false
     },
     "policies": {

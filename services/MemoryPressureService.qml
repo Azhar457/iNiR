@@ -16,6 +16,7 @@ Singleton {
 
     // ── Config ────────────────────────────────────────────────────────────
     readonly property bool enabled: Config.options?.performance?.memoryMonitoring ?? true
+    readonly property bool notifyEnabled: Config.options?.performance?.memoryWarningNotification ?? false
     readonly property int deletedMappingsThreshold: Config.options?.performance?.jsgcThreshold ?? 300
     readonly property int checkIntervalMs: 300000  // check every 5 min
 
@@ -65,7 +66,8 @@ Singleton {
             threshold: root.deletedMappingsThreshold,
             notificationShown: root.notificationShown,
             userDismissed: root.userDismissed,
-            enabled: root.enabled
+            enabled: root.enabled,
+            notifyEnabled: root.notifyEnabled
         })
     }
 
@@ -81,6 +83,7 @@ Singleton {
     }
 
     function _notifyUser(): void {
+        if (!root.notifyEnabled) { _log("threshold hit, notification disabled"); return }
         if (root.notificationShown || root.userDismissed) return
         
         root.notificationShown = true
