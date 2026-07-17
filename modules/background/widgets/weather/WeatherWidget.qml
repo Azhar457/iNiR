@@ -23,18 +23,31 @@ AbstractBackgroundWidget {
         x: 100, y: 200
     })
 
-    readonly property string weatherStyle: Config.getNestedValue("background.widgets.weather.style", "pill")
-    readonly property string weatherShape: Config.getNestedValue("background.widgets.weather.shape", "pill")
-    readonly property int shapeSize: Math.round((Config.getNestedValue("background.widgets.weather.size", 200)) * scaleFactor)
-    readonly property int tempFontSize: Math.round((Config.getNestedValue("background.widgets.weather.tempSize", 80)) * scaleFactor)
-    readonly property int weatherIconSize: Math.round((Config.getNestedValue("background.widgets.weather.iconSize", 80)) * scaleFactor)
-    readonly property bool showTemp: Config.getNestedValue("background.widgets.weather.showTemp", true)
-    readonly property bool showIcon: Config.getNestedValue("background.widgets.weather.showIcon", true)
-    readonly property bool showCondition: Config.getNestedValue("background.widgets.weather.showCondition", false)
+    readonly property string weatherStyle: root._readConfigKey("style") ?? "pill"
+    readonly property string weatherShape: root._readConfigKey("shape") ?? "pill"
+    readonly property real logicalShapeSize: Math.max(1,
+        Number(root._readConfigKey("size") ?? 200))
+    readonly property real contentScale: root.logicalShapeSize / 200
+    readonly property int shapeSize: Math.round(root.logicalShapeSize * root.scaleFactor)
+    readonly property int tempFontSize: Math.max(10, Math.round(
+        Number(root._readConfigKey("tempSize") ?? 80)
+            * root.scaleFactor * root.contentScale))
+    readonly property int weatherIconSize: Math.max(12, Math.round(
+        Number(root._readConfigKey("iconSize") ?? 80)
+            * root.scaleFactor * root.contentScale))
+    readonly property bool showTemp: Boolean(root._readConfigKey("showTemp") ?? true)
+    readonly property bool showIcon: Boolean(root._readConfigKey("showIcon") ?? true)
+    readonly property bool showCondition: Boolean(root._readConfigKey("showCondition") ?? false)
     readonly property int visibleContentCount: Number(showTemp) + Number(showIcon) + Number(showCondition)
-    readonly property int weatherPadding: Math.round((Config.getNestedValue("background.widgets.weather.padding", 20)) * scaleFactor)
-    readonly property int tempFontWeight: Config.getNestedValue("background.widgets.weather.tempFontWeight", 500)
-    readonly property real conditionOpacity: Config.getNestedValue("background.widgets.weather.conditionOpacity", 0.7)
+    readonly property int weatherPadding: Math.max(4, Math.round(
+        Number(root._readConfigKey("padding") ?? 20)
+            * root.scaleFactor * root.contentScale))
+    readonly property int contentInset: Math.max(root.weatherPadding,
+        Math.round(root.shapeSize * 0.13))
+    readonly property int conditionFontSize: Math.max(8, Math.round(
+        Appearance.font.pixelSize.small * root.scaleFactor * root.contentScale))
+    readonly property int tempFontWeight: Number(root._readConfigKey("tempFontWeight") ?? 500)
+    readonly property real conditionOpacity: Number(root._readConfigKey("conditionOpacity") ?? 0.7)
     readonly property string temperatureText: {
         const raw = String(Weather.data?.temp ?? "--°");
         if (raw.endsWith("°C") || raw.endsWith("°F")) return raw.slice(0, -1);
@@ -260,22 +273,33 @@ AbstractBackgroundWidget {
         }
 
         StyledText {
+            id: temperatureLabel
             visible: root.showTemp
+            height: Math.max(1, Math.round(root.height * 0.42))
             font {
                 pixelSize: root.tempFontSize
                 family: Appearance.font.family.expressive
                 weight: root.tempFontWeight
             }
+            fontSizeMode: Text.Fit
+            minimumPixelSize: Math.max(8, Math.round(root.tempFontSize * 0.45))
+            maximumLineCount: 1
+            wrapMode: Text.NoWrap
+            horizontalAlignment: Text.AlignRight
+            verticalAlignment: Text.AlignVCenter
+            clip: true
             // Matches weatherIconColor so the number and icon read as one coloured
             // unit in both modes, instead of the icon being tinted and the number
             // staying flat ink like it did before.
             color: root.weatherIconColor
             text: root.temperatureText
             anchors {
+                left: parent.left
                 right: parent.right
                 top: parent.top
-                rightMargin: root.weatherPadding
-                topMargin: Math.round(root.weatherPadding * 1.2)
+                leftMargin: root.contentInset
+                rightMargin: root.contentInset
+                topMargin: root.contentInset
             }
         }
 
@@ -288,8 +312,8 @@ AbstractBackgroundWidget {
             anchors {
                 left: parent.left
                 bottom: parent.bottom
-                leftMargin: root.weatherPadding
-                bottomMargin: Math.round(root.weatherPadding * 1.2)
+                leftMargin: root.contentInset
+                bottomMargin: root.contentInset
             }
         }
 
@@ -301,19 +325,21 @@ AbstractBackgroundWidget {
         StyledText {
             visible: root.showCondition
             font {
-                pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                pixelSize: root.conditionFontSize
                 family: Appearance.font.family.expressive
             }
             color: root.weatherConditionColor
             text: Weather.data?.description ?? ""
             elide: Text.ElideRight
-            width: Math.min(implicitWidth, root.width - root.weatherPadding * (root.showIcon ? 3 : 2) - (root.showIcon ? weatherIcon.width : 0))
+            width: Math.max(0, Math.min(implicitWidth,
+                root.width - root.contentInset * 2
+                    - (root.showIcon ? weatherIcon.width + Math.round(root.contentInset * 0.4) : 0)))
             anchors {
                 left: root.showIcon ? weatherIcon.right : parent.left
-                leftMargin: root.showIcon ? Math.round(root.weatherPadding * 0.5) : root.weatherPadding
+                leftMargin: root.showIcon ? Math.round(root.contentInset * 0.4) : root.contentInset
                 verticalCenter: root.showIcon ? weatherIcon.verticalCenter : undefined
                 bottom: root.showIcon ? undefined : parent.bottom
-                bottomMargin: root.showIcon ? 0 : Math.round(root.weatherPadding * 1.2)
+                bottomMargin: root.showIcon ? 0 : root.contentInset
             }
         }
     }

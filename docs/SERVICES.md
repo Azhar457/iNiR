@@ -37,6 +37,7 @@
 | **ResourceUsage** | CPU, RAM, GPU, temperature, disk polling. History arrays for graphs. Auto-stop timer (15s) when no consumers active. |
 | **ScreenTime** | Optional focused-app usage tracking. Local JSON storage, daily totals, hourly buckets, 3/14 day range aggregation. Disabled unless `sidebar.screenTime.enable` is true. |
 | **SystemInfo** | Distro name, username, desktop environment detection. |
+| **ShellLayoutController** | Validates and persists bar, dock, taskbar and sidebar placement across panel families. IPC target: `shellLayout`. |
 | **Privacy** | Mic and screen sharing detection via PipeWire link analysis. |
 
 ## Theming and Appearance
@@ -117,6 +118,7 @@
 | **Ydotool** | Virtual keyboard input for on-screen keyboard. |
 | **LatexRenderer** | LaTeX math rendering via MicroTeX. |
 | **Translation** | i18n string lookup. Auto language detection, 15 languages. |
+| **DevNavigation** | Deterministic development navigation for loading lazy surfaces and internal settings views. IPC target: `dev`. |
 | **CustomWidgets** | User-installed custom widget management (scan/create/list/remove from the widgets dir). IPC target: `customWidgets`. |
 | **MemoryPressureService** | Monitors JSGCHeap accumulation (Qt V4 memfd leak); notifies and offers a shell restart. IPC target: `memory`. |
 | **WidgetPowerManager** | Pauses desktop-widget rendering on game mode / fullscreen / present windows / edit mode. IPC target: `widgetpower`. |

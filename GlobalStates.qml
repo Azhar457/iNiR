@@ -83,17 +83,45 @@ Singleton {
     property bool superReleaseMightTrigger: true
     property bool wallpaperSelectorOpen: false
     property bool widgetEditMode: false
+    property string selectedDesktopWidget: ""
+    property string desktopWidgetQuickControls: ""
     property bool shellLayoutEditMode: false
 
     function setWidgetEditMode(enabled: bool): void {
         if (enabled)
             shellLayoutEditMode = false
+        else {
+            selectedDesktopWidget = ""
+            desktopWidgetQuickControls = ""
+        }
         widgetEditMode = enabled
     }
 
+    function selectDesktopWidget(instanceKey: string): void {
+        if (!widgetEditMode)
+            return
+        selectedDesktopWidget = String(instanceKey ?? "")
+    }
+
+    function clearDesktopWidgetSelection(): void {
+        selectedDesktopWidget = ""
+        desktopWidgetQuickControls = ""
+    }
+
+    function requestDesktopWidgetQuickControls(instanceKey: string): void {
+        if (!widgetEditMode)
+            return
+        const key = String(instanceKey ?? "")
+        selectedDesktopWidget = key
+        desktopWidgetQuickControls = key
+    }
+
     function setShellLayoutEditMode(enabled: bool): void {
-        if (enabled)
+        if (enabled) {
             widgetEditMode = false
+            selectedDesktopWidget = ""
+            desktopWidgetQuickControls = ""
+        }
         shellLayoutEditMode = enabled
     }
     // Navigate sidebar right to a specific widget by type (e.g. "notepad", "calendar")

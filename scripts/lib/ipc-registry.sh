@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 9783aedbb23bd822
+# IPC.md hash: 27bb264133e9378a
 # Targets: 59
 
 declare -gA IPC_TARGET_DESC=(
@@ -135,7 +135,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [appCatalog]="refresh search install list"
   [audio]="volumeUp volumeDown mute playEvent micMute"
   [autostart]="status addCommand addApp removeLast reload"
-  [background]="toggleEditMode setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
+  [background]="toggleEditMode setEditMode editState focusWidget promoteWidget resetLayerOrder setWidgetEnabled clockDebugState clockDebugSetMode clockDebugSetRegion clockDebugSetLayout clockDebugRestore"
   [bar]="toggle close open"
   [brightness]="increment decrement"
   [cheatsheet]="toggle close open"
@@ -219,6 +219,11 @@ declare -gA IPC_FUNCTION_DESC=(
   ["autostart:removeLast"]="Remove the last managed entry"
   ["autostart:reload"]="Force re-read the startup file"
   ["background:toggleEditMode"]="Toggle widget edit mode (drag, resize, configure desktop widgets)"
+  ["background:setEditMode"]="Set widget edit mode explicitly"
+  ["background:editState"]="Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output"
+  ["background:focusWidget"]="Select a desktop widget and optionally open its quick controls"
+  ["background:promoteWidget"]="Move a desktop widget to the top of the persistent layer order"
+  ["background:resetLayerOrder"]="Reset desktop widgets to their built-in stacking order"
   ["background:setWidgetEnabled"]="Enable or disable a built-in desktop widget"
   ["background:clockDebugState"]="Report clock palette, renderer and quick-control geometry diagnostics"
   ["background:clockDebugSetMode"]="cookie adaptToWallpaper\`"
@@ -436,6 +441,9 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["audio:playEvent"]="<event>"
   ["autostart:addCommand"]="<cmd>"
   ["autostart:addApp"]="<desktopId>"
+  ["background:setEditMode"]="<enabled>"
+  ["background:focusWidget"]="<widgetName> <openControls>"
+  ["background:promoteWidget"]="<widgetName>"
   ["background:setWidgetEnabled"]="<widgetName> <enabled>"
   ["background:clockDebugSetMode"]="<style> <adaptToWallpaper>"
   ["background:clockDebugSetRegion"]="<color> <brightness> <spread>"

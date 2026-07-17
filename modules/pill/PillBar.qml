@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
+import qs
 import qs.services
 import qs.modules.common
 
@@ -33,6 +34,14 @@ Scope {
     function close() {
         openMon = "";
         openSurface = "";
+    }
+
+    Connections {
+        target: GlobalStates
+        function onWidgetEditModeChanged(): void {
+            if (GlobalStates.widgetEditMode)
+                root.close()
+        }
     }
 
     readonly property var surfaceNames: ["power", "media", "battery", "calendar", "link", "mixer", "sysmon", "clipboard", "glance", "launcher", "recorder"]
@@ -110,9 +119,11 @@ Scope {
             readonly property real reservedH: Math.max(0, restHeight + topGapPx - 12 * (1 - root.appGap) * s)
 
             screen: modelData
+            visible: !GlobalStates.widgetEditMode
             color: "transparent"
             exclusionMode: ExclusionMode.Normal
-            exclusiveZone: GameMode.active ? gameBarH : reservedH
+            exclusiveZone: GlobalStates.widgetEditMode ? 0
+                : GameMode.active ? gameBarH : reservedH
             aboveWindows: true
 
             anchors { top: true; left: true; right: true }
@@ -158,7 +169,8 @@ Scope {
             // Stay mapped while the pill is still fading out (it hides on an
             // opacity Behavior, not instantly), or unmapping would cut the fade
             // into a pop. Mapping back is immediate, so the fade-in is intact.
-            visible: modal || !pill.fsHide || pill.opacity > 0.01
+            visible: !GlobalStates.widgetEditMode
+                && (modal || !pill.fsHide || pill.opacity > 0.01)
 
             // While a fullscreen window owns this monitor the pill is hidden and
             // must not eat pointer input either.

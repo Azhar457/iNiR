@@ -10,6 +10,7 @@ Singleton {
     id: root
 
     readonly property string activeFamily: Config.options?.panelFamily ?? "ii"
+    readonly property int desktopWidgetOuterGap: 12
 
     readonly property var _descriptors: [
         {
@@ -186,6 +187,131 @@ Singleton {
         return root._descriptors
             .filter(item => item.families.includes(targetFamily))
             .map(item => root._clone(item))
+    }
+
+    function _panelEnabled(identifier: string): bool {
+        return (Config.options?.enabledPanels ?? []).includes(identifier)
+    }
+
+    function _outputEnabled(configuredOutputs: var, outputName: string): bool {
+        if (!Array.isArray(configuredOutputs) || configuredOutputs.length === 0)
+            return true
+        if (outputName.length > 0 && configuredOutputs.includes(outputName))
+            return true
+        const currentNames = Quickshell.screens.map(screen => screen?.name ?? "")
+        return !configuredOutputs.some(name => currentNames.includes(name))
+    }
+
+    function _applyInset(insets: var, edge: string, thickness: real): void {
+        if (!(edge in insets))
+            return
+        insets[edge] = Math.max(insets[edge], Math.max(0, Math.round(thickness)))
+    }
+
+    // Physical desktop space occupied by persistent shell surfaces. Free
+    // desktop placement can overlap it deliberately; automatic zone placement
+    // and shell-layout diagnostics use it to keep snapped widgets visible.
+    function desktopInsets(outputName: string): var {
+        const result = {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            barEdge: "",
+            dockEdge: ""
+        }
+        if (root.activeFamily !== "ii")
+            return result
+
+        const barVertical = Config.options?.bar?.vertical ?? false
+        const barIdentifier = barVertical ? "iiVerticalBar" : "iiBar"
+        const barOutputs = Config.options?.bar?.screenList ?? []
+        if (root._panelEnabled(barIdentifier)
+                && root._outputEnabled(barOutputs, outputName)
+                && (GlobalStates.barOpen ?? true)) {
+            const barState = root.currentState("iiBar", outputName)
+            const appearanceStyle = Config.options?.bar?.appearanceStyle ?? "classic"
+            let thickness = 0
+            if (appearanceStyle === "pill" && !barVertical) {
+                const screen = Quickshell.screens.find(item => (item?.name ?? "") === outputName)
+                    ?? Quickshell.screens[0]
+                const scale = ((screen?.height ?? 1080) / 1080)
+                    * (Config.options?.bar?.pill?.scale ?? 1)
+                const restHeight = (Config.options?.bar?.pill?.barMode ?? false)
+                    ? 58 * scale : 38 * scale
+                const topGap = 8 * (Config.options?.bar?.pill?.topGap ?? 1) * scale
+                const appGap = Config.options?.bar?.pill?.appGap ?? 1
+                thickness = Math.max(0, restHeight + topGap - 12 * (1 - appGap) * scale)
+            } else if (barVertical) {
+                thickness = Appearance.sizes.verticalBarWidth + Appearance.rounding.screenRounding
+            } else {
+                const detachedZzz = Appearance.zzzEverywhere
+                    && Appearance.zzz.round
+                    && appearanceStyle === "classic"
+                    && (Config.options?.bar?.showBackground ?? true)
+                    && ([1, 3].includes(Config.options?.bar?.cornerStyle ?? 0))
+                thickness = detachedZzz
+                    ? Appearance.sizes.baseBarHeight + Appearance.sizes.elevationMargin * 2
+                    : Appearance.sizes.barHeight
+            }
+            result.barEdge = barState.ok ? barState.slot : ""
+            root._applyInset(result, result.barEdge, thickness)
+        }
+
+        const dockOutputs = Config.options?.dock?.screenList ?? []
+        if (root._panelEnabled("iiDock")
+                && (Config.options?.dock?.enable ?? true)
+                && root._outputEnabled(dockOutputs, outputName)) {
+            const dockState = root.currentState("iiDock", outputName)
+            result.dockEdge = dockState.ok ? dockState.slot : ""
+            root._applyInset(result, result.dockEdge,
+                (Config.options?.dock?.height ?? 70)
+                    + Appearance.sizes.elevationMargin
+                    + Appearance.sizes.hyprlandGapsOut)
+        }
+        return result
+    }
+
+    function _workAreaFromInsets(insets: var, screenWidth: real,
+            screenHeight: real): var {
+        const gap = root.desktopWidgetOuterGap
+        const left = Math.max(0, (insets.left ?? 0) + gap)
+        const top = Math.max(0, (insets.top ?? 0) + gap)
+        const right = Math.max(left,
+            Math.max(0, Number(screenWidth) || 0) - (insets.right ?? 0) - gap)
+        const bottom = Math.max(top,
+            Math.max(0, Number(screenHeight) || 0) - (insets.bottom ?? 0) - gap)
+        return {
+            insets: insets,
+            left: left,
+            top: top,
+            right: right,
+            bottom: bottom,
+            width: Math.max(0, right - left),
+            height: Math.max(0, bottom - top)
+        }
+    }
+
+    function desktopWorkArea(outputName: string, screenWidth: real,
+            screenHeight: real): var {
+        const panelInsets = root.desktopInsets(outputName)
+        return root._workAreaFromInsets({
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            barEdge: panelInsets.barEdge ?? "",
+            dockEdge: panelInsets.dockEdge ?? ""
+        }, screenWidth, screenHeight)
+    }
+
+    // Zone placement is intentionally panel-aware while free placement spans
+    // the full desktop. This keeps deliberate edge placement possible without
+    // letting automatic zone snaps disappear underneath a movable bar or dock.
+    function desktopZoneWorkArea(outputName: string, screenWidth: real,
+            screenHeight: real): var {
+        return root._workAreaFromInsets(root.desktopInsets(outputName),
+            screenWidth, screenHeight)
     }
 
     function currentState(surfaceId: string, outputName: string): var {

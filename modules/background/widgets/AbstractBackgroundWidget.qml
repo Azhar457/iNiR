@@ -20,9 +20,23 @@ AbstractWidget {
     required property int scaledScreenWidth
     required property int scaledScreenHeight
     required property real wallpaperScale
+    property string outputName: ""
     readonly property string _configPath: "background.widgets." + root.configEntryName
     property bool visibleWhenLocked: false
-    property int widgetIndex: 0 // used to offset auto-placed widgets so they don't stack
+    property int widgetIndex: 0 // stable base stacking order
+    readonly property string editInstanceKey: root.outputName + "::" + root.configEntryName
+    readonly property bool editSelected: GlobalStates.widgetEditMode
+        && GlobalStates.selectedDesktopWidget === root.editInstanceKey
+    readonly property int desktopPersistentZ: {
+        Config.revision
+        const order = Config.getNestedValue("background.widgets.layerOrder", []) ?? []
+        const index = order.indexOf(root.editInstanceKey)
+        return index >= 0 ? 1000 + index : root.widgetIndex
+    }
+    // Selection temporarily rises above every widget while editing, but the
+    // persisted order remains active both inside and outside edit mode.
+    readonly property int desktopStackZ: root.editSelected
+        ? 10000 : root.desktopPersistentZ
     // Diagnostic-only control, supplied by Background.qml when the supervised
     // shell is loaded with INIR_REGION_DEBUG=1.
     property bool debugQuickControlsOpen: false
@@ -48,6 +62,7 @@ AbstractWidget {
     // Includes press bump when dragging. Widgets should multiply their sizes by this
     // instead of relying on Item.scale (which causes bitmap blur).
     property bool _isResizing: false
+    property var _resizePreviewValues: ({})
     readonly property real scaleFactor: ((draggable && containsPress && !_isResizing) ? 1.05 : 1.0) * _baseScale
     readonly property real widgetOpacity: {
         const v = Number(root._readConfigKey("widgetOpacity") ?? 100);
@@ -105,28 +120,46 @@ AbstractWidget {
         centerLeft: "←", center: "⊙", centerRight: "→",
         bottomLeft: "↙", bottomCenter: "↓", bottomRight: "↘"
     })
-    // Margin from screen edges for zone placement
-    readonly property int _zoneMargin: 48
+    // Free placement spans the complete output. Zone placement separately
+    // respects the live bar/dock edge so an automatic snap stays visible after
+    // edit mode restores those movable surfaces.
+    readonly property var _workArea: ShellLayoutController.desktopWorkArea(
+        root.outputName, root.scaledScreenWidth, root.scaledScreenHeight)
+    readonly property var _zoneWorkArea: ShellLayoutController.desktopZoneWorkArea(
+        root.outputName, root.scaledScreenWidth, root.scaledScreenHeight)
+    readonly property real _safeLeft: root._workArea.left ?? 0
+    readonly property real _safeTop: root._workArea.top ?? 0
+    readonly property real _safeRight: root._workArea.right ?? root.scaledScreenWidth
+    readonly property real _safeBottom: root._workArea.bottom ?? root.scaledScreenHeight
+    readonly property real _safeWidth: root._workArea.width ?? 0
+    readonly property real _safeHeight: root._workArea.height ?? 0
+    readonly property real _zoneSafeLeft: root._zoneWorkArea.left ?? root._safeLeft
+    readonly property real _zoneSafeTop: root._zoneWorkArea.top ?? root._safeTop
+    readonly property real _zoneSafeRight: root._zoneWorkArea.right ?? root._safeRight
+    readonly property real _zoneSafeBottom: root._zoneWorkArea.bottom ?? root._safeBottom
+    readonly property int _zoneMargin: 16
+    readonly property int _analysisPadding: 48
 
     function _getZonePosition(zone: string): point {
-        const m = root._zoneMargin;
-        const w = root.scaledScreenWidth;
-        const h = root.scaledScreenHeight;
-        const ww = root.width;
-        const wh = root.height;
-        const cx = (w - ww) / 2;
-        const cy = (h - wh) / 2;
+        const left = root._zoneSafeLeft + root._zoneMargin
+        const top = root._zoneSafeTop + root._zoneMargin
+        const right = Math.max(left,
+            root._zoneSafeRight - root._zoneMargin - root.width)
+        const bottom = Math.max(top,
+            root._zoneSafeBottom - root._zoneMargin - root.height)
+        const cx = left + (right - left) / 2
+        const cy = top + (bottom - top) / 2
         switch (zone) {
-            case "topLeft":      return Qt.point(m, m);
-            case "topCenter":    return Qt.point(cx, m);
-            case "topRight":     return Qt.point(w - ww - m, m);
-            case "centerLeft":   return Qt.point(m, cy);
-            case "center":       return Qt.point(cx, cy);
-            case "centerRight":  return Qt.point(w - ww - m, cy);
-            case "bottomLeft":   return Qt.point(m, h - wh - m);
-            case "bottomCenter": return Qt.point(cx, h - wh - m);
-            case "bottomRight":  return Qt.point(w - ww - m, h - wh - m);
-            default:             return Qt.point(cx, cy);
+            case "topLeft":      return Qt.point(left, top)
+            case "topCenter":    return Qt.point(cx, top)
+            case "topRight":     return Qt.point(right, top)
+            case "centerLeft":   return Qt.point(left, cy)
+            case "center":       return Qt.point(cx, cy)
+            case "centerRight":  return Qt.point(right, cy)
+            case "bottomLeft":   return Qt.point(left, bottom)
+            case "bottomCenter": return Qt.point(cx, bottom)
+            case "bottomRight":  return Qt.point(right, bottom)
+            default:               return Qt.point(cx, cy)
         }
     }
 
@@ -195,13 +228,15 @@ AbstractWidget {
     readonly property bool _isAutoPlacement: root.placementStrategy === "leastBusy" || root.placementStrategy === "mostBusy"
 
     function _clampX(value: real): real {
-        const maxX = Math.max(0, root.scaledScreenWidth - root.width);
-        return root._snapToPixel(Math.max(0, Math.min(Number(value) || 0, maxX)));
+        const maxX = Math.max(root._safeLeft, root._safeRight - root.width)
+        return root._snapToPixel(Math.max(root._safeLeft,
+            Math.min(Number(value) || 0, maxX)))
     }
 
     function _clampY(value: real): real {
-        const maxY = Math.max(0, root.scaledScreenHeight - root.height);
-        return root._snapToPixel(Math.max(0, Math.min(Number(value) || 0, maxY)));
+        const maxY = Math.max(root._safeTop, root._safeBottom - root.height)
+        return root._snapToPixel(Math.max(root._safeTop,
+            Math.min(Number(value) || 0, maxY)))
     }
 
     // Target position — zones read stored config, free clamps to screen
@@ -476,44 +511,45 @@ AbstractWidget {
     readonly property int _editToolbarGap: 12
     readonly property int _editPopoverGap: 6
     function _resolveEditControlsGeometry(widgetX: real, widgetY: real, popoverVisible: bool): var {
-        const margin = root._editScreenMargin;
-        const safeX = Math.max(0, Math.min(root.scaledScreenWidth - root.width, widgetX));
-        const safeY = Math.max(0, Math.min(root.scaledScreenHeight - root.height, widgetY));
-        const popoverHeight = popoverVisible ? editPopoverPanel.height : 0;
+        const leftBound = root._safeLeft + root._editScreenMargin
+        const topBound = root._safeTop + root._editScreenMargin
+        const rightBound = root._safeRight - root._editScreenMargin
+        const bottomBound = root._safeBottom - root._editScreenMargin
+        const safeX = root._clampX(widgetX)
+        const safeY = root._clampY(widgetY)
+        const popoverHeight = popoverVisible ? editPopoverPanel.height : 0
         const stackHeight = editToolbar.height
-            + (popoverVisible ? popoverHeight + root._editPopoverGap : 0);
-        const spaceAbove = Math.max(0, safeY - margin - root._editToolbarGap);
+            + (popoverVisible ? popoverHeight + root._editPopoverGap : 0)
+        const spaceAbove = Math.max(0, safeY - topBound - root._editToolbarGap)
         const spaceBelow = Math.max(0,
-            root.scaledScreenHeight - margin - safeY - root.height - root._editToolbarGap);
-        const fitsAbove = spaceAbove >= stackHeight;
-        const fitsBelow = spaceBelow >= stackHeight;
-        const below = fitsAbove ? false : fitsBelow ? true : spaceBelow > spaceAbove;
-        const toolbarMaxX = Math.max(margin,
-            root.scaledScreenWidth - margin - editToolbar.width);
-        const toolbarX = Math.max(margin, Math.min(toolbarMaxX,
-            safeX + (root.width - editToolbar.width) / 2));
+            bottomBound - safeY - root.height - root._editToolbarGap)
+        const fitsAbove = spaceAbove >= stackHeight
+        const fitsBelow = spaceBelow >= stackHeight
+        const below = fitsAbove ? false : fitsBelow ? true : spaceBelow > spaceAbove
+        const toolbarMaxX = Math.max(leftBound, rightBound - editToolbar.width)
+        const toolbarX = Math.max(leftBound, Math.min(toolbarMaxX,
+            safeX + (root.width - editToolbar.width) / 2))
         const preferredStackY = below
             ? safeY + root.height + root._editToolbarGap
-            : safeY - root._editToolbarGap - stackHeight;
-        const stackMaxY = Math.max(margin,
-            root.scaledScreenHeight - margin - stackHeight);
-        const stackY = Math.max(margin, Math.min(stackMaxY, preferredStackY));
+            : safeY - root._editToolbarGap - stackHeight
+        const stackMaxY = Math.max(topBound, bottomBound - stackHeight)
+        const stackY = Math.max(topBound, Math.min(stackMaxY, preferredStackY))
         const toolbarY = below
             ? stackY
-            : stackY + (popoverVisible ? popoverHeight + root._editPopoverGap : 0);
-        const popoverMaxX = Math.max(margin,
-            root.scaledScreenWidth - margin - editPopoverPanel.width);
-        const popoverX = Math.max(margin, Math.min(popoverMaxX,
-            toolbarX + (editToolbar.width - editPopoverPanel.width) / 2));
+            : stackY + (popoverVisible ? popoverHeight + root._editPopoverGap : 0)
+        const popoverMaxX = Math.max(leftBound,
+            rightBound - editPopoverPanel.width)
+        const popoverX = Math.max(leftBound, Math.min(popoverMaxX,
+            toolbarX + (editToolbar.width - editPopoverPanel.width) / 2))
         const popoverY = below
             ? toolbarY + editToolbar.height + root._editPopoverGap
-            : stackY;
-        const toolbarInBounds = toolbarX >= margin && toolbarY >= margin
-            && toolbarX + editToolbar.width <= root.scaledScreenWidth - margin
-            && toolbarY + editToolbar.height <= root.scaledScreenHeight - margin;
-        const popoverInBounds = !popoverVisible || (popoverX >= margin && popoverY >= margin
-            && popoverX + editPopoverPanel.width <= root.scaledScreenWidth - margin
-            && popoverY + editPopoverPanel.height <= root.scaledScreenHeight - margin);
+            : stackY
+        const toolbarInBounds = toolbarX >= leftBound && toolbarY >= topBound
+            && toolbarX + editToolbar.width <= rightBound
+            && toolbarY + editToolbar.height <= bottomBound
+        const popoverInBounds = !popoverVisible || (popoverX >= leftBound && popoverY >= topBound
+            && popoverX + editPopoverPanel.width <= rightBound
+            && popoverY + editPopoverPanel.height <= bottomBound)
         return {
             widgetX: safeX,
             widgetY: safeY,
@@ -529,6 +565,65 @@ AbstractWidget {
     readonly property var _editControlsGeometry: root._resolveEditControlsGeometry(
         root.x, root.y, editPopoverPanel.open)
     readonly property bool _editControlsBelow: root._editControlsGeometry.below
+
+    // Loader containment masks consume this exact union instead of a huge
+    // per-widget rectangle. Overlapping widgets therefore follow visual z
+    // order, while the selected widget still owns its toolbar and popover.
+    readonly property real editInputX: {
+        if (!GlobalStates.widgetEditMode || !root._editControlsShown)
+            return -8
+        const toolbarX = root._editControlsGeometry.toolbarX - root.x
+        const popoverX = root._editControlsGeometry.popoverX - root.x
+        return Math.min(-8, toolbarX - 8,
+            editPopoverPanel.open ? popoverX - 8 : 0)
+    }
+    readonly property real editInputY: {
+        if (!GlobalStates.widgetEditMode || !root._editControlsShown)
+            return -8
+        const toolbarY = root._editControlsGeometry.toolbarY - root.y
+        const popoverY = root._editControlsGeometry.popoverY - root.y
+        return Math.min(-8, toolbarY - 8,
+            editPopoverPanel.open ? popoverY - 8 : 0)
+    }
+    readonly property real editInputWidth: {
+        if (!GlobalStates.widgetEditMode || !root._editControlsShown)
+            return root.width + 16
+        const toolbarRight = root._editControlsGeometry.toolbarX - root.x
+            + editToolbar.width + 8
+        const popoverRight = root._editControlsGeometry.popoverX - root.x
+            + editPopoverPanel.width + 8
+        return Math.max(root.width + 8, toolbarRight,
+            editPopoverPanel.open ? popoverRight : 0) - root.editInputX
+    }
+    readonly property real editInputHeight: {
+        if (!GlobalStates.widgetEditMode || !root._editControlsShown)
+            return root.height + 16
+        const toolbarBottom = root._editControlsGeometry.toolbarY - root.y
+            + editToolbar.height + 8
+        const popoverBottom = root._editControlsGeometry.popoverY - root.y
+            + editPopoverPanel.height + 8
+        return Math.max(root.height + 8, toolbarBottom,
+            editPopoverPanel.open ? popoverBottom : 0) - root.editInputY
+    }
+
+    readonly property int overlappingLayerCount: {
+        Config.revision
+        root.x
+        root.y
+        root.width
+        root.height
+        const canvas = root.parent?.parent ?? null
+        if (!canvas || typeof canvas.overlappingDesktopWidgetCount !== "function")
+            return 1
+        return canvas.overlappingDesktopWidgetCount(root.editInstanceKey)
+    }
+
+    function _cycleOverlappingWidget(): void {
+        const canvas = root.parent?.parent ?? null
+        if (!canvas || typeof canvas.cycleOverlappingDesktopWidget !== "function")
+            return
+        canvas.cycleOverlappingDesktopWidget(root.editInstanceKey)
+    }
 
     readonly property string editControlsGeometryReport: {
         const requestedX = root.debugLayoutProbeActive ? root.debugLayoutProbeX : root.x;
@@ -553,22 +648,46 @@ AbstractWidget {
             editPopoverPanel.open = root.debugQuickControlsOpen;
     }
     onLockedChanged: if (root.locked) editPopoverPanel.open = false
+    onEditSelectedChanged: {
+        _editDisengageTimer.stop()
+        if (root.editSelected) {
+            root._editControlsShown = true
+        } else {
+            editPopoverPanel.open = false
+            // Selection is explicit. Releasing the previous toolbar and its
+            // containment mask immediately lets the newly selected layer own
+            // the next pointer event instead of blocking it for 350 ms.
+            root._editControlsShown = false
+        }
+    }
 
     Connections {
         target: GlobalStates
         function onWidgetEditModeChanged(): void {
             if (!GlobalStates.widgetEditMode)
-                editPopoverPanel.open = false;
+                editPopoverPanel.open = false
+            _geometryPlacementDebounce.restart()
+        }
+        function onDesktopWidgetQuickControlsChanged(): void {
+            if (GlobalStates.desktopWidgetQuickControls !== root.editInstanceKey
+                    || root.locked || root._effectivePopover === null)
+                return
+            _editDisengageTimer.stop()
+            root._editControlsShown = true
+            editPopoverPanel.open = true
         }
     }
 
-    function _snapToGrid(value: real): real {
-        return Math.round(value / _editGridSize) * _editGridSize;
+    function _snapToGrid(value: real, origin: real): real {
+        return origin + Math.round((value - origin) / _editGridSize) * _editGridSize
     }
 
-    // Snap preview ghost — shows where widget will land while dragging
-    property real _snapPreviewX: _snapEnabled ? _snapToGrid(root.x) : root.x
-    property real _snapPreviewY: _snapEnabled ? _snapToGrid(root.y) : root.y
+    // Snap preview ghost. The grid is anchored to the full desktop canvas,
+    // independent of movable shell surfaces.
+    property real _snapPreviewX: _snapEnabled
+        ? _snapToGrid(root.x, root._safeLeft) : root.x
+    property real _snapPreviewY: _snapEnabled
+        ? _snapToGrid(root.y, root._safeTop) : root.y
     Rectangle {
         id: snapGhost
         visible: root.containsPress && root._snapEnabled && root.draggable
@@ -584,12 +703,11 @@ AbstractWidget {
     }
 
     // ── Edit engagement ──────────────────────────────────────
-    // Only the widget being pointed at (or actively manipulated) shows its
-    // heavy controls. Neighbors keep just outline and name, so stacked zone
-    // widgets stop piling toolbars and handles on top of each other. The
-    // disengage latch covers the pointer's travel across the toolbar gap.
+    // Heavy controls belong to the explicit selection, never to incidental
+    // pointer travel. Hover only previews the outline/name; pressing promotes
+    // that widget to the active editing layer.
     readonly property bool _editEngaged: GlobalStates.widgetEditMode
-        && (widgetEditHover.hovered || toolbarEditHover.hovered
+        && (root.editSelected || toolbarEditHover.hovered
             || root.containsPress || root.isDragging || root._isResizing
             || root._releaseGuard || editPopoverPanel.open
             || root.debugQuickControlsOpen)
@@ -613,6 +731,11 @@ AbstractWidget {
     HoverHandler {
         id: widgetEditHover
         enabled: GlobalStates.widgetEditMode
+    }
+
+    onPressed: {
+        if (GlobalStates.widgetEditMode)
+            GlobalStates.selectDesktopWidget(root.editInstanceKey)
     }
 
     // ── Edit mode toolbar (proper Material action bar) ─────────
@@ -697,6 +820,29 @@ AbstractWidget {
                     color: root.locked ? Appearance.colors.colError : Appearance.colors.colOnLayer2
                 }
                 StyledToolTip { text: root.locked ? Translation.tr("Unlock position") : Translation.tr("Lock position") }
+            }
+
+            RippleButton {
+                visible: root.overlappingLayerCount > 1
+                width: 32; height: 32
+                buttonRadius: Appearance.rounding.full
+                colBackground: "transparent"
+                colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.08)
+                colRipple: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
+                // Switch only after a completed click. `releaseAction` also runs
+                // on pointer cancellation, which previously changed layers when
+                // the press was dragged away from the button.
+                onClicked: Qt.callLater(() => root._cycleOverlappingWidget())
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "layers"
+                    iconSize: 18
+                    color: Appearance.colors.colOnLayer2
+                }
+                StyledToolTip {
+                    text: Translation.tr("Bring next overlapping widget forward (%1)")
+                        .arg(root.overlappingLayerCount)
+                }
             }
 
             RippleButton {
@@ -831,6 +977,10 @@ AbstractWidget {
         Item {
             id: editPopoverPanel
             property bool open: false
+            onOpenChanged: {
+                if (!open && GlobalStates.desktopWidgetQuickControls === root.editInstanceKey)
+                    GlobalStates.desktopWidgetQuickControls = ""
+            }
             visible: opacity > 0
             enabled: open
             opacity: open ? 1 : 0
@@ -894,8 +1044,8 @@ AbstractWidget {
     Row {
         z: 200
         visible: GlobalStates.widgetEditMode
-        // Calm-state identity: full presence only while this widget is engaged
-        opacity: root._editControlsShown ? 1 : 0.7
+        // Calm-state identity: selection is explicit; hover is only a preview.
+        opacity: root.editSelected ? 1 : widgetEditHover.hovered ? 0.78 : 0.46
         x: Math.round((root.width - width) / 2)
         y: root._editControlsBelow ? -height - 6 : root.height + 6
         spacing: 4
@@ -955,10 +1105,17 @@ AbstractWidget {
         color: "transparent"
         radius: Appearance.rounding.small + 4
         border {
-            width: root.locked ? 2 : 1.5
+            width: root.editSelected || root.locked ? 2 : 1
             color: root.locked
-                ? ColorUtils.applyAlpha(Appearance.colors.colError, 0.35)
-                : ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.4)
+                ? ColorUtils.applyAlpha(Appearance.colors.colError,
+                    root.editSelected ? 0.86 : 0.42)
+                : ColorUtils.applyAlpha(Appearance.colors.colPrimary,
+                    root.editSelected ? 0.88
+                        : widgetEditHover.hovered ? 0.62 : 0.26)
+        }
+        Behavior on border.color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
         }
     }
 
@@ -976,10 +1133,21 @@ AbstractWidget {
         property bool resizeTop: false
         property bool resizeBottom: false
 
+        readonly property bool _corner: (resizeLeft || resizeRight)
+            && (resizeTop || resizeBottom)
+        readonly property bool _axisSupported: {
+            const axes = root.resizableAxes
+            if (axes.uniform)
+                return rh._corner
+            const horizontal = (resizeLeft || resizeRight) && Boolean(axes.width)
+            const vertical = (resizeTop || resizeBottom) && Boolean(axes.height)
+            return rh._corner ? horizontal && vertical : horizontal || vertical
+        }
+
         z: 201
-        visible: root._resizeVisible
-        width: 10; height: 10
-        radius: 3
+        visible: root._resizeVisible && rh._axisSupported
+        width: 12; height: 12
+        radius: 4
         color: Appearance.colors.colPrimary
         border { width: 1; color: ColorUtils.applyAlpha(Appearance.colors.colOnPrimary, 0.3) }
         opacity: rhArea.containsMouse || rhArea.pressed ? 1.0 : 0.7
@@ -997,9 +1165,9 @@ AbstractWidget {
         MouseArea {
             id: rhArea
             anchors.fill: parent
-            anchors.margins: -4
-            hoverEnabled: root._resizeVisible
-            visible: root._resizeVisible
+            anchors.margins: -6
+            hoverEnabled: rh.visible
+            visible: rh.visible
             cursorShape: {
                 if ((rh.resizeLeft && rh.resizeTop) || (rh.resizeRight && rh.resizeBottom)) return Qt.SizeFDiagCursor;
                 if ((rh.resizeRight && rh.resizeTop) || (rh.resizeLeft && rh.resizeBottom)) return Qt.SizeBDiagCursor;
@@ -1023,8 +1191,9 @@ AbstractWidget {
                 if (axes.uniform) vals.uniform = Number(root._readConfigKey(axes.uniform) ?? 100);
                 if (axes.width) vals.width = Number(root._readConfigKey(axes.width) ?? Math.round(root.width / root.scaleFactor));
                 if (axes.height) vals.height = Number(root._readConfigKey(axes.height) ?? Math.round(root.height / root.scaleFactor));
-                rh._startConfigVals = vals;
-                root._isResizing = true;
+                rh._startConfigVals = vals
+                root._resizePreviewValues = ({})
+                root._isResizing = true
             }
 
             onPositionChanged: (mouse) => {
@@ -1032,9 +1201,8 @@ AbstractWidget {
                 const mapped = rhArea.mapToItem(root.parent, mouse.x, mouse.y);
                 const dx = mapped.x - rh._canvasStartX;
                 const dy = mapped.y - rh._canvasStartY;
-                const prefix = root._configPath;
-                const axes = root.resizableAxes;
-                const isUniform = !!axes.uniform;
+                const axes = root.resizableAxes
+                const isUniform = !!axes.uniform
 
                 let newW = rh._startWidth;
                 let newH = rh._startHeight;
@@ -1054,44 +1222,60 @@ AbstractWidget {
                     newH = dh;
                 }
 
-                // Ratio-based: multiply starting config value by size ratio
+                const preview = {}
                 if (isUniform) {
-                    const startSize = Math.max(rh._startWidth, rh._startHeight);
-                    const newSize = Math.max(newW, newH);
-                    const ratio = startSize > 0 ? newSize / startSize : 1;
-                    Config.setNestedValue(prefix + "." + axes.uniform, Math.round(rh._startConfigVals.uniform * ratio));
+                    const startSize = Math.max(rh._startWidth, rh._startHeight)
+                    const newSize = Math.max(newW, newH)
+                    const ratio = startSize > 0 ? newSize / startSize : 1
+                    preview[axes.uniform] = Math.round(
+                        rh._startConfigVals.uniform * ratio)
                 } else {
                     if (axes.width && (rh.resizeLeft || rh.resizeRight)) {
-                        const ratio = rh._startWidth > 0 ? newW / rh._startWidth : 1;
-                        Config.setNestedValue(prefix + "." + axes.width, Math.round(rh._startConfigVals.width * ratio));
+                        const ratio = rh._startWidth > 0 ? newW / rh._startWidth : 1
+                        preview[axes.width] = Math.round(
+                            rh._startConfigVals.width * ratio)
                     }
                     if (axes.height && (rh.resizeTop || rh.resizeBottom)) {
-                        const ratio = rh._startHeight > 0 ? newH / rh._startHeight : 1;
-                        Config.setNestedValue(prefix + "." + axes.height, Math.round(rh._startConfigVals.height * ratio));
+                        const ratio = rh._startHeight > 0 ? newH / rh._startHeight : 1
+                        preview[axes.height] = Math.round(
+                            rh._startConfigVals.height * ratio)
                     }
                 }
-                if (rh.resizeLeft) {
-                    Config.setNestedValue(prefix + ".x", Math.round(newX));
-                    root.x = newX;
-                }
-                if (rh.resizeTop) {
-                    Config.setNestedValue(prefix + ".y", Math.round(newY));
-                    root.y = newY;
-                }
+                root._resizePreviewValues = preview
+                if (rh.resizeLeft)
+                    root.x = root._clampX(newX)
+                if (rh.resizeTop)
+                    root.y = root._clampY(newY)
             }
 
             onReleased: {
-                root._isResizing = false;
+                const updates = {}
+                const preview = root._resizePreviewValues
+                for (const key in preview)
+                    updates[root._configPath + "." + key] = preview[key]
+                if (rh.resizeLeft)
+                    updates[root._configPath + ".x"] = Math.round(root.x)
+                if (rh.resizeTop)
+                    updates[root._configPath + ".y"] = Math.round(root.y)
+                if (Object.keys(updates).length > 0)
+                    Config.setNestedValues(updates)
+                root._resizePreviewValues = ({})
+                root._isResizing = false
                 if (root._isZonePlacement) {
-                    root.snapToZone(root.placementStrategy);
-                    if (root.needsColText) _placementDebounce.restart();
+                    root.snapToZone(root.placementStrategy)
+                    if (root.needsColText) _placementDebounce.restart()
                 } else if (root._isAutoPlacement) {
-                    root.refreshPlacementIfNeeded();
+                    root.refreshPlacementIfNeeded()
                 } else if (root.needsColText) {
-                    // Free mode: the region under the widget changed size —
-                    // re-run the colour analysis at the new geometry.
-                    _placementDebounce.restart();
+                    _placementDebounce.restart()
                 }
+            }
+
+            onCanceled: {
+                root.x = rh._startX
+                root.y = rh._startY
+                root._resizePreviewValues = ({})
+                root._isResizing = false
             }
         }
     }
@@ -1131,6 +1315,18 @@ AbstractWidget {
         resizeRight: true
     }
 
+    ShellEditSizeBadge {
+        z: 203
+        anchors.centerIn: parent
+        active: root._isResizing
+        valueText: Math.round(root.width) + " × " + Math.round(root.height) + " px"
+        accentColor: Appearance.colors.colPrimary
+        surfaceColor: Appearance.colors.colLayer2
+        textColor: Appearance.colors.colOnLayer2
+        fontFamily: Appearance.font.family.main
+        fontPixelSize: Appearance.font.pixelSize.smaller
+    }
+
     onReleased: {
         if (GlobalStates.screenLocked) return;
         // Suppress _autoPosition Binding for a frame so it doesn't snap back
@@ -1149,11 +1345,11 @@ AbstractWidget {
         }
 
         if (root._snapEnabled) {
-            newX = root._snapToGrid(newX);
-            newY = root._snapToGrid(newY);
+            newX = root._snapToGrid(newX, root._safeLeft)
+            newY = root._snapToGrid(newY, root._safeTop)
         }
-        const finalX = root._snapToPixel(newX);
-        const finalY = root._snapToPixel(newY);
+        const finalX = root._clampX(newX)
+        const finalY = root._clampY(newY)
         root.x = finalX;
         root.y = finalY;
         const prefix = root._configPath;
@@ -1203,7 +1399,10 @@ AbstractWidget {
 
     // Read a possibly-nested key from configEntry (e.g. "cookie.size" → configEntry.cookie.size)
     function _readConfigKey(key: string): var {
-        return Config.getNestedValue(root._configPath + "." + key, undefined);
+        if (root._isResizing
+                && Object.prototype.hasOwnProperty.call(root._resizePreviewValues, key))
+            return root._resizePreviewValues[key]
+        return Config.getNestedValue(root._configPath + "." + key, undefined)
     }
 
     // Override in subclasses with widget-specific default values
@@ -1444,6 +1643,18 @@ AbstractWidget {
         else if (root.placementStrategy === "free") _geometryPlacementDebounce.restart()
     onScaledScreenHeightChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
         else if (root.placementStrategy === "free") _geometryPlacementDebounce.restart()
+    on_SafeLeftChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
+        else _geometryPlacementDebounce.restart()
+    on_SafeTopChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
+        else _geometryPlacementDebounce.restart()
+    on_SafeRightChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
+        else _geometryPlacementDebounce.restart()
+    on_SafeBottomChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
+        else _geometryPlacementDebounce.restart()
+    on_ZoneSafeLeftChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
+    on_ZoneSafeTopChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
+    on_ZoneSafeRightChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
+    on_ZoneSafeBottomChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
     onWidthChanged: _geometryPlacementDebounce.restart()
     onHeightChanged: _geometryPlacementDebounce.restart()
     Timer {
@@ -1462,12 +1673,14 @@ AbstractWidget {
             else if (root._isAutoPlacement)
                 root.refreshPlacementIfNeeded();
             else if (root.placementStrategy === "free") {
-                // Re-clamp rendered position when the widget grew past the
-                // screen edge. Never overwrites saved config (only root.x/y).
-                if (root.width > 0 && root.x + root.width > root.scaledScreenWidth)
-                    root.x = Math.max(0, root.scaledScreenWidth - root.width);
-                if (root.height > 0 && root.y + root.height > root.scaledScreenHeight)
-                    root.y = Math.max(0, root.scaledScreenHeight - root.height);
+                // Re-clamp rendered position against the full desktop canvas.
+                // Saved coordinates stay untouched until the next user gesture.
+                const clampedX = root._clampX(root.x)
+                const clampedY = root._clampY(root.y)
+                if (Math.round(root.x) !== Math.round(clampedX))
+                    root.x = clampedX
+                if (Math.round(root.y) !== Math.round(clampedY))
+                    root.y = clampedY
             }
         }
     }
@@ -1546,8 +1759,8 @@ AbstractWidget {
         property string wallpaperPath: root.wallpaperPath
         property int contentWidth: Math.max(1, Math.round(root.width / Math.max(root.wallpaperScale, 0.001)))
         property int contentHeight: Math.max(1, Math.round(root.height / Math.max(root.wallpaperScale, 0.001)))
-        property int horizontalPadding: root._zoneMargin
-        property int verticalPadding: root._zoneMargin
+        property int horizontalPadding: root._analysisPadding
+        property int verticalPadding: root._analysisPadding
         command: [Quickshell.shellPath("scripts/images/least-busy-region-venv.sh") // Comments to force the formatter to break lines
             , "--screen-width", Math.round(root.scaledScreenWidth) //
             , "--screen-height", Math.round(root.scaledScreenHeight) //

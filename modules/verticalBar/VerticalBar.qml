@@ -66,7 +66,8 @@ Scope {
                     }
                 }
                 property bool superShow: false
-                property bool mustShow: hoverRegion.containsMouse || superShow || ShellEditSession.active
+                property bool mustShow: hoverRegion.containsMouse || superShow
+                    || ShellEditSession.active
                 exclusionMode: ExclusionMode.Ignore
                 exclusiveZone: GameMode.shouldHidePanels ? 0 :
                     (GlobalStates.coverflowSelectorOpen || (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows))) ? 0 :
@@ -113,7 +114,7 @@ Scope {
 
                     VerticalBarContent {
                         id: barContent
-                        
+
                         implicitWidth: Appearance.sizes.verticalBarWidth
                         anchors {
                             top: parent.top

@@ -78,7 +78,12 @@ Scope {
                 visible: !GlobalStates.screenLocked && !GameMode.shouldHidePanels
                     && !GlobalStates.widgetEditMode
 
-                property bool reveal: !GlobalStates.coverflowSelectorOpen && GlobalStates.shellEntryReady && (ShellEditSession.active || root.pinned || (Config.options?.dock?.hoverToReveal && dockMouseArea.containsMouse) || (dockApps?.requestDockShow || dockAppsVertical?.requestDockShow) || (Config.options?.dock?.showOnDesktop !== false && !ToplevelManager.activeToplevel?.activated))
+                property bool reveal: !GlobalStates.coverflowSelectorOpen && GlobalStates.shellEntryReady
+                    && (ShellEditSession.active || root.pinned
+                        || (Config.options?.dock?.hoverToReveal && dockMouseArea.containsMouse)
+                        || (dockApps?.requestDockShow || dockAppsVertical?.requestDockShow)
+                        || (Config.options?.dock?.showOnDesktop !== false
+                            && !ToplevelManager.activeToplevel?.activated))
 
                 // Shell edit resize previews locally and persists once on release.
                 property real editThicknessPreview: -1
@@ -169,7 +174,9 @@ Scope {
                 }
 
                 Item { id: emptyMask; width: 0; height: 0 }
-                mask: Region { item: GameMode.shouldHidePanels ? emptyMask : dockMouseArea }
+                mask: Region {
+                    item: GameMode.shouldHidePanels ? emptyMask : dockMouseArea
+                }
 
                 MouseArea {
                     id: dockMouseArea
@@ -344,8 +351,9 @@ Scope {
                                     : angelEverywhere ? Appearance.angel.roundingNormal
                                     : inirEverywhere ? Appearance.inir.roundingNormal
                                     : cardStyle ? Appearance.rounding.normal : Appearance.rounding.large
-                                // Organic morph on style/shape switch (organic-transitions)
-                                Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
+                                // Radius is a direct style binding. Adding a Behavior here
+                                // installs a second interceptor when the dock Rectangle is
+                                // rebuilt after an edge move, which Qt rejects at runtime.
                                 Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }

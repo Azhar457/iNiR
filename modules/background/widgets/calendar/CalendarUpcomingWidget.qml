@@ -30,8 +30,10 @@ AbstractBackgroundWidget {
         x: 80, y: 80
     })
 
-    implicitWidth: Math.round((Config.getNestedValue("background.widgets.calendarUpcoming.contentWidth", 280)) * scaleFactor)
-    implicitHeight: Math.round((Config.getNestedValue("background.widgets.calendarUpcoming.contentHeight", 220)) * scaleFactor)
+    implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 280)
+        * root.scaleFactor)
+    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 220)
+        * root.scaleFactor)
 
     visibleWhenLocked: true
     needsColText: true
@@ -196,6 +198,7 @@ AbstractBackgroundWidget {
 
         // Header
         RowLayout {
+            visible: root.upcomingEvents.length > 0
             Layout.fillWidth: true
             spacing: 6
 
@@ -283,36 +286,42 @@ AbstractBackgroundWidget {
             }
         }
 
-        ColumnLayout {
+        Item {
             visible: root.upcomingEvents.length === 0
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: Math.round(6 * root.scaleFactor)
 
-            Item { Layout.fillHeight: true }
+            Column {
+                anchors.centerIn: parent
+                width: Math.min(parent.width,
+                    Math.round(190 * root.scaleFactor))
+                spacing: Math.round(7 * root.scaleFactor)
 
-            MaterialShape {
-                Layout.alignment: Qt.AlignHCenter
-                implicitSize: Math.round(54 * root.scaleFactor)
-                shape: MaterialShape.Shape.Ghostish
-                color: ColorUtils.applyAlpha(root.widgetAccent, 0.16)
+                MaterialShape {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    implicitSize: Math.round(54 * root.scaleFactor)
+                    shape: MaterialShape.Shape.Ghostish
+                    color: ColorUtils.applyAlpha(root.widgetAccent, 0.16)
 
-                MaterialSymbol {
-                    anchors.centerIn: parent
-                    text: "event_available"
-                    iconSize: Math.round(26 * root.scaleFactor)
-                    color: root.widgetAccentVisible
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "event_available"
+                        iconSize: Math.round(26 * root.scaleFactor)
+                        color: root.widgetAccentVisible
+                    }
+                }
+
+                StyledText {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: Translation.tr("No upcoming events")
+                    color: root.widgetInkMuted
+                    font.pixelSize: Math.round(
+                        Appearance.font.pixelSize.small * root.scaleFactor)
+                    wrapMode: Text.WordWrap
                 }
             }
-
-            StyledText {
-                Layout.alignment: Qt.AlignHCenter
-                text: Translation.tr("No upcoming events")
-                color: root.widgetInkMuted
-                font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
-            }
-
-            Item { Layout.fillHeight: true }
         }
 
         Item {

@@ -872,6 +872,11 @@ Desktop background and widget controls.
 | Function | Description |
 |----------|-------------|
 | `toggleEditMode` | Toggle widget edit mode (drag, resize, configure desktop widgets) |
+| `setEditMode enabled` | Set widget edit mode explicitly |
+| `editState` | Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area for each output |
+| `focusWidget widgetName openControls` | Select a desktop widget and optionally open its quick controls |
+| `promoteWidget widgetName` | Move a desktop widget to the top of the persistent layer order |
+| `resetLayerOrder` | Reset desktop widgets to their built-in stacking order |
 | `setWidgetEnabled widgetName enabled` | Enable or disable a built-in desktop widget |
 | `clockDebugState` | Report clock palette, renderer and quick-control geometry diagnostics |
 | `clockDebugSetMode digital\|cookie adaptToWallpaper` | Temporarily select a diagnostic clock mode |

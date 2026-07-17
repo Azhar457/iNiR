@@ -49,11 +49,134 @@ Scope {
     property string clockDebugPaletteReport: "{}"
     property string clockDebugControlsReport: "{}"
 
+    function promoteDesktopWidgetKey(instanceKey: string): var {
+        const key = String(instanceKey ?? "")
+        if (key.length === 0)
+            return Config.getNestedValue("background.widgets.layerOrder", []) ?? []
+        const stored = Config.getNestedValue("background.widgets.layerOrder", []) ?? []
+        const order = []
+        for (let i = 0; i < stored.length; ++i) {
+            const candidate = String(stored[i] ?? "")
+            if (candidate.length > 0 && candidate !== key
+                    && order.indexOf(candidate) === -1)
+                order.push(candidate)
+        }
+        order.push(key)
+        Config.setNestedValue("background.widgets.layerOrder", order)
+        return order
+    }
+
     IpcHandler {
         target: "background"
         function toggleEditMode(): string {
-            GlobalStates.setWidgetEditMode(!GlobalStates.widgetEditMode);
-            return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off";
+            GlobalStates.setWidgetEditMode(!GlobalStates.widgetEditMode)
+            return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off"
+        }
+
+        function setEditMode(enabled: bool): string {
+            GlobalStates.setWidgetEditMode(enabled)
+            return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off"
+        }
+
+        function editState(): string {
+            return JSON.stringify({
+                active: GlobalStates.widgetEditMode,
+                selected: GlobalStates.selectedDesktopWidget,
+                quickControls: GlobalStates.desktopWidgetQuickControls,
+                layerOrder: Config.getNestedValue("background.widgets.layerOrder", []) ?? [],
+                outputs: Quickshell.screens.map(screen => ({
+                    name: screen?.name ?? "",
+                    width: screen?.width ?? 0,
+                    height: screen?.height ?? 0,
+                    insets: ShellLayoutController.desktopInsets(screen?.name ?? ""),
+                    workArea: ShellLayoutController.desktopWorkArea(
+                        screen?.name ?? "", screen?.width ?? 0,
+                        screen?.height ?? 0),
+                    zoneWorkArea: ShellLayoutController.desktopZoneWorkArea(
+                        screen?.name ?? "", screen?.width ?? 0,
+                        screen?.height ?? 0)
+                }))
+            })
+        }
+
+        function focusWidget(widgetName: string, openControls: bool): string {
+            const name = String(widgetName ?? "").trim()
+            if (name.length === 0)
+                return "widget name is required"
+
+            const builtinDefaults = ({
+                weather: false, clock: true, mediaControls: false,
+                visualizer: false, systemMonitor: false, battery: false,
+                notes: false, calendarUpcoming: false, uptime: false,
+                newsTicker: false, mascot: false, japaneseTypography: false
+            })
+            let known = builtinDefaults[name] !== undefined
+            let enabled = known
+                ? Boolean(Config.getNestedValue(
+                    "background.widgets." + name + ".enable",
+                    builtinDefaults[name]))
+                : false
+
+            if (name.startsWith("mascotInstances.")) {
+                const instanceId = name.slice("mascotInstances.".length)
+                const instance = Config.getNestedValue(
+                    "background.widgets.mascotInstances." + instanceId, null)
+                known = instance !== null && typeof instance === "object"
+                enabled = known && Boolean(instance.enable)
+            } else if (name.startsWith("custom.")) {
+                const customId = name.slice("custom.".length)
+                known = CustomWidgets.ready
+                    && CustomWidgets.widgets.some(widget => widget.id === customId)
+                enabled = known && Boolean(Config.getNestedValue(
+                    "background.widgets.custom." + customId + ".enable", false))
+            }
+
+            if (!known)
+                return "unknown widget: " + name
+            if (!enabled)
+                return "widget disabled: " + name
+            if (name === "battery" && !Battery.available)
+                return "widget unavailable: " + name
+
+            const focusedOutput = NiriService.currentOutput ?? ""
+            const screen = Quickshell.screens.find(item => (item?.name ?? "") === focusedOutput)
+                ?? Quickshell.screens[0]
+            if (!screen)
+                return "no output available"
+            const screenList = Config.getNestedValue(
+                "background.widgets.screenList", []) ?? []
+            if (screenList.length > 0 && !screenList.includes(screen.name ?? ""))
+                return "widgets hidden on output: " + (screen.name ?? "")
+
+            const key = (screen.name ?? "") + "::" + name
+            GlobalStates.setWidgetEditMode(true)
+            if (openControls && name !== "uptime")
+                GlobalStates.requestDesktopWidgetQuickControls(key)
+            else
+                GlobalStates.selectDesktopWidget(key)
+            return openControls && name === "uptime"
+                ? key + " (quick controls unavailable)" : key
+        }
+
+        function promoteWidget(widgetName: string): string {
+            const name = String(widgetName ?? "").trim()
+            if (name.length === 0)
+                return "widget name is required"
+            const focusedOutput = NiriService.currentOutput ?? ""
+            const screen = Quickshell.screens.find(item =>
+                (item?.name ?? "") === focusedOutput) ?? Quickshell.screens[0]
+            if (!screen)
+                return "no output available"
+            const key = (screen.name ?? "") + "::" + name
+            return JSON.stringify({
+                promoted: key,
+                layerOrder: backgroundScope.promoteDesktopWidgetKey(key)
+            })
+        }
+
+        function resetLayerOrder(): string {
+            Config.setNestedValue("background.widgets.layerOrder", [])
+            return "widget layer order reset"
         }
 
         function setWidgetEnabled(widgetName: string, enabled: bool): string {
@@ -1276,6 +1399,13 @@ Scope {
                 }
             }
 
+            FocusScope {
+                id: desktopFocusSink
+                width: 0
+                height: 0
+                focus: false
+            }
+
             // Desktop right-click context menu
             MouseArea {
                 anchors.fill: parent
@@ -1289,6 +1419,7 @@ Scope {
                 acceptedButtons: Qt.RightButton | Qt.LeftButton
                 onClicked: function(mouse) {
                     if (mouse.button === Qt.LeftButton) {
+                        desktopFocusSink.forceActiveFocus()
                         if (desktopContextMenu.active) desktopContextMenu.close()
                         return
                     }
@@ -1383,6 +1514,65 @@ Scope {
                 readonly property bool _parallaxActive: useParallax
                     && !GlobalStates.screenLocked && !bgRoot.wallpaperSafetyTriggered && !bgRoot.backdropActive
 
+                // The canvas owns layer discovery. Individual widgets should not
+                // walk the visual tree themselves: loaders, repeater delegates and
+                // custom widgets all live here, and this is the only place with a
+                // complete view of the current output.
+                function _loadedDesktopWidgets(): var {
+                    const widgets = []
+                    for (let i = 0; i < widgetCanvas.children.length; ++i) {
+                        const holder = widgetCanvas.children[i]
+                        const item = holder?.item ?? holder
+                        if (!item || item.editInstanceKey === undefined || !item.visible)
+                            continue
+                        widgets.push(item)
+                    }
+                    return widgets
+                }
+
+                function overlappingDesktopWidgets(instanceKey: string): var {
+                    const widgets = widgetCanvas._loadedDesktopWidgets()
+                    const current = widgets.find(item => item.editInstanceKey === instanceKey)
+                    if (!current || current.width <= 0 || current.height <= 0)
+                        return []
+                    const matches = widgets.filter(item => item.width > 0 && item.height > 0
+                        && item.x < current.x + current.width
+                        && item.x + item.width > current.x
+                        && item.y < current.y + current.height
+                        && item.y + item.height > current.y)
+                    // Topmost first. The selected widget has a temporary edit z,
+                    // so use the persistent z when deciding which underlying
+                    // widget should be promoted next.
+                    matches.sort((a, b) => {
+                        const order = Number(b.desktopPersistentZ ?? b.widgetIndex ?? 0)
+                            - Number(a.desktopPersistentZ ?? a.widgetIndex ?? 0)
+                        return order !== 0 ? order
+                            : String(a.editInstanceKey).localeCompare(String(b.editInstanceKey))
+                    })
+                    return matches
+                }
+
+                function overlappingDesktopWidgetCount(instanceKey: string): int {
+                    return widgetCanvas.overlappingDesktopWidgets(instanceKey).length
+                }
+
+                function cycleOverlappingDesktopWidget(instanceKey: string): string {
+                    const matches = widgetCanvas.overlappingDesktopWidgets(instanceKey)
+                    if (matches.length < 2)
+                        return instanceKey
+                    const current = matches.findIndex(item => item.editInstanceKey === instanceKey)
+                    if (current < 0)
+                        return instanceKey
+                    const next = matches[(current + 1) % matches.length]
+                    const nextKey = String(next?.editInstanceKey ?? instanceKey)
+                    backgroundScope.promoteDesktopWidgetKey(nextKey)
+                    GlobalStates.selectDesktopWidget(nextKey)
+                    if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+                        console.debug("[WidgetEdit] layer promote", instanceKey, "->", nextKey,
+                            "overlaps=", matches.length)
+                    return nextKey
+                }
+
                 // ── Edit Mode Scrim ──────────────────────────────
                 Rectangle {
                     anchors.fill: parent
@@ -1419,13 +1609,32 @@ Scope {
                         : Appearance.inirEverywhere ? Appearance.inir.colTertiary
                         : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
                         : Appearance.colors.colTertiary
-                    readonly property int zoneMargin: 48
+                    readonly property var workArea: ShellLayoutController.desktopWorkArea(
+                        bgRoot.screen?.name ?? "", width, height)
+                    readonly property var zoneWorkArea: ShellLayoutController.desktopZoneWorkArea(
+                        bgRoot.screen?.name ?? "", width, height)
+                    readonly property int zoneMargin: 16
+                    readonly property real safeLeft: workArea.left ?? 0
+                    readonly property real safeTop: workArea.top ?? 0
+                    readonly property real safeRight: workArea.right ?? width
+                    readonly property real safeBottom: workArea.bottom ?? height
+                    readonly property real safeWidth: workArea.width ?? 0
+                    readonly property real safeHeight: workArea.height ?? 0
+                    readonly property real zoneLeft: zoneWorkArea.left ?? safeLeft
+                    readonly property real zoneTop: zoneWorkArea.top ?? safeTop
+                    readonly property real zoneWidth: zoneWorkArea.width ?? safeWidth
+                    readonly property real zoneHeight: zoneWorkArea.height ?? safeHeight
+                    readonly property bool hasSelection: GlobalStates.selectedDesktopWidget
+                        .startsWith((bgRoot.screen?.name ?? "") + "::")
 
                     // Grid dots at intersections
                     readonly property bool gridNonDefault: gridSize !== 32
                     Canvas {
                         id: editGridCanvas
-                        anchors.fill: parent
+                        x: editGridOverlay.safeLeft
+                        y: editGridOverlay.safeTop
+                        width: editGridOverlay.safeWidth
+                        height: editGridOverlay.safeHeight
                         visible: editGridOverlay.gridVisible
                         onPaint: {
                             const ctx = getContext("2d");
@@ -1465,6 +1674,8 @@ Scope {
                             }
                         }
                         onVisibleChanged: if (visible && available) requestPaint()
+                        onWidthChanged: if (available) requestPaint()
+                        onHeightChanged: if (available) requestPaint()
                         Component.onCompleted: requestPaint()
                         Connections {
                             target: editGridOverlay
@@ -1483,21 +1694,34 @@ Scope {
                         }
                     }
 
-                    // Center crosshair lines (dashed segments near center)
                     Rectangle {
-                        x: Math.floor(parent.width / 2)
-                        width: 1; height: parent.height
+                        x: editGridOverlay.safeLeft
+                        y: editGridOverlay.safeTop
+                        width: editGridOverlay.safeWidth
+                        height: editGridOverlay.safeHeight
+                        color: "transparent"
+                        radius: Appearance.rounding.small
+                        border.width: 1
+                        border.color: CF.ColorUtils.applyAlpha(editGridOverlay.gridColor, 0.18)
+                    }
+
+                    // Crosshair follows the usable widget area, not raw screen center.
+                    Rectangle {
+                        x: Math.floor(editGridOverlay.safeLeft + editGridOverlay.safeWidth / 2)
+                        y: editGridOverlay.safeTop
+                        width: 1; height: editGridOverlay.safeHeight
                         color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.08)
                     }
                     Rectangle {
-                        y: Math.floor(parent.height / 2)
-                        width: parent.width; height: 1
+                        x: editGridOverlay.safeLeft
+                        y: Math.floor(editGridOverlay.safeTop + editGridOverlay.safeHeight / 2)
+                        width: editGridOverlay.safeWidth; height: 1
                         color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.08)
                     }
                     // Center dot
                     Rectangle {
-                        x: Math.floor(parent.width / 2) - 3
-                        y: Math.floor(parent.height / 2) - 3
+                        x: Math.floor(editGridOverlay.safeLeft + editGridOverlay.safeWidth / 2) - 3
+                        y: Math.floor(editGridOverlay.safeTop + editGridOverlay.safeHeight / 2) - 3
                         width: 6; height: 6; radius: 3
                         color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.25)
                     }
@@ -1520,8 +1744,8 @@ Scope {
                             required property var modelData
                             readonly property int col: modelData.col
                             readonly property int row: modelData.row
-                            readonly property real zw: (editGridOverlay.width - editGridOverlay.zoneMargin * 2) / 3
-                            readonly property real zh: (editGridOverlay.height - editGridOverlay.zoneMargin * 2) / 3
+                            readonly property real zw: (editGridOverlay.zoneWidth - editGridOverlay.zoneMargin * 2) / 3
+                            readonly property real zh: (editGridOverlay.zoneHeight - editGridOverlay.zoneMargin * 2) / 3
                             readonly property var occupants: bgRoot.zoneOccupants[modelData.zone] ?? []
                             readonly property bool occupied: occupants.length > 0
                             readonly property bool hasLocked: {
@@ -1530,11 +1754,12 @@ Scope {
                                 return false;
                             }
 
-                            x: editGridOverlay.zoneMargin + col * zw + 4
-                            y: editGridOverlay.zoneMargin + row * zh + 4
+                            x: editGridOverlay.zoneLeft + editGridOverlay.zoneMargin + col * zw + 4
+                            y: editGridOverlay.zoneTop + editGridOverlay.zoneMargin + row * zh + 4
                             width: zw - 8
                             height: zh - 8
                             radius: Appearance.rounding.small
+                            opacity: editGridOverlay.hasSelection ? 1 : 0.32
                             color: occupied
                                 ? CF.ColorUtils.applyAlpha(hasLocked ? Appearance.colors.colError : editGridOverlay.gridColor, 0.04)
                                 : "transparent"
@@ -1543,6 +1768,10 @@ Scope {
                                 color: CF.ColorUtils.applyAlpha(
                                     hasLocked ? Appearance.colors.colError : editGridOverlay.gridColor,
                                     occupied ? 0.25 : 0.10)
+                            }
+                            Behavior on opacity {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
                             }
                             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: 200 } }
                             Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: 200 } }
@@ -1588,6 +1817,14 @@ Scope {
                     }
                 }
 
+                MouseArea {
+                    anchors.fill: parent
+                    z: 0
+                    enabled: GlobalStates.widgetEditMode
+                    acceptedButtons: Qt.LeftButton
+                    onClicked: GlobalStates.clearDesktopWidgetSelection()
+                }
+
                 Item {
                     id: editControlsOverlay
                     anchors.fill: parent
@@ -1603,12 +1840,12 @@ Scope {
                     // ── Floating Edit Controls Bar ────────────────────
                     Item {
                         id: editControlsBar
-                        anchors {
-                            horizontalCenter: parent.horizontalCenter
-                            bottom: parent.bottom
-                            bottomMargin: 24
-                        }
-                        width: Math.min(parent.width - 32, editBarRow.implicitWidth + 24)
+                        x: Math.round(editGridOverlay.safeLeft
+                            + (editGridOverlay.safeWidth - width) / 2)
+                        y: Math.round(Math.max(editGridOverlay.safeTop,
+                            editGridOverlay.safeBottom - height - 12))
+                        width: Math.min(editGridOverlay.safeWidth,
+                            editBarRow.implicitWidth + 24)
                         height: 48
 
                         Toolbar {
@@ -1711,7 +1948,7 @@ Scope {
                             Flickable {
                                 id: widgetToggleRail
                                 width: Math.max(72, Math.min(420,
-                                    editControlsOverlay.width - 330,
+                                    editGridOverlay.safeWidth - 330,
                                     widgetToggleRow.implicitWidth))
                                 height: 36
                                 contentWidth: widgetToggleRow.implicitWidth
@@ -1875,8 +2112,11 @@ Scope {
                         active: shown
                         visible: shown
                         z: 150
-                        x: Math.max(16, Math.round(parent.width - width - 24))
-                        y: Math.max(16, Math.round(parent.height - (editControlsBar.height + 24) - height - 12))
+                        x: Math.max(editGridOverlay.safeLeft,
+                            Math.round(editGridOverlay.safeRight - width))
+                        y: Math.max(editGridOverlay.safeTop,
+                            Math.round(editGridOverlay.safeBottom
+                                - editControlsBar.height - height - 36))
                         sourceComponent: WidgetManagerPanel {
                             canvasWidth: widgetManagerPanel.parent?.width ?? 800
                             canvasHeight: widgetManagerPanel.parent?.height ?? 600
@@ -1886,10 +2126,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("weather", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask : null
-                    Item { id: _hitMask; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: WeatherWidget {
                         widgetIndex: 0
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1900,10 +2142,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("clock", true)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask2 : null
-                    Item { id: _hitMask2; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask2; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: ClockWidget {
                         widgetIndex: 1
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1925,10 +2169,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("mediaControls", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask3 : null
-                    Item { id: _hitMask3; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask3; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: MediaControlsWidget {
                         widgetIndex: 2
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1939,10 +2185,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("visualizer", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask4 : null
-                    Item { id: _hitMask4; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask4; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: VisualizerWidget {
                         widgetIndex: 3
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1953,10 +2201,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("systemMonitor", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask5 : null
-                    Item { id: _hitMask5; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask5; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: SystemMonitorWidget {
                         widgetIndex: 4
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1967,10 +2217,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("battery", false) && Battery.available
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask6 : null
-                    Item { id: _hitMask6; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask6; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: BatteryWidget {
                         widgetIndex: 5
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1981,10 +2233,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("notes", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask7 : null
-                    Item { id: _hitMask7; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask7; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: NotesWidget {
                         widgetIndex: 6
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -1995,10 +2249,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("calendarUpcoming", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask8 : null
-                    Item { id: _hitMask8; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask8; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: CalendarUpcomingWidget {
                         widgetIndex: 7
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -2009,10 +2265,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("uptime", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask10 : null
-                    Item { id: _hitMask10; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask10; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: UptimeWidget {
                         widgetIndex: 9
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -2023,10 +2281,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("newsTicker", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask12 : null
-                    Item { id: _hitMask12; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask12; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: NewsTickerWidget {
                         widgetIndex: 11
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -2037,10 +2297,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("mascot", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask13 : null
-                    Item { id: _hitMask13; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask13; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: MascotWidget {
                         widgetIndex: 12
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -2051,10 +2313,12 @@ Scope {
 
                 FadeLoader {
                     shown: bgRoot._widgetEnabled("japaneseTypography", false)
+                    z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask14 : null
-                    Item { id: _hitMask14; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                    Item { id: _hitMask14; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: JapaneseTypographyWidget {
                         widgetIndex: 13
+                        outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height
                         scaledScreenWidth: bgRoot.screen.width
@@ -2076,8 +2340,9 @@ Scope {
                         id: mascotInstanceLoader
                         required property string modelData
                         required property int index
+                        z: item?.desktopStackZ ?? 0
                         containmentMask: GlobalStates.widgetEditMode ? _hitMaskInst : null
-                        Item { id: _hitMaskInst; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                        Item { id: _hitMaskInst; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
 
                         active: false
 
@@ -2089,6 +2354,7 @@ Scope {
                             setSource(Quickshell.shellPath("modules/background/widgets/mascot/MascotWidget.qml"), {
                                 configEntryName: "mascotInstances." + modelData,
                                 widgetIndex: 20 + index,
+                                outputName: bgRoot.screen?.name ?? "",
                                 screenWidth: bgRoot.screen.width,
                                 screenHeight: bgRoot.screen.height,
                                 scaledScreenWidth: bgRoot.screen.width,
@@ -2136,8 +2402,9 @@ Scope {
 
                     Loader {
                         id: customWidgetLoader
-                        containmentMask: GlobalStates.widgetEditMode ? _hitMask7 : null
-                        Item { id: _hitMask7; x: -30; y: -260; width: (parent?.width ?? 0) + 60; height: (parent?.height ?? 0) + 300 }
+                        z: item?.desktopStackZ ?? 0
+                        containmentMask: GlobalStates.widgetEditMode ? _customHitMask : null
+                        Item { id: _customHitMask; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                         required property var modelData
                         required property int index
 
@@ -2150,7 +2417,8 @@ Scope {
                         // setSource passes required properties at construction time
                         function _load(): void {
                             const props = {
-                                widgetIndex: 6 + index,
+                                widgetIndex: 40 + index,
+                                outputName: bgRoot.screen?.name ?? "",
                                 screenWidth: bgRoot.screen.width,
                                 screenHeight: bgRoot.screen.height,
                                 scaledScreenWidth: bgRoot.screen.width,
