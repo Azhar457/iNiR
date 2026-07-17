@@ -7,123 +7,204 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-The Kira mascot system, the dashboard hub, three new bar surface styles, a rebuilt YT Music on InnerTube, autostart that reads niri's own startup file, and the ZZZ global style fully shipped across the whole shell.
+The five weeks since 2.27.0 were not quiet. The shell grew a cat, a
+dashboard, a fifth bar style and a live layout editor, and a long tail of
+things got fixed by people with better eyes than ours. Everything below
+lives on `prerelease` and reaches `main` with the next release.
 
 ### Added
-- **Dedicated live Shell Layout editor**: persistent shell surfaces now use their own top-layer editor instead of sharing the desktop-widget canvas. Drag the ii bar, dock, sidebars or Waffle taskbar straight to a screen edge — legal edges light up as drop strips, a chip follows the pointer, and releasing commits the move; dropping a surface on an occupied edge swaps both surfaces atomically (sidebar↔sidebar and bar↔dock alike). Sidebars resize live with full/fit/custom policies and a live dimension readout, and the dock gains its own resize handle with the edit frame hugging the visible dock instead of its transparent hover region. Editor chrome follows the Ricelin washi-and-flame language: gradient cards with top sheen, hairlines, tracked uppercase labels, tabular numbers and one warm accent ramp, all themed from each family's tokens. The original desktop-widget editor remains independent. Settings › Shell Layout in both families uses the same controller, changes persist immediately, and legacy sidebar IPC continues to open semantic content wherever it was placed. `inir shellLayout` exposes the same validated workflow for scripts and diagnostics, including deterministic `dragStart`/`dragUpdate`/`dragEnd` calls.
-- **Bar corner controls follow sidebar placement**: after swapping sidebars, clicking the bar's left corner (or left area) opens whatever panel currently sits on the left edge, and the right-side controls open the right-edge panel. Feature-specific triggers (weather, timers, notification shortcuts) keep opening their own content wherever it lives.
-- **Calmer desktop-widget editing**: in widget edit mode, only the widget under the pointer (or being dragged, resized or configured) shows its full toolbar and resize handles; the rest keep a light outline and name. Toolbars from adjacent zone widgets no longer pile on top of each other.
-- **AI provider catalogs are live instead of hardcoded**: OpenRouter, Gemini, Ollama, LM Studio, Groq, Mistral, Cerebras, Anthropic, OpenAI and OpenCode Zen/Go expose health and model discovery through one normalized catalog with modalities, context, tool/search/reasoning support, current free/local state and expiry where providers publish it. OpenCode models resolve the correct Responses, Messages, Gemini or chat-completions route per live model instead of pinning one stale ID. The sidebar model picker separates available and connection-required models and filters Recommended, Free, Local, Vision and Coding without asking users to type model IDs.
-- **Voice input is provider-neutral**: Auto prefers local whisper.cpp, then connected Groq, Gemini and OpenAI transcription backends. Both Settings families show backend health and language choice; remote keys stay in the system keyring and are passed through the process environment rather than command arguments.
-- **Development navigation IPC**: `inir dev list/open/close/current` exposes stable semantic destinations for lazy shell surfaces and settings pages. `inir dev audit` now checks only changed or explicitly selected UI areas by default; `--all --all-families` keeps the exhaustive audit available.
-- **Meet Kira**, the iNiR mascot: a retro pixel-art cat girl who can live across the shell, or stay completely out of your way. Everything about her is opt-in and off by default; her art pack is a separate ~27 MiB download under `./setup` → Extras. What she actually does when you let her loose is best discovered in Settings › Mascot.
-- **Mascot settings page** (both families): every behavior, reaction, placement and image she uses is yours to configure: curated full-body pose galleries, per-surface picks, custom images and phrases, and a searchable Kira collection that gives all 208 shipped illustrations a visible role without mixing portraits or chibis into the live full-body companion.
-- **Per-spot mascot images, GIFs included**: 17 placement groups (notifications, clipboard, media, todo, calendar, Wi-Fi, start menu, wallpaper selector, boot greeting and more) share a curated full-body collection (animated poses included), and the desktop mascot widget gains quick controls to cycle or shuffle poses right from the edit toolbar.
-- **Custom event sounds**: every shell sound (notifications, battery events, timer, pomodoro) can be changed in Settings › General › Sounds: pick from your sound theme with instant preview, or point any event at your own audio file; plus a master sound volume and an `audio playEvent` IPC function for scripting.
-- **Chaos mode** exists. It's off by default. `inir mascot romp` if you're brave, `inir mascot tidy` when you regret it.
-- **ZZZ global style**: sixth visual style for Material ii (poster/console plates, square/round shape mode, wallpaper-hue-locked surfaces), routed through every module, widget and settings page.
-- **Dashboard hub panel** (`iiDashboard`): configurable three-column overlay with greeting, clock, ICS-merged agenda, notifications, todo, notes, media, weather, calendar, system usage and GitHub heatmap; in-panel edit mode and density options. `dashboard` IPC target.
-- **Bar surface styles**: islands, scenic and frame join Classic, plus a layout preset gallery with live mini-mockups. Islands geometry (capsule inset and padding) is tunable in Settings › Bar.
-- **Pill bar** (Settings › Bar › Bar appearance): a fifth bar style that replaces the whole bar with a morphing centre island: rest shows the clock, hover expands into workspaces, weather, tray and status icons, and each icon grows the pill itself into its surface: power, media, battery, calendar, network, mixer, system vitals, clipboard search, a fuzzy app launcher with inline calculator, a today glance (weather + agenda + pending tasks in one face) and a screen recorder over iNiR's recording pipeline. Docks into a flush minimal bar in game mode, hosts its own toasts and OSD (each can be handed back to the regular popups/OSD), and everything (scale, opacity, gaps, kanji glyphs, music visualizer, optional surfaces, and every module of the expanded hover row individually) is configurable, down to icon size and spacing, the soul bead's style (orb, ember, ring, or off), and every Japanese character, each swappable for your own in Settings › Ricelin › Glyphs. An optional **bar mode** keeps the row permanently expanded like a regular bar; transient OSD and toasts cross-fade in place instead of morphing the geometry. Mixer faders track live hardware brightness (OSD keys move them too), and volume/microphone gain proper mute buttons with a muted visual state; mic mute flashes its own OSD. `pill` IPC target for keybinds.
-- **Island dock, sidebars and search**: the gradient-card island skin can now dress the dock (Settings › Interface › Dock › Style), both sidebars (Settings › Interface › Sidebars) and the search surface (Settings › Services › Search): one shared card with hairline border, lit top edge and soft shadow, so the whole shell can wear a coherent look. Island dock window indicators become thin lit threads, dock icons hover like Ricelin rows, and choosing island applies under every global style, ZZZ included.
-- **Islands settings** (Settings › Interface › Islands): the shared island skin is tunable in one place: corner radius, fill opacity, drop shadow and the lit top edge apply to every island surface at once. Lowering the opacity now reads as frosted glass: a blurred wallpaper backdrop (toggle + strength) sits behind translucent islands instead of raw see-through.
-- **Ricelin settings hub** (Settings › Appearance › Ricelin): every switchable piece of the washi & flame dialect on one page, labelled by the area it affects: pill bar and bar mode, optional pill surfaces, island dock/sidebars/search, and the shared island skin. Everything stays opt-in; the stock iNiR looks are untouched.
-- **Workspace edge strip** (`iiWorkspaceStrip`): hover rail with live workspace previews, window thumbnails and drag-to-reorder. `workspaceStrip` IPC target.
-- **YT Music rebuilt on InnerTube**: cookie-less browsing via a `ytmusicapi` sidecar (search, home, radio, synced lyrics), InnerTune-style UI with queue and device-flow login; playback stays on mpv/MPRIS.
-- **Autostart manager**: ii + waffle settings pages and an `autostart` IPC target that read/write niri's own `config.d/50-startup.kdl`.
-- **News tab** in the left sidebar: Google News RSS, city follows Weather, no API key.
-- **New desktop widgets**: system uptime and news ticker; Settings › Widgets gains an at-a-glance toggle overview and a reset-to-defaults button on every widget section.
-- **Theme color invert** (`appearance.colorInvert`): genuinely complementary palette via an `--invert-hue` generation pass.
-- **Flexible bar spacers** (#174): per-instance weight (1x–8x) with width/mode controls in Settings.
-- **Intel GPU detection** for the resource monitor via `intel_gpu_top`.
-- Region-adaptive accent helper (`ColorUtils.adaptAccent()`) and `brightness_std` from wallpaper region sampling; World Clock toggle added to Settings › Panels; Waffle `WMenu` icon column alignment.
-- **Pinned clipboard entries**: keep the token, the password, the path you paste all week at the top of the clipboard panel. `Ctrl+P` or the pin button; pins hold their own copy of the text, so they survive the history rotating past them. Both families.
-- **Notification badges on the dock**: the count of an app's pending notifications sits on its icon, and clears when you dismiss them. Turn it off in Settings › Interface › Dock.
-- **Scroll an app's dock icon** to walk through that app's windows.
-- **Quiet hours** (Settings › Interface › Notifications): pick a nightly window and popups stay quiet inside it. Notifications still land in the history; you just read them in the morning. Both families.
-- **Collapse notifications when empty** (Settings › Sidebars): the right sidebar contracts into a screen-relative compact band when the notification list is empty, instead of holding a full-height blank panel. Collapsing its bottom widget group contracts it one step further; notifications reclaim the released elastic space when the group is closed.
-- **Fit left sidebar to widgets** (Settings › Sidebars): the left sidebar fits the Widgets tab inside its own proportional height band and expands back on taller tabs like AI chat. Settings previews the intentionally asymmetric left/right sizing in both panel families.
-- **Modular sidebars** (Settings › Sidebars › Arrange): reorder the normal right sidebar's system, sliders, toggles, notifications and widgets sections; resize the two flexible zones; and arrange left-sidebar tabs. The live panels offer direct drag/resize editing, while Settings uses tap-to-lift and tap-to-place in both panel families.
-- **The unified snip menu remembers your last choice** (Settings › Tools): the action and shape picked in its toolbar persist across opens in both families. Dedicated screenshot, OCR and visual-search shortcuts remain deterministic, and recording never sticks as the default.
-- **Separate idle timeouts on battery** (Settings › Services): laptops can blank, lock and suspend sooner while unplugged, without touching the plugged-in numbers. Hidden entirely on desktops.
-- **Search the notification history** in the waffle notification center, once you have enough of it to bother.
-- **AI settings page** (both families): everything about the assistant in one place: a setup checklist that tells you what is still missing, one-click providers (Ollama, OpenRouter, Gemini, Groq and more) with API-format detection, the system prompt, tool mode, temperature, the privacy policy and voice input. Previously these controls were scattered through Settings › Services, and waffle had none of them at all.
-- **Conversation history and voice dictation in the AI sidebar**: past chats can be listed, reopened, renamed and deleted; a mic button records and transcribes straight into the message box; stopping voice input now cancels either recording or transcription cleanly; and the send button becomes a stop button while the model is answering. The `/` and `/clear` controls remain visible in the normal-width sidebar.
+- Meet Kira, the iNiR mascot: a retro pixel-art cat girl who can live across
+  the shell or stay completely out of your way. Everything about her is
+  opt-in and off by default; her art pack is a separate ~27 MiB download
+  under `./setup` › Extras. What she actually does when you let her loose is
+  best discovered in Settings › Mascot.
+- Chaos mode exists. It's off by default. `inir mascot romp` if you're
+  brave, `inir mascot tidy` when you regret it.
+- A Mascot settings page in both families: every behavior, reaction and
+  placement is configurable, 17 placement groups share a curated collection
+  (GIFs included), and custom images and phrases are yours to add. All 208
+  illustrations get a visible role somewhere.
+- A live Shell Layout editor: drag the bar, dock, sidebars or Waffle taskbar
+  to another screen edge and drop it there; dropping on an occupied edge
+  swaps both surfaces. Sidebars and the dock resize live. Settings › Shell
+  Layout drives the same controller, `inir shellLayout` scripts it.
+- Bar corner clicks now open whatever panel actually sits on that edge after
+  a sidebar swap.
+- Desktop-widget editing got smarter: movable panels step aside while you
+  edit (their zones follow them back), stacked widgets resolve from a Layers
+  button, resize handles preview live. `inir background setEditMode` for
+  scripts.
+- AI providers expose live model catalogs instead of hardcoded lists:
+  health, modalities, free/local state, and a picker that filters
+  Recommended, Free, Local, Vision and Coding rather than asking you to type
+  model IDs.
+- Voice input is provider-neutral: local whisper.cpp first, then whatever
+  transcription backend you have connected. Keys stay in the keyring.
+- `inir dev list/open/close/current` navigates shell surfaces and settings
+  pages by name.
+- Every shell sound is swappable in Settings › General › Sounds, with
+  preview, per-event files, a master volume and an `audio playEvent` IPC.
+- ZZZ, the sixth global style: poster plates, square or round shape mode,
+  wallpaper-hue-locked surfaces, routed through the whole shell.
+- A dashboard hub panel: three configurable columns of greeting, agenda,
+  notifications, todo, notes, media, weather, system usage and the GitHub
+  heatmap. `dashboard` IPC target.
+- Bar styles islands, scenic and frame join Classic, with a preset gallery
+  of live mini-mockups.
+- The pill bar, a fifth bar style: a morphing centre island that rests as a
+  clock and grows into workspaces, mixer, launcher, recorder and the rest as
+  you hover, docks flush in game mode, and hosts its own OSD and toasts.
+  Nearly every part of it is configurable, down to each kanji. Design
+  language adapted from Ricelin, credited in the README. `pill` IPC target.
+- The island skin can dress the dock, both sidebars and search; Settings ›
+  Interface › Islands tunes radius, opacity, shadow and frosted-glass blur
+  in one place, and Settings › Appearance › Ricelin gathers the whole
+  washi-and-flame dialect on one page. All of it opt-in.
+- A workspace edge strip: hover rail with live previews, window thumbnails
+  and drag-to-reorder. `workspaceStrip` IPC target.
+- YT Music rebuilt on InnerTube: cookie-less search, home, radio and synced
+  lyrics; playback stays on mpv/MPRIS.
+- An autostart manager that reads and writes niri's own
+  `config.d/50-startup.kdl` instead of inventing a second startup system.
+- A news tab in the left sidebar: Google News RSS, city follows Weather, no
+  API key.
+- New desktop widgets: system uptime and a news ticker, plus a toggle
+  overview and per-widget reset in Settings › Widgets.
+- `appearance.colorInvert` generates a genuinely complementary palette.
+- Flexible bar spacers with per-instance weight (#174).
+- Intel GPU readings in the resource monitor via `intel_gpu_top`.
+- Pinned clipboard entries: Ctrl+P keeps the token you paste all week at the
+  top, and pins survive the history rotating past them. Both families.
+- Notification counts on dock icons, and scrolling an icon walks that app's
+  windows.
+- Quiet hours: popups stay silent in your nightly window, history still
+  collects them for the morning. Both families.
+- Sidebars are modular: reorder the right sidebar's sections, resize its
+  flexible zones and arrange left tabs (Settings › Sidebars › Arrange), and
+  both sidebars can contract to fit their content instead of holding blank
+  panels.
+- The snip menu remembers your last action and shape; recording never
+  sticks as the default.
+- Laptops get separate idle timeouts on battery. Desktops never see the
+  option.
+- Search the waffle notification history, once you have enough of it to
+  bother.
+- An AI settings page in both families (setup checklist, one-click
+  providers, system prompt, tools, privacy, voice input), and the AI sidebar
+  gains conversation history and voice dictation. Waffle previously had none
+  of these controls at all.
+- World Clock toggle in Settings › Panels, region-adaptive accent sampling,
+  and Waffle menu icon alignment.
 
 ### Changed
-- **AI onboarding and tools now behave like shell features instead of an API client**: curated provider cards hide endpoints, API formats and raw model codes from the normal path; ii and Waffle Settings show live provider/model readiness; the sidebar explains keys and model compatibility without requiring `/key` or `/model`. Normal Shell tools use a bounded `GlobalActions` registry, configuration changes preserve JSON types and show old/new values for approval, and arbitrary bash moved to an explicit Advanced mode that still requires per-call approval. Catalog initialization preserves legacy `ai.extraModels` entries and restores the persisted model when its live catalog record arrives.
-- **Lower idle CPU, GPU and memory use across both panel families**: closed heavyweight panels now unload while lightweight IPC routers remain available; desktop media visualizers stop rendering when they are not in use, and animated progress waves translate one prepared texture instead of repainting a Canvas continuously; wallpaper/backdrop textures decode at the resolution their effects need; and Niri 26.04+ can take over blur for shape-accurate bars, bar islands and dock surfaces. Settings › Effects now owns the default backend, per-area overrides, compositor permission, reduced motion and low-power effects in both panel families. Unsupported silhouettes fall back to wallpaper blur instead of receiving a rectangular compositor region.
-- **AI provider setup now represents connections, not hardcoded models**: curated providers use keyring state plus their live catalog, while `ai.extraModels` is reserved for genuinely custom endpoints. Both Settings families replace provider-chip clutter with native cards/rows that distinguish key stored, catalog browseable, local service unavailable and connection-required states.
-- **Desktop widget editing is structured around the task now**: every Settings card separates Widget, Placement, feature-specific controls, Appearance and Surface; Zone mode shows its selected screen region inside the owning card; Japanese Typography gains desktop quick controls for composition, palette, typography and visible elements; and the bottom edit bar carries every built-in and custom widget in a bounded horizontal rail instead of growing past the screen.
-- **Desktop clock and widget controls rebuilt end to end**: Digital uses the Cookie clock's ink hierarchy for time, date, quotes and status text, with an optional Settings › Widgets switch for subtle live wallpaper adaptation while dragging. Cookie keeps its complete colored face in ZZZ and when visual effects are disabled, while edit-mode quick controls now choose the available side of a widget and stay inside the screen.
-- **Kira now moves as one character**: companion visits, event reactions, chaos actions, empty states and the desktop widget use normal-proportion full-body art, with four new frame-by-frame loops for presence, music, screenshots and wallpaper changes. Speech bubbles sit beside her shoulder instead of floating away from her, and reduced-motion mode pauses animated poses.
-- **Islands bar style redrawn**: every island, edge sections and centre groups alike, now wears the same gradient card (vertical gradient, hairline border, lit top edge, drop shadow) in every global style. Previously the centre groups rendered transparent under the ZZZ style, leaving them naked over the wallpaper.
-- **Bar layout no longer reserves space for hidden modules**: an invisible module (battery on a desktop, media with nothing playing) used to leave a ghost gap inside its group; islands hug their content and the weather chip no longer draws a card inside the edge island.
-- **Right sidebar notifications lost the search field**: it crowded the list, and search stays in the waffle notification center.
-- **Settings**: directional page slides, one shared `SettingsPageRegistry` for overlay and window modes, current±1 page preloading (was warm-all 18 pages), non-essential sections start collapsed, readable centered column width.
-- **Bar settings dropped the Layout Presets grid**: each click rewrote five layout keys and could stall the shell; the module layout editor covers the same ground.
-- **Media controls popup**: player presets keep their cross-slide transitions; Bottom overlay mode now lifts a bounded distance from its final dock edge instead of flying through the whole output, and still releases its visual tree after the close animation.
-- Style switches batch config writes through `setNestedValues`; picking aurora/angel no longer force-enables transparency.
-- Background widget plates use a contrasting scrim with a minimum opacity floor, keeping text legible on any wallpaper.
-- Nav rails across settings/sidebars are background-less with accent-pill selection.
-- ZZZ separates surfaces by fill contrast, not outline strokes: border doctrine dropped shell-wide, plate saturation raised to carry wallpaper hue.
-- `NiriService.switchToWorkspaceById` for cross-monitor workspace focus; `ToolsView` gates niri-only tiles on `CompositorService.isNiri`.
-- Docs counts and examples refreshed to match the live tree (raw `qs kill` example replaced with the `inir` CLI).
+- The assistant behaves like a shell feature, not an API client: provider
+  cards hide endpoints and raw model codes, shell tools run through a
+  bounded registry with typed approvals, and arbitrary bash moved behind an
+  explicit Advanced mode. Provider setup represents connections;
+  `ai.extraModels` is for genuinely custom endpoints.
+- Idle CPU, GPU and memory dropped across both families: closed panels
+  unload, visualizers stop rendering when unseen, textures decode at the
+  size their effects need, and Niri 26.04+ can take over blur. Settings ›
+  Effects owns backends, overrides and low-power switches.
+- Widget settings cards are organized by task now: Widget, Placement,
+  Appearance, Surface, instead of one long pile.
+- The desktop clock was rebuilt on the Cookie ink hierarchy, and edit-mode
+  quick controls stay inside the screen.
+- Kira moves as one character: full-body art everywhere, four new animation
+  loops, speech bubbles at her shoulder instead of floating off on their
+  own, and reduced motion pauses her.
+- Islands wear the same gradient card in every global style; ZZZ used to
+  leave the centre groups naked over the wallpaper.
+- Hidden bar modules no longer reserve ghost space in their group.
+- The right sidebar notification list lost its search field; it crowded the
+  list and the waffle center already searches.
+- Settings pages slide directionally, preload only their neighbors (was:
+  all 18 at once), and start non-essential sections collapsed.
+- The Bar layout-presets grid is gone; each click rewrote five keys and
+  could stall the shell. The layout editor covers the same ground.
+- Style switches batch their config writes; aurora and angel no longer
+  force-enable transparency. Widget plates keep a minimum scrim so text
+  stays legible on any wallpaper, and ZZZ separates surfaces by fill
+  contrast instead of outline strokes.
 
 ### Fixed
-- **Sidebars stay responsive through rapid close/reopen cycles and can remain open together**: closing releases fullscreen input immediately while the card finishes animating, reopening reverses the same resident surface, and simultaneous left/right sidebars use content-only input regions plus one shared center backdrop instead of blocking each other. The right sidebar waits for valid mapped geometry before its first content mount; its bottom widget workspace can collapse normally without returning empty or reserving an invisible elastic zone.
-- **The first region-selector shortcut after shell startup no longer opens and immediately dismisses itself**: the lightweight selector root stays resident while its heavy capture/editor content remains lazy, removing the nested on-demand loader race in both panel families.
-- **The right sidebar's bottom widget group no longer under-reports its height**: its content pane sized itself outside the layout system, so height-sensitive modes (like collapse-when-empty) clipped the calendar/weather/nav rail mid-row. The pane now feeds the layout its real height.
-- **Screenshot buttons no longer inherit stale snip state**: the control panel tile and waffle widgets opened the region selector with whatever action/shape the last record or Lens use left behind (e.g. Record + circle). Every entry point now resolves the same explicit defaults.
-- **The left sidebar's Widgets tab breathes**: the clock no longer sits flush against the card's top edge, and when the enabled widgets don't fill the panel the block centers instead of pooling all leftover space at the bottom.
-- **AI catalog models no longer fail with raw “Missing Authentication header” errors**: public catalogs remain browseable, paid models stay locked until their provider key exists, and Zen's free models use OpenCode's documented public credential fallback. Authentication transport is independent from request protocol, while HTTP authorization/rate-limit/provider failures are reported per real request instead of globally invalidating a stored key or becoming reusable conversation context.
-- **AI chat now treats the normal left sidebar as its primary geometry**: every row has explicit minimum/maximum width behavior, code and message blocks cannot widen their parents, compact footer controls become icon-only, and the model popup is centered and clipped inside the actual `AiChat` surface rather than the full-screen `PanelWindow`. Ctrl+O and the Ctrl+P window progressively add detail without changing the compact baseline.
-- Lazy sidebar, settings and wallpaper views now load with typed fallbacks and complete singleton imports; Coverflow no longer treats a corrupt static-image thumbnail as the source image.
-- **KDE's generic paused browser bridge no longer creates a duplicate desktop media card** while Chromium or another browser is already publishing the real playing track.
-- **`inir doctor` no longer reports a valid Niri configuration as broken**: current Niri releases can exit successfully without printing the word “valid”, so the check now trusts the validator's exit status.
-- **Settings no longer forgets where you were when pages unload**: ii and Waffle retain the active page, theme filters and Gowall editor choices independently from their bounded page render cache, including standalone window reopen.
-- **Explicit Island/Ricelin surfaces no longer mix visual dialects**: bar, dock and sidebars resolve one material owner, so ZZZ chrome, Aurora glass or Angel borders cannot leak into an island surface selected by the user.
-- **Both sidebars now honor the selected entrance animation consistently**: their content mounts lazily at final geometry, then stays resumable after first use so closing a sidebar no longer discards searches, conversations or navigation state. Reveal clips the stable content tree instead of resizing it, and hidden animations and polling still pause while the sidebar is closed.
-- **Thumbnail generation no longer inflates the shell service's memory indefinitely**: workers run in a collected user scope, terminate their process pool on cancellation and are cleaned up by `inir restart`; generated-image and wallpaper caches are no longer charged to `inir.service` after the job ends.
-- **Native dock blur is visible and shape-accurate**: the Aurora wallpaper layer no longer covers Niri's blur with a sharp image or opaque fill, and the compositor region follows the live panel, macOS or island background instead of the larger hover surface.
-- **Cookie desktop-widget backgrounds now obey their controls**: the Cookie global style owns widget surfaces instead of being overridden by the optional Island skin, with exact background opacity, border-only rendering and corner radius support. The full widget pass also fixes truthful Surface/blur availability, centered empty states and quick controls, Media/System color roles, Weather temperature normalization, News Ticker transitions, and resource/power lifecycle leaks.
-- **Desktop widget appearance controls now match what they claim**: Auto, Light ink and Dark ink affect text, accents and visible widget plates; dimming is applied once and consistently across every built-in widget; opacity sliders no longer get ignored by hidden minimums or display normalized values as `10000%`; and each Widgets settings card separates enablement, placement, appearance and surface controls into aligned groups.
-- **VRR is a three-way choice now: off, on demand, or always on** (Settings › Compositor › Displays). Some monitors flicker and dim when variable refresh rate stays on for the whole desktop, and the switch could only ask for always-on. On demand keeps the desktop at a fixed rate and only hands VRR to games and video players, and it now ships the window rule that makes it do anything at all. Display changes also stop leaving the page showing stale output state (#202).
-- **Wallpapers and files with non-ASCII names never got thumbnails**: the shell-side hash percent-encoded code points while every consumer encoded UTF-8 bytes, so the two halves looked for different files (#199).
-- **Typing in the overview search bred calculator processes**: every qalc result re-triggered qalc, about 33 spawns a second for as long as text sat in the box. Math results still render; the loop is gone (#199).
-- **Bar workspace clicks and scrolls target that bar's own monitor**: niri resolves index references against the focused output, so a second monitor's bar used to switch the wrong screen (#199).
-- **Mic volume tracks outside changes again** after being adjusted once in the shell (#199).
-- **A wrong wifi password no longer breaks the retry prompt**, and the wifi icon reflects the connection instead of keeping full strength after disconnecting (#200).
-- **Screen changes leaked brightness monitors** that kept respawning ddcutil; stale ones are now destroyed with their screen (#200).
-- **The Super-tap daemon survives unplugging a keyboard** and picks up devices plugged in later (#200).
-- **The high-memory warning could never fire**: its counter read the wrong process's memory maps and its notification called a function that does not exist. `inir memory stats` reports real numbers from startup now (#199, #203).
-- Fresh installs failed to create the notes and notification stores; AI wallpaper categorization broke on filenames with quotes; thumbnail logs moved from `/tmp` into the cache directory (#199, #200).
-- Dead mpvpaper restore-script machinery removed from wallpaper switching; it also embedded unescaped filenames in an executable script (#201).
-- **Clipboard history pasted raw HTML** (`<meta http-equiv="content-type"...>` in front of your text). The watcher asks for the generic type `text`, and wl-paste then picks *any* matching type, so when a page offers only `text/html`, which is what happens copying an image or rich text out of an editor like ChatGPT's, the markup itself was stored. The list preview hid it, because the panel strips tags for display, so the entry looked clean right up until you pasted it. Text now goes through a filter that strips browser markup while keeping the entry (asking for `text/plain` instead would have dropped those copies entirely). Migration 032 updates existing setups; history already stored is left alone.
-- **The clipboard list showed a stale order**: reopening the panel within five seconds of copying from it skipped the refresh on purpose, but cliphist had already moved that entry to the top, so the thing you copied last appeared wherever it used to be, far down the list, and anything you copied outside the panel in that window did not show up at all. The panel now always refreshes when it opens.
-- **The clipboard sometimes opened scrolled to the end of the list.** The panel is hidden rather than destroyed on close, so the list kept the scroll position it was left at, and the model rebuild that happens on open could not move it: it runs while the window is still invisible, so the list never lays out and never scrolls. The panel now always opens at the most recent entry.
-- **Pinning was one-way in the list**: an already-pinned entry still offered "Pin" (pinning it again), gave no sign it was pinned, and Ctrl+P on it re-pinned instead of unpinning. Pinned entries are now badged and offer Unpin.
-- **The waffle clipboard never refreshed when it opened**, so it showed the order it had the last time it was closed and anything copied since was missing.
-- **AI tool calls never completed**, on any provider: a large tool result (the shell config, for instance) exceeded the kernel's per-argument limit and killed the request with no visible error; the follow-up request that carries the tool result back to the model was silently dropped; and the OpenAI format (Ollama, OpenRouter, Groq, Mistral) never parsed `tool_calls`, so the model's function call was discarded mid-stream. Search is no longer offered on providers that do not implement it.
-- **The wallpaper stayed on screen under fullscreen windows on niri**: the check read a window property niri no longer exposes, so `background.hideWhenFullscreen` never actually fired and the wallpaper, the backdrop and their GPU textures stayed resident under every fullscreen game. A fullscreen window now also hides the wallpaper only on the monitor it covers, instead of every monitor.
-- **Config: writing a whole section at once** (what "Reset to defaults" does) could drop the keys the payload left out from `config.json` while keeping them alive in memory; the setting looked applied and came back changed after a restart.
-- Kira no longer appears over fullscreen Niri windows; fullscreen state now follows the live window geometry stream instead of waiting for an imperative refresh.
-- **Bar SIGSEGV when a new PipeWire stream appeared** (#190, e.g. MPD): `playerStreamNode` binding loop replaced with imperative recomputation.
-- **Dark/light choice not persisted through regeneration** (#178, partial): the explicit toggle is written before `switchwall.sh` and honored from `colors.json`; presets whose JSON omits `darkmode` still infer.
-- **Overview search text clipping with scaled fonts** (#179).
-- **Screen recording ignored the configured acceleration mode** (#181): legacy `cpu`/`gpu` values normalized, fallback forces `libx264`.
-- **`flake.nix` shipped a broken NixOS/Home Manager payload** (#186): root QML files missing, wrapped kirigami has no QML, `patchShebangs` mangled Python scripts.
-- **Lock screen crash on screen sleep/disconnect**: null `modelData` guarded; `lock` IPC honors `lock.useHyprlock` (#176).
-- **Wi-Fi showed disconnected on non-English locales**: `nmcli` state parsing now forces `LANG=C`.
-- **Reddit sidebar panel removed**: the API returns 403 without a per-user OAuth app; migration drops `sidebar.reddit`.
-- **`workspaceStrip` didn't seed on fresh installs or family switches**: missing loader entries in `ShellWafflePanels.qml` and `shell.qml`.
-- Region selector `ReferenceError` on open (missing functions import); angel theme-editor card never activated (Loader missing `id`).
-- YT Music background processes now start lazily on first enable; hotspot/WARP pollers gate on panel visibility instead of polling all session.
-- Background widgets: free-placement binding loop, ZZZ border toggle no-op, `WidgetManagerPanel` `ReferenceError`, media widget rendering empty (typed player list → `QVariantList`), popup size not tracking the widget.
-- AI chat and command-palette overlay leaked QML objects on teardown (`destroy()` now called; overlay mask no longer leaks `Region` batches).
-- IPC docs generator misclassified shared targets that sat under a family heading; an explicit shared-target set wins first.
-- Bar/dock polish: mic icon fallback color, `colText` Behavior gated on `animationsEnabled`, nav-rail clicks eaten by a non-overflowing `Flickable`, control-panel sliders deduplicated into `QuickSliders`.
-- **ZZZ style-pass tail**: glass-wash masks now match the plate's chamfer (no unwashed wedge), settings card fill separated from page background, alt-switcher plate anchored in the correct panel, radius/color `Behavior` gating, `colScrim` token instead of hardcoded black, zzz-aware icon/label colors across settings.
+- Bar rebuilds log clean, and orientation changes no longer install two
+  animations on the same corner radius.
+- Sidebars survive rapid close/reopen cycles, can stay open together, honor
+  the selected entrance animation, and remember searches, conversations and
+  navigation state after closing.
+- The first region-selector shortcut after startup no longer opens and
+  immediately dismisses itself.
+- Screenshot buttons no longer inherit stale snip state from the last
+  record or Lens use.
+- AI tool calls complete now, on every provider: oversized tool results,
+  silently dropped follow-ups and unparsed OpenAI-format `tool_calls` are
+  all gone, and search is only offered where it exists.
+- AI catalog models stop failing with raw authentication errors; public
+  catalogs browse without keys and per-request failures no longer poison a
+  stored key.
+- AI chat fits the normal sidebar width without code blocks widening it,
+  and the model popup stays inside the chat surface.
+- The clipboard stops pasting raw browser HTML in front of your text
+  (migration 032), always refreshes and opens at the most recent entry, and
+  pinning is finally two-way, in both families.
+- Fullscreen windows actually hide the wallpaper under them, per monitor,
+  and Kira no longer floats over fullscreen Niri windows.
+- Writing a whole config section (what Reset to defaults does) no longer
+  drops the keys the payload left out.
+- Settings remembers where you were when pages unload, including the
+  standalone window.
+- Explicit Island or Ricelin surfaces no longer mix visual dialects with
+  ZZZ chrome, Aurora glass or Angel borders.
+- Thumbnail generation no longer inflates the shell service's memory
+  indefinitely, and non-ASCII filenames finally get thumbnails at all: the
+  hash was percent-encoding code points while every consumer encoded UTF-8
+  bytes (#199).
+- Native dock blur is visible and shape-accurate.
+- Cookie desktop-widget backgrounds obey their opacity, border and radius
+  controls, and appearance controls across all widgets do what they claim
+  (no more sliders showing `10000%`).
+- VRR is a three-way choice now: off, on demand, or always (Settings ›
+  Compositor › Displays), and on demand ships the window rule that makes it
+  do anything at all (#202).
+- Typing in the overview search no longer breeds calculator processes,
+  about 33 qalc spawns a second at its peak (#199).
+- Bar workspace clicks and scrolls target that bar's own monitor (#199),
+  and mic volume tracks outside changes after being adjusted in the shell
+  (#199).
+- A wrong wifi password no longer breaks the retry prompt, and the wifi
+  icon stops claiming full strength after disconnecting (#200).
+- Screen changes stop leaking brightness monitors that respawned ddcutil
+  (#200), and the Super-tap daemon survives keyboards coming and going
+  (#200).
+- The high-memory warning could never fire: wrong process, nonexistent
+  function. `inir memory stats` reports real numbers now (#199, #203).
+- Fresh installs create the notes and notification stores; AI wallpaper
+  categorization handles quoted filenames; thumbnail logs moved out of
+  `/tmp` (#199, #200).
+- Dead mpvpaper restore-script machinery removed from wallpaper switching;
+  it also embedded unescaped filenames in an executable script (#201).
+- KDE's paused browser bridge no longer duplicates the desktop media card
+  while a browser is publishing the real track.
+- `inir doctor` trusts niri's validator exit status instead of grepping for
+  a word current releases stopped printing.
+- Bar SIGSEGV when a new PipeWire stream appeared (#190): binding loop
+  replaced with imperative recomputation.
+- Dark/light choice persists through palette regeneration (#178, partial),
+  overview search text no longer clips with scaled fonts (#179), screen
+  recording honors the configured acceleration mode (#181), and `flake.nix`
+  ships a working NixOS/Home Manager payload (#186).
+- Lock screen no longer crashes on screen sleep or disconnect, and `lock`
+  IPC honors `lock.useHyprlock` (#176).
+- Wi-Fi state parses correctly on non-English locales (`LANG=C`).
+- The Reddit sidebar panel is gone; the API returns 403 without a per-user
+  OAuth app. Migration drops `sidebar.reddit`.
+- `workspaceStrip` seeds on fresh installs and family switches; region
+  selector and angel theme editor recover from loader mistakes; YT Music
+  processes start lazily; background widgets fix a binding loop, an empty
+  media widget and a stuck popup size; AI chat and the command palette stop
+  leaking QML objects on teardown; and the ZZZ style pass cleaned up its
+  last unwashed corners.
 
 ### Issues / PRs
 - Fixed [#174](https://github.com/snowarch/iNiR/issues/174), [#178](https://github.com/snowarch/iNiR/issues/178), [#179](https://github.com/snowarch/iNiR/issues/179), [#181](https://github.com/snowarch/iNiR/issues/181), [#190](https://github.com/snowarch/iNiR/issues/190), [#202](https://github.com/snowarch/iNiR/issues/202).
