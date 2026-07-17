@@ -69,8 +69,10 @@ ColumnLayout {
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     playing: Appearance.animationsEnabled && visible
-                    smooth: false
-                    mipmap: false
+                    cache: true
+                    smooth: true
+                    mipmap: true
+                    antialiasing: true
                 }
                 MaterialSymbol {
                     anchors.centerIn: parent
@@ -167,10 +169,11 @@ ColumnLayout {
                                 fillMode: Image.PreserveAspectFit
                                 asynchronous: true
                                 playing: Appearance.animationsEnabled && visible
-                                smooth: false
-                                mipmap: false
-                                sourceSize.width: 128
-                                sourceSize.height: 128
+                                smooth: true
+                                mipmap: true
+                                antialiasing: true
+                                sourceSize.width: 256
+                                sourceSize.height: 256
                             }
                             MaterialSymbol {
                                 anchors.centerIn: parent

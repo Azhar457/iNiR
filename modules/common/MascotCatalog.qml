@@ -15,9 +15,17 @@ Singleton {
 
     property var animatedPoses: []
     property var collectionPoses: []
+    property var pickerPoses: []
+    property var desktopWidgetPoses: []
     property var chibiPoses: []
     property var editorialPoses: []
     property var collectionSpecial: ({})
+    property var clickTiers: ({})
+    readonly property var manualOnlyPoses: root.collectionPoses.filter(pose =>
+        root.editorialPoses.indexOf(pose) === -1
+            && root.desktopWidgetPoses.indexOf(pose) === -1)
+    readonly property var desktopWidgetSelectablePoses: root._uniquePoses(
+        root.desktopWidgetPoses.concat(root.manualOnlyPoses))
     property var fullBodyPoses: []
     property var contextualOcclusionPoses: []
     property var fullBodyReplacements: ({})
@@ -31,8 +39,54 @@ Singleton {
     // shots at the same box size). Absent = 1.0, no correction.
     property var frameScale: ({})
 
+    function _uniquePoses(values) {
+        const seen = ({})
+        const result = []
+        for (let i = 0; i < values.length; ++i) {
+            const pose = String(values[i] ?? "")
+            if (pose.length === 0 || seen[pose])
+                continue
+            seen[pose] = true
+            result.push(pose)
+        }
+        return result
+    }
+
     function isAnimated(pose) {
         return root.animatedPoses.indexOf(pose) !== -1
+    }
+
+    function isManualOnly(pose) {
+        return root.manualOnlyPoses.indexOf(pose) !== -1
+    }
+
+    function desktopWidgetPosesForGroup(group) {
+        const key = group === "classic" ? "pixel" : String(group ?? "all")
+        const safe = root.desktopWidgetPoses
+        switch (key) {
+        case "featured":
+            return root.pickerPoses.filter(pose =>
+                root.desktopWidgetSelectablePoses.indexOf(pose) !== -1)
+        case "pixel":
+            // Art-line filters are inclusive. Classic pixel chibis and loops
+            // still belong to Pixel while also appearing in their specialized
+            // Chibi/Loops views.
+            return safe.filter(pose => !pose.startsWith("street-"))
+        case "street":
+            // Street is an art line, not a safety rating. Include the manual
+            // subset here as well so the newest street drops do not disappear
+            // from their own class; automatic pools still use `safe` only.
+            return root.desktopWidgetSelectablePoses.filter(pose =>
+                pose.startsWith("street-") && !root.isAnimated(pose))
+        case "chibi":
+            return safe.filter(pose => root.chibiPoses.indexOf(pose) !== -1)
+        case "loops":
+            return safe.filter(pose => root.isAnimated(pose))
+        case "manual":
+            return root.manualOnlyPoses
+        default:
+            return root.desktopWidgetSelectablePoses
+        }
     }
 
     function scaleFor(pose) {
@@ -44,6 +98,13 @@ Singleton {
             return ""
         const ext = root.isAnimated(pose) ? "gif" : "png"
         return Quickshell.shellPath(`assets/images/mascot/inir-mascot-${pose}.${ext}`)
+    }
+
+    function displayName(pose) {
+        const value = String(pose ?? "").replace(/^street-/, "")
+        return value.split("-").map(word => word.length > 0
+            ? word[0].toUpperCase() + word.slice(1)
+            : word).join(" ")
     }
 
     function isCompatible(pose) {
@@ -103,9 +164,12 @@ Singleton {
                 const m = JSON.parse(text())
                 root.animatedPoses = m.animatedPoses ?? []
                 root.collectionPoses = m.collectionPoses ?? []
+                root.pickerPoses = m.pickerPoses ?? []
+                root.desktopWidgetPoses = m.desktopWidgetPoses ?? []
                 root.chibiPoses = m.chibiPoses ?? []
                 root.editorialPoses = m.editorialPoses ?? []
                 root.collectionSpecial = m.collectionSpecial ?? {}
+                root.clickTiers = m.clickTiers ?? {}
                 root.fullBodyPoses = m.fullBodyPoses ?? []
                 root.contextualOcclusionPoses = m.contextualOcclusionPoses ?? []
                 root.fullBodyReplacements = m.fullBodyReplacements ?? {}

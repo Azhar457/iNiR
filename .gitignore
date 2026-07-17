@@ -179,9 +179,7 @@ opencode.jsonc
 assets/images/mascot/frames/
 # Mascot generation prompt catalog (AI/agent tooling, local-only)
 assets/images/mascot/PROMPTS.md
-# Mascot art pack: optional extra installed by `setup extras`; the repo
-# ships only the manifest, the base identity reference and the hero banner
+# Mascot art: all of it lives in the snowarch/inir-mascot repo and arrives
+# via the optional pack (`setup extras`); this repo ships only the manifest
 assets/images/mascot/inir-mascot-*.png
 assets/images/mascot/inir-mascot-*.gif
-!assets/images/mascot/inir-mascot-base.png
-!assets/images/mascot/inir-mascot-hero-banner.png

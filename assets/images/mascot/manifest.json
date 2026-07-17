@@ -83,6 +83,98 @@
     [
       "thought-spark",
       "left"
+    ],
+    [
+      "street-phone-sprawl",
+      "bottom"
+    ],
+    [
+      "street-phone-flop",
+      "bottom"
+    ],
+    [
+      "street-blanket-burrito",
+      "bottom"
+    ],
+    [
+      "street-ramen-bliss",
+      "bottom"
+    ],
+    [
+      "street-sneaker-tie",
+      "bottom"
+    ],
+    [
+      "street-headphone-bop",
+      "left"
+    ],
+    [
+      "street-baggy-swagger",
+      "right"
+    ],
+    [
+      "street-zombie-sip",
+      "left"
+    ],
+    [
+      "street-toothbrush",
+      "right"
+    ],
+    [
+      "street-laundry-day",
+      "left"
+    ],
+    [
+      "street-cat-grass",
+      "right"
+    ],
+    [
+      "street-goth-strut",
+      "left"
+    ],
+    [
+      "street-denim-phone",
+      "right"
+    ],
+    [
+      "street-waking-stretch",
+      "left"
+    ],
+    [
+      "street-coat-reading",
+      "left"
+    ],
+    [
+      "street-ponder-crossed",
+      "right"
+    ],
+    [
+      "street-pedestal-lean",
+      "left"
+    ],
+    [
+      "street-mug-hold",
+      "right"
+    ],
+    [
+      "street-coffee-thought",
+      "left"
+    ],
+    [
+      "street-chair-nap",
+      "bottom"
+    ],
+    [
+      "street-floor-gamer",
+      "bottom"
+    ],
+    [
+      "street-sticker-album",
+      "right"
+    ],
+    [
+      "street-pillow-doze",
+      "bottom"
     ]
   ],
   "linesByPose": {
@@ -1050,6 +1142,352 @@
       "Color pass complete. Try not to change it for ten minutes.",
       "Purple fixes everything. This is peer-reviewed.",
       "Fresh palette. Same impeccable supervisor."
+    ],
+    "street-phone-sprawl": [
+      "Horizontal is a valid workflow.",
+      "Scrolling. For research. Obviously.",
+      "The floor is free real estate and I claimed it.",
+      "Don't send anything important. I'm off duty.",
+      "My feed is better than your feed. Statistically.",
+      "This is deep work. Deeply horizontal."
+    ],
+    "street-phone-flop": [
+      "Face down. Phone up. Balance.",
+      "I'll get up when the timeline ends. So, never.",
+      "Gravity and I reached an agreement.",
+      "This counts as cardio if you scroll fast enough.",
+      "Do not disturb. The pose says it all."
+    ],
+    "street-blanket-burrito": [
+      "Burrito mode. All complaints in writing.",
+      "The blanket chose me.",
+      "Climate control, personal edition.",
+      "I have the remote. I make the rules.",
+      "Winter is a mindset. So is refusing to leave it.",
+      "Warmth achieved. Ambition postponed."
+    ],
+    "street-ramen-bliss": [
+      "Noodles fix what compilers break.",
+      "Slurping loudly. It's cultural. Don't ask which culture.",
+      "This bowl has better uptime than your projects.",
+      "Dinner of champions. And of me.",
+      "Broth first. Feelings later."
+    ],
+    "street-sneaker-tie": [
+      "Lacing up. Somewhere, an errand trembles.",
+      "Double knot. Zero plans.",
+      "Prepared for a jog I will not take.",
+      "The shoes are ready. The rest of me declined.",
+      "Athletic intent detected. Intent only."
+    ],
+    "street-headphone-bop": [
+      "Volume up. World off.",
+      "The queue is immaculate today. I made sure.",
+      "You can't hear it. That's your loss.",
+      "This beat could fix your posture.",
+      "Dancing counts as background processing."
+    ],
+    "street-baggy-swagger": [
+      "The fit is doing all the work today.",
+      "Comfort and menace. Same outfit.",
+      "Pockets full of opinions.",
+      "I woke up like this. It took effort.",
+      "Street clearance level: maximum."
+    ],
+    "street-zombie-sip": [
+      "Awake is a spectrum.",
+      "The drink is doing the thinking.",
+      "I have been perceived too much today.",
+      "%1 battery. That's about my level too.",
+      "Consciousness: buffering.",
+      "Do not schedule anything. Ever."
+    ],
+    "street-toothbrush": [
+      "Hygiene arc. Character development.",
+      "Two minutes. I timed it. Roughly.",
+      "Minty. Menacing. Ready for nothing.",
+      "Even chaos brushes twice a day.",
+      "This is the productive part of my day."
+    ],
+    "street-laundry-day": [
+      "The floor wardrobe has been archived.",
+      "Every sock accounted for. A miracle.",
+      "Laundry day. The true system update.",
+      "Clean clothes, clean conscience. One of those.",
+      "This basket has better organization than your downloads."
+    ],
+    "street-cat-grass": [
+      "It's for a friend.",
+      "Botany. A hobby. Don't investigate further.",
+      "This plant judges you less than I do. Barely.",
+      "Fresh greens. The desktop needed an ecosystem.",
+      "I water it. It ignores me. Healthy dynamic."
+    ],
+    "street-goth-strut": [
+      "Dressed for the aesthetic. The aesthetic is winning.",
+      "Black goes with everything. Especially superiority.",
+      "The skirt has pockets. Bow.",
+      "Tonight's look: unbothered.",
+      "Boots louder than your notifications."
+    ],
+    "street-denim-phone": [
+      "Posting. Not about you. Probably.",
+      "The group chat needed my presence.",
+      "One more scroll and I'm productive. Promise.",
+      "Signal strong. Interest weak.",
+      "I read the comments so you don't have to."
+    ],
+    "street-waking-stretch": [
+      "Systems booting. Please hold.",
+      "The yawn was structural.",
+      "Morning is a rumor I'm investigating.",
+      "Stretching: the only alarm I respect.",
+      "Awake-ish. Manage expectations."
+    ],
+    "street-zombie-morning": [
+      "%1 left. Same as my will to move.",
+      "Charge the machine. Charge me. Same cable if needed.",
+      "Running on fumes and attitude.",
+      "%1. We ration blinks now.",
+      "Power low. Sass reserves untouched."
+    ],
+    "street-can-offer": [
+      "Update juice. Take it. It's cold.",
+      "Fresh packages. I tasted one. Metaphorically.",
+      "You update. I supervise. Deal.",
+      "New version available. Hydrate first.",
+      "It's not bribery if it works."
+    ],
+    "street-sweater-hide": [
+      "Do not disturb. The sweater agrees.",
+      "I'm in stealth. Emotionally.",
+      "Quiet hours. Enforced by knitwear.",
+      "If you can't see my face, I'm not available.",
+      "The world was loud. I opted out."
+    ],
+    "street-grocery-fumble": [
+      "Too many things. All urgent. None held properly.",
+      "The notifications multiplied while I blinked.",
+      "I caught most of it. Define most.",
+      "Everything at once. As usual. Fine. FINE.",
+      "One more ping and the tomato drops."
+    ],
+    "street-point-wink": [
+      "That one. Trust me.",
+      "New look approved. By me. The only vote.",
+      "Style points awarded. Don't spend them at once.",
+      "Yes, that wallpaper. Obviously.",
+      "I have taste. You have luck. Together we manage."
+    ],
+    "street-feral-gamer": [
+      "One more round. The round lied.",
+      "The controller fears me now.",
+      "Victory smells like this. Exactly like this.",
+      "Ranked is a mistake I keep choosing.",
+      "I meant to sleep. Then the lobby loaded."
+    ],
+    "street-gamer-lean": [
+      "Shh. Clutch in progress.",
+      "The lean adds accuracy. Proven.",
+      "This boss has three phases. I have one mood.",
+      "Focus mode. Interruptions will be avenged.",
+      "I don't blink during fights. Noted?"
+    ],
+    "street-panic-dash": [
+      "Nothing is on fire. Stop looking at me like that.",
+      "Relocating. With urgency. For reasons.",
+      "The workspace multiplied. I'm handling it.",
+      "Everything is under control. Loosely.",
+      "I know where I'm going. Directionally."
+    ],
+    "street-peace-jump": [
+      "You're back! I did nothing while you were gone. Suspicious, right?",
+      "Welcome back. The pixels behaved. Mostly.",
+      "Reentry approved. Try to deserve it.",
+      "You unlocked. I celebrated. We're even.",
+      "Session restored. Morale restored-ish."
+    ],
+    "street-grossed-out": [
+      "Ew. No. Retract the cursor.",
+      "That touch was NOT authorized.",
+      "I felt that through the screen.",
+      "Personal space. Look it up.",
+      "One star. Would not be poked again."
+    ],
+    "street-shy-fidget": [
+      "...hi. Don't make it a thing.",
+      "I'm not blushing. It's the color temperature.",
+      "Okay. One pat. Two maximum.",
+      "This is fine. I'm fine. Stop looking.",
+      "Affection acknowledged. Processing slowly."
+    ],
+    "street-pillow-hug": [
+      "The pillow understands me.",
+      "Soft things are load-bearing.",
+      "Hugging is a coping strategy. A good one.",
+      "This pillow has seen things. It stays.",
+      "Comfort acquired. Do not remove."
+    ],
+    "street-crouch-grin": [
+      "I have an idea. You won't like it. I love it.",
+      "Crouching mascot, hidden agenda.",
+      "Something is about to happen. Legally, I said nothing.",
+      "The floor has excellent acoustics for scheming.",
+      "Stay calm. It's funnier that way."
+    ],
+    "street-cape-flare": [
+      "The cape is functional. The function is drama.",
+      "Fear me. Fashionably.",
+      "Every villain arc starts with good outerwear.",
+      "This jacket has main character energy. So do I.",
+      "Behold. Then go back to work."
+    ],
+    "street-cookie-bite": [
+      "The cookie clock made me hungry. Coincidence?",
+      "Crumbs are temporary. Flavor is forever.",
+      "I saved you half. Then I didn't.",
+      "Baked goods outrank most software.",
+      "Snack-driven development."
+    ],
+    "street-detective": [
+      "The case of the missing file. I have a suspect. It's you.",
+      "Clues everywhere. Mostly crumbs. Mine.",
+      "Elementary. The bug was in the config.",
+      "I investigate. You incriminate.",
+      "The magnifier makes me 40% more credible."
+    ],
+    "street-controller-jump": [
+      "GG. No rematch. I retire undefeated.",
+      "Victory screen. Frame it.",
+      "The final boss and I have history. Had.",
+      "Jump earned. Landing optional.",
+      "Achievement unlocked: witnessed by you."
+    ],
+    "street-blanket-spook": [
+      "The blanket is a fortress. The fortress has opinions.",
+      "I saw the horror. It was the backlog.",
+      "Protective layer deployed. Emotionally too.",
+      "The stars on this blanket are load-bearing.",
+      "Fear is valid. Blankets are valider."
+    ],
+    "street-jacket-wrestle": [
+      "The jacket started it.",
+      "Getting dressed is a boss fight today.",
+      "Fashion requires sacrifice. Mostly dignity.",
+      "The sleeve moved. I retaliated.",
+      "I will win. The jacket disagrees."
+    ],
+    "street-five-more-minutes": [
+      "The mug says it. I enforce it.",
+      "Five more minutes. Renewable. Indefinitely.",
+      "Consciousness is negotiable before coffee.",
+      "The shirt is a legal document.",
+      "Morning meetings should fear me."
+    ],
+    "street-phone-lounge": [
+      "Comfort level: unreasonable.",
+      "The hoodie is doing emotional labor.",
+      "Scrolling with intent. The intent is nothing.",
+      "This is my thinking position. The thoughts are memes.",
+      "Reachable? Technically. Responsive? No."
+    ],
+    "street-coat-reading": [
+      "Shh. Plot.",
+      "The book is better than the changelog.",
+      "One more chapter. Renewable clause.",
+      "Reading. It's like scrolling but with commitment.",
+      "Do not spoil chapter twelve. I will know."
+    ],
+    "street-ponder-crossed": [
+      "Thinking. Big things. Snack things.",
+      "The plan is forming. Slowly. Menacingly.",
+      "Hypothesis: your setup could be worse. Testing ongoing.",
+      "Quiet. The gears are turning and they squeak.",
+      "I have three thoughts and two are naps."
+    ],
+    "street-pedestal-lean": [
+      "This pedestal? Earned.",
+      "Leaning is a lifestyle choice.",
+      "I hold the wall up. The wall is grateful.",
+      "Posture optional. Presence mandatory.",
+      "Just vibing. Architecturally."
+    ],
+    "street-mug-hold": [
+      "The mug is warm. My opinions are warmer.",
+      "First sip pending. Do not approach.",
+      "Caffeine loading. Sass already loaded.",
+      "This mug has seen every deadline.",
+      "Hot beverage, cold stare. Balance."
+    ],
+    "street-coffee-thought": [
+      "Thinking about coffee. While holding coffee. Recursive.",
+      "The cup is half full. Of doubt.",
+      "One more sip and I unlock opinions.",
+      "To-go cup. Going nowhere.",
+      "The thought bubble is decaf. Ignore it."
+    ],
+    "street-chair-nap": [
+      "The chair won. Fair fight.",
+      "Not asleep. Deep buffering.",
+      "This is what peak performance looks like.",
+      "Wake me for snacks or emergencies. Snacks first.",
+      "The spin chair spun. I surrendered."
+    ],
+    "street-floor-gamer": [
+      "Floor seat. Best latency.",
+      "The snacks are within arm's reach. Strategy.",
+      "One more match. The floor agrees.",
+      "Console posture: criminal. Performance: elite.",
+      "Down here the frame drops can't hurt me."
+    ],
+    "street-sticker-album": [
+      "My sticker collection. No trades. Maybe trades.",
+      "Every sticker has lore.",
+      "This page took years. Respect it.",
+      "Rare holographic. You may look. Briefly.",
+      "Collecting is self-care with extra steps."
+    ],
+    "street-pillow-doze": [
+      "Zzz. Reading this counts as disturbing me.",
+      "The pillow and I have an arrangement.",
+      "Five minutes. Desktop time. So, an hour.",
+      "Do not deploy anything loud.",
+      "Dreaming of a zero-notification world."
+    ],
+    "street-overwhelm-cry": [
+      "THE PINGS. THEY KEEP COMING.",
+      "I looked at the notification count. Mistake.",
+      "Everything beeped at once and so did my soul.",
+      "Send help. Or mute. Mute works.",
+      "This is fine. It is NOT fine."
+    ],
+    "street-lean-taunt": [
+      "Heh. Made you look.",
+      "Something's off about your layout. Not telling what.",
+      "I moved nothing. Probably.",
+      "Come closer. I dare you.",
+      "The smirk is load-bearing."
+    ],
+    "street-squat-huff": [
+      "Hmph. Noted. Resented.",
+      "I'm not pouting. I'm compressing rage.",
+      "The audacity of that click.",
+      "Personal bubble. Violated. Again.",
+      "I will remember this at snack time."
+    ],
+    "street-taunt-laugh": [
+      "HA. And also: HA.",
+      "You clicked. I win. Those are the rules.",
+      "Point and laugh. It's in my contract.",
+      "The disrespect flows both ways now.",
+      "Comedy. And you're the punchline."
+    ],
+    "street-shades-point": [
+      "Yes, you. The one with the cursor.",
+      "Shades on. Judgment enhanced.",
+      "I point, therefore I am.",
+      "Cool detected. It's me. I'm the cool.",
+      "You get one finger gun. Cherish it."
     ]
   },
   "idleLines": [
@@ -1120,7 +1558,25 @@
     "Uptime is not a personality. Close, though.",
     "One more config tweak and I start charging consulting fees.",
     "The compositor and I talk. About you.",
-    "systemd restarted something. Nobody knows what. Classic."
+    "systemd restarted something. Nobody knows what. Classic.",
+    "I dressed down today. The desktop can handle it.",
+    "I have opinions about your tab count.",
+    "Somewhere in Downloads, a file named final-final-v3 is crying.",
+    "Your CPU fan just sighed. Relatable.",
+    "The trash can is 90% regret. I checked.",
+    "New pose. Same supervision.",
+    "I stretched. That was the whole workout.",
+    "Ask your terminal how it's feeling sometime.",
+    "I'd alphabetize your chaos but it has character.",
+    "Snack break. You keep working. One of us should.",
+    "The moon is up. So are you. Only one of you should be.",
+    "Do not open a seventh workspace. I know you're thinking it.",
+    "Your notifications and I have a truce. It expires soon.",
+    "Today's agenda: exist adorably. Done by noon.",
+    "I counted the pixels again. Still all mine.",
+    "Somewhere a tiling algorithm is very proud of you.",
+    "Laundry exists. Just an observation.",
+    "I nap professionally. You nap accidentally."
   ],
   "animatedPoses": [
     "tail-sway",
@@ -1363,7 +1819,146 @@
     "thought-spark",
     "over-shoulder-toe-tap",
     "caught-red-handed",
-    "notice-think-wink-loop"
+    "notice-think-wink-loop",
+    "street-phone-sprawl",
+    "street-feral-gamer",
+    "street-pocky-grump",
+    "street-panic-scream",
+    "street-tank-wink",
+    "street-smoke-den",
+    "street-morning-stretch",
+    "street-iced-coffee",
+    "street-bawling",
+    "street-beanbag-twirl",
+    "street-jacket-smoke",
+    "street-fist-tantrum",
+    "street-bust-shock",
+    "street-bust-fingerguns",
+    "street-bust-huff",
+    "street-crouch-grin",
+    "street-sailor-wink",
+    "street-bust-rage",
+    "street-bust-waterworks",
+    "street-bust-smug",
+    "street-bust-callout",
+    "street-phone-lounge",
+    "street-five-more-minutes",
+    "street-dead-inside-mug",
+    "street-sailor-flipoff",
+    "street-beer-buzz",
+    "street-scheme-station",
+    "street-no-more-hope",
+    "street-remote-haze",
+    "street-blanket-burrito",
+    "street-detective",
+    "street-cookie-bite",
+    "street-jacket-wrestle",
+    "street-headphone-bop",
+    "street-goth-strut",
+    "street-grocery-fumble",
+    "street-baggy-swagger",
+    "street-cape-flare",
+    "street-panic-dash",
+    "street-peace-jump",
+    "street-zombie-sip",
+    "street-toothbrush",
+    "street-laundry-day",
+    "street-sneaker-tie",
+    "street-ramen-bliss",
+    "street-denim-phone",
+    "street-waking-stretch",
+    "street-pillow-hug",
+    "street-grossed-out",
+    "street-shy-fidget",
+    "street-zombie-morning",
+    "street-point-wink",
+    "street-sweater-hide",
+    "street-gamer-lean",
+    "street-can-offer",
+    "street-controller-jump",
+    "street-blanket-spook",
+    "street-phone-flop",
+    "street-cat-grass",
+    "street-shorts-sulk",
+    "street-taunt-laugh",
+    "street-slipper-flail",
+    "street-kneel-sparkle",
+    "street-squat-huff",
+    "street-jeans-wink",
+    "street-stool-sip",
+    "street-smoke-stand",
+    "street-flannel-cheers",
+    "street-pedestal-lean",
+    "street-wine-poise",
+    "street-coat-reading",
+    "street-ponder-crossed",
+    "street-spark-wink",
+    "street-plaid-refresh",
+    "street-stool-snack",
+    "street-bright-idea",
+    "street-tank-flipoff",
+    "street-ramen-mess",
+    "street-point-laugh",
+    "street-chair-lurk",
+    "street-zzz-stretch",
+    "street-bottle-chug",
+    "street-mask-peace",
+    "street-kitchen-panic",
+    "street-floor-gamer",
+    "street-office-specs",
+    "street-pillow-doze",
+    "street-rain-umbrella",
+    "street-fries-crouch",
+    "street-grocery-gloom",
+    "street-chair-nap",
+    "street-shades-point",
+    "street-crouch-plead",
+    "street-mug-hold",
+    "street-snack-jar",
+    "street-overwhelm-cry",
+    "street-tablet-wink",
+    "street-scare-recoil",
+    "street-lean-taunt",
+    "street-floor-slip",
+    "street-kneel-hope",
+    "street-chips-feral",
+    "street-pocky-shock",
+    "street-glass-inspect",
+    "street-smoke-chapter",
+    "street-sticker-album",
+    "street-coffee-thought",
+    "street-track-scholar",
+    "street-wine-cackle",
+    "street-aura-scream",
+    "street-focus-seal",
+    "street-gear-lunge",
+    "street-checker-stance",
+    "street-armchair-reader",
+    "street-hero-stand",
+    "street-swagger-point",
+    "street-trench-detective",
+    "street-flaming-pan",
+    "street-moon-wand",
+    "street-spike-jump",
+    "street-fish-lure",
+    "street-force-push",
+    "street-dig-dive",
+    "street-circle-wand",
+    "street-pilot-seat",
+    "street-mad-scribe",
+    "street-easel-painter",
+    "street-power-flex",
+    "street-peace-swagger",
+    "street-meat-swig",
+    "street-smoke-peace",
+    "street-chair-smoke",
+    "street-smoke-slump",
+    "street-katana-smoke-alt",
+    "street-katana-smoke",
+    "street-brew-bottle",
+    "street-flannel-smoke",
+    "street-tongue-flipoff",
+    "street-hangover-crash"
   ],
   "chibiPoses": [
     "chibi-arms-crossed",
@@ -1383,14 +1978,18 @@
   "editorialPoses": [
     "base",
     "expression-sheet",
-    "hero-banner"
+    "hero-banner",
+    "street-smoke-den",
+    "street-scheme-station"
   ],
   "collectionSpecial": {
     "base": { "category": "editorial", "role": "identity" },
     "expression-sheet": { "category": "editorial", "role": "expression-study" },
     "hero-banner": { "category": "editorial", "role": "brand-key-art" },
     "crash-pancake": { "category": "fullbody", "role": "chaos-fail" },
-    "recording-director": { "category": "fullbody", "role": "recording-director" }
+    "recording-director": { "category": "fullbody", "role": "recording-director" },
+    "street-smoke-den": { "category": "editorial", "role": "night-owl-scene" },
+    "street-scheme-station": { "category": "editorial", "role": "villain-arc-scene" }
   },
   "fullBodyPoses": [
     "alert-look",
@@ -1469,7 +2068,125 @@
     "thought-spark",
     "over-shoulder-toe-tap",
     "caught-red-handed",
-    "notice-think-wink-loop"
+    "notice-think-wink-loop",
+    "street-phone-sprawl",
+    "street-feral-gamer",
+    "street-crouch-grin",
+    "street-phone-lounge",
+    "street-five-more-minutes",
+    "street-beer-buzz",
+    "street-remote-haze",
+    "street-beanbag-twirl",
+    "street-blanket-burrito",
+    "street-detective",
+    "street-cookie-bite",
+    "street-jacket-wrestle",
+    "street-headphone-bop",
+    "street-goth-strut",
+    "street-grocery-fumble",
+    "street-baggy-swagger",
+    "street-cape-flare",
+    "street-panic-dash",
+    "street-peace-jump",
+    "street-zombie-sip",
+    "street-toothbrush",
+    "street-laundry-day",
+    "street-sneaker-tie",
+    "street-ramen-bliss",
+    "street-denim-phone",
+    "street-waking-stretch",
+    "street-pillow-hug",
+    "street-grossed-out",
+    "street-shy-fidget",
+    "street-zombie-morning",
+    "street-point-wink",
+    "street-sweater-hide",
+    "street-gamer-lean",
+    "street-can-offer",
+    "street-controller-jump",
+    "street-blanket-spook",
+    "street-phone-flop",
+    "street-cat-grass",
+    "street-shorts-sulk",
+    "street-taunt-laugh",
+    "street-slipper-flail",
+    "street-kneel-sparkle",
+    "street-squat-huff",
+    "street-jeans-wink",
+    "street-stool-sip",
+    "street-smoke-stand",
+    "street-flannel-cheers",
+    "street-pedestal-lean",
+    "street-wine-poise",
+    "street-coat-reading",
+    "street-ponder-crossed",
+    "street-spark-wink",
+    "street-plaid-refresh",
+    "street-stool-snack",
+    "street-bright-idea",
+    "street-tank-flipoff",
+    "street-ramen-mess",
+    "street-point-laugh",
+    "street-chair-lurk",
+    "street-zzz-stretch",
+    "street-bottle-chug",
+    "street-mask-peace",
+    "street-kitchen-panic",
+    "street-floor-gamer",
+    "street-office-specs",
+    "street-pillow-doze",
+    "street-rain-umbrella",
+    "street-fries-crouch",
+    "street-grocery-gloom",
+    "street-chair-nap",
+    "street-shades-point",
+    "street-crouch-plead",
+    "street-mug-hold",
+    "street-snack-jar",
+    "street-overwhelm-cry",
+    "street-tablet-wink",
+    "street-scare-recoil",
+    "street-lean-taunt",
+    "street-floor-slip",
+    "street-kneel-hope",
+    "street-chips-feral",
+    "street-pocky-shock",
+    "street-glass-inspect",
+    "street-smoke-chapter",
+    "street-sticker-album",
+    "street-coffee-thought",
+    "street-track-scholar",
+    "street-wine-cackle",
+    "street-aura-scream",
+    "street-focus-seal",
+    "street-gear-lunge",
+    "street-checker-stance",
+    "street-armchair-reader",
+    "street-hero-stand",
+    "street-swagger-point",
+    "street-trench-detective",
+    "street-flaming-pan",
+    "street-moon-wand",
+    "street-spike-jump",
+    "street-fish-lure",
+    "street-force-push",
+    "street-dig-dive",
+    "street-circle-wand",
+    "street-pilot-seat",
+    "street-mad-scribe",
+    "street-easel-painter",
+    "street-power-flex",
+    "street-peace-swagger",
+    "street-meat-swig",
+    "street-smoke-peace",
+    "street-chair-smoke",
+    "street-smoke-slump",
+    "street-katana-smoke-alt",
+    "street-katana-smoke",
+    "street-brew-bottle",
+    "street-flannel-smoke",
+    "street-tongue-flipoff",
+    "street-hangover-crash"
   ],
   "contextualOcclusionPoses": [
     "box-hideout"
@@ -1507,31 +2224,383 @@
     "thought-spark",
     "over-shoulder-toe-tap",
     "caught-red-handed",
-    "notice-think-wink-loop"
+    "notice-think-wink-loop",
+    "street-phone-sprawl",
+    "street-feral-gamer",
+    "street-pocky-grump",
+    "street-tank-wink",
+    "street-morning-stretch",
+    "street-iced-coffee",
+    "street-bust-smug",
+    "street-bust-fingerguns",
+    "street-sailor-wink",
+    "street-crouch-grin",
+    "street-phone-lounge",
+    "street-five-more-minutes",
+    "street-dead-inside-mug",
+    "street-no-more-hope",
+    "street-blanket-burrito",
+    "street-detective",
+    "street-cookie-bite",
+    "street-headphone-bop",
+    "street-goth-strut",
+    "street-baggy-swagger",
+    "street-peace-jump",
+    "street-zombie-sip",
+    "street-ramen-bliss",
+    "street-denim-phone",
+    "street-pillow-hug",
+    "street-shy-fidget",
+    "street-zombie-morning",
+    "street-point-wink",
+    "street-sweater-hide",
+    "street-gamer-lean",
+    "street-controller-jump",
+    "street-phone-flop",
+    "street-cat-grass",
+    "street-focus-seal",
+    "street-gear-lunge",
+    "street-checker-stance",
+    "street-armchair-reader",
+    "street-hero-stand",
+    "street-swagger-point",
+    "street-flaming-pan",
+    "street-moon-wand",
+    "street-spike-jump",
+    "street-force-push",
+    "street-dig-dive",
+    "street-circle-wand",
+    "street-pilot-seat",
+    "street-mad-scribe",
+    "street-easel-painter",
+    "street-peace-swagger"
   ],
   "desktopWidgetPoses": [
-    "presence-idle-loop",
-    "headphone-groove-full-loop",
+    "about-confident",
+    "ai-oracle",
+    "alert-look",
+    "annoyed-poked",
+    "arms-crossed-confident",
+    "back-turned",
+    "bar-tightrope",
+    "battery-low",
+    "battle-point",
+    "bluetooth-magnet-pair",
+    "bored-chin-rest",
+    "bottom-corner-lean",
+    "bottom-rise",
+    "box-hideout",
+    "brightness-sunshield",
+    "bug-net",
+    "cable-defeat",
+    "calendar-star-mark",
+    "calendar-timewarp",
+    "camera-boop",
+    "capture-frame",
+    "carry-crate",
+    "carry-run",
+    "cheatsheet-sensei",
+    "checklist-steps",
+    "cheer-ready",
+    "cheer-wink",
+    "chef-flambe",
+    "chibi-arms-crossed",
+    "chibi-bounce",
+    "chibi-cry",
+    "chibi-frustrated",
+    "chibi-happy",
+    "chibi-love",
+    "chibi-mallet",
+    "chibi-pointing-laugh",
+    "chibi-rage",
+    "chibi-roast-bubble",
+    "chibi-shrug",
+    "chibi-sleepy",
+    "chibi-thumbsup",
     "cleanup-sweep-loop",
-    "snapshot-director-loop",
-    "wallpaper-color-sweep-loop",
-    "hand-on-hip",
-    "reading",
-    "sit-laptop",
-    "tea-break",
-    "tiptoe-sneak",
-    "yawn-stretch",
-    "panel-sitter",
+    "clipboard-paperstorm",
+    "color-prism",
+    "community-highfive",
+    "conductor-baton",
+    "cpu-overheat",
+    "crash-pancake",
+    "crouch-inspect",
+    "crouch-ready",
+    "dash-loop",
+    "dash-twist",
+    "dead-crash",
+    "detective-glass",
     "dock-hang",
-    "sit-peace-wink",
-    "stretching-break",
+    "dock-skater",
+    "docs-guide",
+    "doctor-checkup",
+    "dust-hands",
+    "ear-twitch",
+    "edge-peek",
+    "energy-drink",
+    "error-annoyed",
+    "facepalm",
+    "fight-guard",
+    "fisheye-inspect",
+    "fisheye-reach",
+    "fist-pump",
+    "flee-back",
+    "follow-me",
+    "gaming-focus",
+    "gardener-sprout",
+    "gift-giving",
+    "goodbye-wave",
+    "gossip-phone",
+    "ground-slam",
+    "guide-point-down",
+    "guide-point-side",
+    "guide-point-up",
+    "hand-on-hip",
     "handheld-gaming",
+    "hanging-claws",
+    "headphone-groove-full-loop",
+    "headphone-groove-loop",
+    "heart-eyes-pat",
+    "heavy-lift",
+    "heroic-run",
+    "high-kick",
+    "hurl-throw",
+    "idle-blink",
+    "idle-breathe",
+    "inbox-clear-loop",
+    "jab-punch",
+    "jump-bounce",
+    "key-offer",
+    "keyhole-guardian",
+    "late-night",
+    "laughing-roast",
+    "lean-peek",
+    "low-angle-guard",
+    "lying-lazy",
+    "magic-hat",
+    "magician-hat",
+    "mallet-swing",
+    "map-explorer",
+    "marshaller-windows",
+    "mate-break",
+    "mic-stage-check",
+    "mood-shuffle",
+    "morning-coffee",
+    "music-conductor",
+    "music-vibe",
+    "network-offline",
+    "network-signal-fishing",
+    "notification-avalanche",
+    "notifications-clear",
+    "overview-orbit",
+    "package-lifter",
+    "paint-roller",
+    "panel-sitter",
+    "peace-wink",
+    "plant-care",
+    "plugin-alchemist",
+    "point-at-viewer",
+    "point-up-shout",
+    "polkit-bouncer",
+    "popcorn-watch",
+    "pounce-point",
+    "power-cord-yank",
+    "presence-idle-loop",
+    "presenting",
+    "presenting-warm",
+    "privacy-lock",
+    "prowl-low",
+    "punk-reach",
+    "purr-content",
+    "quota-empty",
+    "reading",
+    "recording-director",
+    "right-edge-peek",
+    "rocket-ride",
+    "run-cycle",
+    "salute-ready",
+    "seated-thinking",
+    "settings-judging",
+    "shh-finger",
+    "shocked-jump",
+    "shrug-annoyed",
+    "shy-flustered",
+    "side-hop",
+    "side-kick",
+    "sit-laptop",
+    "sit-peace-wink",
+    "sit-pointing",
+    "skater-trick",
+    "sleep-dnd",
+    "sleepy-nod",
+    "smug-hand-raised",
+    "snapshot-director-loop",
+    "speech-bubble-calm",
+    "spin-attack",
+    "spin-dodge",
+    "sport-ready",
+    "spyglass-search",
+    "stand-pout",
+    "standing-unimpressed",
+    "sticky-notes",
+    "stomp-victory",
+    "stretching-break",
+    "success-celebrate",
+    "tail-flick",
+    "tail-sway",
+    "tea-break",
+    "telescope-scan",
+    "terminal-demo",
+    "theme-artist",
+    "thinking",
+    "thinking-pose",
+    "tiling-tetris",
+    "tiptoe-sneak",
+    "tired-dev",
+    "todo-done",
+    "top-peek",
+    "trip-fall",
+    "trip-splat",
+    "typing-loop",
+    "update-ready",
+    "upside-down-hang",
+    "upside-down-peek",
+    "vertical-bar-climber",
+    "visualizer-surf",
+    "volume-wave-rider",
+    "waffle-snack",
+    "wallpaper-color-sweep-loop",
+    "warning-concerned",
+    "wave-loop",
+    "waving-hi",
+    "weather-umbrella",
     "weather-windswept",
+    "welcome-wave",
+    "welcoming",
+    "wizard-complete",
+    "workspace-juggle",
+    "workspace-portal",
+    "yawn-stretch",
     "notification-scout",
     "clipboard-librarian",
+    "signal-whisperer",
     "thought-spark",
     "over-shoulder-toe-tap",
-    "notice-think-wink-loop"
+    "caught-red-handed",
+    "notice-think-wink-loop",
+    "street-phone-sprawl",
+    "street-feral-gamer",
+    "street-pocky-grump",
+    "street-panic-scream",
+    "street-tank-wink",
+    "street-morning-stretch",
+    "street-iced-coffee",
+    "street-bawling",
+    "street-fist-tantrum",
+    "street-bust-shock",
+    "street-bust-fingerguns",
+    "street-bust-huff",
+    "street-crouch-grin",
+    "street-sailor-wink",
+    "street-bust-rage",
+    "street-bust-waterworks",
+    "street-bust-smug",
+    "street-bust-callout",
+    "street-phone-lounge",
+    "street-five-more-minutes",
+    "street-dead-inside-mug",
+    "street-no-more-hope",
+    "street-blanket-burrito",
+    "street-detective",
+    "street-cookie-bite",
+    "street-jacket-wrestle",
+    "street-headphone-bop",
+    "street-goth-strut",
+    "street-grocery-fumble",
+    "street-baggy-swagger",
+    "street-cape-flare",
+    "street-panic-dash",
+    "street-peace-jump",
+    "street-zombie-sip",
+    "street-toothbrush",
+    "street-laundry-day",
+    "street-sneaker-tie",
+    "street-ramen-bliss",
+    "street-denim-phone",
+    "street-waking-stretch",
+    "street-pillow-hug",
+    "street-grossed-out",
+    "street-shy-fidget",
+    "street-zombie-morning",
+    "street-point-wink",
+    "street-sweater-hide",
+    "street-gamer-lean",
+    "street-can-offer",
+    "street-controller-jump",
+    "street-blanket-spook",
+    "street-phone-flop",
+    "street-cat-grass",
+    "street-shorts-sulk",
+    "street-taunt-laugh",
+    "street-slipper-flail",
+    "street-kneel-sparkle",
+    "street-squat-huff",
+    "street-jeans-wink",
+    "street-pedestal-lean",
+    "street-coat-reading",
+    "street-ponder-crossed",
+    "street-spark-wink",
+    "street-plaid-refresh",
+    "street-stool-snack",
+    "street-bright-idea",
+    "street-ramen-mess",
+    "street-point-laugh",
+    "street-chair-lurk",
+    "street-zzz-stretch",
+    "street-mask-peace",
+    "street-kitchen-panic",
+    "street-floor-gamer",
+    "street-office-specs",
+    "street-pillow-doze",
+    "street-rain-umbrella",
+    "street-fries-crouch",
+    "street-grocery-gloom",
+    "street-chair-nap",
+    "street-shades-point",
+    "street-crouch-plead",
+    "street-mug-hold",
+    "street-snack-jar",
+    "street-overwhelm-cry",
+    "street-tablet-wink",
+    "street-scare-recoil",
+    "street-lean-taunt",
+    "street-floor-slip",
+    "street-kneel-hope",
+    "street-chips-feral",
+    "street-pocky-shock",
+    "street-glass-inspect",
+    "street-sticker-album",
+    "street-coffee-thought",
+    "street-track-scholar",
+    "street-aura-scream",
+    "street-focus-seal",
+    "street-gear-lunge",
+    "street-checker-stance",
+    "street-armchair-reader",
+    "street-hero-stand",
+    "street-swagger-point",
+    "street-trench-detective",
+    "street-flaming-pan",
+    "street-moon-wand",
+    "street-spike-jump",
+    "street-force-push",
+    "street-dig-dive",
+    "street-circle-wand",
+    "street-pilot-seat",
+    "street-mad-scribe",
+    "street-easel-painter",
+    "street-power-flex",
+    "street-peace-swagger"
   ],
   "fullBodyReplacements": {
     "about-confident": "presence-idle-loop",
@@ -1677,6 +2746,36 @@
     ],
     "network-signal-fishing": [
       "bottom"
+    ],
+    "street-phone-sprawl": [
+      "bottom"
+    ],
+    "street-phone-flop": [
+      "bottom"
+    ],
+    "street-blanket-burrito": [
+      "bottom"
+    ],
+    "street-ramen-bliss": [
+      "bottom"
+    ],
+    "street-sneaker-tie": [
+      "bottom"
+    ],
+    "street-feral-gamer": [
+      "bottom"
+    ],
+    "street-phone-lounge": [
+      "bottom"
+    ],
+    "street-chair-nap": [
+      "bottom"
+    ],
+    "street-floor-gamer": [
+      "bottom"
+    ],
+    "street-pillow-doze": [
+      "bottom"
     ]
   },
   "clickTiers": {
@@ -1684,7 +2783,9 @@
       "poses": [
         "hand-on-hip",
         "stand-pout",
-        "low-angle-guard"
+        "low-angle-guard",
+        "street-grossed-out",
+        "street-squat-huff"
       ],
       "lines": [
         "Do I look clickable to you?",
@@ -1699,7 +2800,12 @@
         "Paws off.",
         "I am not a button.",
         "You have a whole desktop. And you chose me.",
-        "Careful. I bite. Later. When you forget."
+        "Careful. I bite. Later. When you forget.",
+        "Ew. Fingerprints.",
+        "I was having a moment. You ended it.",
+        "Click the wallpaper. It has fewer feelings.",
+        "That was my only patience. You spent it.",
+        "The audacity arrives daily, I see."
       ]
     },
     "tier2": {
@@ -1707,7 +2813,9 @@
         "sit-peace-wink",
         "tea-break",
         "follow-me",
-        "reading"
+        "reading",
+        "street-shy-fidget",
+        "street-pillow-hug"
       ],
       "lines": [
         "...okay. Pats are acceptable.",
@@ -1722,7 +2830,12 @@
         "One more. Then we never speak of this.",
         "My dignity and I are negotiating.",
         "The ear thing. Again. ...please.",
-        "This is a limited-time offer."
+        "This is a limited-time offer.",
+        "Warmth detected. Proceeding with dignity loss.",
+        "Okay but if anyone asks, I resisted.",
+        "This is bribery. It's working.",
+        "Careful. I imprint fast.",
+        "Recorded as an accident. Repeat the accident."
       ]
     },
     "tier4": {
@@ -1730,7 +2843,8 @@
         "battle-point",
         "ground-slam",
         "point-up-shout",
-        "mallet-swing"
+        "mallet-swing",
+        "street-taunt-laugh"
       ],
       "lines": [
         "THAT'S IT. I'm out.",
@@ -1742,7 +2856,11 @@
         "My lawyer will hear about this.",
         "I am UNIONIZING.",
         "Deleting you from my will.",
-        "You will be hearing from my tail."
+        "You will be hearing from my tail.",
+        "I know where your cursor sleeps.",
+        "Escalating to hiss. HISS.",
+        "The claws were decorative. WERE.",
+        "Enjoy your shell. It knows what you did."
       ]
     }
   },
@@ -1770,6 +2888,30 @@
     {
       "pose": "presence-idle-loop",
       "line": "Still staring? I charge by the minute."
+    },
+    {
+      "pose": "street-zombie-sip",
+      "line": "Blink if you need help. Oh wait. That's me."
+    },
+    {
+      "pose": "street-baggy-swagger",
+      "line": "Yes. The fit is good. Move along."
+    },
+    {
+      "pose": "street-cookie-bite",
+      "line": "You watch. I snack. Fair trade."
+    },
+    {
+      "pose": "street-grossed-out",
+      "line": "You've been staring. I've been judging. We're even."
+    },
+    {
+      "pose": "street-shades-point",
+      "line": "I see you seeing me. The shades change nothing."
+    },
+    {
+      "pose": "street-ponder-crossed",
+      "line": "Deep in thought. You're not in it. Mostly."
     }
   ],
     "prankPoses": [
@@ -1777,7 +2919,10 @@
     "follow-me",
     "snapshot-director-loop",
     "low-angle-guard",
-    "caught-red-handed"
+    "caught-red-handed",
+    "street-crouch-grin",
+    "street-cape-flare",
+    "street-lean-taunt"
   ],
   "chaos": {
     "run": [
@@ -2202,7 +3347,9 @@
       "poses": [
         "power-cord-yank",
         "low-angle-guard",
-        "hand-on-hip"
+        "hand-on-hip",
+        "street-zombie-morning",
+        "street-zombie-sip"
       ],
       "edge": "left",
       "source": "battery"
@@ -2211,7 +3358,8 @@
       "poses": [
         "package-lifter",
         "clipboard-librarian",
-        "thought-spark"
+        "thought-spark",
+        "street-can-offer"
       ],
       "edge": "top",
       "source": "update"
@@ -2227,7 +3375,9 @@
     "dnd": {
       "poses": [
         "tea-break",
-        "reading"
+        "reading",
+        "street-sweater-hide",
+        "street-chair-nap"
       ],
       "edge": "right",
       "source": "dnd"
@@ -2236,7 +3386,9 @@
       "poses": [
         "cleanup-sweep-loop",
         "notification-scout",
-        "clipboard-librarian"
+        "clipboard-librarian",
+        "street-grocery-fumble",
+        "street-overwhelm-cry"
       ],
       "edge": "right",
       "source": ""
@@ -2245,7 +3397,8 @@
       "poses": [
         "wallpaper-color-sweep-loop",
         "thought-spark",
-        "notice-think-wink-loop"
+        "notice-think-wink-loop",
+        "street-point-wink"
       ],
       "edge": "right",
       "source": ""
@@ -2261,7 +3414,10 @@
     "gaming": {
       "poses": [
         "handheld-gaming",
-        "low-angle-guard"
+        "low-angle-guard",
+        "street-feral-gamer",
+        "street-gamer-lean",
+        "street-floor-gamer"
       ],
       "edge": "right",
       "source": ""
@@ -2270,7 +3426,8 @@
       "poses": [
         "workspace-portal",
         "follow-me",
-        "over-shoulder-toe-tap"
+        "over-shoulder-toe-tap",
+        "street-panic-dash"
       ],
       "edge": "top",
       "source": ""
@@ -2279,7 +3436,8 @@
       "poses": [
         "headphone-groove-full-loop",
         "notice-think-wink-loop",
-        "over-shoulder-toe-tap"
+        "over-shoulder-toe-tap",
+        "street-headphone-bop"
       ],
       "edge": "right",
       "source": "media"
@@ -2287,7 +3445,8 @@
     "unlock": {
       "poses": [
         "polkit-bouncer",
-        "notice-think-wink-loop"
+        "notice-think-wink-loop",
+        "street-peace-jump"
       ],
       "edge": "right",
       "source": ""
@@ -2397,14 +3556,19 @@
       "%1 again? Bold choice.",
       "%2. Approved. Reluctantly.",
       "%1 on repeat. Iconic or concerning? Both.",
-      "%1 by %2. A statement. I guess."
+      "%1 by %2. A statement. I guess.",
+      "%1. The algorithm knows you too well.",
+      "Adding %1 to my mental playlist. Reluctantly.",
+      "%2 really said this and you really played it."
     ],
     "game-over": [
       "GG. %1 never stood a chance.",
       "So. Who won at %1?",
       "%1, huh. Your APM is showing.",
       "Back from %1. Blink twice if you're okay.",
-      "%1 again? I'm starting to think this is a main."
+      "%1 again? I'm starting to think this is a main.",
+      "%1 closed. The rage quit was audible.",
+      "How was %1? Don't answer. Your face did."
     ]
   },
   "contextLines": {
@@ -2421,44 +3585,57 @@
       "%1 notifications. A museum of neglect.",
       "%1 unread. Impressive avoidance.",
       "Your notifications called. All %1 of them.",
-      "%1 pings. Zero answers. Legendary restraint."
+      "%1 pings. Zero answers. Legendary restraint.",
+      "%1 unread and climbing. It's basically a hobby now.",
+      "%1 notifications are aging like milk in there."
     ],
     "uptime-days": [
       "Day %1 without a reboot. Bold.",
       "%1 days of uptime. The RAM remembers.",
       "Uptime: %1 days. Your kernel updates are crying.",
-      "%1 days up. At this point it's a relationship."
+      "%1 days up. At this point it's a relationship.",
+      "%1 days. Reboots are free, you know.",
+      "Day %1. The swap file has stories."
     ],
     "monday": [
       "Monday. My condolences.",
       "It's Monday. Lower your expectations accordingly.",
       "Monday again. Who approved this.",
-      "Week's started. I'm supervising."
+      "Week's started. I'm supervising.",
+      "Monday. The desktop and I are also not ready.",
+      "Statistically, Mondays pass. Hold that thought."
     ],
     "friday-night": [
       "Friday night. And you're here. With me. Cute.",
       "Big Friday plans, I see. Sitting dramatically.",
       "The weekend starts when you stop pretending to be busy.",
-      "Friday. Even the bad ideas are going home."
+      "Friday. Even the bad ideas are going home.",
+      "Friday night. The compile can wait until Monday. It won't, but it can.",
+      "It's Friday. Order the food. You know which one."
     ],
     "weekend": [
       "Weekend ricing session? Called it.",
       "Rest is productive too. Try it.",
       "It's the weekend. The bugs can wait. They won't leave, but they can wait.",
-      "Weekend mode: same desktop, fewer excuses."
+      "Weekend mode: same desktop, fewer excuses.",
+      "Weekend detected. Pajama compliance verified.",
+      "Two whole days. Imagine touching grass. Wild concept."
     ],
     "battery-full": [
       "Battery's full. Unplug me. I'm free-range.",
       "100%. It's been 100% for hours. Let go.",
       "Fully charged. Unlike you.",
-      "The battery is done. It has achieved completion. Release it."
+      "The battery is done. It has achieved completion. Release it.",
+      "Full charge. The cable is now decorative."
     ],
     "app-marathon": [
       "Hours of %1. Blink.",
       "%1 and you. Name a more iconic duo.",
       "Still %1? Commitment. Or a hostage situation.",
       "%1. The only thing you've opened today.",
-      "If %1 had a frequent user card, you'd have platinum."
+      "If %1 had a frequent user card, you'd have platinum.",
+      "%1 for hours. The window bar gave up scrolling.",
+      "You and %1 need couples counseling."
     ],
     "weather-wet": [
       "%1 outside. Stay in. Rice instead.",
@@ -2470,37 +3647,46 @@
       "The music is playing. To no one. It's muted.",
       "Muted audio, playing track. Performance art?",
       "You've been vibing to silence. Impressive.",
-      "Unmute or stop pretending. Your call."
+      "Unmute or stop pretending. Your call.",
+      "The saddest concert: muted, attended by no one."
     ],
     "window-pileup": [
       "%1 windows open. This is hoarding.",
       "%1 windows. Close something. Anything.",
       "I counted %1 windows. Then I stopped counting.",
-      "%1 windows open and you're still looking for the right one."
+      "%1 windows open and you're still looking for the right one.",
+      "%1 windows. The compositor sends its regards.",
+      "%1 windows and every single one is 'in use'. Sure."
     ],
     "updates-waiting": [
       "%1 updates pending. They multiply when you look away.",
       "pacman is holding %1 hostages. Negotiate.",
       "%1 packages want attention. They're unionizing.",
-      "The update counter hit %1. It's a lifestyle now."
+      "The update counter hit %1. It's a lifestyle now.",
+      "%1 updates. Somewhere a maintainer is disappointed."
     ],
     "workspace-sprawl": [
       "%1 workspaces. This is a cry for help.",
       "You have %1 workspaces and visit two. I counted.",
       "%1 workspaces deep. Archaeologists will find your first one.",
-      "All %1 workspaces are 'important'. Sure."
+      "All %1 workspaces are 'important'. Sure.",
+      "%1 workspaces. Marie Kondo would faint."
     ],
     "volume-blast": [
       "The neighbors know this song now.",
       "Volume check: your ears filed a complaint.",
       "I can hear it through the pixels.",
-      "Bold volume. The desk is vibrating."
+      "Bold volume. The desk is vibrating.",
+      "My ears fold back for a reason, you know."
     ],
     "deep-night": [
       "It's stupid o'clock. I'm up because you're up.",
       "The sun has an ETA. You had a bedtime. Past tense.",
       "Night shift again. The moon and I exchanged looks.",
-      "Whatever you're fixing can break again tomorrow."
+      "Whatever you're fixing can break again tomorrow.",
+      "The birds will start soon. That's your cue. It was your cue hours ago.",
+      "3AM code review: everything is fine and nothing is real.",
+      "I'm nocturnal. What's your excuse."
     ]
   },
   "frameScale": {
@@ -2530,7 +3716,26 @@
     "todo-done": 0.95,
     "waffle-snack": 0.95,
     "weather-umbrella": 0.95,
-    "wizard-complete": 0.95
+    "wizard-complete": 0.95,
+    "street-pocky-grump": 0.88,
+    "street-panic-scream": 0.88,
+    "street-tank-wink": 0.88,
+    "street-morning-stretch": 0.95,
+    "street-iced-coffee": 0.88,
+    "street-bawling": 0.88,
+    "street-jacket-smoke": 0.88,
+    "street-fist-tantrum": 0.88,
+    "street-bust-shock": 0.88,
+    "street-bust-fingerguns": 0.88,
+    "street-bust-huff": 0.88,
+    "street-sailor-wink": 0.88,
+    "street-bust-rage": 0.88,
+    "street-bust-waterworks": 0.88,
+    "street-bust-smug": 0.88,
+    "street-bust-callout": 0.88,
+    "street-dead-inside-mug": 0.88,
+    "street-sailor-flipoff": 0.88,
+    "street-no-more-hope": 0.88
   },
   "chaosTriggers": {
     "batteryCritical": {

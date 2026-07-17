@@ -3245,25 +3245,43 @@ ContentPage {
         SettingsGroup {
             id: mascotWidgetGroup
 
-            // Pose thumbnails come straight from the mascot manifest
-            property var poseOptions: []
-            FileView {
-                path: Quickshell.shellPath("assets/images/mascot/manifest.json")
-                watchChanges: true
-                onLoadedChanged: {
-                    if (!loaded) return
-                    try {
-                        const m = JSON.parse(text())
-                        const anim = m.animatedPoses ?? []
-                        mascotWidgetGroup.poseOptions = (m.desktopWidgetPoses ?? []).map(p => ({
-                            displayName: p,
-                            value: p,
-                            image: Quickshell.shellPath(`assets/images/mascot/inir-mascot-${p}.${anim.includes(p) ? "gif" : "png"}`)
-                        }))
-                    } catch (e) {
-                        console.warn("[DesktopWidgetsConfig] mascot manifest load failed:", e)
-                    }
+            // Pose thumbnails come from the shared mascot catalog.
+            readonly property var poseGroups: [
+                { f: "all", label: Translation.tr("All") },
+                { f: "featured", label: Translation.tr("Featured") },
+                { f: "pixel", label: Translation.tr("Pixel") },
+                { f: "street", label: Translation.tr("Street") },
+                { f: "chibi", label: Translation.tr("Chibi") },
+                { f: "loops", label: Translation.tr("Loops") },
+                { f: "manual", label: Translation.tr("Manual") }
+            ]
+            function _optionsFor(poses: var): var {
+                const result = []
+                for (let i = 0; i < poses.length; ++i) {
+                    const pose = poses[i]
+                    result.push({
+                        displayName: MascotCatalog.displayName(pose),
+                        value: pose,
+                        image: MascotCatalog.sourceFor(pose)
+                    })
                 }
+                return result
+            }
+            readonly property var poseOptions: {
+                MascotCatalog.revision
+                return mascotWidgetGroup._optionsFor(
+                    MascotCatalog.desktopWidgetSelectablePoses)
+            }
+            // Same persisted key as the widget popover chips, so both stay in sync
+            readonly property string poseFilter: {
+                Config.revision
+                return Config.getNestedValue("background.widgets.mascot.poseFilter", "all")
+            }
+            readonly property var filteredPoseOptions: {
+                MascotCatalog.revision
+                return mascotWidgetGroup._optionsFor(
+                    MascotCatalog.desktopWidgetPosesForGroup(
+                        mascotWidgetGroup.poseFilter))
             }
 
             WidgetStateControls {
@@ -3282,10 +3300,36 @@ ContentPage {
                 color: Appearance.colors.colSubtext
                 wrapMode: Text.Wrap
             }
+            Flow {
+                Layout.fillWidth: true
+                Layout.preferredHeight: childrenRect.height
+                spacing: 2
+                Repeater {
+                    model: mascotWidgetGroup.poseGroups
+                    SelectionGroupButton {
+                        required property var modelData
+                        required property int index
+                        leftmost: index === 0
+                        rightmost: index === mascotWidgetGroup.poseGroups.length - 1
+                        toggled: mascotWidgetGroup.poseFilter === modelData.f
+                        buttonText: modelData.label
+                        onClicked: Config.setNestedValue(
+                            "background.widgets.mascot.poseFilter", modelData.f)
+                    }
+                }
+            }
+            StyledText {
+                Layout.fillWidth: true
+                visible: mascotWidgetGroup.poseFilter === "manual"
+                text: Translation.tr("Manual-only poses never rotate automatically")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.Wrap
+            }
             MascotPoseGallery {
                 Layout.fillWidth: true
                 label: Translation.tr("Pose on the desktop")
-                options: mascotWidgetGroup.poseOptions
+                options: mascotWidgetGroup.filteredPoseOptions
                 currentValue: {
                     const configured = Config.getNestedValue("background.widgets.mascot.pose", "reading")
                     return mascotWidgetGroup.poseOptions.some(o => o.value === configured)

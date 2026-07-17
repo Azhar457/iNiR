@@ -204,7 +204,7 @@ extras_install_mascot_pack() {
   local shell_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
   local dest="${shell_dir}/assets/images/mascot"
 
-  tui_info "Optional mascot art pack: ~215 poses/animations, ~27 MiB download."
+  tui_info "Optional mascot art pack: ~275 poses/animations, ~29 MiB download."
   tui_dim "Installs into the shell assets dir; enable her later in Settings › Mascot."
 
   if [[ ! -d "$shell_dir" ]]; then

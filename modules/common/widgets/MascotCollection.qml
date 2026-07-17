@@ -24,24 +24,27 @@ ColumnLayout {
         { key: "animated", label: Translation.tr("Animated") },
         { key: "portrait", label: Translation.tr("Portraits") },
         { key: "chibi", label: Translation.tr("Chibi") },
+        { key: "street", label: Translation.tr("Street") },
+        { key: "manual", label: Translation.tr("Manual") },
         { key: "editorial", label: Translation.tr("Editorial") }
     ]
     readonly property var filteredPoses: MascotCatalog.collectionPoses.filter(pose => {
         const category = MascotCatalog.collectionCategory(pose)
         const filterMatch = root.filter === "all"
             || (root.filter === "animated" && MascotCatalog.isAnimated(pose))
+            || (root.filter === "street" && pose.startsWith("street-"))
+            || (root.filter === "manual" && MascotCatalog.isManualOnly(pose))
             || category === root.filter
         return filterMatch && root.prettyName(pose).toLowerCase().includes(root.query.trim().toLowerCase())
     })
 
     function prettyName(pose) {
-        if (!pose) return ""
-        return pose.split("-").map(word => word.length > 0
-            ? word[0].toUpperCase() + word.slice(1)
-            : word).join(" ")
+        return MascotCatalog.displayName(pose)
     }
 
     function roleText(pose) {
+        if (MascotCatalog.isManualOnly(pose))
+            return Translation.tr("Manual-only collection pose")
         switch (MascotCatalog.collectionRole(pose)) {
         case "identity": return Translation.tr("Canonical identity reference")
         case "expression-study": return Translation.tr("Expression and acting study")

@@ -417,6 +417,7 @@
         },
         "widgets": {
             "screenList": [],
+            "layerOrder": [],
             "powerSaving": {
                 "enable": true,
                 "pauseOnGameMode": true,
@@ -774,6 +775,8 @@
                 "cornerRadius": -1,
                 "colorMode": "auto",
                 "pose": "reading",
+                "poseFilter": "all",
+                "posePickerMode": "buttons",
                 "customPath": "",
                 "anchorWidget": "",
                 "x": 120,

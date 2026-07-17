@@ -286,7 +286,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code patterns, and
 ---
 
 <p align="center">
-  <img src="assets/images/mascot/inir-mascot-hero-banner.png" alt="iNiR mascot leaning on the iNiR logotype" width="720">
+  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="iNiR mascot leaning on the iNiR logotype" width="720">
 </p>
 
 ---

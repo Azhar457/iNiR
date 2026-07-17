@@ -4,7 +4,6 @@ import qs
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -27,11 +26,15 @@ AbstractBackgroundWidget {
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         showBackground: false, showBorder: false, backgroundOpacity: 0.16,
         borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1, useBlur: false,
-        pose: "reading", customPath: "", anchorWidget: "", x: 120, y: 320
+        pose: "reading", poseFilter: "all", posePickerMode: "buttons",
+        customPath: "", anchorWidget: "",
+        x: 120, y: 320
     })
 
-    implicitWidth: Math.round((root._readConfigKey("contentWidth") ?? 200) * scaleFactor)
-    implicitHeight: implicitWidth
+    readonly property int mascotContentSize: Math.round(
+        Number(root._readConfigKey("contentWidth") ?? 200) * root._baseScale)
+    implicitWidth: root.mascotContentSize
+    implicitHeight: root.mascotContentSize
     // She's an image — no ink to adapt — but her optional card is the shared
     // region-aware plate, so run the analysis only while the card is on.
     needsColText: widgetHasSurface
@@ -170,8 +173,43 @@ AbstractBackgroundWidget {
 
     // Quick controls: cycle/shuffle the catalog pose right from the desktop.
     // Picking from the catalog clears a custom image on purpose.
-    readonly property var _poseList: {
-        return root._manifest.desktopWidgetPoses ?? []
+    readonly property var _poseList: MascotCatalog.desktopWidgetSelectablePoses
+    // Browse filter: art line or category. The shared catalog owns grouping so
+    // Settings, every mascot instance and the full collection cannot drift.
+    // Editorial/key-art scenes stay in the collection because this widget is a
+    // square transparent-cutout surface. Manual-only art is visible here but
+    // remains excluded from every automatic companion and chaos rotation.
+    readonly property string poseFilter: root._readConfigKey("poseFilter") ?? "all"
+    readonly property string posePickerMode:
+        root._readConfigKey("posePickerMode") === "gallery" ? "gallery" : "buttons"
+    readonly property var _poseGroups: [
+        { f: "all", label: Translation.tr("All") },
+        { f: "featured", label: Translation.tr("Featured") },
+        { f: "pixel", label: Translation.tr("Pixel") },
+        { f: "street", label: Translation.tr("Street") },
+        { f: "chibi", label: Translation.tr("Chibi") },
+        { f: "loops", label: Translation.tr("Loops") },
+        { f: "manual", label: Translation.tr("Manual") }
+    ]
+    readonly property var _filteredPoses:
+        MascotCatalog.desktopWidgetPosesForGroup(root.poseFilter)
+    function _setFilter(f: string): void {
+        Config.setNestedValue(root._configPath + ".poseFilter", f)
+        // Land inside the new category right away so the choice is visible
+        Qt.callLater(() => {
+            if (root._filteredPoses.length > 0 && !root._filteredPoses.includes(root.pose))
+                root._setPose(root._filteredPoses[0])
+        })
+    }
+    function _setPosePickerMode(mode: string): void {
+        Config.setNestedValue(root._configPath + ".posePickerMode",
+            mode === "gallery" ? "gallery" : "buttons")
+    }
+    function _poseLabel(value: var): string {
+        return MascotCatalog.displayName(String(value ?? ""))
+    }
+    function _poseSource(value: var): string {
+        return MascotCatalog.ready ? MascotCatalog.sourceFor(String(value ?? "")) : ""
     }
     readonly property string _effectivePose: root._poseList.includes(root.pose)
         ? root.pose
@@ -183,109 +221,469 @@ AbstractBackgroundWidget {
         Config.setNestedValues(updates)
     }
     function _cyclePose(dir: int): void {
-        const list = root._poseList
+        const list = root._filteredPoses.length > 0 ? root._filteredPoses : root._poseList
         if (list.length === 0) return
-        const cur = list.indexOf(root.pose)
-        root._setPose(list[((cur === -1 ? 0 : cur) + dir + list.length) % list.length])
+        const current = list.indexOf(root.pose)
+        if (current === -1) {
+            root._setPose(dir < 0 ? list[list.length - 1] : list[0])
+            return
+        }
+        root._setPose(list[(current + dir + list.length) % list.length])
     }
     function _shufflePose(): void {
-        const list = root._poseList
+        const list = root._filteredPoses.length > 0 ? root._filteredPoses : root._poseList
         if (list.length === 0) return
-        root._setPose(list[Math.floor(Math.random() * list.length)])
+        if (list.length === 1) {
+            root._setPose(list[0])
+            return
+        }
+        let next = root.pose
+        while (next === root.pose)
+            next = list[Math.floor(Math.random() * list.length)]
+        root._setPose(next)
+    }
+    // Copy this widget into a new independent instance, offset so both stay
+    // visible. The copy always starts free-floating: two widgets perched on
+    // the same anchor would overlap exactly.
+    function _duplicateWidget(): void {
+        const cfg = Config.getNestedValue(root._configPath, {}) ?? {}
+        const copy = JSON.parse(JSON.stringify(cfg))
+        copy.enable = true
+        copy.anchorWidget = ""
+        copy.placementStrategy = "free"
+        copy.x = Math.round(root._clampX(root.x + 48))
+        copy.y = Math.round(root._clampY(root.y + 48))
+        Config.addMascotInstance(copy)
     }
 
     editPopoverContent: Component {
         ColumnLayout {
+            id: mascotQuickControls
+            property bool browserOpen: false
             spacing: 6
-            GridLayout {
-                columns: 3
-                columnSpacing: 4
-                Layout.alignment: Qt.AlignHCenter
-                SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    buttonIcon: "chevron_left"
-                    onClicked: root._cyclePose(-1)
+
+            onVisibleChanged: if (!visible) browserOpen = false
+
+            RowLayout {
+                Layout.preferredWidth: Math.min(344, root.scaledScreenWidth - 48)
+                spacing: 8
+
+                Rectangle {
+                    Layout.preferredWidth: 52
+                    Layout.preferredHeight: 62
+                    radius: Appearance.rounding.verysmall
+                    color: Appearance.colors.colLayer2
+                    border.width: 1
+                    border.color: Appearance.colors.colOutlineVariant
+                    clip: true
+
+                    AnimatedImage {
+                        anchors.fill: parent
+                        anchors.margins: 3
+                        source: root.customPath.length > 0
+                            ? (root.customPath.startsWith("file://")
+                                ? root.customPath : "file://" + root.customPath)
+                            : root._poseSource(root._effectivePose)
+                        fillMode: Image.PreserveAspectFit
+                        asynchronous: true
+                        sourceSize.width: 128
+                        sourceSize.height: 160
+                        playing: false
+                        cache: true
+                        smooth: true
+                        mipmap: true
+                        antialiasing: true
+                    }
                 }
-                SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    buttonIcon: "casino"
-                    buttonText: Translation.tr("Shuffle")
-                    onClicked: root._shufflePose()
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: root.customPath.length > 0
+                            ? Translation.tr("Custom image")
+                            : root._poseLabel(root.pose)
+                        color: Appearance.colors.colOnLayer2
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.DemiBold
+                        wrapMode: Text.NoWrap
+                        elide: Text.ElideMiddle
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: Translation.tr("Available") + ": "
+                            + root._filteredPoses.length
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        wrapMode: Text.NoWrap
+                    }
                 }
-                SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    buttonIcon: "chevron_right"
-                    onClicked: root._cyclePose(1)
+
+                Row {
+                    spacing: 2
+                    SelectionGroupButton {
+                        width: 32; height: 32
+                        horizontalPadding: 6
+                        verticalPadding: 5
+                        leftmost: true; rightmost: true
+                        buttonIcon: "chevron_left"
+                        onClicked: root._cyclePose(-1)
+                        StyledToolTip { text: Translation.tr("Previous") }
+                    }
+                    SelectionGroupButton {
+                        width: 32; height: 32
+                        horizontalPadding: 6
+                        verticalPadding: 5
+                        leftmost: true; rightmost: true
+                        buttonIcon: "casino"
+                        onClicked: root._shufflePose()
+                        StyledToolTip { text: Translation.tr("Shuffle") }
+                    }
+                    SelectionGroupButton {
+                        width: 32; height: 32
+                        horizontalPadding: 6
+                        verticalPadding: 5
+                        leftmost: true; rightmost: true
+                        buttonIcon: "chevron_right"
+                        onClicked: root._cyclePose(1)
+                        StyledToolTip { text: Translation.tr("Next") }
+                    }
                 }
             }
-            StyledText {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: 180
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                text: root.customPath.length > 0 ? Translation.tr("Custom image") : root.pose
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
+
+            Flow {
+                Layout.preferredWidth: Math.min(344, root.scaledScreenWidth - 48)
+                Layout.preferredHeight: childrenRect.height
+                spacing: 3
+
+                Repeater {
+                    model: root._poseGroups
+                    SelectionGroupButton {
+                        required property var modelData
+                        height: 30
+                        horizontalPadding: 8
+                        verticalPadding: 4
+                        enableImplicitWidthAnimation: false
+                        leftmost: true
+                        rightmost: true
+                        toggled: root.poseFilter === modelData.f
+                        buttonText: modelData.label
+                        onClicked: root._setFilter(modelData.f)
+                    }
+                }
+
+                SelectionGroupButton {
+                    width: 34; height: 30
+                    horizontalPadding: 6
+                    verticalPadding: 4
+                    leftmost: true; rightmost: true
+                    toggled: mascotQuickControls.browserOpen
+                    buttonIcon: mascotQuickControls.browserOpen
+                        ? "expand_less" : "grid_view"
+                    onClicked: mascotQuickControls.browserOpen
+                        = !mascotQuickControls.browserOpen
+                    StyledToolTip {
+                        text: mascotQuickControls.browserOpen
+                            ? Translation.tr("Hide gallery")
+                            : Translation.tr("Browse poses")
+                    }
+                }
             }
-            GridLayout {
-                columns: 3
-                columnSpacing: 4
-                Layout.alignment: Qt.AlignHCenter
-                visible: root._anchorCandidates.length > 0
-                // The chevrons pick WHICH widget she sits on, so they only mean
-                // something while seated; the middle button owns the mode.
+
+            RowLayout {
+                visible: mascotQuickControls.browserOpen
+                Layout.preferredWidth: Math.min(344, root.scaledScreenWidth - 48)
+                spacing: 4
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: root.posePickerMode === "gallery"
+                        ? Translation.tr("Gallery") : Translation.tr("Buttons")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                }
+
                 SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    enabled: root.perched
-                    buttonIcon: "chevron_left"
-                    onClicked: root._cycleAnchor(-1)
+                    width: 32; height: 28
+                    horizontalPadding: 6
+                    verticalPadding: 3
+                    leftmost: true; rightmost: false
+                    toggled: root.posePickerMode === "buttons"
+                    buttonIcon: "view_list"
+                    onClicked: root._setPosePickerMode("buttons")
+                    StyledToolTip { text: Translation.tr("Buttons") }
                 }
                 SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    toggled: root.perched
-                    buttonIcon: "chair"
-                    buttonText: root.perched ? Translation.tr("Seated") : Translation.tr("Free")
-                    onClicked: root._toggleSeat()
-                }
-                SelectionGroupButton {
-                    leftmost: true; rightmost: true
-                    enabled: root.perched
-                    buttonIcon: "chevron_right"
-                    onClicked: root._cycleAnchor(1)
+                    width: 32; height: 28
+                    horizontalPadding: 6
+                    verticalPadding: 3
+                    leftmost: false; rightmost: true
+                    toggled: root.posePickerMode === "gallery"
+                    buttonIcon: "grid_view"
+                    onClicked: root._setPosePickerMode("gallery")
+                    StyledToolTip { text: Translation.tr("Gallery") }
                 }
             }
-            StyledText {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: 180
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                visible: root._anchorCandidates.length > 0
-                text: root.perched
-                    ? (Translation.tr("Perched on") + " " + root.anchorWidget.split(".").pop())
-                    : Translation.tr("Free-floating")
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
+            Rectangle {
+                id: posePickerViewport
+                visible: mascotQuickControls.browserOpen
+                Layout.preferredWidth: Math.min(344, root.scaledScreenWidth - 48)
+                Layout.preferredHeight: root.posePickerMode === "gallery" ? 224 : 168
+                radius: Appearance.rounding.small
+                color: Appearance.colors.colLayer2
+                border.width: 1
+                border.color: Appearance.colors.colOutlineVariant
+
+                GridView {
+                    id: quickPoseButtons
+                    anchors.fill: parent
+                    anchors.margins: 6
+                    visible: root.posePickerMode === "buttons"
+                    clip: true
+                    model: visible ? root._filteredPoses : []
+                    cellWidth: Math.max(1, Math.floor(width / 2))
+                    cellHeight: 36
+                    cacheBuffer: cellHeight * 4
+                    boundsBehavior: Flickable.StopAtBounds
+                    currentIndex: Math.max(0, root._filteredPoses.indexOf(root.pose))
+                    onCurrentIndexChanged: {
+                        if (visible && currentIndex >= 0)
+                            Qt.callLater(() => positionViewAtIndex(currentIndex, GridView.Contain))
+                    }
+
+                    delegate: Item {
+                        id: poseButtonCell
+                        required property var modelData
+                        required property int index
+                        width: quickPoseButtons.cellWidth
+                        height: quickPoseButtons.cellHeight
+                        readonly property bool selected: String(modelData) === root.pose
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: 3
+                            radius: Appearance.rounding.verysmall
+                            color: poseButtonCell.selected
+                                ? Appearance.colors.colPrimaryContainer
+                                : poseButtonMouse.containsMouse
+                                    ? Appearance.colors.colLayer2Hover : "transparent"
+                            border.width: poseButtonCell.selected ? 2 : 1
+                            border.color: poseButtonCell.selected
+                                ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
+
+                            StyledText {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                text: root._poseLabel(poseButtonCell.modelData)
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.NoWrap
+                                elide: Text.ElideMiddle
+                                color: poseButtonCell.selected
+                                    ? Appearance.colors.colOnPrimaryContainer
+                                    : Appearance.colors.colOnLayer2
+                            }
+
+                            MouseArea {
+                                id: poseButtonMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root._setPose(String(poseButtonCell.modelData))
+                            }
+                        }
+                    }
+                }
+
+                GridView {
+                    id: quickPoseGallery
+                    anchors.fill: parent
+                    anchors.margins: 6
+                    visible: root.posePickerMode === "gallery"
+                    clip: true
+                    model: visible ? root._filteredPoses : []
+                    cellWidth: Math.max(1, Math.floor(width / 3))
+                    cellHeight: 138
+                    cacheBuffer: cellHeight * 2
+                    boundsBehavior: Flickable.StopAtBounds
+                    currentIndex: Math.max(0, root._filteredPoses.indexOf(root.pose))
+                    onCurrentIndexChanged: {
+                        if (visible && currentIndex >= 0)
+                            Qt.callLater(() => positionViewAtIndex(currentIndex, GridView.Contain))
+                    }
+
+                    delegate: Item {
+                        id: poseCell
+                        required property var modelData
+                        required property int index
+                        width: quickPoseGallery.cellWidth
+                        height: quickPoseGallery.cellHeight
+                        readonly property bool selected: String(modelData) === root.pose
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: 3
+                            radius: Appearance.rounding.verysmall
+                            color: poseCell.selected
+                                ? Appearance.colors.colPrimaryContainer
+                                : poseHover.hovered ? Appearance.colors.colLayer2Hover : "transparent"
+                            border.width: poseCell.selected ? 2 : 1
+                            border.color: poseCell.selected
+                                ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
+
+                            AnimatedImage {
+                                anchors {
+                                    left: parent.left
+                                    right: parent.right
+                                    top: parent.top
+                                    bottom: poseLabel.top
+                                    margins: 7
+                                    bottomMargin: 3
+                                }
+                                source: root._poseSource(poseCell.modelData)
+                                fillMode: Image.PreserveAspectFit
+                                asynchronous: true
+                                sourceSize.width: 256
+                                sourceSize.height: 320
+                                playing: poseCell.selected && Appearance.animationsEnabled
+                                cache: true
+                                smooth: true
+                                mipmap: true
+                                antialiasing: true
+                            }
+
+                            StyledText {
+                                id: poseLabel
+                                anchors {
+                                    left: parent.left
+                                    right: parent.right
+                                    bottom: parent.bottom
+                                    leftMargin: 6
+                                    rightMargin: 6
+                                    bottomMargin: 5
+                                }
+                                height: 18
+                                text: root._poseLabel(poseCell.modelData)
+                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.NoWrap
+                                elide: Text.ElideMiddle
+                                color: poseCell.selected
+                                    ? Appearance.colors.colOnPrimaryContainer
+                                    : Appearance.colors.colSubtext
+                            }
+
+                            HoverHandler { id: poseHover }
+                            TapHandler {
+                                onTapped: root._setPose(String(poseCell.modelData))
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 2
+                    width: 3
+                    radius: width / 2
+                    visible: quickPoseButtons.visible
+                        && quickPoseButtons.visibleArea.heightRatio < 1
+                    height: Math.max(24,
+                        quickPoseButtons.height * quickPoseButtons.visibleArea.heightRatio)
+                    y: quickPoseButtons.y + quickPoseButtons.visibleArea.yPosition
+                        * Math.max(0, quickPoseButtons.height - height)
+                    color: Appearance.colors.colPrimary
+                    opacity: 0.45
+                }
+
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 2
+                    width: 3
+                    radius: width / 2
+                    visible: quickPoseGallery.visible
+                        && quickPoseGallery.visibleArea.heightRatio < 1
+                    height: Math.max(24,
+                        quickPoseGallery.height * quickPoseGallery.visibleArea.heightRatio)
+                    y: quickPoseGallery.y + quickPoseGallery.visibleArea.yPosition
+                        * Math.max(0, quickPoseGallery.height - height)
+                    color: Appearance.colors.colPrimary
+                    opacity: 0.45
+                }
+            }
+            RowLayout {
+                Layout.preferredWidth: Math.min(344, root.scaledScreenWidth - 48)
+                spacing: 4
+
+                Row {
+                    visible: root._anchorCandidates.length > 0
+                    spacing: 2
+
+                    SelectionGroupButton {
+                        width: 30; height: 30
+                        horizontalPadding: 5
+                        verticalPadding: 4
+                        leftmost: true; rightmost: true
+                        enabled: root.perched
+                        buttonIcon: "chevron_left"
+                        onClicked: root._cycleAnchor(-1)
+                    }
+                    SelectionGroupButton {
+                        height: 30
+                        horizontalPadding: 8
+                        verticalPadding: 4
+                        leftmost: true; rightmost: true
+                        toggled: root.perched
+                        buttonIcon: "chair"
+                        buttonText: root.perched
+                            ? Translation.tr("Seated") : Translation.tr("Free")
+                        onClicked: root._toggleSeat()
+                    }
+                    SelectionGroupButton {
+                        width: 30; height: 30
+                        horizontalPadding: 5
+                        verticalPadding: 4
+                        leftmost: true; rightmost: true
+                        enabled: root.perched
+                        buttonIcon: "chevron_right"
+                        onClicked: root._cycleAnchor(1)
+                    }
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignLeft
+                    wrapMode: Text.NoWrap
+                    elide: Text.ElideMiddle
+                    text: root.perched
+                        ? (Translation.tr("Perched on") + " "
+                            + root.anchorWidget.split(".").pop())
+                        : Translation.tr("Free-floating")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                }
+
+                SelectionGroupButton {
+                    width: 32; height: 30
+                    horizontalPadding: 6
+                    verticalPadding: 4
+                    leftmost: true; rightmost: true
+                    buttonIcon: "content_copy"
+                    onClicked: root._duplicateWidget()
+                    StyledToolTip { text: Translation.tr("Duplicate") }
+                }
             }
         }
     }
 
-    // GIF poses need AnimatedImage playback; the manifest says which ones
-    // (kept whole: the click ladder reads its pose pools from it too)
-    property var _manifest: ({})
-    readonly property var _animatedPoses: _manifest.animatedPoses ?? []
-    FileView {
-        id: manifestFile
-        path: Quickshell.shellPath("assets/images/mascot/manifest.json")
-        watchChanges: true
-        onLoadedChanged: {
-            if (!loaded) return
-            try {
-                root._manifest = JSON.parse(text())
-            } catch (e) {
-                console.warn("[MascotWidget] manifest load failed:", e)
-            }
-        }
-    }
+    // MascotCatalog parses the manifest once for every surface and instance.
+    // Keeping that ownership shared avoids one watched FileView per duplicate.
 
     // Click ladder: pokes escalate through the same manifest pose tiers as
     // the live companion (annoyed → pats → rage), reverting after a moment.
@@ -298,7 +696,7 @@ AbstractBackgroundWidget {
     function _reactToClick(): void {
         root._clicks++
         _clickReset.restart()
-        const tiers = root._manifest.clickTiers ?? ({})
+        const tiers = MascotCatalog.clickTiers ?? ({})
         const tier = root._clicks >= 4 ? tiers.tier4 : (root._clicks >= 2 ? tiers.tier2 : tiers.tier1)
         const pool = tier?.poses ?? ["hand-on-hip"]
         root._reactPose = pool[Math.floor(Math.random() * pool.length)]
@@ -332,16 +730,20 @@ AbstractBackgroundWidget {
         source: {
             if (root.customPath.length > 0)
                 return root.customPath.startsWith("file://") ? root.customPath : "file://" + root.customPath
-            if (!manifestFile.loaded) return ""
+            if (!MascotCatalog.ready) return ""
             const p = root._reactPose.length > 0 ? root._reactPose : root._effectivePose
-            return Quickshell.shellPath(`assets/images/mascot/inir-mascot-${p}.${root._animatedPoses.includes(p) ? "gif" : "png"}`)
+            return MascotCatalog.sourceFor(p)
         }
         playing: root.powerActive && Appearance.animationsEnabled
         fillMode: Image.PreserveAspectFit
         asynchronous: true
-        // custom images aren't pixel art — smooth them; catalog stays crisp
-        smooth: root.customPath.length > 0
-        mipmap: false
+        cache: true
+        // Desktop widgets are freely resized and commonly minify 400-640 px
+        // source art. High-quality filtering avoids the serrated street line
+        // and the uneven shimmer that `smooth: false` produced while dragging.
+        smooth: true
+        mipmap: true
+        antialiasing: true
 
         // Custom images render regardless of the mascot switch; catalog
         // poses stay gated behind it

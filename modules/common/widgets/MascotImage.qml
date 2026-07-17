@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Quickshell
 import qs.modules.common
@@ -67,13 +69,14 @@ Image {
     source: (active && MascotCatalog.ready && effectivePose.length > 0 && !animatedPose)
         ? MascotCatalog.sourceFor(effectivePose)
         : ""
-    sourceSize.width: 256
-    sourceSize.height: 256
+    sourceSize.width: 384
+    sourceSize.height: 384
     fillMode: Image.PreserveAspectFit
     asynchronous: true
     cache: true
-    smooth: false
-    mipmap: false
+    smooth: true
+    mipmap: true
+    antialiasing: true
 
     function refreshSurfacePose() {
         if (previewMode || !MascotCatalog.ready) return
@@ -98,7 +101,8 @@ Image {
         fillMode: Image.PreserveAspectFit
         asynchronous: true
         cache: true
-        smooth: false
-        mipmap: false
+        smooth: true
+        mipmap: true
+        antialiasing: true
     }
 }

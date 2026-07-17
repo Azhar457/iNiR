@@ -1141,6 +1141,10 @@ Singleton {
                         property bool showPausedEffect: true
                     }
                     property list<string> screenList: []
+                    // Persistent bottom-to-top widget instance keys. Entries are
+                    // output-qualified ("OUTPUT::configEntryName") so each screen
+                    // keeps its own overlap order after edit mode closes/restarts.
+                    property list<string> layerOrder: []
                     property JsonObject clock: JsonObject {
                         property bool enable: true
                         property bool locked: false
@@ -1486,6 +1490,8 @@ Singleton {
                         property string colorMode: "auto"
                         property int dim: 0
                         property string pose: "reading"
+                        property string poseFilter: "all" // all | featured | pixel | street | chibi | loops | manual
+                        property string posePickerMode: "buttons" // desktop quick controls: buttons | gallery
                         property string customPath: "" // any user image/GIF replaces the catalog pose
                         property string anchorWidget: "" // configEntryName of another widget she perches on top of; "" = free
                         property real x: 120
