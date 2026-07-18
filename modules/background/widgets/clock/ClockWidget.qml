@@ -46,13 +46,14 @@ AbstractBackgroundWidget {
         ColumnLayout {
             spacing: 6
             GridLayout {
-                columns: 2
+                columns: 3
                 columnSpacing: 4
                 rowSpacing: 4
                 Layout.alignment: Qt.AlignHCenter
                 Repeater {
                     model: [
                         { label: "Digital", icon: "digital_out_of_home", value: "digital" },
+                        { label: "Android", icon: "android", value: "androidStacked" },
                         { label: "Cookie", icon: "circle", value: "cookie" }
                     ]
                     SelectionGroupButton {
@@ -71,7 +72,7 @@ AbstractBackgroundWidget {
                 columnSpacing: 4
                 rowSpacing: 4
                 Layout.alignment: Qt.AlignHCenter
-                visible: root.clockStyle === "digital"
+                visible: root.textClockStyle
                 Repeater {
                     model: [
                         { label: "System", icon: "settings", value: "system" },
@@ -93,6 +94,8 @@ AbstractBackgroundWidget {
     }
 
     property string clockStyle: Config.getNestedValue("background.widgets.clock.style", "digital")
+    readonly property bool textClockStyle: root.clockStyle === "digital"
+        || root.clockStyle === "androidStacked"
     property bool adaptDigitalToWallpaper: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true)
     property bool forceCenter: (GlobalStates.screenLocked && (Config.options?.lock?.centerClock ?? false))
     property bool wallpaperSafetyTriggered: false
@@ -101,8 +104,8 @@ AbstractBackgroundWidget {
     property real debugRegionBrightness: -1
     property real debugRegionSpread: 0
     property string cookieDiagnostics: "{}"
-    needsColText: root.clockStyle === "digital" && (root.adaptDigitalToWallpaper || root.widgetHasSurface)
-    liveColorTracking: root.clockStyle === "digital" && root.adaptDigitalToWallpaper && !root.widgetHasSurface
+    needsColText: root.textClockStyle && (root.adaptDigitalToWallpaper || root.widgetHasSurface)
+    liveColorTracking: root.textClockStyle && root.adaptDigitalToWallpaper && !root.widgetHasSurface
     visibleWhenLocked: true
 
     // --- Clock customization config ---
@@ -230,7 +233,7 @@ AbstractBackgroundWidget {
     // What the digital text actually sits on: the card plate when one renders,
     // the analyzed wallpaper region otherwise (theme surface until the analysis
     // lands, so nothing re-tones on first paint).
-    readonly property bool _digitalCard: root.clockStyle === "digital" && root.widgetHasSurface
+    readonly property bool _digitalCard: root.textClockStyle && root.widgetHasSurface
     readonly property bool _digitalHasBrightness: root.debugRegionActive
         ? root.debugRegionBrightness >= 0 : root._hasBrightness
     readonly property color _digitalRegionColor: root.debugRegionActive
@@ -335,7 +338,7 @@ AbstractBackgroundWidget {
         screenY: root.y + Math.round(8 * root.scaleFactor)
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.clockStyle === "digital"
+        visible: root.textClockStyle
             && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
     }
 
@@ -412,6 +415,27 @@ AbstractBackgroundWidget {
                         }
                     }
                 }
+            }
+        }
+
+        FadeLoader {
+            id: androidStackedClockLoader
+            anchors.horizontalCenter: parent.horizontalCenter
+            shown: root.clockStyle === "androidStacked"
+            sourceComponent: AndroidStackedClock {
+                currentDate: displayClock.date
+                timeText: root.timeText
+                timeColor: root.digitalTimeColor
+                dateColor: root.digitalDateColor
+                haloColor: root.colHalo
+                fontFamily: root.clockFontFamily
+                scaleFactor: root.scaleFactor
+                timeScale: root.timeScale / 100
+                dateScale: root.dateScale / 100
+                showDate: root.showDate
+                showShadow: root.showShadow
+                animateChange: Config.getNestedValue("background.widgets.clock.digital.animateChange", false)
+                horizontalAlignment: root.textHorizontalAlignment
             }
         }
         Item {

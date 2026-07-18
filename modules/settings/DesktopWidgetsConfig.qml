@@ -1108,6 +1108,7 @@ ContentPage {
                     onSelected: newValue => Config.setNestedValue("background.widgets.clock.style", newValue)
                     options: [
                         { displayName: Translation.tr("Digital"), icon: "timer", value: "digital" },
+                        { displayName: Translation.tr("Android stacked"), icon: "android", value: "androidStacked" },
                         { displayName: Translation.tr("Cookie"), icon: "cookie", value: "cookie" },
                     ]
                 }
@@ -1115,11 +1116,11 @@ ContentPage {
             }
 
             ContentSubsection {
-                visible: clockSection._clockStyle === "digital"
-                title: Translation.tr("Digital format")
+                visible: clockSection._clockStyle === "digital" || clockSection._clockStyle === "androidStacked"
+                title: Translation.tr("Time format")
 
                 WidgetSettingRow {
-                visible: clockSection._clockStyle === "digital"
+                visible: clockSection._clockStyle === "digital" || clockSection._clockStyle === "androidStacked"
                 label: Translation.tr("Time format")
                 trailing: false
 
@@ -1188,7 +1189,7 @@ ContentPage {
             }
 
             ContentSubsection {
-                visible: clockSection._clockStyle === "digital"
+                visible: clockSection._clockStyle === "digital" || clockSection._clockStyle === "androidStacked"
                 title: Translation.tr("Display options")
 
                 ConfigRow {
@@ -1243,7 +1244,7 @@ ContentPage {
 
                         checked: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true)
                         onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.digital.adaptToWallpaper", checked)
-                        StyledToolTip { text: Translation.tr("Gently adapt the Cookie-inspired ink to the wallpaper behind the digital clock") }
+                        StyledToolTip { text: Translation.tr("Adapt clock colors to the wallpaper behind the text") }
                     }
                 }
 
@@ -1253,6 +1254,7 @@ ContentPage {
                     Layout.fillWidth: true
 
                     WidgetSettingRow {
+                        visible: clockSection._clockStyle === "digital"
                         label: Translation.tr("Font weight")
                         StyledSpinBox {
                             from: 100; to: 900; stepSize: 100
@@ -1262,6 +1264,7 @@ ContentPage {
                     }
 
                     WidgetSettingRow {
+                        visible: clockSection._clockStyle === "digital"
                         label: Translation.tr("Spacing")
                         StyledSpinBox {
                             from: 0; to: 20; stepSize: 1
@@ -1539,8 +1542,8 @@ ContentPage {
                 configPath: "background.widgets.clock"
                 configEntry: Config.getNestedValue("background.widgets.clock", ({}))
                 dimDefault: 70
-                hasColorMode: clockSection._clockStyle === "digital"
-                hasCardControls: clockSection._clockStyle === "digital"
+                hasColorMode: clockSection._clockStyle === "digital" || clockSection._clockStyle === "androidStacked"
+                hasCardControls: clockSection._clockStyle === "digital" || clockSection._clockStyle === "androidStacked"
             }
         }
 
