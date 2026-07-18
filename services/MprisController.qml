@@ -247,6 +247,22 @@ Singleton {
 		return false;
 	}
 
+	function _isYoutubeUrl(url): bool {
+		const value = (url ?? "").toString().toLowerCase();
+		return value.includes("youtube.com") || value.includes("youtu.be");
+	}
+
+	function _extractYoutubeVideoId(url): string {
+		const value = (url ?? "").toString();
+		if (!value) return "";
+		let match = value.match(/[?&]v=([A-Za-z0-9_-]{11})/);
+		if (match?.[1]) return match[1];
+		match = value.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
+		if (match?.[1]) return match[1];
+		match = value.match(/youtube\.com\/(?:shorts|live)\/([A-Za-z0-9_-]{11})/);
+		return match?.[1] ?? "";
+	}
+
 	function isRealPlayer(player) {
 		if (!Config.options?.media?.filterDuplicatePlayers) return true;
 		const name = player?.dbusName ?? "";
@@ -260,6 +276,13 @@ Singleton {
 		const lowerUrl = rawUrl.toLowerCase();
 		const lowerTitle = (player?.trackTitle ?? "").toLowerCase();
 		const lowerAlbum = (player?.trackAlbum ?? "").toLowerCase();
+		// YouTube hover previews inherit the browser MPRIS service, but their
+		// page URL has no playable video id. Reject them before the streaming
+		// branches below can accept isPlaying/length as sufficient evidence.
+		if (root._isBrowserPlayer(player) && root._isYoutubeUrl(rawUrl)
+				&& root._extractYoutubeVideoId(rawUrl).length === 0) {
+			return false;
+		}
 		if (lowerUrl.includes("x.com") || lowerUrl.includes("twitter.com") ||
 			lowerTitle.includes("x.com") || lowerTitle.includes("twitter.com") ||
 			lowerAlbum.includes("x.com") || lowerAlbum.includes("twitter.com")) {
@@ -298,7 +321,6 @@ Singleton {
 			if (isBrowser) {
 				const trackUrl = player.metadata?.["xesam:url"] ?? "";
 				const hasProgress = (player.position ?? 0) > 0 || (player.length ?? 0) > 0;
-				// Ignore hover/previews: if not playing and no progress/length, skip
 				if (!player.isPlaying && !hasProgress) return false;
 				// Accept known streaming sites
 				if (_isStreamingSite(trackUrl)) return true;
@@ -330,6 +352,14 @@ Singleton {
 				|| genericTitle === "google chrome"
 				|| genericTitle === "firefox"
 			if (!player.isPlaying && genericBridge && root._hasOtherPlayingBrowserPlayer(player))
+				return false;
+
+			// During a YouTube thumbnail preview Plasma can publish the preview
+			// title while retaining the current video's URL and clearing its art.
+			// The native browser provider still carries the coherent title for that
+			// same URL, so prefer it until Plasma finishes the metadata handoff.
+			if (!(player.trackArtUrl ?? "").length
+					&& root._hasConflictingBrowserPeer(player))
 				return false;
 
 			if (_isStreamingSite(trackUrl)) return true;
@@ -397,9 +427,8 @@ Singleton {
 			return false;
 		}
 		// Ignore YouTube hover cards with zero progress (no playback yet)
-		if (isBrowserPlayer && (trackUrl.includes("youtube.com") || trackUrl.includes("youtu.be"))) {
-			const ytPathOk = /youtube\.com\/(watch|live|shorts)\b/.test(trackUrl) || trackUrl.includes("youtu.be/");
-			if (!ytPathOk) return false;
+		if (isBrowserPlayer && root._isYoutubeUrl(trackUrl)) {
+			if (root._extractYoutubeVideoId(trackUrl).length === 0) return false;
 			if (!player.isPlaying) {
 				const hasProgress = (player.position ?? 0) > 0 || (player.length ?? 0) > 0;
 				if (!hasProgress) return false;
@@ -456,6 +485,25 @@ Singleton {
 	function _hasOtherPlayingBrowserPlayer(excludedPlayer): bool {
 		for (const candidate of Mpris.players.values) {
 			if (candidate !== excludedPlayer && candidate?.isPlaying && root._isBrowserPlayer(candidate))
+				return true;
+		}
+		return false;
+	}
+
+	function _hasConflictingBrowserPeer(player): bool {
+		const url = (player?.metadata?.["xesam:url"] ?? "").toString();
+		const title = root._normTitle(player?.trackTitle)
+			.replace(/\s+-\s+youtube$/, "");
+		if (!url.length || !title.length) return false;
+
+		for (const candidate of Mpris.players.values) {
+			if (candidate === player || !root._isBrowserPlayer(candidate)) continue;
+			const candidateUrl = (candidate?.metadata?.["xesam:url"] ?? "").toString();
+			if (candidateUrl !== url) continue;
+			const candidateTitle = root._normTitle(candidate?.trackTitle)
+				.replace(/\s+-\s+youtube$/, "");
+			if (candidateTitle.length > 0 && !title.includes(candidateTitle)
+					&& !candidateTitle.includes(title))
 				return true;
 		}
 		return false;
@@ -870,6 +918,10 @@ Singleton {
 	function effectiveArtUrl(player): string {
 		const direct = player?.trackArtUrl ?? "";
 		if (direct.length > 0) return direct;
+		const videoId = root._extractYoutubeVideoId(
+			player?.metadata?.["xesam:url"] ?? "");
+		if (videoId.length > 0)
+			return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 		return root.faviconArtUrl(player);
 	}
 

@@ -128,14 +128,15 @@ AbstractBackgroundWidget {
         }
     }
 
-    // Use MprisController.displayPlayers - centralized filtering.
-    // Spread into a plain JS array: ScriptModel.values expects a QVariantList,
-    // but displayPlayers is a typed list<MprisPlayer> (QQmlListReference) which
-    // cannot be assigned to QVariantList directly (silent failure → empty widget).
-    readonly property var meaningfulPlayers: [...MprisController.displayPlayers]
+    // The desktop surface represents the active player only. Multi-player
+    // browsing belongs to the media popups; stacking transient browser
+    // providers here changes the widget's geometry during metadata handoff.
+    readonly property MprisPlayer meaningfulPlayer: MprisController.activePlayer
+    readonly property var meaningfulPlayers: root.meaningfulPlayer
+        ? [root.meaningfulPlayer] : []
 
     implicitWidth: widgetWidth
-    implicitHeight: playerColumnLayout.implicitHeight
+    implicitHeight: widgetHeight
 
     // Every preset can render the configured visualizer. Keep the shared Cava
     // subscription alive whenever a visible preset actually needs points.
