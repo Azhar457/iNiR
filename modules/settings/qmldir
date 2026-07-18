@@ -9,3 +9,4 @@ WorkspaceStripConfig 1.0 WorkspaceStripConfig.qml
 DockConfig 1.0 DockConfig.qml
 SidebarsConfig 1.0 SidebarsConfig.qml
 SettingsOverlay 1.0 SettingsOverlay.qml
+SettingsPageHost 1.0 SettingsPageHost.qml

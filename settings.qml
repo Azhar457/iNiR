@@ -1312,44 +1312,20 @@ ApplicationWindow {
                     }
                 }
 
-                Item {
+                SettingsPageHost {
                     id: pagesStack
                     anchors { top: windowPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
 
-                    // Keep only the visible page alive. Pre-incubating neighbour
-                    // pages created thousands of short-lived delegates and then
-                    // cancelled them on ordinary navigation, flooding qslog with
-                    // "Object or context destroyed during incubation" messages.
-                    function _pageActive(index) {
-                        return index === root.currentPage
-                    }
-
-                    // Direction of the last nav change, so pages slide in from the
-                    // correct side (fluid sideways feel, like the coverflow filmstrip).
-                    property int navDirection: 1
-                    property int lastPage: root.currentPage
-
-                    Connections {
-                        target: root
-                        function onCurrentPageChanged() {
-                            pagesStack.navDirection = root.currentPage >= pagesStack.lastPage ? 1 : -1
-                            pagesStack.lastPage = root.currentPage
-                        }
-                    }
+                    pages: root.pages
+                    requestedIndex: root.currentPage
+                    loadEnabled: Config.ready
 
                     // Loading indicator while the target page incubates
                     CircularProgress {
                         id: windowPageLoading
                         anchors.centerIn: parent
                         z: 10
-                        readonly property bool isLoading: {
-                            for (var i = 0; i < windowPagesRepeater.count; i++) {
-                                var loader = windowPagesRepeater.itemAt(i);
-                                if (loader && loader.index === root.currentPage && loader.status !== Loader.Ready)
-                                    return true;
-                            }
-                            return false;
-                        }
+                        readonly property bool isLoading: pagesStack.loading
                         opacity: isLoading ? 1 : 0
                         scale: isLoading ? 1 : 0.7
                         visible: opacity > 0
@@ -1363,40 +1339,6 @@ ApplicationWindow {
                         }
                     }
 
-                    Repeater {
-                        id: windowPagesRepeater
-                        model: root.pages.length
-                        delegate: Loader {
-                            id: pageLoader
-                            required property int index
-                            anchors.fill: parent
-                            active: Config.ready && pagesStack._pageActive(index)
-                            // Only the current page is active, so load it
-                            // synchronously and never leave cancellable incubators.
-                            asynchronous: false
-                            source: root.pages[index].component
-                            visible: index === root.currentPage && status === Loader.Ready
-                            opacity: visible ? 1 : 0
-                            // Slide in from the side the navigation came from, settle to 0.
-                            x: visible ? 0 : pagesStack.navDirection * 28
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Appearance.animation.elementMoveFast.duration
-                                    easing.type: Appearance.animation.elementMoveEnter.type
-                                    easing.bezierCurve: Appearance.animationCurves.emphasizedLastHalf
-                                }
-                            }
-                            Behavior on x {
-                                enabled: Appearance.animationsEnabled
-                                NumberAnimation {
-                                    duration: Appearance.animation.elementMove.duration
-                                    easing.type: Appearance.animation.elementMove.type
-                                    easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
-                                }
-                            }
-                        }
-                    }
                 }
 
                 // Search results overlay - Simple dropdown style
