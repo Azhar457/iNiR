@@ -28,6 +28,10 @@ Singleton {
     readonly property string backendProvider: "awww"
     readonly property bool awwwBackendEnabled: true
 
+    // Single gate for all animated wallpaper surfaces (background, backdrops, lock):
+    // freeze video/GIF playback while discharging to save power.
+    readonly property bool batteryPauseActive: (Config.options?.background?.pauseAnimationOnBattery ?? true) && Battery.onBattery
+
     // Wallpaper path resolution for aurora/backdrop
     readonly property bool isWaffleFamily: (Config.options?.panelFamily ?? "ii") === "waffle"
     readonly property bool useBackdropWallpaper: isWaffleFamily

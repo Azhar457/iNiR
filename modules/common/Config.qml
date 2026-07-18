@@ -1531,6 +1531,7 @@ Singleton {
                 property string thumbnailPath: ""
                 property string fillMode: "fill" // "fill", "fit", "center", "tile"
                 property bool enableAnimation: true // Enable animated wallpapers (video/gif). When disabled, shows thumbnail instead (better performance)
+                property bool pauseAnimationOnBattery: true // Freeze video/gif wallpapers while on battery power (all surfaces, both families)
                 property bool hideWhenFullscreen: true
                 property JsonObject effects: JsonObject {
                     property bool enableBlur: false

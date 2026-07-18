@@ -20,6 +20,8 @@ Singleton {
     property var chargeState: UPower.displayDevice.state
     property bool isCharging: chargeState == UPowerDeviceState.Charging
     property bool isPluggedIn: isCharging || chargeState == UPowerDeviceState.PendingCharge
+    // Discharging-based, not !isPluggedIn: FullyCharged on AC must not count as "on battery"
+    readonly property bool onBattery: available && (chargeState == UPowerDeviceState.Discharging || chargeState == UPowerDeviceState.PendingDischarge)
     property real percentage: UPower.displayDevice?.percentage ?? 1
     readonly property bool allowAutomaticSuspend: Config.options?.battery?.automaticSuspend ?? false
     readonly property bool soundEnabled: Config.options?.sounds?.battery ?? true

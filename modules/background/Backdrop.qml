@@ -225,7 +225,7 @@ Variants {
                 smooth: true
                 mipmap: false
                 visible: !backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsGif
-                playing: visible && backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive
+                playing: visible && backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
 
                 layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
                 layer.effect: MultiEffect {
@@ -255,7 +255,7 @@ Variants {
                 muted: true
                 autoPlay: true
 
-                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive
+                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
 
                 function pauseAndShowFirstFrame() {
                     pause()
@@ -343,7 +343,7 @@ Variants {
                 smooth: true
                 mipmap: false
                 visible: backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsGif
-                playing: visible && backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive
+                playing: visible && backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
 
                 layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur
                 layer.effect: MultiEffect {
@@ -370,7 +370,7 @@ Variants {
                 muted: true
                 autoPlay: true
 
-                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive
+                readonly property bool shouldPlay: backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
 
                 function pauseAndShowFirstFrame() {
                     pause()

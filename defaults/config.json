@@ -344,6 +344,7 @@
             "auroraOverlayOpacity": 0.38
         },
         "enableAnimation": true,
+        "pauseAnimationOnBattery": true,
         "effects": {
             "blurRadius": 22,
             "dim": 30,

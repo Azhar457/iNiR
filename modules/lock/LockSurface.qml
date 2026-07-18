@@ -129,7 +129,7 @@ MouseArea {
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
-        playing: visible && root.enableAnimation
+        playing: visible && root.enableAnimation && !Wallpapers.batteryPauseActive
         onStatusChanged: {
             if (status === Image.Error) console.error("[LockSurface] GIF load error:", source)
         }
@@ -154,7 +154,7 @@ MouseArea {
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
-        playing: root.enableAnimation
+        playing: root.enableAnimation && !Wallpapers.batteryPauseActive
         visible: false
         z: -2
         onStatusChanged: {
@@ -180,7 +180,7 @@ MouseArea {
         muted: true
         autoPlay: true
 
-        readonly property bool shouldPlay: root.enableAnimation
+        readonly property bool shouldPlay: root.enableAnimation && !Wallpapers.batteryPauseActive
 
         function pauseAndShowFirstFrame() {
             pause()
@@ -242,7 +242,7 @@ MouseArea {
         muted: true
         autoPlay: true
 
-        readonly property bool shouldPlay: root.enableAnimation
+        readonly property bool shouldPlay: root.enableAnimation && !Wallpapers.batteryPauseActive
 
         function pauseAndShowFirstFrame() {
             pause()

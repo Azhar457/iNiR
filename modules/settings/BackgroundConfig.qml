@@ -1640,6 +1640,19 @@ ContentPage {
 
             SettingsSwitch {
                 visible: Config.options?.background?.enableAnimation ?? true
+                buttonIcon: "battery_saver"
+                text: Translation.tr("Pause animated wallpapers on battery")
+                checked: Config.options?.background?.pauseAnimationOnBattery ?? true
+                onCheckedChanged: {
+                    Config.setNestedValue("background.pauseAnimationOnBattery", checked);
+                }
+                StyledToolTip {
+                    text: Translation.tr("Freeze videos and GIFs while on battery power to save energy")
+                }
+            }
+
+            SettingsSwitch {
+                visible: Config.options?.background?.enableAnimation ?? true
                 buttonIcon: "blur_on"
                 text: Translation.tr("Blur animated wallpapers (videos/GIFs)")
                 checked: Config.options?.background?.effects?.enableAnimatedBlur ?? false

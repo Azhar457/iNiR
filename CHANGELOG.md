@@ -95,6 +95,10 @@ lives on `prerelease` and reaches `main` with the next release.
   of these controls at all.
 - World Clock toggle in Settings › Panels, region-adaptive accent sampling,
   and Waffle menu icon alignment.
+- Video and GIF wallpapers pause on battery power — every surface that
+  plays them (desktop, backdrop, lock screen, both families) freezes on the
+  current frame while unplugged. On by default; Settings › Background turns
+  it off if you'd rather spend the charge.
 
 ### Changed
 - The assistant behaves like a shell feature, not an API client: provider
