@@ -258,7 +258,10 @@ Item {
 
             anchors.fill: parent
             active: root.loadEnabled && root._retainedIndices.indexOf(index) >= 0
-            source: active ? root._sourceFor(index) : ""
+            // `active` already owns residency. Making `source` depend on it
+            // creates a Loader-internal active/source feedback cycle during
+            // first construction and can report a binding loop.
+            source: root._sourceFor(index)
             asynchronous: index !== root._currentIndex && index !== root._pendingIndex
             visible: active && (index === root._currentIndex || index === root._pendingIndex)
             enabled: index === root._currentIndex

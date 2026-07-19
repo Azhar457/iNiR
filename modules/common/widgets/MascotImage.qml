@@ -37,21 +37,28 @@ Image {
         if (v === undefined && fallbackSurface.length > 0) v = s[fallbackSurface]
         return v === undefined ? true : v
     }
-    // Per-surface pose override (Settings › Mascot › Surface poses):
-    // users pick their own image for each placement group
-    readonly property string requestedPose: {
-        if (surface.length > 0) {
-            const o = Config.options?.mascot?.surfacePoses
-            if (o) {
-                const v = o[surface] ?? ""
-                if (v.length > 0) return v
-                const legacy = fallbackSurface.length > 0 ? (o[fallbackSurface] ?? "") : ""
-                if (legacy.length > 0) return legacy
-            }
-        }
-        return rotatingPose.length > 0 ? rotatingPose : pose
+    // Per-surface pose override (Settings › Mascot › Surface poses). Config's
+    // revision is an explicit dependency because dynamic JsonObject indexing
+    // does not reliably notify every binding after a nested write.
+    readonly property string surfaceOverridePose: {
+        const _revision = Config.revision
+        if (surface.length === 0) return ""
+        const overrides = Config.options?.mascot?.surfacePoses
+        if (!overrides) return ""
+        const direct = overrides[surface] ?? ""
+        if (direct.length > 0) return direct
+        return fallbackSurface.length > 0 ? (overrides[fallbackSurface] ?? "") : ""
     }
-    readonly property string effectivePose: previewMode
+    readonly property bool validSurfaceOverride: surfaceOverridePose.length > 0
+        && MascotCatalog.collectionPoses.indexOf(surfaceOverridePose) !== -1
+    readonly property string requestedPose: validSurfaceOverride
+        ? surfaceOverridePose
+        : rotatingPose.length > 0 ? rotatingPose : pose
+    // Automatic pools stay in the full-body/contextual domain. A deliberate
+    // settings override is different: the user explicitly selected that exact
+    // catalog asset, so portraits, chibis and manual-only art must not be
+    // silently replaced by resolvePose().
+    readonly property string effectivePose: (previewMode || validSurfaceOverride)
         ? requestedPose
         : MascotCatalog.resolvePose(requestedPose, surface, fallbackSurface)
     readonly property bool animatedPose: MascotCatalog.isAnimated(effectivePose)
