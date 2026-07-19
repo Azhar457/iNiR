@@ -40,8 +40,18 @@ lives on `prerelease` and reaches `main` with the next release.
 - A Mascot settings page in both families: every behavior, reaction and
   placement is configurable, 17 placement groups share a curated collection
   (GIFs included), and custom images and phrases are yours to add. All 208
-  illustrations get a visible role somewhere. Her conversational register can
-  follow the current mood or stay casual, dry, composed or chaotic.
+  illustrations get a visible role somewhere. Manual surface choices now show
+  the exact selected catalog art instead of being replaced by an automatic
+  full-body fallback. Her conversational register can follow the current mood
+  or stay casual, dry, composed or chaotic.
+- The right sidebar opens on a profile card instead of a flat row: a banner
+  image, your avatar, `user@distro`, uptime, and action buttons that no
+  longer crowd the text. Reordering sections and switching to the compact
+  layout moved into an overflow menu. The banner can be your live wallpaper,
+  custom image/GIF/video media, a solid plate, or nothing; Settings › Sidebars ›
+  Right sidebar header also switches back to the classic uptime row. Animated
+  wallpapers and custom GIF/video banners play only while the sidebar is open,
+  and multi-monitor setups use the wallpaper from the sidebar's own screen.
 - A live Shell Layout editor: drag the bar, dock, sidebars or Waffle taskbar
   to another screen edge and drop it there; dropping on an occupied edge
   swaps both surfaces. Sidebars and the dock resize live. Settings › Shell
