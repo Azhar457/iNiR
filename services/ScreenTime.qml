@@ -17,6 +17,12 @@ Singleton {
     property var _todayData: null
     property string _currentAppId: ""
     property string _currentAppName: ""
+    property string _sessionAppId: ""
+    property int _currentSessionSeconds: 0
+    property int _sessionRevision: 0
+    property real _idleStartedAt: 0
+    property real _lastReturnAt: 0
+    property int _lastIdleDurationSeconds: 0
     property real _lastTickTime: 0
     property real _lastPersistMs: 0
     readonly property int _persistIntervalMs: 30000
@@ -37,6 +43,10 @@ Singleton {
     readonly property var todayData: _todayData
     readonly property string currentAppId: _currentAppId
     readonly property string currentAppName: _currentAppName
+    readonly property int currentSessionSeconds: _currentSessionSeconds
+    readonly property int sessionRevision: _sessionRevision
+    readonly property real lastReturnAt: _lastReturnAt
+    readonly property int lastIdleDurationSeconds: _lastIdleDurationSeconds
 
     signal dataChanged()
     signal rangeLoaded(int days, var data)
@@ -51,6 +61,9 @@ Singleton {
                 root._dirty = false
                 root._lastPersistMs = Date.now()
             }
+            root._sessionAppId = ""
+            root._currentSessionSeconds = 0
+            root._sessionRevision++
             root.ready = true
             return
         }
@@ -81,7 +94,24 @@ Singleton {
         enabled: root.enabled
         timeout: root._idleTimeoutSeconds
         respectInhibitors: false
-        onIsIdleChanged: root._lastTickTime = Date.now()
+        onIsIdleChanged: {
+            const now = Date.now()
+            root._lastTickTime = now
+            root._sessionAppId = ""
+            root._currentSessionSeconds = 0
+            root._sessionRevision++
+            if (idleMonitor.isIdle) {
+                // ext-idle-notify fires after the timeout, so reconstruct the
+                // beginning of the idle period for a useful break duration.
+                root._idleStartedAt = now - root._idleTimeoutSeconds * 1000
+            } else if (root._idleStartedAt > 0) {
+                root._lastIdleDurationSeconds = Math.max(0,
+                    Math.round((now - root._idleStartedAt) / 1000))
+                root._lastReturnAt = now
+                root._idleStartedAt = 0
+            }
+            root.dataChanged()
+        }
     }
 
     Timer {
@@ -106,6 +136,9 @@ Singleton {
                 root._todayData = root._emptyDay(now)
                 root._currentAppId = ""
                 root._currentAppName = ""
+                root._sessionAppId = ""
+                root._currentSessionSeconds = 0
+                root._sessionRevision++
                 root._lastTickTime = Date.now()
                 root._lastPersistMs = Date.now()
                 root._rangeGeneration++
@@ -158,6 +191,12 @@ Singleton {
             return
         }
 
+        if (appId !== root._sessionAppId) {
+            root._sessionAppId = appId
+            root._currentSessionSeconds = 0
+            root._sessionRevision++
+        }
+
         if (elapsed <= 0 || elapsed > 60) {
             root._currentAppId = appId
             root._currentAppName = appName
@@ -168,6 +207,7 @@ Singleton {
             root._todayData = _emptyDay(root._currentDate)
 
         if (appId.length > 0) {
+            root._currentSessionSeconds += elapsed
             root._todayData.totalSeconds += elapsed
 
             const key = appId.toLowerCase().replace(/[^a-z0-9-]/g, "")
