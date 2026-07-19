@@ -18,6 +18,9 @@ Singleton {
     // The asynchronous lookup below remains the authoritative refresh.
     property string username: Quickshell.env("USER") || "user"
     property string displayName: ""
+    // Static hostname. `/etc/hostname` is the portable source; the env var is a
+    // seed for the frame before the file is read and is absent on most systems.
+    property string hostname: Quickshell.env("HOSTNAME") || ""
     property string homeUrl: ""
     property string documentationUrl: ""
     property string supportUrl: ""
@@ -40,6 +43,9 @@ Singleton {
         repeat: false
         onTriggered: {
             refreshIdentity()
+            fileHostname.reload()
+            const textHostname = fileHostname.text().trim()
+            if (textHostname.length > 0) hostname = textHostname.split("\n")[0].trim()
             fileOsRelease.reload()
             const textOsRelease = fileOsRelease.text()
 
@@ -129,5 +135,10 @@ Singleton {
     FileView {
         id: fileOsRelease
         path: "/etc/os-release"
+    }
+
+    FileView {
+        id: fileHostname
+        path: "/etc/hostname"
     }
 }
