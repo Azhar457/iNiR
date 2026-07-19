@@ -50,9 +50,11 @@ Singleton {
             shift 2
             if [ -x "$systemd_run" ]; then
                 if [ -n "$desc" ]; then
-                    "$systemd_run" --user --scope --quiet --collect --property="Description=$desc" -- "$@" && exit 0
+                    "$systemd_run" --user --quiet --collect --same-dir \
+                        --property=Type=exec --property="Description=$desc" -- "$@" && exit 0
                 else
-                    "$systemd_run" --user --scope --quiet --collect -- "$@" && exit 0
+                    "$systemd_run" --user --quiet --collect --same-dir \
+                        --property=Type=exec -- "$@" && exit 0
                 fi
             fi
             exec "$@"

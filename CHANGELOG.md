@@ -169,6 +169,9 @@ lives on `prerelease` and reaches `main` with the next release.
   FFmpeg entirely instead of retaining a paused fullscreen decoder.
 - Kira keeps the same art family throughout each companion visit, and her
   downscaled sprites use smooth mipmapped filtering instead of serrated edges.
+- Applications launched through `ShellExec` now run as detached transient
+  services. The shell no longer retains one waiting Bash wrapper per app, so
+  app lifetime and memory accounting stay outside `inir.service`.
 - Bar rebuilds log clean, and orientation changes no longer install two
   animations on the same corner radius.
 - Sidebars survive rapid close/reopen cycles, can stay open together, honor
