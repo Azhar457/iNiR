@@ -66,6 +66,9 @@ if ! grep -q "inir-mascot-.*\\.png" "$runtime_root/Makefile" \
     exit 1
 fi
 
+step "mascot pack install and repair"
+bash "$runtime_root/scripts/test-mascot-pack-flow.sh"
+
 if [[ -f "$runtime_root/Makefile" ]]; then
     step "make install dry run"
     make -n install PREFIX=/tmp/inir-stage-test -C "$runtime_root" >/dev/null

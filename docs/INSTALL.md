@@ -72,7 +72,10 @@ For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by categor
 > publishes the PNG/GIF files. iNiR ships the required
 > `assets/images/mascot/manifest.json`, dialogue, pose pools, settings and
 > runtime behavior. Updating or reinstalling the art pack does not replace the
-> shell manifest; normal iNiR install/update paths provide it.
+> shell manifest; normal iNiR install/update paths provide it. Extras stages and
+> verifies the complete archive before touching live assets, records the release
+> tag plus an installed-tree hash, and repairs missing or corrupt files during a
+> later `./setup update` without auto-installing the optional pack for new users.
 >
 > **Important for minimal installs (Arch base / netinstall):**
 > If shell startup fails with `module "org.kde.syntaxhighlighting" is not installed`, install:

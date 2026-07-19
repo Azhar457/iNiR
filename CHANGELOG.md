@@ -156,6 +156,9 @@ lives on `prerelease` and reaches `main` with the next release.
   contrast instead of outline strokes.
 
 ### Fixed
+- Optional Kira art updates are staged and verified before installation, keep
+  the shell-owned manifest untouched, and repair missing or corrupt assets even
+  when the published release tag has not changed.
 - A missing or malformed Kira manifest no longer makes every mascot placement
   disappear. Core surfaces keep a safe fallback pose, and the distribution
   check now rejects payloads without a valid runtime manifest.
