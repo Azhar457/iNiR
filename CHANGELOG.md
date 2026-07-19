@@ -32,7 +32,7 @@ lives on `prerelease` and reaches `main` with the next release.
   a frame, both when previewing and when applying.
 - Meet Kira, the iNiR mascot: a retro pixel-art cat girl who can live across
   the shell or stay completely out of your way. Everything about her is
-  opt-in and off by default; her art pack is a separate ~27 MiB download
+  opt-in and off by default; her art pack is a separate ~32 MiB download
   under `./setup` › Extras. What she actually does when you let her loose is
   best discovered in Settings › Mascot.
 - Chaos mode exists. It's off by default. `inir mascot romp` if you're
@@ -156,6 +156,17 @@ lives on `prerelease` and reaches `main` with the next release.
   contrast instead of outline strokes.
 
 ### Fixed
+- A missing or malformed Kira manifest no longer makes every mascot placement
+  disappear. Core surfaces keep a safe fallback pose, and the distribution
+  check now rejects payloads without a valid runtime manifest.
+- Screen Time tracks the whole enabled session instead of starting when its
+  sidebar page first opens, initializes correctly when enabled after startup,
+  pauses after five minutes without input, keeps multi-day ranges current
+  without rereading history every poll, and serializes range requests instead
+  of mixing their results. Hour selection is reliable inside the scrolling
+  sidebar, long app
+  names stay inside the panel, and disabling the ii widget now stops tracking
+  as the switch implies.
 - Dense Settings categories no longer rebuild on every revisit. The selected
   page loads synchronously, recent pages stay in a bounded LRU cache, and the
   previous page remains visible until the replacement is ready.

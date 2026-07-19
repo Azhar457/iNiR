@@ -33,6 +33,39 @@ while IFS= read -r runtime_dir; do
     [[ -d "$runtime_root/$runtime_dir" ]]
 done < "$runtime_root/sdata/runtime-payload-dirs.txt"
 
+step "mascot runtime manifest"
+mascot_manifest="$runtime_root/assets/images/mascot/manifest.json"
+if [[ ! -f "$mascot_manifest" ]]; then
+    printf 'FAIL: mascot runtime manifest is missing: %s\n' "$mascot_manifest" >&2
+    exit 1
+fi
+python3 -m json.tool "$mascot_manifest" >/dev/null
+if ! grep -qx 'assets' "$runtime_root/sdata/runtime-payload-dirs.txt"; then
+    printf 'FAIL: assets is absent from runtime-payload-dirs.txt\n' >&2
+    exit 1
+fi
+if grep -q -- "--exclude='assets/images/mascot/manifest.json'" "$runtime_root/sdata/lib/functions.sh"; then
+    printf 'FAIL: repo-copy sync excludes the mascot runtime manifest\n' >&2
+    exit 1
+fi
+for local_mascot_path in \
+    "assets/images/mascot/*.png" \
+    "assets/images/mascot/*.gif" \
+    "assets/images/mascot/frames/" \
+    "assets/images/mascot/PROMPTS.md"; do
+    if ! grep -Fq -- "--exclude='$local_mascot_path'" "$runtime_root/sdata/lib/functions.sh"; then
+        printf 'FAIL: repo-copy sync can leak local mascot artifact: %s\n' "$local_mascot_path" >&2
+        exit 1
+    fi
+done
+if ! grep -q "inir-mascot-.*\\.png" "$runtime_root/Makefile" \
+        || ! grep -q "inir-mascot-.*\\.gif" "$runtime_root/Makefile" \
+        || ! grep -q 'PROMPTS.md' "$runtime_root/Makefile" \
+        || ! grep -q 'assets/images/mascot/frames' "$runtime_root/Makefile"; then
+    printf 'FAIL: make install does not strip local mascot art/tooling\n' >&2
+    exit 1
+fi
+
 if [[ -f "$runtime_root/Makefile" ]]; then
     step "make install dry run"
     make -n install PREFIX=/tmp/inir-stage-test -C "$runtime_root" >/dev/null
