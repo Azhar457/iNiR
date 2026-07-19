@@ -272,6 +272,7 @@ Singleton {
         id: cacheFile
         path: Qt.resolvedUrl(`${Directories.stateUserPath}/ai/model-catalog.json`)
         blockLoading: true
+        printErrors: false
         watchChanges: false
         onLoadedChanged: root._loadCache()
     }
