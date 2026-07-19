@@ -25,8 +25,8 @@ AbstractBackgroundWidget {
         cornerRadius: -1, x: 100, y: 100
     })
 
-    implicitWidth: Math.round((Config.getNestedValue("background.widgets.visualizer.contentWidth", 304)) * scaleFactor)
-    implicitHeight: Math.round((Config.getNestedValue("background.widgets.visualizer.contentHeight", 104)) * scaleFactor)
+    implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 304) * scaleFactor)
+    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 104) * scaleFactor)
 
     visibleWhenLocked: false
     needsColText: true

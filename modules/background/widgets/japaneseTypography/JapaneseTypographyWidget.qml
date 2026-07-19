@@ -80,8 +80,8 @@ AbstractBackgroundWidget {
         y: 120
     })
 
-    implicitWidth: Math.round(Config.getNestedValue("background.widgets.japaneseTypography.contentWidth", 330) * root.scaleFactor)
-    implicitHeight: Math.round(Config.getNestedValue("background.widgets.japaneseTypography.contentHeight", 600) * root.scaleFactor)
+    implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 330) * root.scaleFactor)
+    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 600) * root.scaleFactor)
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 220
     resizeMinHeight: 320

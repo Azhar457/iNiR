@@ -30,7 +30,7 @@ AbstractBackgroundWidget {
 
     visibleWhenLocked: true
     needsColText: true
-    resizableAxes: ({ uniform: "ringSize" })
+    resizableAxes: ({ uniform: "widgetScale" })
     resizeMinWidth: 40
     resizeMinHeight: 40
 
@@ -72,7 +72,7 @@ AbstractBackgroundWidget {
 
     readonly property string displayMode: Config.getNestedValue("background.widgets.battery.displayMode", "ring")
     readonly property bool showTimeEstimate: Config.getNestedValue("background.widgets.battery.showTime", true)
-    readonly property int ringSize: Math.round((Config.getNestedValue("background.widgets.battery.ringSize", 72)) * scaleFactor)
+    readonly property int ringSize: Math.round(Number(root._readConfigKey("ringSize") ?? 72) * scaleFactor)
     readonly property int ringLineWidth: Math.round((Config.getNestedValue("background.widgets.battery.ringLineWidth", 6)) * scaleFactor)
     readonly property int barCount: Config.getNestedValue("background.widgets.battery.barCount", 20)
     readonly property int barSpacing: Config.getNestedValue("background.widgets.battery.barSpacing", 2)

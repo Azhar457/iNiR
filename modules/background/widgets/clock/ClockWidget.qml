@@ -35,8 +35,20 @@ AbstractBackgroundWidget {
         cornerRadius: -1, x: 100, y: 100
     })
 
-    implicitHeight: contentColumn.implicitHeight
-    implicitWidth: contentColumn.implicitWidth
+    readonly property real activeClockWidth: root.clockStyle === "cookie"
+        ? cookieClockLoader.width
+        : root.clockStyle === "androidStacked"
+            ? androidStackedClockLoader.width : digitalClockLoader.width
+    readonly property real activeClockHeight: root.clockStyle === "cookie"
+        ? cookieClockLoader.height
+        : root.clockStyle === "androidStacked"
+            ? androidStackedClockLoader.height : digitalClockLoader.height
+    readonly property bool statusShown: root.wallpaperSafetyTriggered
+        || (GlobalStates.screenLocked && (Config.options?.lock?.showLockedText ?? false))
+    implicitHeight: root.activeClockHeight
+        + (root.statusShown ? contentColumn.spacing + statusText.implicitHeight : 0)
+    implicitWidth: Math.max(root.activeClockWidth,
+        root.statusShown ? statusText.implicitWidth : 0)
     // Digital mode resizes via timeScale, cookie via cookie.size — avoids scaleFactor churn
     resizableAxes: root.clockStyle === "cookie" ? ({ uniform: "cookie.size" }) : ({ uniform: "timeScale" })
     resizeMinWidth: 80
@@ -114,7 +126,7 @@ AbstractBackgroundWidget {
     property bool showSeconds: Config.getNestedValue("background.widgets.clock.showSeconds", false)
     property bool showDate: Config.getNestedValue("background.widgets.clock.showDate", true)
     property string dateStyle: Config.getNestedValue("background.widgets.clock.dateStyle", "long")
-    property int timeScale: Config.getNestedValue("background.widgets.clock.timeScale", 100)
+    property int timeScale: Number(root._readConfigKey("timeScale") ?? 100)
     property int dateScale: Config.getNestedValue("background.widgets.clock.dateScale", 100)
     property bool showShadow: Config.getNestedValue("background.widgets.clock.showShadow", true)
     property int digitalFontWeight: Config.getNestedValue("background.widgets.clock.digital.fontWeight", 600)
@@ -345,15 +357,28 @@ AbstractBackgroundWidget {
     Column {
         id: contentColumn
         anchors.centerIn: parent
+        width: root.implicitWidth
+        height: root.implicitHeight
         spacing: Math.round(6 * root.scaleFactor)
 
         FadeLoader {
             id: cookieClockLoader
-            anchors.horizontalCenter: parent.horizontalCenter
+            x: Math.round((parent.width - width) / 2)
             shown: root.clockStyle === "cookie"
+            width: item?.desiredImplicitWidth ?? 0
+            height: item?.desiredImplicitHeight ?? 0
             sourceComponent: Column {
+                id: cookieColumn
+                readonly property real desiredImplicitWidth: Math.max(
+                    cookieClock.implicitWidth, cookieQuote.implicitWidth)
+                readonly property real desiredImplicitHeight: cookieClock.implicitHeight
+                    + (cookieQuote.shown ? cookieQuote.implicitHeight : 0)
+
                 CookieClock {
+                    id: cookieClock
                     anchors.horizontalCenter: parent.horizontalCenter
+                    implicitSize: Math.round(Number(root._readConfigKey("cookie.size") ?? 230)
+                        * root.scaleFactor)
                     scaleFactor: root.scaleFactor
                     colBackground: root.cookieFace
                     colOnBackground: root.cookieInk
@@ -364,6 +389,7 @@ AbstractBackgroundWidget {
                     onDiagnosticReportChanged: root.cookieDiagnostics = diagnosticReport
                 }
                 FadeLoader {
+                    id: cookieQuote
                     anchors.horizontalCenter: parent.horizontalCenter
                     shown: (Config.getNestedValue("background.widgets.clock.quote.enable", false))
                         && (Config.getNestedValue("background.widgets.clock.quote.text", "")) !== ""
@@ -374,18 +400,33 @@ AbstractBackgroundWidget {
 
         FadeLoader {
             id: digitalClockLoader
-            anchors.horizontalCenter: parent.horizontalCenter
+            x: Math.round((parent.width - width) / 2)
             shown: root.clockStyle === "digital"
+            width: item?.desiredImplicitWidth ?? 0
+            height: item?.desiredImplicitHeight ?? 0
             sourceComponent: ColumnLayout {
                 id: clockColumn
                 spacing: Math.round(root.digitalSpacing * root.scaleFactor)
+                readonly property real desiredImplicitWidth: Math.ceil(Math.max(
+                    timeLabel.implicitWidth,
+                    dateLabel.visible ? dateLabel.implicitWidth : 0,
+                    quoteLabel.visible ? quoteLabel.implicitWidth : 0))
+                readonly property real desiredImplicitHeight: Math.ceil(
+                    timeLabel.implicitHeight
+                    + (dateLabel.visible
+                        ? dateLabel.implicitHeight
+                            + dateLabel.Layout.topMargin + clockColumn.spacing : 0)
+                    + (quoteLabel.visible
+                        ? quoteLabel.implicitHeight + clockColumn.spacing : 0))
 
                 ClockText {
+                    id: timeLabel
                     color: root.digitalTimeColor
                     font.pixelSize: Math.round(90 * Appearance.fontSizeScale * root.timeScale / 100 * root.scaleFactor)
                     text: root.timeText
                 }
                 ClockText {
+                    id: dateLabel
                     visible: root.showDate
                     color: root.digitalDateColor
                     Layout.topMargin: Math.round(-5 * root.scaleFactor)
@@ -393,6 +434,7 @@ AbstractBackgroundWidget {
                     text: root.dateText
                 }
                 StyledText {
+                    id: quoteLabel
                     // Somehow gets fucked up if made a ClockText???
                     visible: (Config.getNestedValue("background.widgets.clock.quote.enable", false))
                         && (Config.getNestedValue("background.widgets.clock.quote.text", "")).length > 0
@@ -420,8 +462,10 @@ AbstractBackgroundWidget {
 
         FadeLoader {
             id: androidStackedClockLoader
-            anchors.horizontalCenter: parent.horizontalCenter
+            x: Math.round((parent.width - width) / 2)
             shown: root.clockStyle === "androidStacked"
+            width: item?.desiredImplicitWidth ?? 0
+            height: item?.desiredImplicitHeight ?? 0
             sourceComponent: AndroidStackedClock {
                 currentDate: displayClock.date
                 timeText: root.timeText
@@ -440,7 +484,7 @@ AbstractBackgroundWidget {
         }
         Item {
             id: statusText
-            anchors.horizontalCenter: parent.horizontalCenter
+            x: Math.round((parent.width - width) / 2)
             implicitHeight: statusTextBg.implicitHeight
             implicitWidth: statusTextBg.implicitWidth
             StyledRectangularShadow {

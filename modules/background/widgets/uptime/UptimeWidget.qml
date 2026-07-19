@@ -20,8 +20,8 @@ AbstractBackgroundWidget {
         x: 80, y: 80
     })
 
-    implicitWidth: Math.round(Config.getNestedValue("background.widgets.uptime.contentWidth", 250) * scaleFactor)
-    implicitHeight: Math.round(Config.getNestedValue("background.widgets.uptime.contentHeight", 96) * scaleFactor)
+    implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 250) * scaleFactor)
+    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 96) * scaleFactor)
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 190
     resizeMinHeight: 76

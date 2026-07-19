@@ -34,9 +34,21 @@ ColumnLayout {
     readonly property int labelPixelSize: Math.round(
         Appearance.font.pixelSize.large * root.dateScale * root.scaleFactor)
 
+    readonly property real desiredImplicitWidth: Math.ceil(Math.max(
+        weekdayLabel.visible ? weekdayLabel.implicitWidth : 0,
+        dateLabel.visible ? dateLabel.implicitWidth : 0,
+        heroLabel.implicitWidth))
+    readonly property real desiredImplicitHeight: Math.ceil(
+        (weekdayLabel.visible ? weekdayLabel.implicitHeight : 0)
+        + (dateLabel.visible
+            ? dateLabel.implicitHeight - Appearance.sizes.spacingSmall : 0)
+        + heroLabel.implicitHeight
+        - (root.showDate ? Appearance.sizes.spacingMedium : 0))
+
     spacing: 0
 
     StyledText {
+        id: weekdayLabel
         visible: root.showDate
         Layout.alignment: root.layoutAlignment
         horizontalAlignment: root.horizontalAlignment
@@ -53,6 +65,7 @@ ColumnLayout {
     }
 
     StyledText {
+        id: dateLabel
         visible: root.showDate
         Layout.alignment: root.layoutAlignment
         Layout.topMargin: -Appearance.sizes.spacingSmall
@@ -70,6 +83,7 @@ ColumnLayout {
     }
 
     StyledText {
+        id: heroLabel
         Layout.alignment: root.layoutAlignment
         Layout.topMargin: root.showDate ? -Appearance.sizes.spacingMedium : 0
         horizontalAlignment: root.horizontalAlignment
