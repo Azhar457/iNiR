@@ -18,12 +18,12 @@ ContentPage {
             "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", 
             "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", 
             "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", 
-            "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiWorkspaceStrip"
+            "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiWorkspaceStrip"
         ],
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
             "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
-            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiWorkspaceStrip"
+            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiWorkspaceStrip"
         ]
     })
 
@@ -943,14 +943,14 @@ ContentPage {
             ContentSubsection {
                 title: Translation.tr("Selector style")
 
-                SettingsSwitch {
-                    buttonIcon: "view_carousel"
-                    text: Translation.tr("Coverflow mode")
-                    checked: (Config.options?.wallpaperSelector?.style ?? "grid") === "coverflow"
-                    onCheckedChanged: Config.setNestedValue("wallpaperSelector.style", checked ? "coverflow" : "grid")
-                    StyledToolTip {
-                        text: Translation.tr("Use a fullscreen coverflow carousel instead of the grid picker.\nNavigate with arrow keys or mouse wheel.")
-                    }
+                ConfigSelectionArray {
+                    currentValue: Config.options?.wallpaperSelector?.style ?? "grid"
+                    options: [
+                        { displayName: Translation.tr("Grid"), icon: "grid_view", value: "grid" },
+                        { displayName: Translation.tr("Coverflow"), icon: "view_carousel", value: "coverflow" },
+                        { displayName: Translation.tr("Launcher"), icon: "wallpaper_slideshow", value: "launcher" }
+                    ]
+                    onSelected: value => Config.setNestedValue("wallpaperSelector.style", value)
                 }
 
                 SettingsSwitch {

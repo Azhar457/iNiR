@@ -82,6 +82,8 @@ Singleton {
     property bool superDown: false
     property bool superReleaseMightTrigger: true
     property bool wallpaperSelectorOpen: false
+    property bool wallpaperLauncherOpen: false
+    property string wallpaperLauncherMode: "static"
     property bool widgetEditMode: false
     property string selectedDesktopWidget: ""
     property string desktopWidgetQuickControls: ""
@@ -146,6 +148,18 @@ Singleton {
             if (Config.options?.wallpaperSelector?.targetMonitor) {
                 Config.setNestedValue("wallpaperSelector.targetMonitor", "")
             }
+        }
+    }
+    onWallpaperLauncherOpenChanged: {
+        if (!wallpaperLauncherOpen) {
+            Wallpapers.stopPreview()
+            wallpaperSelectionTarget = "main"
+            wallpaperSelectorTargetMonitor = ""
+            if (Config.options?.wallpaperSelector?.selectionTarget
+                    && Config.options.wallpaperSelector.selectionTarget !== "main")
+                Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
+            if (Config.options?.wallpaperSelector?.targetMonitor)
+                Config.setNestedValue("wallpaperSelector.targetMonitor", "")
         }
     }
     property bool cheatsheetOpen: false

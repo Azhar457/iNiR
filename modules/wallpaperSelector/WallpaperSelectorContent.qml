@@ -115,6 +115,19 @@ MouseArea {
         }
     }
 
+    function openWallpaperLauncher(mode: string): void {
+        const target = Wallpapers.currentSelectionTarget()
+        const monitor = root.selectedMonitor
+        GlobalStates.wallpaperSelectorOpen = false
+        Config.setNestedValue("wallpaperSelector.style", "launcher")
+        GlobalStates.wallpaperSelectionTarget = target
+        Config.setNestedValue("wallpaperSelector.selectionTarget", target)
+        GlobalStates.wallpaperSelectorTargetMonitor = monitor
+        Config.setNestedValue("wallpaperSelector.targetMonitor", monitor)
+        GlobalStates.wallpaperLauncherMode = mode === "animated" ? "animated" : "static"
+        GlobalStates.wallpaperLauncherOpen = true
+    }
+
     acceptedButtons: Qt.LeftButton | Qt.BackButton | Qt.ForwardButton
 
     onClicked: mouse => {
@@ -529,6 +542,16 @@ MouseArea {
                         screenY: {
                             const mapped = extraOptions.mapToGlobal(0, 0)
                             return mapped.y
+                        }
+
+                        IconToolbarButton {
+                            implicitWidth: height
+                            onClicked: root.openWallpaperLauncher("static")
+                            altAction: () => root.openWallpaperLauncher("animated")
+                            text: "wallpaper_slideshow"
+                            StyledToolTip {
+                                text: Translation.tr("Open wallpaper carousel\nRight-click for animated wallpapers")
+                            }
                         }
 
                         IconToolbarButton {

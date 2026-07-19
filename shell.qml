@@ -371,7 +371,7 @@ ShellRoot {
             "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard",
             "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
             "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar",
-            "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiRecordingOsd", "iiDashboard",
+            "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiRecordingOsd", "iiDashboard",
             "iiWorkspaceStrip", "iiMascotCompanion"
         ],
         "waffle": [
@@ -379,7 +379,7 @@ ShellRoot {
             // Shared modules that work with waffle
             // Note: wAltSwitcher is always loaded when waffle is active (not in this list)
             "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
-            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiCoverflowSelector", "iiClipboard",
+            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard",
             "iiWorkspaceStrip", "iiMascotCompanion"
         ]
     })

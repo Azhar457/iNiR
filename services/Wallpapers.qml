@@ -32,6 +32,33 @@ Singleton {
     // freeze video/GIF playback while discharging to save power.
     readonly property bool batteryPauseActive: (Config.options?.background?.pauseAnimationOnBattery ?? true) && Battery.onBattery
 
+    // Transient launcher preview. This never writes Config or starts the color
+    // pipeline; background surfaces simply render it until the picker closes.
+    property string previewPath: ""
+    property string previewMonitorName: ""
+    readonly property bool previewActive: previewPath.length > 0
+
+    function startPreview(path: string, monitorName = ""): void {
+        const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
+        if (!normalizedPath) return
+        root.previewMonitorName = String(monitorName ?? "")
+        root.previewPath = normalizedPath
+    }
+
+    function stopPreview(): void {
+        root.previewPath = ""
+        root.previewMonitorName = ""
+    }
+
+    function previewActiveForMonitor(monitorName = ""): bool {
+        return root.previewActive
+            && (!root.previewMonitorName || root.previewMonitorName === String(monitorName ?? ""))
+    }
+
+    function previewPathForMonitor(monitorName: string, fallbackPath: string): string {
+        return root.previewActiveForMonitor(monitorName) ? root.previewPath : fallbackPath
+    }
+
     // Wallpaper path resolution for aurora/backdrop
     readonly property bool isWaffleFamily: (Config.options?.panelFamily ?? "ii") === "waffle"
     readonly property bool useBackdropWallpaper: isWaffleFamily

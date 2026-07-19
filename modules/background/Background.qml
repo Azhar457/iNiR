@@ -429,8 +429,10 @@ Scope {
 
         // Wallpaper — use per-monitor path when multi-monitor enabled, otherwise direct config
         readonly property string wallpaperPathRaw: {
-            if (_multiMonEnabled && wallpaperData.path) return wallpaperData.path
-            return bgRoot.backgroundOptions.wallpaperPath ?? ""
+            const configuredPath = (_multiMonEnabled && wallpaperData.path)
+                ? wallpaperData.path
+                : (bgRoot.backgroundOptions.wallpaperPath ?? "")
+            return Wallpapers.previewPathForMonitor(monitorName, configuredPath)
         }
         readonly property string wallpaperThumbnailPath: bgRoot.backgroundOptions.thumbnailPath ?? bgRoot.wallpaperPathRaw
         readonly property bool enableAnimation: bgRoot.backgroundOptions.enableAnimation ?? true
@@ -463,6 +465,7 @@ Scope {
         readonly property bool pauseParallaxDuringTransitions: bgRoot.parallaxOptions.pauseDuringTransitions ?? true
         readonly property int parallaxTransitionSettleMs: ParallaxMath.resolveTransitionSettle(bgRoot.parallaxOptions, 220)
         readonly property bool externalMainWallpaperEligible: !wallpaperSafetyTriggered
+            && !Wallpapers.previewActiveForMonitor(monitorName)
             && !((bgRoot.backgroundOptions.backdrop?.enable ?? false) && (bgRoot.backgroundOptions.backdrop?.hideWallpaper ?? false))
             && AwwwBackend.supportsVisibleMainWallpaper(
                 bgRoot.wallpaperPathRaw,
@@ -1115,13 +1118,18 @@ Scope {
                         && !wallpaperContainer.showInternalStaticWallpaper
                     source: (bgRoot.wallpaperSafetyTriggered || !wallpaperContainer.needsStaticTexture)
                         ? "" : bgRoot.wallpaperPath
-                    // NEVER use crossfader transitions when awww is active — awww handles all transitions.
-                    // When parallax is on, the crossfader fades out to reveal awww's native transition.
-                    enableTransitions: !AwwwBackend.active
+                    readonly property bool launcherPreviewActive:
+                        Wallpapers.previewActiveForMonitor(bgRoot.monitorName)
+                    gentleTransition: launcherPreviewActive
+                    // Preview is rendered internally even when awww owns normal wallpaper changes.
+                    enableTransitions: (!AwwwBackend.active || launcherPreviewActive)
                         && (Config.options?.background?.transition?.enable ?? true)
-                    transitionType: Config.options?.background?.transition?.type ?? "crossfade"
+                    transitionType: launcherPreviewActive ? "crossfade"
+                        : (Config.options?.background?.transition?.type ?? "crossfade")
                     transitionDirection: Config.options?.background?.transition?.direction ?? "right"
-                    transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
+                    transitionBaseDuration: launcherPreviewActive
+                        ? Appearance.animationCurves.expressiveSlowSpatialDuration
+                        : (Config.options?.background?.transition?.duration ?? 800)
                     fillMode: bgRoot.fillMode === "fit" ? Image.PreserveAspectFit
                             : bgRoot.fillMode === "tile" ? Image.Tile
                             : bgRoot.fillMode === "center" ? Image.Pad

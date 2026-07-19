@@ -435,18 +435,41 @@ bind "Super+M" { spawn "inir" "globalActions" "run" "toggle-mute"; }
 
 ### wallpaperSelector
 
-Wallpaper picker grid.
+Wallpaper picker with grid, coverflow and compact launcher styles.
 
 | Function | Description |
 |----------|-------------|
 | `toggle` | Open/close wallpaper selector |
 | `open` | Open wallpaper selector |
 | `close` | Close wallpaper selector |
+| `openLauncher <mode>` | Open the compact launcher in `static` or `animated` mode |
 | `toggleOnMonitor <name>` | Open wallpaper selector on a specific monitor |
 | `random` | Pick a random wallpaper from the current folder |
 
 ```kdl
 bind "Ctrl+Alt+T" { spawn "inir" "wallpaperSelector" "toggle"; }
+bind "Ctrl+Alt+A" { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }
+```
+
+---
+
+### wallpaperLauncher
+
+Navigation and apply controls for the compact wallpaper launcher.
+
+| Function | Description |
+|----------|-------------|
+| `next` | Select the next wallpaper |
+| `previous` | Select the previous wallpaper |
+| `applyCurrent` | Apply the selected wallpaper and keep the launcher open |
+| `status` | Return launcher mode, index, count, path, target and monitor as JSON |
+
+Open the launcher before calling its controls:
+
+```bash
+inir wallpaperSelector openLauncher static
+inir wallpaperLauncher next
+inir wallpaperLauncher applyCurrent
 ```
 
 ---

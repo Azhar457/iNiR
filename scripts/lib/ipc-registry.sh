@@ -2,8 +2,8 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 27bb264133e9378a
-# Targets: 59
+# IPC.md hash: 3cb073ab1a41d430
+# Targets: 60
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -57,7 +57,8 @@ declare -gA IPC_TARGET_DESC=(
   [voiceSearch]="Provider-neutral voice input for web search and AI dictation. Auto prefers local whisper.cpp, then connected Groq, Gemini and OpenAI speech backends. Keys stay in the system keyring and are passed to adapters through the process environment."
   [wactionCenter]="Waffle action center (quick settings)."
   [waffleAltSwitcher]="Waffle Alt+Tab window switcher. Separate from the ii \`altSwitcher\`, supports quick-switch (first tab switches instantly, second opens UI) and no-visual-UI mode."
-  [wallpaperSelector]="Wallpaper picker grid."
+  [wallpaperLauncher]="Navigation and apply controls for the compact wallpaper launcher."
+  [wallpaperSelector]="Wallpaper picker with grid, coverflow and compact launcher styles."
   [wbar]="Waffle taskbar visibility."
   [widgetpower]="Desktop-widget power management (pauses widget rendering on game mode, fullscreen, present windows, or edit mode). Service: \`services/WidgetPowerManager.qml\`."
   [wnotificationCenter]="Waffle notification center."
@@ -119,6 +120,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [voiceSearch]="shared"
   [wactionCenter]="waffle"
   [waffleAltSwitcher]="waffle"
+  [wallpaperLauncher]="shared"
   [wallpaperSelector]="shared"
   [wbar]="waffle"
   [widgetpower]="waffle"
@@ -181,7 +183,8 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [voiceSearch]="start stop toggle refresh status"
   [wactionCenter]="toggle"
   [waffleAltSwitcher]="open close toggle next previous"
-  [wallpaperSelector]="toggle open close toggleOnMonitor random"
+  [wallpaperLauncher]="next previous applyCurrent status"
+  [wallpaperSelector]="toggle open close openLauncher toggleOnMonitor random"
   [wbar]="toggle close open"
   [widgetpower]="status"
   [wnotificationCenter]="toggle"
@@ -407,9 +410,14 @@ declare -gA IPC_FUNCTION_DESC=(
   ["waffleAltSwitcher:toggle"]="Toggle switcher"
   ["waffleAltSwitcher:next"]="Focus next window"
   ["waffleAltSwitcher:previous"]="Focus previous window"
+  ["wallpaperLauncher:next"]="Select the next wallpaper"
+  ["wallpaperLauncher:previous"]="Select the previous wallpaper"
+  ["wallpaperLauncher:applyCurrent"]="Apply the selected wallpaper and keep the launcher open"
+  ["wallpaperLauncher:status"]="Return launcher mode, index, count, path, target and monitor as JSON"
   ["wallpaperSelector:toggle"]="Open/close wallpaper selector"
   ["wallpaperSelector:open"]="Open wallpaper selector"
   ["wallpaperSelector:close"]="Close wallpaper selector"
+  ["wallpaperSelector:openLauncher"]="Open the compact launcher in \`static\` or \`animated\` mode"
   ["wallpaperSelector:toggleOnMonitor"]="Open wallpaper selector on a specific monitor"
   ["wallpaperSelector:random"]="Pick a random wallpaper from the current folder"
   ["wbar:toggle"]="Show/hide taskbar"
@@ -475,6 +483,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["shellLayout:reset"]="<surfaceId>"
   ["shellLayout:setProperty"]="<surfaceId> <key> <value>"
   ["shellLayout:validate"]="<surfaceId> <slot>"
+  ["wallpaperSelector:openLauncher"]="<mode>"
   ["wallpaperSelector:toggleOnMonitor"]="<monitorName>"
 )
 
@@ -505,13 +514,14 @@ bind "Ctrl+Shift+S" { spawn "inir" "region" "menu"; }'
   [settings]='bind "Super+Comma" { spawn "inir" "settings"; }'
   [shellLayout]='bind "Super+W" { spawn "inir" "shellLayout" "toggle"; }'
   [voiceSearch]='bind "Super+Shift+V" { spawn "inir" "voiceSearch" "toggle"; }'
-  [wallpaperSelector]='bind "Ctrl+Alt+T" { spawn "inir" "wallpaperSelector" "toggle"; }'
+  [wallpaperSelector]='bind "Ctrl+Alt+T" { spawn "inir" "wallpaperSelector" "toggle"; }
+bind "Ctrl+Alt+A" { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [workspaceStrip]='bind "Super+Tab" { spawn "inir" "workspaceStrip" "toggle"; }'
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperSelector workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osd osdVolume osk overlay overview packageSearch panelFamily pill recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions keyboard lock mascot mascotMood mediaControls memory minimize mpris notifications osdVolume osk overlay overview packageSearch panelFamily pill region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight tiling voiceSearch wallpaperLauncher wallpaperSelector workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=()
 IPC_WAFFLE_TARGETS=(autostart customWidgets osd recordingOsd search taskview wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 
@@ -538,6 +548,7 @@ declare -gA IPC_KEBAB_ALIASES=(
   [voice-search]=voiceSearch
   [waction-center]=wactionCenter
   [waffle-alt-switcher]=waffleAltSwitcher
+  [wallpaper-launcher]=wallpaperLauncher
   [wallpaper-selector]=wallpaperSelector
   [wnotification-center]=wnotificationCenter
   [workspace-strip]=workspaceStrip

@@ -68,6 +68,7 @@ modules/                      # 35 UI module directories
 ├── settings/                 # All config UI pages (37 files)
 ├── dock/                     # App dock (all 4 positions)
 ├── overview/                 # Workspace overview + app search
+├── wallpaperLauncher/        # Shared compact wallpaper carousel and preview
 ├── waffle/                   # Windows 11 family
 │   ├── bar/                  # Bottom taskbar
 │   ├── startMenu/            # Start menu with search
@@ -150,6 +151,10 @@ docs/                         # User documentation (28 files)
 | `Weather` | medium | Weather polling + privacy-aware location |
 | `Network` | medium | NetworkManager integration |
 | `Wallpapers` | medium | Wallpaper management + theming pipeline |
+
+Wallpaper launcher previews are session-only state in `Wallpapers`. Both
+background families render the transient path, while only an explicit apply
+updates config and starts the theming pipeline.
 
 These are **stability boundaries** — prefer add-only changes, verify all dependents before reshaping.
 

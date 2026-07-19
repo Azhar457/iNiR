@@ -52,11 +52,20 @@ Scope {
     }
 
     function toggle(): void {
+        if (GlobalStates.wallpaperLauncherOpen) {
+            GlobalStates.wallpaperLauncherOpen = false
+            return
+        }
         if (Config.options?.wallpaperSelector?.useSystemFileDialog ?? false) {
             Wallpapers.openFallbackPicker(Appearance.m3colors.darkmode)
             return
         }
-        if ((Config.options?.wallpaperSelector?.style ?? "grid") === "coverflow") {
+        const selectorStyle = Config.options?.wallpaperSelector?.style ?? "grid"
+        if (selectorStyle === "launcher") {
+            root._openLauncher("static", "")
+            return
+        }
+        if (selectorStyle === "coverflow") {
             GlobalStates.wallpaperSelectorOpen = false
             const multiMonitor = Config.options?.background?.multiMonitor?.enable ?? false
             const explicitMonitor = Config.options?.wallpaperSelector?.targetMonitor ?? ""
@@ -93,12 +102,47 @@ Scope {
         GlobalStates.wallpaperSelectorOpen = true
     }
 
+    function _openLauncher(mode: string, requestedMonitor: string): void {
+        const nextMode = mode === "animated" ? "animated" : "static"
+        GlobalStates.wallpaperSelectorOpen = false
+        GlobalStates.coverflowSelectorOpen = false
+        Config.setNestedValue("wallpaperSelector.style", "launcher")
+        GlobalStates.wallpaperLauncherMode = nextMode
+        const configuredMonitor = Config.options?.wallpaperSelector?.targetMonitor ?? ""
+        const monitorName = requestedMonitor || configuredMonitor
+            || ((Config.options?.background?.multiMonitor?.enable ?? false)
+                ? root.defaultMonitorName : "")
+        const target = Wallpapers.currentSelectionTarget()
+        GlobalStates.wallpaperSelectionTarget = target
+        Config.setNestedValue("wallpaperSelector.selectionTarget", target)
+        GlobalStates.wallpaperSelectorTargetMonitor = monitorName
+        Config.setNestedValue("wallpaperSelector.targetMonitor", monitorName)
+        GlobalStates.wallpaperLauncherOpen = true
+    }
+
+    function openLauncher(mode: string): void {
+        root._openLauncher(mode, "")
+    }
+
     IpcHandler {
         target: "wallpaperSelector"
         function toggle(): void { root.toggle() }
-        function open(): void { if (!GlobalStates.wallpaperSelectorOpen) root.toggle() }
-        function close(): void { GlobalStates.wallpaperSelectorOpen = false }
+        function open(): void {
+            if (!GlobalStates.wallpaperSelectorOpen
+                    && !GlobalStates.wallpaperLauncherOpen
+                    && !GlobalStates.coverflowSelectorOpen)
+                root.toggle()
+        }
+        function close(): void {
+            GlobalStates.wallpaperSelectorOpen = false
+            GlobalStates.wallpaperLauncherOpen = false
+        }
+        function openLauncher(mode: string): void { root.openLauncher(mode) }
         function toggleOnMonitor(monitorName: string): void {
+            if ((Config.options?.wallpaperSelector?.style ?? "grid") === "launcher") {
+                root._openLauncher("static", monitorName)
+                return
+            }
             if (monitorName) {
                 GlobalStates.wallpaperSelectorTargetMonitor = monitorName
                 Config.setNestedValue("wallpaperSelector.targetMonitor", monitorName)

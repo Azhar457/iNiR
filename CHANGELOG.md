@@ -13,6 +13,12 @@ things got fixed by people with better eyes than ours. Everything below
 lives on `prerelease` and reaches `main` with the next release.
 
 ### Added
+- A compact wallpaper launcher adds a fast, searchable carousel with live
+  desktop preview, static and animated libraries, and matching ii and Waffle
+  settings. It reuses the grid's wallpaper cards, switches libraries with Tab,
+  keeps keyboard, pointer and IPC navigation on the same selected item, and
+  applies through the normal wallpaper target pipeline without closing. Its
+  softened preview transition stays transient until a wallpaper is applied.
 - Meet Kira, the iNiR mascot: a retro pixel-art cat girl who can live across
   the shell or stay completely out of your way. Everything about her is
   opt-in and off by default; her art pack is a separate ~27 MiB download

@@ -43,6 +43,7 @@ Users can disable any panel from Settings without touching config files.
 | `dashboard/` | `iiDashboard` | Centered hub panel: welcome, clock, agenda (local events + ICS), notifications, todo, notes, media, weather, calendar, system usage, GitHub heatmap. Modular three-column layout with in-panel edit mode; configured in Settings › Dashboard. IPC target `dashboard`. |
 | `mediaControls/` | `iiMediaControls` | MPRIS media player popup with multiple layout presets. |
 | `wallpaperSelector/` | `iiWallpaperSelector` | Wallpaper browser with directory navigation. |
+| `wallpaperLauncher/` | `iiWallpaperLauncher` | Shared compact wallpaper carousel with search, static and animated libraries, live preview and IPC navigation. |
 | `sessionScreen/` | `iiSessionScreen` | Logout, reboot, shutdown, suspend screen. |
 
 ### System
@@ -146,7 +147,7 @@ If no timezones are configured, it suggests useful zones from the user's locale/
 
 Some panels work under both families. They keep their `ii` prefix but load in waffle mode too:
 
-`iiCheatsheet`, `iiOnScreenKeyboard`, `iiOverlay`, `iiOverview`, `iiRegionSelector`, `iiScreenCorners`, `iiWallpaperSelector`, `iiClipboard`, `iiRecordingOsd`, `iiWorkspaceStrip`, `iiMascotCompanion`
+`iiCheatsheet`, `iiOnScreenKeyboard`, `iiOverlay`, `iiOverview`, `iiRegionSelector`, `iiScreenCorners`, `iiWallpaperSelector`, `iiWallpaperLauncher`, `iiClipboard`, `iiRecordingOsd`, `iiWorkspaceStrip`, `iiMascotCompanion`
 
 ## For contributors
 

@@ -78,7 +78,9 @@ Scope {
                 visible: !GlobalStates.screenLocked && !GameMode.shouldHidePanels
                     && !GlobalStates.widgetEditMode
 
-                property bool reveal: !GlobalStates.coverflowSelectorOpen && GlobalStates.shellEntryReady
+                property bool reveal: !GlobalStates.coverflowSelectorOpen
+                    && !(GlobalStates.wallpaperLauncherOpen && root.position === "bottom")
+                    && GlobalStates.shellEntryReady
                     && (ShellEditSession.active || root.pinned
                         || (Config.options?.dock?.hoverToReveal && dockMouseArea.containsMouse)
                         || (dockApps?.requestDockShow || dockAppsVertical?.requestDockShow)
