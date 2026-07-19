@@ -164,7 +164,9 @@ lives on `prerelease` and reaches `main` with the next release.
 - Cancelling or applying a wallpaper while an awww preview is still running no
   longer lets that stale preview finish last and repaint the wrong image.
 - Material and Aurora backdrop styles no longer keep two video decoders loaded
-  for the same wallpaper when only one style can be visible.
+  for the same wallpaper when only one style can be visible. A backdrop with
+  animation disabled now uses its cached representative frame and releases
+  FFmpeg entirely instead of retaining a paused fullscreen decoder.
 - Kira keeps the same art family throughout each companion visit, and her
   downscaled sprites use smooth mipmapped filtering instead of serrated edges.
 - Bar rebuilds log clean, and orientation changes no longer install two

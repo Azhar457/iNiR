@@ -136,6 +136,18 @@ Variants {
         }
 
         readonly property string effectiveWallpaperPath: wallpaperPathRaw
+        readonly property string frozenVideoFramePath: {
+            const _dep = Wallpapers.videoFirstFrames
+            if (!wallpaperIsVideo || enableAnimation)
+                return ""
+            const frame = Wallpapers.getVideoFirstFramePath(wallpaperPathRaw)
+            if (!frame) {
+                Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)
+                return ""
+            }
+            return frame.startsWith("file://") ? frame : ("file://" + frame)
+        }
+        readonly property bool useFrozenVideoFrame: frozenVideoFramePath.length > 0
 
         // For ColorQuantizer: needs an image source (can't decode video files)
         // Uses first-frame cache for videos, config thumbnail as fallback
@@ -237,13 +249,39 @@ Variants {
                 }
             }
 
-            // Video wallpaper
-            // Always loaded for videos: plays when animation enabled, frozen (paused) when disabled
+            // A disabled animated backdrop is visually a still image. Once the
+            // representative frame exists, render that image and release FFmpeg
+            // instead of retaining a paused fullscreen decoder indefinitely.
+            Image {
+                id: frozenVideoWallpaper
+                anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
+                visible: !backdropWindow.useAuroraStyle && backdropWindow.useFrozenVideoFrame
+                source: visible ? backdropWindow.frozenVideoFramePath : ""
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: false
+                smooth: true
+                sourceSize: backdropWindow.backdropSourceSize
+
+                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
+                layer.effect: MultiEffect {
+                    blurEnabled: true
+                    blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
+                    blurMax: 64
+                    saturation: backdropWindow.backdropSaturation
+                    contrast: backdropWindow.backdropContrast
+                }
+            }
+
+            // Video wallpaper. Keep the decoder only while animation is enabled,
+            // or briefly while the cached still frame is being generated.
             Video {
                 id: videoWallpaper
                 anchors.fill: parent
                 anchors.margins: -parent.blurOverflow
                 visible: !backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
+                    && !backdropWindow.useFrozenVideoFrame
                 source: {
                     // The Aurora branch owns its own player. Keep this pipeline
                     // completely unloaded while that style is visible.
@@ -360,12 +398,41 @@ Variants {
                 }
             }
 
+            Image {
+                id: auroraFrozenVideoWallpaper
+                anchors.fill: parent
+                anchors.margins: -parent.blurOverflow
+                visible: backdropWindow.useAuroraStyle && backdropWindow.useFrozenVideoFrame
+                source: visible ? backdropWindow.frozenVideoFramePath : ""
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: false
+                smooth: true
+                sourceSize.width: Math.round((backdropWindow.screen?.width ?? 1920) * 0.5)
+                sourceSize.height: Math.round((backdropWindow.screen?.height ?? 1080) * 0.5)
+
+                layer.enabled: Appearance.effectsEnabled
+                layer.smooth: true
+                layer.textureSize: Qt.size(Math.round(width * 0.5), Math.round(height * 0.5))
+                layer.effect: MultiEffect {
+                    source: auroraFrozenVideoWallpaper
+                    anchors.fill: source
+                    saturation: Appearance.angelEverywhere
+                        ? Appearance.angel.blurSaturation
+                        : (Appearance.effectsEnabled ? 0.2 : 0)
+                    blurEnabled: Appearance.effectsEnabled
+                    blurMax: 64
+                    blur: Appearance.effectsEnabled ? 1 : 0
+                }
+            }
+
             // Aurora-style for Videos
             Video {
                 id: auroraVideoWallpaper
                 anchors.fill: parent
                 anchors.margins: -parent.blurOverflow
                 visible: backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
+                    && !backdropWindow.useFrozenVideoFrame
                 source: {
                     // Do not borrow videoWallpaper.source: that kept the hidden
                     // non-Aurora MediaPlayer loaded as a second decoder.
