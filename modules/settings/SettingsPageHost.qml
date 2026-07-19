@@ -10,26 +10,32 @@ Item {
     required property var pages
     required property int requestedIndex
     property bool loadEnabled: true
+    property int cacheLimit: 5
 
     readonly property int currentIndex: _currentIndex
-    readonly property Item currentItem: _currentSlot < 0 ? null : _loader(_currentSlot).item
-    readonly property bool loading: _pendingSlot >= 0
-        || (_currentSlot >= 0 && _loader(_currentSlot).status === Loader.Loading)
+    readonly property Item currentItem: {
+        void(_statusRevision)
+        const loader = _loaderFor(_currentIndex)
+        return loader?.item ?? null
+    }
+    readonly property bool loading: {
+        void(_statusRevision)
+        const currentLoader = _loaderFor(_currentIndex)
+        if (currentLoader?.status === Loader.Loading)
+            return true
+        const pendingLoader = _loaderFor(_pendingIndex)
+        return pendingLoader?.status === Loader.Loading
+    }
 
     property int _currentIndex: -1
-    property int _currentSlot: -1
     property int _pendingIndex: -1
-    property int _pendingSlot: -1
-    property int _slot0Index: -1
-    property int _slot1Index: -1
     property int _direction: 1
     property bool _transitionRunning: false
+    property var _retainedIndices: []
+    property var _lruIndices: []
+    property int _statusRevision: 0
 
     clip: _transitionRunning
-
-    function _loader(slot) {
-        return slot === 0 ? pageSlot0 : pageSlot1
-    }
 
     function _sourceFor(index) {
         if (index < 0 || index >= pages.length)
@@ -37,30 +43,62 @@ Item {
         return pages[index]?.component ?? ""
     }
 
-    function _setSlotIndex(slot, index) {
-        if (slot === 0)
-            _slot0Index = index
-        else
-            _slot1Index = index
+    function _loaderFor(index) {
+        if (index < 0 || index >= pageRepeater.count)
+            return null
+        return pageRepeater.itemAt(index)
     }
 
-    function _prepareSlot(slot, index, asynchronous, opacity, x) {
-        const loader = _loader(slot)
-        loader.asynchronous = asynchronous
-        loader.opacity = opacity
-        loader.x = x
-        _setSlotIndex(slot, index)
+    function _retain(index) {
+        if (index < 0)
+            return
+
+        let retained = _retainedIndices.slice()
+        if (retained.indexOf(index) < 0) {
+            retained.push(index)
+            _retainedIndices = retained
+        }
+
+        let lru = _lruIndices.filter(value => value !== index)
+        lru.push(index)
+        _lruIndices = lru
+    }
+
+    function _trimCache() {
+        const limit = Math.max(2, cacheLimit)
+        let retained = _retainedIndices.slice()
+        let lru = _lruIndices.slice()
+
+        while (retained.length > limit) {
+            let evictIndex = -1
+            for (let i = 0; i < lru.length; i++) {
+                const candidate = lru[i]
+                if (candidate !== _currentIndex
+                        && candidate !== _pendingIndex
+                        && candidate !== requestedIndex) {
+                    evictIndex = candidate
+                    lru.splice(i, 1)
+                    break
+                }
+            }
+
+            if (evictIndex < 0)
+                break
+            retained = retained.filter(value => value !== evictIndex)
+        }
+
+        _retainedIndices = retained
+        _lruIndices = lru.filter(value => retained.indexOf(value) >= 0)
     }
 
     function _reset() {
         switchAnimation.stop()
         _transitionRunning = false
         _currentIndex = -1
-        _currentSlot = -1
         _pendingIndex = -1
-        _pendingSlot = -1
-        _setSlotIndex(0, -1)
-        _setSlotIndex(1, -1)
+        _retainedIndices = []
+        _lruIndices = []
+        _statusRevision++
     }
 
     function _requestPage() {
@@ -70,43 +108,72 @@ Item {
         if (_transitionRunning)
             switchAnimation.complete()
 
-        if (_currentSlot < 0) {
-            _currentSlot = 0
+        if (_currentIndex < 0) {
             _currentIndex = requestedIndex
-            _prepareSlot(0, requestedIndex, false, 1, 0)
+            const loader = _loaderFor(_currentIndex)
+            if (loader) {
+                loader.opacity = 1
+                loader.x = 0
+            }
+            _retain(_currentIndex)
+            _trimCache()
             return
         }
 
-        if (_pendingSlot >= 0 || requestedIndex === _currentIndex)
+        if (requestedIndex === _currentIndex) {
+            _retain(_currentIndex)
+            _trimCache()
             return
+        }
+
+        if (_pendingIndex >= 0) {
+            const stalePending = _loaderFor(_pendingIndex)
+            if (stalePending) {
+                stalePending.opacity = 0
+                stalePending.x = 0
+            }
+        }
 
         _direction = requestedIndex >= _currentIndex ? 1 : -1
         _pendingIndex = requestedIndex
-        _pendingSlot = _currentSlot === 0 ? 1 : 0
-        _prepareSlot(
-            _pendingSlot,
-            _pendingIndex,
-            true,
-            0,
-            _direction * Appearance.sizes.spacingMedium * 2
-        )
+
+        const pendingLoader = _loaderFor(_pendingIndex)
+        if (pendingLoader) {
+            pendingLoader.opacity = 0
+            pendingLoader.x = _direction * Appearance.sizes.spacingMedium * 2
+        }
+
+        // The selected page loads synchronously. Asynchronous incubation made
+        // large pages feel much slower and was repeatedly cancelled by normal
+        // navigation. Recently visited pages remain instantiated in a small LRU.
+        _retain(_pendingIndex)
+
+        Qt.callLater(function() {
+            const loader = root._loaderFor(root._pendingIndex)
+            if (loader)
+                root._handleStatus(root._pendingIndex, loader.status)
+        })
     }
 
-    function _discardPending() {
-        const slot = _pendingSlot
-        _pendingIndex = -1
-        _pendingSlot = -1
-        if (slot >= 0)
-            _setSlotIndex(slot, -1)
-    }
+    function _handleStatus(index, status) {
+        _statusRevision++
 
-    function _handleStatus(slot, status) {
-        if (slot !== _pendingSlot)
+        if (index === _currentIndex && _pendingIndex < 0 && status === Loader.Ready) {
+            const currentLoader = _loaderFor(index)
+            if (currentLoader) {
+                currentLoader.opacity = 1
+                currentLoader.x = 0
+            }
+            return
+        }
+
+        if (index !== _pendingIndex || _transitionRunning)
             return
 
         if (status === Loader.Error) {
             console.warn("SettingsPageHost: failed to load page", _pendingIndex)
-            _discardPending()
+            _pendingIndex = -1
+            _trimCache()
             return
         }
 
@@ -114,7 +181,12 @@ Item {
             return
 
         if (_pendingIndex !== requestedIndex) {
-            _discardPending()
+            const staleLoader = _loaderFor(_pendingIndex)
+            if (staleLoader) {
+                staleLoader.opacity = 0
+                staleLoader.x = 0
+            }
+            _pendingIndex = -1
             Qt.callLater(root._requestPage)
             return
         }
@@ -124,8 +196,13 @@ Item {
             return
         }
 
-        const currentLoader = _loader(_currentSlot)
-        const pendingLoader = _loader(_pendingSlot)
+        const currentLoader = _loaderFor(_currentIndex)
+        const pendingLoader = _loaderFor(_pendingIndex)
+        if (!currentLoader || !pendingLoader) {
+            _finishSwap()
+            return
+        }
+
         currentFade.target = currentLoader
         pendingFade.target = pendingLoader
         pendingSlide.target = pendingLoader
@@ -134,25 +211,28 @@ Item {
     }
 
     function _finishSwap() {
-        if (_pendingSlot < 0)
+        if (_pendingIndex < 0)
             return
 
-        const oldSlot = _currentSlot
-        const nextSlot = _pendingSlot
+        const oldIndex = _currentIndex
         const nextIndex = _pendingIndex
-        const oldLoader = _loader(oldSlot)
-        const nextLoader = _loader(nextSlot)
+        const oldLoader = _loaderFor(oldIndex)
+        const nextLoader = _loaderFor(nextIndex)
 
-        oldLoader.opacity = 0
-        nextLoader.opacity = 1
-        nextLoader.x = 0
+        if (oldLoader) {
+            oldLoader.opacity = 0
+            oldLoader.x = 0
+        }
+        if (nextLoader) {
+            nextLoader.opacity = 1
+            nextLoader.x = 0
+        }
 
-        _currentSlot = nextSlot
         _currentIndex = nextIndex
-        _pendingSlot = -1
         _pendingIndex = -1
         _transitionRunning = false
-        _setSlotIndex(oldSlot, -1)
+        _retain(_currentIndex)
+        _trimCache()
 
         if (requestedIndex !== _currentIndex)
             Qt.callLater(root._requestPage)
@@ -165,34 +245,37 @@ Item {
         else
             _reset()
     }
+    onCacheLimitChanged: _trimCache()
     Component.onCompleted: Qt.callLater(root._requestPage)
 
-    Loader {
-        id: pageSlot0
+    Repeater {
+        id: pageRepeater
+        model: root.pages.length
 
-        anchors.fill: parent
-        active: root._slot0Index >= 0
-        source: active ? root._sourceFor(root._slot0Index) : ""
-        visible: active
-        enabled: root._currentSlot === 0 && root._pendingSlot < 0 && !root._transitionRunning
-        z: root._pendingSlot === 0 ? 1 : 0
-        layer.enabled: root._transitionRunning && active
+        delegate: Loader {
+            id: pageLoader
+            required property int index
 
-        onStatusChanged: root._handleStatus(0, status)
-    }
+            anchors.fill: parent
+            active: root.loadEnabled && root._retainedIndices.indexOf(index) >= 0
+            source: active ? root._sourceFor(index) : ""
+            asynchronous: index !== root._currentIndex && index !== root._pendingIndex
+            visible: active && (index === root._currentIndex || index === root._pendingIndex)
+            enabled: index === root._currentIndex
+                && root._pendingIndex < 0
+                && !root._transitionRunning
+            z: index === root._pendingIndex ? 1 : 0
+            layer.enabled: root._transitionRunning && visible
 
-    Loader {
-        id: pageSlot1
-
-        anchors.fill: parent
-        active: root._slot1Index >= 0
-        source: active ? root._sourceFor(root._slot1Index) : ""
-        visible: active
-        enabled: root._currentSlot === 1 && root._pendingSlot < 0 && !root._transitionRunning
-        z: root._pendingSlot === 1 ? 1 : 0
-        layer.enabled: root._transitionRunning && active
-
-        onStatusChanged: root._handleStatus(1, status)
+            onStatusChanged: root._handleStatus(index, status)
+            onActiveChanged: {
+                root._statusRevision++
+                if (!active) {
+                    opacity = 0
+                    x = 0
+                }
+            }
+        }
     }
 
     ParallelAnimation {
