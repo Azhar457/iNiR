@@ -14,6 +14,8 @@ FocusScope {
     required property string monitorName
 
     readonly property string mode: GlobalStates.wallpaperLauncherMode
+    // The tab buttons must react on click, not after the swap animation.
+    readonly property string displayMode: _pendingMode || mode
     readonly property var entries: mode === "animated"
         ? library.animatedEntries : library.staticEntries
     readonly property string selectionTarget: Wallpapers.currentSelectionTarget()
@@ -36,24 +38,60 @@ FocusScope {
         + Appearance.sizes.spacingMedium * 2
     focus: true
 
+    // Scan the configured root, wherever the current wallpaper actually lives,
+    // and whatever folder the grid selector is browsing. Using only the current
+    // wallpaper's folder made the list change depending on what happened to be
+    // applied, so videos came and went.
+    function refreshLibrary(force = false): void {
+        library.refresh(Directories.wallpapersPath, [
+            FileUtils.parentDirectory(root.currentWallpaperPath),
+            Wallpapers.effectiveDirectory
+        ], force)
+    }
+
+    // Switching libraries replaces every delegate at once. Swapping in place
+    // reads as a hard cut, so the carousel fades out, swaps while invisible,
+    // and fades back in.
+    property bool _modeSwitching: false
+    property string _pendingMode: ""
+
     function setMode(nextMode: string): void {
         if (nextMode !== "static" && nextMode !== "animated") return
-        if (GlobalStates.wallpaperLauncherMode === nextMode) return
-        Wallpapers.stopPreview()
+        if (root.displayMode === nextMode) return
+        if (!Appearance.animationsEnabled) {
+            root._commitMode(nextMode)
+            return
+        }
+        // Tabbing back before the swap lands: cancel it and fade straight in
+        // again rather than committing a mode the user already left.
+        if (nextMode === GlobalStates.wallpaperLauncherMode) {
+            modeSwapTimer.stop()
+            root._pendingMode = ""
+            root._modeSwitching = false
+            return
+        }
+        root._pendingMode = nextMode
+        root._modeSwitching = true
+        modeSwapTimer.restart()
+    }
+
+    function _commitMode(nextMode: string): void {
         GlobalStates.wallpaperLauncherMode = nextMode
         searchField.text = ""
-        Qt.callLater(carousel.syncCurrentIndex)
+        Qt.callLater(carousel.syncCurrentIndexAndPreview)
     }
 
     function applyPath(path: string): void {
         if (!path) return
-        Wallpapers.stopPreview()
+        // The real apply produces its own transition; don't restore first.
+        Wallpapers.clearWallpaperPreview()
         Wallpapers.applySelectionTarget(path, root.selectionTarget,
             Appearance.m3colors.darkmode, root.selectionMonitorName)
+        GlobalStates.wallpaperLauncherOpen = false
     }
 
     function openGrid(): void {
-        Wallpapers.stopPreview()
+        Wallpapers.cancelWallpaperPreview()
         root._pendingGridTarget = root.selectionTarget
         root._pendingGridMonitor = root.selectionMonitorName
         Config.setNestedValue("wallpaperSelector.style", "grid")
@@ -77,15 +115,18 @@ FocusScope {
             count: root.count,
             path: root.selectedPath,
             target: root.selectionTarget,
-            monitor: root.selectionMonitorName
+            monitor: root.selectionMonitorName,
+            previewPath: Wallpapers.internalPreviewPath,
+            previewMonitor: Wallpapers.internalPreviewMonitor,
+            awwwPreview: AwwwBackend.previewActive
         })
     }
 
     Component.onCompleted: {
-        library.refresh(Directories.wallpapersPath)
+        root.refreshLibrary()
         Qt.callLater(() => {
             root.forceActiveFocus()
-            carousel.syncCurrentIndex()
+            carousel.syncCurrentIndexAndPreview()
         })
     }
 
@@ -94,10 +135,10 @@ FocusScope {
 
         function onWallpaperLauncherOpenChanged(): void {
             if (!GlobalStates.wallpaperLauncherOpen) return
-            library.refresh(Directories.wallpapersPath)
+            root.refreshLibrary()
             Qt.callLater(() => {
                 root.forceActiveFocus()
-                carousel.syncCurrentIndex()
+                carousel.syncCurrentIndexAndPreview()
             })
         }
     }
@@ -107,7 +148,7 @@ FocusScope {
             GlobalStates.wallpaperLauncherOpen = false
             event.accepted = true
         } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
-            root.setMode(root.mode === "static" ? "animated" : "static")
+            root.setMode(root.displayMode === "static" ? "animated" : "static")
             event.accepted = true
         } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Up) {
             carousel.moveSelection(-1)
@@ -130,6 +171,16 @@ FocusScope {
     }
 
     WallpaperLibrary { id: library }
+
+    Timer {
+        id: modeSwapTimer
+        interval: Appearance.animation.elementMoveExit.duration
+        onTriggered: {
+            root._commitMode(root._pendingMode)
+            root._pendingMode = ""
+            root._modeSwitching = false
+        }
+    }
 
     Timer {
         id: gridOpenTimer
@@ -177,13 +228,13 @@ FocusScope {
                 id: modeControls
                 Layout.alignment: Qt.AlignHCenter
                 spacing: Appearance.sizes.spacingSmall
-                property int clickIndex: root.mode === "static" ? 0 : 1
+                property int clickIndex: root.displayMode === "static" ? 0 : 1
 
                 SelectionGroupButton {
                     Layout.fillWidth: false
                     Layout.fillHeight: false
                     leftmost: true
-                    toggled: root.mode === "static"
+                    toggled: root.displayMode === "static"
                     buttonIcon: "image"
                     buttonText: Translation.tr("Static")
                     onClicked: root.setMode("static")
@@ -193,7 +244,7 @@ FocusScope {
                     Layout.fillWidth: false
                     Layout.fillHeight: false
                     rightmost: true
-                    toggled: root.mode === "animated"
+                    toggled: root.displayMode === "animated"
                     buttonIcon: "movie"
                     buttonText: Translation.tr("Animated")
                     onClicked: root.setMode("animated")
@@ -206,7 +257,7 @@ FocusScope {
                     text: root.loading ? "progress_activity" : "refresh"
                     enabled: !root.loading
                     onClicked: {
-                        library.refresh(Directories.wallpapersPath)
+                        root.refreshLibrary(true)
                         Wallpapers.generateThumbnail("large")
                     }
                     StyledToolTip { text: Translation.tr("Refresh animated wallpapers") }
@@ -225,6 +276,37 @@ FocusScope {
                 Layout.fillWidth: true
                 implicitHeight: carousel.implicitHeight
 
+                opacity: root._modeSwitching ? 0 : 1
+                scale: root._modeSwitching ? 0.97 : 1
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: root._modeSwitching
+                            ? Appearance.animation.elementMoveExit.duration
+                            : Appearance.animation.elementMoveEnter.duration
+                        easing.type: root._modeSwitching
+                            ? Appearance.animation.elementMoveExit.type
+                            : Appearance.animation.elementMoveEnter.type
+                        easing.bezierCurve: root._modeSwitching
+                            ? Appearance.animation.elementMoveExit.bezierCurve
+                            : Appearance.animation.elementMoveEnter.bezierCurve
+                    }
+                }
+                Behavior on scale {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: root._modeSwitching
+                            ? Appearance.animation.elementMoveExit.duration
+                            : Appearance.animation.elementMoveEnter.duration
+                        easing.type: root._modeSwitching
+                            ? Appearance.animation.elementMoveExit.type
+                            : Appearance.animation.elementMoveEnter.type
+                        easing.bezierCurve: root._modeSwitching
+                            ? Appearance.animation.elementMoveExit.bezierCurve
+                            : Appearance.animation.elementMoveEnter.bezierCurve
+                    }
+                }
+
                 WallpaperLauncherList {
                     id: carousel
                     anchors.centerIn: parent
@@ -233,7 +315,7 @@ FocusScope {
                     entries: root.entries
                     searchText: searchField.text
                     currentWallpaperPath: root.currentWallpaperPath
-                    monitorName: root.monitorName
+                    monitorName: root.selectionMonitorName
                     onApplyRequested: path => root.applyPath(path)
                 }
 
@@ -296,7 +378,7 @@ FocusScope {
                     placeholderText: Translation.tr("Search wallpapers")
                     Keys.onPressed: event => {
                         if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
-                            root.setMode(root.mode === "static" ? "animated" : "static")
+                            root.setMode(root.displayMode === "static" ? "animated" : "static")
                             root.forceActiveFocus()
                             event.accepted = true
                         } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Right) {

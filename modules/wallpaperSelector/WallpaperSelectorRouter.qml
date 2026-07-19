@@ -62,7 +62,7 @@ Scope {
         }
         const selectorStyle = Config.options?.wallpaperSelector?.style ?? "grid"
         if (selectorStyle === "launcher") {
-            root._openLauncher("static", "")
+            root._openLauncher("", "")
             return
         }
         if (selectorStyle === "coverflow") {
@@ -102,10 +102,26 @@ Scope {
         GlobalStates.wallpaperSelectorOpen = true
     }
 
+    // An empty mode means "match what is on screen": opening the picker while a
+    // video wallpaper is applied must land on Animated, not on Static where the
+    // current wallpaper cannot even appear.
+    function _resolveLauncherMode(mode: string): string {
+        if (mode === "animated" || mode === "static")
+            return mode
+        const currentPath = Wallpapers.currentWallpaperPathForTarget(
+            Wallpapers.currentSelectionTarget(),
+            (Config.options?.background?.multiMonitor?.enable ?? false)
+                ? (Config.options?.wallpaperSelector?.targetMonitor ?? "") : "")
+        return WallpaperListener.isAnimatedPath(currentPath) ? "animated" : "static"
+    }
+
     function _openLauncher(mode: string, requestedMonitor: string): void {
-        const nextMode = mode === "animated" ? "animated" : "static"
+        const nextMode = root._resolveLauncherMode(mode)
         GlobalStates.wallpaperSelectorOpen = false
         GlobalStates.coverflowSelectorOpen = false
+        // Opening the launcher makes it the active picker, so the wallpaper
+        // shortcut keeps opening it instead of falling back to the grid.
+        // The grid button inside the launcher is the way back out.
         Config.setNestedValue("wallpaperSelector.style", "launcher")
         GlobalStates.wallpaperLauncherMode = nextMode
         const configuredMonitor = Config.options?.wallpaperSelector?.targetMonitor ?? ""
@@ -140,7 +156,7 @@ Scope {
         function openLauncher(mode: string): void { root.openLauncher(mode) }
         function toggleOnMonitor(monitorName: string): void {
             if ((Config.options?.wallpaperSelector?.style ?? "grid") === "launcher") {
-                root._openLauncher("static", monitorName)
+                root._openLauncher("", monitorName)
                 return
             }
             if (monitorName) {

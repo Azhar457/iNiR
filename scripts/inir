@@ -1430,11 +1430,13 @@ apply_gpu_policy() {
     # GLVND: OpenGL via Mesa, not NVIDIA's libGLX.
     [[ -z "${__GLX_VENDOR_LIBRARY_NAME:-}" ]] && export __GLX_VENDOR_LIBRARY_NAME=mesa
     [[ -z "${__NV_PRIME_RENDER_OFFLOAD:-}" ]] && export __NV_PRIME_RENDER_OFFLOAD=0
-    # Qt FFmpeg: no NVDEC/CUDA hwaccel.
-    [[ -z "${QT_FFMPEG_DECODING_HW_DEVICE_TYPES+x}" ]] && export QT_FFMPEG_DECODING_HW_DEVICE_TYPES=
+    # Qt FFmpeg: keep the NVIDIA decoder paths out without disabling hardware
+    # decoding altogether. VAAPI uses the Mesa iGPU selected above; when VAAPI
+    # is unavailable Qt falls back to software decoding instead of waking CUDA.
+    [[ -z "${QT_FFMPEG_DECODING_HW_DEVICE_TYPES+x}" ]] && export QT_FFMPEG_DECODING_HW_DEVICE_TYPES=vaapi
     # NVIDIA optimus Vulkan layer: pretend iGPU only.
     [[ -z "${__VK_LAYER_NV_optimus:-}" ]] && export __VK_LAYER_NV_optimus=non_NVIDIA_only
-    # VDPAU: Qt FFmpeg probes libvdpau_nvidia.so on init even with hwaccel off.
+    # Block legacy NVIDIA VDPAU probing; Qt Multimedia still has VAAPI above.
     [[ -z "${VDPAU_DRIVER:-}" ]] && export VDPAU_DRIVER=none
 }
 

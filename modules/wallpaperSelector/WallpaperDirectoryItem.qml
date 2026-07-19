@@ -20,6 +20,8 @@ MouseArea {
     property alias radius: background.radius
     property alias margins: background.anchors.margins
     property alias padding: wallpaperItemColumnLayout.anchors.margins
+    property real thumbnailResolutionScale: 1
+    property bool thumbnailMipmap: false
     margins: Appearance.sizes.wallpaperSelectorItemMargins
     padding: Appearance.sizes.wallpaperSelectorItemPadding
 
@@ -94,8 +96,10 @@ MouseArea {
                         // ~250-300px grid cells. Avoids decoding 512px PNGs per item.
                         thumbnailSizeName: {
                             const auto = Images.thumbnailSizeNameForDimensions(
-                                Math.round(wallpaperItemImageContainer.width * root._dpr),
-                                Math.round(wallpaperItemImageContainer.height * root._dpr)
+                                Math.round(wallpaperItemImageContainer.width * root._dpr
+                                    * root.thumbnailResolutionScale),
+                                Math.round(wallpaperItemImageContainer.height * root._dpr
+                                    * root.thumbnailResolutionScale)
                             )
                             return auto === "normal" ? "large" : auto
                         }
@@ -104,8 +108,11 @@ MouseArea {
                         fillMode: Image.PreserveAspectCrop
                         clip: true
                         smooth: true
-                        sourceSize.width: Math.round(wallpaperItemImageContainer.width * root._dpr)
-                        sourceSize.height: Math.round(wallpaperItemImageContainer.height * root._dpr)
+                        mipmap: root.thumbnailMipmap
+                        sourceSize.width: Math.round(wallpaperItemImageContainer.width * root._dpr
+                            * root.thumbnailResolutionScale)
+                        sourceSize.height: Math.round(wallpaperItemImageContainer.height * root._dpr
+                            * root.thumbnailResolutionScale)
                     }
                 }
 

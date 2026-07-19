@@ -268,7 +268,23 @@ get_focused_monitor_name() {
     ' "$SHELL_CONFIG_FILE" 2>/dev/null || echo ""
  }
 
- ensure_color_preview_for_media() {
+ # Wallpaper loops routinely open on black or a fade-in, so frame 0 produces a
+# nearly black palette and a misleading accent. ffmpeg's thumbnail filter scores
+# a batch of frames and returns a representative one instead.
+extract_representative_frame() {
+    local media_path="$1"
+    local out_path="$2"
+    mkdir -p "$(dirname "$out_path")"
+
+    if ffmpeg -y -i "$media_path" -vf "thumbnail=n=100" -frames:v 1 -update 1 -q:v 2 \
+        "$out_path" >/dev/null 2>&1 && [ -s "$out_path" ]; then
+        return 0
+    fi
+    # Very short or unusual clips can defeat the filter; fall back to frame 0.
+    ffmpeg -y -i "$media_path" -vframes 1 -update 1 -q:v 2 "$out_path" >/dev/null 2>&1
+}
+
+ensure_color_preview_for_media() {
     local media_path="$1"
     local out_path="$2"
     mkdir -p "$(dirname "$out_path")"
@@ -278,7 +294,7 @@ get_focused_monitor_name() {
             echo "[switchwall.sh] Missing ffmpeg for video color preview generation" >&2
             return 1
         fi
-        ffmpeg -y -i "$media_path" -vframes 1 "$out_path" >/dev/null 2>&1
+        extract_representative_frame "$media_path" "$out_path"
         return $?
     fi
 
@@ -288,7 +304,7 @@ get_focused_monitor_name() {
             return $?
         fi
         if command -v ffmpeg >/dev/null 2>&1; then
-            ffmpeg -y -i "$media_path" -vframes 1 "$out_path" >/dev/null 2>&1
+            extract_representative_frame "$media_path" "$out_path"
             return $?
         fi
         echo "[switchwall.sh] Missing magick/ffmpeg for gif color preview generation" >&2
@@ -409,7 +425,7 @@ switch() {
             if has_valid_file "$config_thumbnail"; then
                 thumbnail="$config_thumbnail"
             elif ! has_valid_file "$thumbnail"; then
-                ffmpeg -y -i "$imgpath" -vframes 1 "$thumbnail" 2>/dev/null
+                extract_representative_frame "$imgpath" "$thumbnail"
             fi
 
             if ! has_valid_file "$thumbnail"; then

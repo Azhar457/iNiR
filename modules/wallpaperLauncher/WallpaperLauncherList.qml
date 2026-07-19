@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import qs
 import qs.services
 import qs.modules.common
 import QtQuick
@@ -48,17 +49,21 @@ PathView {
     model: ScriptModel {
         id: scriptModel
         values: root.filteredEntries
-        onValuesChanged: Qt.callLater(root.syncCurrentIndex)
+        onValuesChanged: Qt.callLater(root.syncCurrentIndexAndPreview)
     }
 
     function syncCurrentIndex(): void {
         if (scriptModel.values.length === 0) {
             root.currentIndex = 0
-            Wallpapers.stopPreview()
             return
         }
         const index = scriptModel.values.findIndex(entry => entry.path === root.currentWallpaperPath)
         root.currentIndex = Math.max(0, index)
+    }
+
+    function syncCurrentIndexAndPreview(): void {
+        root.syncCurrentIndex()
+        previewDebounce.restart()
     }
 
     function moveSelection(delta: int): void {
@@ -77,23 +82,38 @@ PathView {
         if (entry?.path) root.applyRequested(entry.path)
     }
 
+    // Show the highlighted entry on the desktop. Wallpapers routes static to
+    // awww and animated to the internal renderer, so the preview always uses
+    // the same engine that will render the wallpaper once applied.
     function previewCurrent(): void {
+        // The surface is retained while closed, and the applied wallpaper can
+        // change from elsewhere. Never repaint the desktop when not open.
+        if (!GlobalStates.wallpaperLauncherOpen) return
         const entry = scriptModel.values[currentIndex]
-        if (entry?.path)
-            Wallpapers.startPreview(entry.path, root.monitorName)
-        else
-            Wallpapers.stopPreview()
+        if (!entry?.path || entry.path === root.currentWallpaperPath) {
+            // Back on the applied wallpaper — drop the preview instead of
+            // repainting what is already on screen.
+            Wallpapers.cancelWallpaperPreview()
+            return
+        }
+        Wallpapers.previewWallpaper(entry.path, root.monitorName)
     }
 
-    Component.onCompleted: Qt.callLater(syncCurrentIndex)
-    Component.onDestruction: Wallpapers.stopPreview()
+    Component.onCompleted: Qt.callLater(syncCurrentIndexAndPreview)
+    Component.onDestruction: Wallpapers.cancelWallpaperPreview()
+    onCurrentWallpaperPathChanged: Qt.callLater(syncCurrentIndexAndPreview)
+    onSearchTextChanged: Qt.callLater(syncCurrentIndexAndPreview)
+    // The desktop always shows the highlighted card, however the highlight
+    // moved — navigation, search filtering, or switching Static/Animated.
     onCurrentIndexChanged: previewDebounce.restart()
-    onCurrentWallpaperPathChanged: Qt.callLater(syncCurrentIndex)
-    onSearchTextChanged: Qt.callLater(syncCurrentIndex)
 
     Timer {
         id: previewDebounce
-        interval: 140
+        // Static previews are a cheap awww call, but every animated preview
+        // spins up a fresh decoder for a full-resolution clip. Only load one
+        // once the user has actually settled on a card.
+        interval: root.entries === null ? 180
+            : (scriptModel.values[root.currentIndex]?.kind === "static" ? 180 : 500)
         onTriggered: root.previewCurrent()
     }
 

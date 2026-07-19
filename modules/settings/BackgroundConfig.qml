@@ -1456,11 +1456,25 @@ ContentPage {
                                 }
                                 return Config.options?.background?.wallpaperPath ?? ""
                             }
-                            source: wpPath ? (wpPath.startsWith("file://") ? wpPath : "file://" + wpPath) : ""
+                            readonly property bool isVideo: WallpaperListener.isVideoPath(wpPath)
+                            readonly property string previewPath: isVideo
+                                ? Wallpapers.getVideoFirstFramePath(wpPath) : wpPath
+                            source: previewPath
+                                ? (previewPath.startsWith("file://") ? previewPath : "file://" + previewPath)
+                                : ""
                             sourceSize.width: 1200
                             cache: false
                             fillMode: Image.Stretch
                             visible: status === Image.Ready
+
+                            Component.onCompleted: {
+                                if (isVideo)
+                                    Wallpapers.ensureVideoFirstFrame(wpPath)
+                            }
+                            onWpPathChanged: {
+                                if (isVideo)
+                                    Wallpapers.ensureVideoFirstFrame(wpPath)
+                            }
 
                             readonly property real imgNatW: implicitWidth > 0 ? implicitWidth : 1
                             readonly property real imgNatH: implicitHeight > 0 ? implicitHeight : 1

@@ -32,31 +32,60 @@ Singleton {
     // freeze video/GIF playback while discharging to save power.
     readonly property bool batteryPauseActive: (Config.options?.background?.pauseAnimationOnBattery ?? true) && Battery.onBattery
 
-    // Transient launcher preview. This never writes Config or starts the color
-    // pipeline; background surfaces simply render it until the picker closes.
-    property string previewPath: ""
-    property string previewMonitorName: ""
-    readonly property bool previewActive: previewPath.length > 0
+    // ─── Transient wallpaper preview ───
+    // Single entry point for pickers that show a wallpaper before it is applied.
+    // Nothing here writes Config or starts the colour pipeline.
+    //
+    // Which engine is visible depends on the file and the configuration: awww
+    // paints static images, while the internal Video/AnimatedImage/crossfader
+    // paints videos, GIFs, and everything else whenever awww is disabled,
+    // unavailable, or displaced by dynamic parallax. Rather than guess the
+    // owner, the preview is published to both — the visible one shows it and
+    // the other is a no-op. Crucially this only supplies a path; it never
+    // suppresses externalMainWallpaperEligible, so the engine that renders
+    // while browsing is the same one that renders after applying.
+    property string internalPreviewPath: ""
+    property string internalPreviewMonitor: ""
+    readonly property bool internalPreviewActive: internalPreviewPath.length > 0
 
-    function startPreview(path: string, monitorName = ""): void {
+    function previewWallpaper(path: string, monitorName = ""): void {
         const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
-        if (!normalizedPath) return
-        root.previewMonitorName = String(monitorName ?? "")
-        root.previewPath = normalizedPath
+        if (!normalizedPath) {
+            root.cancelWallpaperPreview()
+            return
+        }
+
+        root.internalPreviewMonitor = String(monitorName ?? "")
+        root.internalPreviewPath = normalizedPath
+        // No-op for videos, GIFs, and when awww is not running.
+        AwwwBackend.previewImage(normalizedPath, monitorName)
     }
 
-    function stopPreview(): void {
-        root.previewPath = ""
-        root.previewMonitorName = ""
+    // Restore whatever the config says without repainting through a different
+    // engine. Called from every launcher exit path that is not an apply.
+    function cancelWallpaperPreview(): void {
+        root._clearInternalPreview()
+        AwwwBackend.cancelPreview()
     }
 
-    function previewActiveForMonitor(monitorName = ""): bool {
-        return root.previewActive
-            && (!root.previewMonitorName || root.previewMonitorName === String(monitorName ?? ""))
+    // The caller is about to apply for real; that apply repaints on its own.
+    function clearWallpaperPreview(): void {
+        root._clearInternalPreview()
+        AwwwBackend.clearPreview()
     }
 
-    function previewPathForMonitor(monitorName: string, fallbackPath: string): string {
-        return root.previewActiveForMonitor(monitorName) ? root.previewPath : fallbackPath
+    function _clearInternalPreview(): void {
+        root.internalPreviewPath = ""
+        root.internalPreviewMonitor = ""
+    }
+
+    function internalPreviewFor(monitorName: string, fallbackPath: string): string {
+        if (!root.internalPreviewActive)
+            return fallbackPath
+        if (root.internalPreviewMonitor
+                && root.internalPreviewMonitor !== String(monitorName ?? ""))
+            return fallbackPath
+        return root.internalPreviewPath
     }
 
     // Wallpaper path resolution for aurora/backdrop
@@ -224,9 +253,15 @@ Singleton {
                 _ffGenProc._videoPath = _ffCheckProc._videoPath
                 _ffGenProc._outputPath = _ffCheckProc._outputPath
                 _ffGenProc.command = ["bash", "-c",
+                    // Wallpaper loops usually fade in from black, so frame 0 gives
+                    // this file a nearly black palette — and this frame is what the
+                    // theming pipeline quantizes. Pick a representative frame.
                     "mkdir -p " + JSON.stringify(root._videoThumbDir) +
                     " && ffmpeg -y -i " + JSON.stringify(_ffCheckProc._videoPath) +
-                    " -vframes 1 -q:v 2 " + JSON.stringify(_ffCheckProc._outputPath)]
+                    " -vf " + JSON.stringify("thumbnail=n=100") +
+                    " -frames:v 1 -update 1 -q:v 2 " + JSON.stringify(_ffCheckProc._outputPath) +
+                    " || ffmpeg -y -i " + JSON.stringify(_ffCheckProc._videoPath) +
+                    " -vframes 1 -update 1 -q:v 2 " + JSON.stringify(_ffCheckProc._outputPath)]
                 _ffGenProc.running = true
             }
         }
@@ -867,7 +902,8 @@ Singleton {
         const commandBody = root.isVideoFile(item.filePath)
             ? "mkdir -p " + JSON.stringify(outputDir)
                 + " && [ -f " + JSON.stringify(item.outputPath) + " ] && exit 0 || { ffmpeg -y -i " + JSON.stringify(item.filePath)
-                + " -vframes 1 -vf " + JSON.stringify(`scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease`)
+                + " -vf " + JSON.stringify(`thumbnail=n=100,scale='min(${maxSize},iw)':'min(${maxSize},ih)':force_original_aspect_ratio=decrease`)
+                + " -frames:v 1 -update 1 "
                 + " " + JSON.stringify(item.outputPath) + " >/dev/null 2>&1 && exit 1; }"
             : "mkdir -p " + JSON.stringify(outputDir)
                 + " && [ -f " + JSON.stringify(item.outputPath) + " ] && exit 0 || { magick " + JSON.stringify(item.filePath + "[0]")

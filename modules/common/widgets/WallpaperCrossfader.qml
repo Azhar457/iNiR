@@ -19,7 +19,6 @@ Item {
     property string transitionType: Config.options?.background?.transition?.type ?? "crossfade"
     property string transitionDirection: Config.options?.background?.transition?.direction ?? "right"
     property bool enableTransitions: Config.options?.background?.transition?.enable ?? true
-    property bool gentleTransition: false
     readonly property list<real> _defaultBezier: [0.54, 0.0, 0.34, 0.99]
     readonly property var _configuredBezier: Config.options?.background?.transition?.bezier ?? _defaultBezier
     readonly property list<real> _effectiveBezier: _normalizeBezier(_configuredBezier)
@@ -48,8 +47,6 @@ Item {
     readonly property real _pushDistance: 1.05
     readonly property real _crossfadeIncomingScale: 1.018
     readonly property real _crossfadeOutgoingScale: 0.985
-    readonly property real _gentleIncomingScale: 1.008
-    readonly property real _gentleOutgoingScale: 0.994
     readonly property real _blurFadeIncomingScale: 1.035
     readonly property real _blurFadeOutgoingScale: 0.96
     readonly property real _blurFadeMax: 0.82
@@ -86,8 +83,6 @@ Item {
     }
 
     function _progressCurveFor(type: string): list<real> {
-        if (root.gentleTransition && type === "crossfade")
-            return Appearance.animationCurves.standard
         switch (type) {
         case "slide":
             return _positionCurveFor(type)
@@ -507,11 +502,9 @@ Item {
         switch (_effectiveType) {
         case "crossfade":
             if (isFrom)
-                return _lerp(1, root.gentleTransition
-                    ? _gentleOutgoingScale : _crossfadeOutgoingScale, progress)
+                return _lerp(1, _crossfadeOutgoingScale, progress)
             if (isTo)
-                return _lerp(root.gentleTransition
-                    ? _gentleIncomingScale : _crossfadeIncomingScale, 1, progress)
+                return _lerp(_crossfadeIncomingScale, 1, progress)
             return 1
         case "wipe":
             if (isFrom)

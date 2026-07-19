@@ -63,6 +63,11 @@ Item {
             fileIsDir: false,
             fileUrl: root.modelData.path
         })
+        // Keep the original card inset and accent surface. The launcher has at
+        // most five cards, so it can afford a 2x decoded thumbnail and mipmaps
+        // without imposing that cost on the full wallpaper grid.
+        thumbnailResolutionScale: 2
+        thumbnailMipmap: true
         colBackground: (root.current || containsMouse)
             ? Appearance.colors.colPrimary
             : root.applied

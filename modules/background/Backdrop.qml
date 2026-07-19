@@ -245,7 +245,9 @@ Variants {
                 anchors.margins: -parent.blurOverflow
                 visible: !backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
                 source: {
-                    if (!backdropWindow.wallpaperIsVideo) return "";
+                    // The Aurora branch owns its own player. Keep this pipeline
+                    // completely unloaded while that style is visible.
+                    if (!videoWallpaper.visible || !backdropWindow.wallpaperIsVideo) return "";
                     const path = backdropWindow.wallpaperPathRaw;
                     if (!path) return "";
                     return path.startsWith("file://") ? path : ("file://" + path);
@@ -364,7 +366,14 @@ Variants {
                 anchors.fill: parent
                 anchors.margins: -parent.blurOverflow
                 visible: backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsVideo
-                source: videoWallpaper.source
+                source: {
+                    // Do not borrow videoWallpaper.source: that kept the hidden
+                    // non-Aurora MediaPlayer loaded as a second decoder.
+                    if (!auroraVideoWallpaper.visible) return "";
+                    const path = backdropWindow.wallpaperPathRaw;
+                    if (!path) return "";
+                    return path.startsWith("file://") ? path : ("file://" + path);
+                }
                 fillMode: VideoOutput.PreserveAspectCrop
                 loops: MediaPlayer.Infinite
                 muted: true

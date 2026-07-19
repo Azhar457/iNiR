@@ -432,7 +432,9 @@ Scope {
             const configuredPath = (_multiMonEnabled && wallpaperData.path)
                 ? wallpaperData.path
                 : (bgRoot.backgroundOptions.wallpaperPath ?? "")
-            return Wallpapers.previewPathForMonitor(monitorName, configuredPath)
+            // Supplies the preview path only. awww eligibility is untouched, so
+            // whichever engine already owns this wallpaper keeps owning it.
+            return Wallpapers.internalPreviewFor(monitorName, configuredPath)
         }
         readonly property string wallpaperThumbnailPath: bgRoot.backgroundOptions.thumbnailPath ?? bgRoot.wallpaperPathRaw
         readonly property bool enableAnimation: bgRoot.backgroundOptions.enableAnimation ?? true
@@ -465,7 +467,6 @@ Scope {
         readonly property bool pauseParallaxDuringTransitions: bgRoot.parallaxOptions.pauseDuringTransitions ?? true
         readonly property int parallaxTransitionSettleMs: ParallaxMath.resolveTransitionSettle(bgRoot.parallaxOptions, 220)
         readonly property bool externalMainWallpaperEligible: !wallpaperSafetyTriggered
-            && !Wallpapers.previewActiveForMonitor(monitorName)
             && !((bgRoot.backgroundOptions.backdrop?.enable ?? false) && (bgRoot.backgroundOptions.backdrop?.hideWallpaper ?? false))
             && AwwwBackend.supportsVisibleMainWallpaper(
                 bgRoot.wallpaperPathRaw,
@@ -1118,18 +1119,13 @@ Scope {
                         && !wallpaperContainer.showInternalStaticWallpaper
                     source: (bgRoot.wallpaperSafetyTriggered || !wallpaperContainer.needsStaticTexture)
                         ? "" : bgRoot.wallpaperPath
-                    readonly property bool launcherPreviewActive:
-                        Wallpapers.previewActiveForMonitor(bgRoot.monitorName)
-                    gentleTransition: launcherPreviewActive
-                    // Preview is rendered internally even when awww owns normal wallpaper changes.
-                    enableTransitions: (!AwwwBackend.active || launcherPreviewActive)
+                    // NEVER use crossfader transitions when awww is active — awww handles all transitions.
+                    // When parallax is on, the crossfader fades out to reveal awww's native transition.
+                    enableTransitions: !AwwwBackend.active
                         && (Config.options?.background?.transition?.enable ?? true)
-                    transitionType: launcherPreviewActive ? "crossfade"
-                        : (Config.options?.background?.transition?.type ?? "crossfade")
+                    transitionType: Config.options?.background?.transition?.type ?? "crossfade"
                     transitionDirection: Config.options?.background?.transition?.direction ?? "right"
-                    transitionBaseDuration: launcherPreviewActive
-                        ? Appearance.animationCurves.expressiveSlowSpatialDuration
-                        : (Config.options?.background?.transition?.duration ?? 800)
+                    transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
                     fillMode: bgRoot.fillMode === "fit" ? Image.PreserveAspectFit
                             : bgRoot.fillMode === "tile" ? Image.Tile
                             : bgRoot.fillMode === "center" ? Image.Pad
@@ -1182,8 +1178,11 @@ Scope {
                 }
 
                 // Video wallpaper (Qt Multimedia)
-                // Always loaded for videos: plays when animation enabled, frozen (paused) when disabled
-                Video {
+                // Two-slot crossfader: a single Video tears down its pipeline on
+                // every source change, so switching between two videos went black
+                // and popped. This keeps the outgoing clip playing until the new
+                // one has decoded a frame.
+                VideoCrossfader {
                     id: videoWallpaper
                     anchors.fill: parent
                     visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && bgRoot.wallpaperIsVideo
@@ -1194,68 +1193,14 @@ Scope {
                     }
                     source: {
                         if (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsVideo || bgRoot.backdropActive) return "";
-                        const path = bgRoot.wallpaperPathRaw;
-                        if (!path) return "";
-                        return path.startsWith("file://") ? path : ("file://" + path);
+                        return bgRoot.wallpaperPathRaw;
                     }
                     fillMode: VideoOutput.PreserveAspectCrop
-                    loops: MediaPlayer.Infinite
-                    muted: true
-                    autoPlay: true
-
-                    readonly property bool shouldPlay: bgRoot.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
-
-                    function pauseAndShowFirstFrame() {
-                        pause()
-                        seek(0) // Ensure first frame is displayed when paused
-                    }
-
-                    onPlaybackStateChanged: {
-                        if (playbackState === MediaPlayer.PlayingState && !shouldPlay) {
-                            pauseAndShowFirstFrame()
-                        }
-                        if (playbackState === MediaPlayer.StoppedState && visible && shouldPlay) {
-                            play()
-                        }
-                    }
-
-                    onShouldPlayChanged: {
-                        if (visible && bgRoot.wallpaperIsVideo) {
-                            if (shouldPlay) play()
-                            else pauseAndShowFirstFrame()
-                        }
-                    }
-                    
-                    onVisibleChanged: {
-                        if (visible && bgRoot.wallpaperIsVideo) {
-                            if (shouldPlay) play()
-                            else pauseAndShowFirstFrame()
-                        } else {
-                            pause()
-                        }
-                    }
-                    
-                    Connections {
-                        target: GlobalStates
-                        function onScreenLockedChanged() {
-                            if (!videoWallpaper.shouldPlay) {
-                                videoWallpaper.pauseAndShowFirstFrame()
-                            } else if (videoWallpaper.visible && bgRoot.wallpaperIsVideo) {
-                                videoWallpaper.play()
-                            }
-                        }
-                    }
-
-                    Connections {
-                        target: GameMode
-                        function onActiveChanged() {
-                            if (!videoWallpaper.shouldPlay) {
-                                videoWallpaper.pauseAndShowFirstFrame()
-                            } else if (videoWallpaper.visible && bgRoot.wallpaperIsVideo) {
-                                videoWallpaper.play()
-                            }
-                        }
-                    }
+                    enableTransitions: Config.options?.background?.transition?.enable ?? true
+                    transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
+                    shouldPlay: bgRoot.enableAnimation && !GlobalStates.screenLocked
+                        && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
+                        && visible
 
                     layer.enabled: Appearance.effectsEnabled && (bgRoot.effectsOptions.enableAnimatedBlur ?? false) && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                     layer.effect: GaussianBlur {

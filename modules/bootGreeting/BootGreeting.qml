@@ -30,6 +30,24 @@ Scope {
 
     // Wallpaper
     readonly property string wallpaperPath: Config.options?.background?.wallpaperPath ?? ""
+    readonly property bool wallpaperIsVideo: WallpaperListener.isVideoPath(wallpaperPath)
+    readonly property string wallpaperPreviewPath: {
+        if (!wallpaperIsVideo)
+            return wallpaperPath
+        const cachedFrame = Wallpapers.getVideoFirstFramePath(wallpaperPath)
+        if (cachedFrame.length > 0)
+            return cachedFrame
+        return Config.options?.background?.thumbnailPath ?? ""
+    }
+
+    Component.onCompleted: {
+        if (wallpaperIsVideo)
+            Wallpapers.ensureVideoFirstFrame(wallpaperPath)
+    }
+    onWallpaperPathChanged: {
+        if (wallpaperIsVideo)
+            Wallpapers.ensureVideoFirstFrame(wallpaperPath)
+    }
 
     // ── Organic morphing: entrance cascade state ──
     property int _cascade: 0
@@ -140,7 +158,7 @@ Scope {
                 Image {
                     anchors.fill: parent
                     anchors.margins: scrim.blurOverflow
-                    source: root.wallpaperPath
+                    source: root.wallpaperPreviewPath
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     cache: true

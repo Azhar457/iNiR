@@ -119,12 +119,18 @@ MouseArea {
         const target = Wallpapers.currentSelectionTarget()
         const monitor = root.selectedMonitor
         GlobalStates.wallpaperSelectorOpen = false
+        // Switching to the carousel makes it the active picker, mirroring the
+        // launcher's own grid button.
         Config.setNestedValue("wallpaperSelector.style", "launcher")
         GlobalStates.wallpaperSelectionTarget = target
         Config.setNestedValue("wallpaperSelector.selectionTarget", target)
         GlobalStates.wallpaperSelectorTargetMonitor = monitor
         Config.setNestedValue("wallpaperSelector.targetMonitor", monitor)
-        GlobalStates.wallpaperLauncherMode = mode === "animated" ? "animated" : "static"
+        // Left-click follows the applied wallpaper's kind; right-click forces animated.
+        GlobalStates.wallpaperLauncherMode = mode === "animated" ? "animated"
+            : (WallpaperListener.isAnimatedPath(
+                Wallpapers.currentWallpaperPathForTarget(target, monitor))
+                ? "animated" : "static")
         GlobalStates.wallpaperLauncherOpen = true
     }
 
@@ -546,7 +552,7 @@ MouseArea {
 
                         IconToolbarButton {
                             implicitWidth: height
-                            onClicked: root.openWallpaperLauncher("static")
+                            onClicked: root.openWallpaperLauncher("")
                             altAction: () => root.openWallpaperLauncher("animated")
                             text: "wallpaper_slideshow"
                             StyledToolTip {

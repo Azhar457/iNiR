@@ -152,7 +152,8 @@ Singleton {
     }
     onWallpaperLauncherOpenChanged: {
         if (!wallpaperLauncherOpen) {
-            Wallpapers.stopPreview()
+            // Restore the configured wallpaper if the user browsed away without applying.
+            Wallpapers.cancelWallpaperPreview()
             wallpaperSelectionTarget = "main"
             wallpaperSelectorTargetMonitor = ""
             if (Config.options?.wallpaperSelector?.selectionTarget
