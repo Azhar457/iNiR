@@ -13,10 +13,13 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    property var animatedPoses: []
-    property var collectionPoses: []
-    property var pickerPoses: []
-    property var desktopWidgetPoses: []
+    // A missing or temporarily malformed manifest must not make every mascot
+    // surface disappear. Keep one pack-stable pose available until the full
+    // catalog loads, then replace this fallback atomically.
+    property var animatedPoses: ["presence-idle-loop"]
+    property var collectionPoses: ["presence-idle-loop"]
+    property var pickerPoses: ["presence-idle-loop"]
+    property var desktopWidgetPoses: ["presence-idle-loop"]
     property var chibiPoses: []
     property var editorialPoses: []
     property var collectionSpecial: ({})
@@ -26,12 +29,13 @@ Singleton {
             && root.desktopWidgetPoses.indexOf(pose) === -1)
     readonly property var desktopWidgetSelectablePoses: root._uniquePoses(
         root.desktopWidgetPoses.concat(root.manualOnlyPoses))
-    property var fullBodyPoses: []
+    property var fullBodyPoses: ["presence-idle-loop"]
     property var contextualOcclusionPoses: []
     property var fullBodyReplacements: ({})
     property var surfaceDefaults: ({})
     property var surfacePools: ({})
-    property bool ready: false
+    property bool ready: true
+    property bool manifestAvailable: false
     property int revision: 0
     property var _surfaceHistory: ({})
     // Per-pose apparent-size correction, derived from the composition tag
@@ -176,12 +180,23 @@ Singleton {
                 root.surfaceDefaults = m.surfaceDefaults ?? {}
                 root.surfacePools = m.surfacePools ?? {}
                 root.frameScale = m.frameScale ?? {}
+                root.manifestAvailable = true
                 root.ready = true
                 root.revision++
             } catch (e) {
-                root.ready = false
-                console.warn("[MascotCatalog] manifest load failed:", e)
+                root.manifestAvailable = false
+                console.warn("[MascotCatalog] manifest load failed; using fallback catalog:", e)
             }
+        }
+    }
+
+    Timer {
+        interval: 1200
+        running: true
+        repeat: false
+        onTriggered: {
+            if (!root.manifestAvailable)
+                console.warn("[MascotCatalog] mascot manifest unavailable; using fallback catalog")
         }
     }
 }
