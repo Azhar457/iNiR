@@ -142,6 +142,12 @@ lives on `prerelease` and reaches `main` with the next release.
 - Settings pages slide directionally, retain the five most recently visited
   pages instead of rebuilding every category on return, and start
   non-essential sections collapsed.
+- Closed sidebars keep their lightweight Wayland hosts ready for a clean Niri
+  entrance, then release their content trees after five idle minutes. Quick
+  reopen keeps its state; leaving one closed all afternoon no longer does.
+- `inir doctor --perf` now reports the observed Qt Quick renderer, render loop,
+  DRM nodes, VA-API and Qt Multimedia state, open media files, and mapped Niri
+  layers instead of stopping at process memory.
 - The Bar layout-presets grid is gone; each click rewrote five keys and
   could stall the shell. The layout editor covers the same ground.
 - Style switches batch their config writes; aurora and angel no longer
