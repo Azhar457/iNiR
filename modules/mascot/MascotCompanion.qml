@@ -85,6 +85,24 @@ Scope {
     property string edge: "right" // "left" | "right" | "top"
     property bool showing: false
     property string line: ""
+    // Art-style lock: "classic" (pixel-art line) vs "street" (streetwear
+    // line) are two different renders of her, not interchangeable frames of
+    // the same one. Set once from the pose that opened this visit; click
+    // escalation and stare reactions stay on that style instead of jumping
+    // mid-visit. Chibi has no street counterpart, so it is style-neutral.
+    property string _visitArtStyle: ""
+    function _artStyleOf(poseName: string): string {
+        if (poseName.startsWith("chibi-")) return ""
+        return poseName.startsWith("street-") ? "street" : "classic"
+    }
+    function _filterByArtStyle(pool) {
+        if (!pool || !pool.length || !root._visitArtStyle) return pool
+        const matched = pool.filter(p => {
+            const s = root._artStyleOf(p)
+            return s === "" || s === root._visitArtStyle
+        })
+        return matched.length ? matched : pool
+    }
     property double _lastShownAt: 0
     property int _clickCount: 0
     property string _contextualSource: ""
@@ -302,6 +320,7 @@ Scope {
         console.log(`[MascotCompanion] peek: ${poseName} from ${edgeName}`)
         pose = poseName
         edge = edgeName
+        _visitArtStyle = _artStyleOf(poseName)
         // A reaction may hand us a value to splice into its %1 slot (e.g. the
         // actual battery percentage). Consumed once, never leaks to the next peek.
         const picked = _lineFor(poseName)
@@ -936,12 +955,36 @@ Scope {
                     playing: root.showing
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
-                    smooth: false
-                    mipmap: false
+                    // High-quality filtering avoids the serrated edges nearest-
+                    // neighbor scaling produces going from 640px source art down
+                    // to the 150-280px sprite size (see MascotWidget.qml).
+                    smooth: true
+                    mipmap: true
+                    antialiasing: true
                     // Only poses drawn hugging the left canvas edge flip on the
                     // right edge; everything else (badge text, asymmetric props)
                     // must render as drawn — mirroring reverses the iNiR badge.
                     mirror: root.edge === "right" && (root._manifest.mirrorOnRight ?? ["edge-peek"]).includes(root.pose)
+
+                    // She isn't just a swapped photo: a slow breathing pulse runs
+                    // under every pose, static or GIF, so she reads as alive even
+                    // between picks. Transform-only (never touches width/height),
+                    // scoped to the sprite so it never perturbs mascotItem's own
+                    // hit-test geometry or the bubble's layout math.
+                    transform: Scale {
+                        id: breathScale
+                        origin.x: companionSprite.width / 2
+                        origin.y: companionSprite.height / 2
+                        property real amount: 0
+                        xScale: 1 + amount
+                        yScale: 1 + amount
+                    }
+                    SequentialAnimation {
+                        running: mascotItem.peekedOut && Appearance.animationsEnabled
+                        loops: Animation.Infinite
+                        NumberAnimation { target: breathScale; property: "amount"; from: 0; to: 0.018; duration: 2100; easing.type: Easing.InOutSine }
+                        NumberAnimation { target: breathScale; property: "amount"; from: 0.018; to: 0; duration: 2100; easing.type: Easing.InOutSine }
+                    }
                 }
 
                 HoverHandler {
@@ -955,8 +998,13 @@ Scope {
                     interval: 4000
                     running: mascotHover.hovered && root.showing && root.pose !== "shy-flustered"
                     onTriggered: {
-                        const fresh = root._stareReactions.filter(r => !root._recentLines.includes(r.line))
-                        const src = fresh.length ? fresh : root._stareReactions
+                        const onStyle = root._stareReactions.filter(r => {
+                            const s = root._artStyleOf(r.pose)
+                            return s === "" || s === root._visitArtStyle
+                        })
+                        const styled = onStyle.length ? onStyle : root._stareReactions
+                        const fresh = styled.filter(r => !root._recentLines.includes(r.line))
+                        const src = fresh.length ? fresh : styled
                         const pick = src[Math.floor(Math.random() * src.length)]
                         root._remember(root._recentLines, pick.line, 12)
                         root._remember(root._recentPoses, pick.pose, 10)
@@ -972,17 +1020,17 @@ Scope {
                         clickResetTimer.restart()
                         if (root._clickCount >= 4) {
                             // Enough. She rage-quits.
-                            root.pose = root._pickPose(root._clickTier4Poses)
+                            root.pose = root._pickPose(root._filterByArtStyle(root._clickTier4Poses))
                             root.line = Translation.tr(root._pickFrom(root._clickTier4Lines))
                             offendedTimer.restart()
                         } else if (root._clickCount >= 2) {
                             // Fine, pats are accepted. Dignity optional.
-                            root.pose = root._pickPose(root._clickTier2Poses)
+                            root.pose = root._pickPose(root._filterByArtStyle(root._clickTier2Poses))
                             root.line = Translation.tr(root._pickFrom(root._clickTier2Lines))
                             hideTimer.restart()
                         } else {
                             // First poke: tolerated, barely
-                            root.pose = root._pickPose(root._clickTier1Poses)
+                            root.pose = root._pickPose(root._filterByArtStyle(root._clickTier1Poses))
                             root.line = Translation.tr(root._pickFrom(root._clickTier1Lines))
                             hideTimer.restart()
                         }
@@ -1077,6 +1125,7 @@ Scope {
 
     onShowingChanged: if (!showing) {
         teardownTimer.restart()
+        _visitArtStyle = ""
         // A suppression cut (fullscreen/lock appeared mid-peek) is nobody
         // ignoring her — only a peek that ran its course counts.
         if (_peekTouched) _ignoredStreak = 0

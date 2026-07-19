@@ -861,8 +861,11 @@ PanelWindow {
                 // uncached async decode lagging behind the tween already moving,
                 // reading as "she leaves without the run animation."
                 cache: true
-                smooth: false
-                mipmap: false
+                // Same fix as MascotCompanion/MascotWidget: nearest-neighbor
+                // scaling of the 640px source art serrated her edges.
+                smooth: true
+                mipmap: true
+                antialiasing: true
                 mirror: spriteStack.mirrored
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
