@@ -24,10 +24,16 @@ Singleton {
     }
 
     // Public API
-    property bool active: _manualActive || _autoActive
+    // Keep fullscreen activation reactive even if the debounced check or the
+    // manual-state FileView has not completed yet. Visible fullscreen state is
+    // already maintained by NiriService and is the source used by per-output
+    // surface gates.
+    readonly property bool _reactiveAutoActive: autoDetect && hasVisibleFullscreenWindow
+    property bool active: _manualActive || _autoActive || _reactiveAutoActive
     readonly property bool autoDetect: Config.options?.gameMode?.autoDetect ?? true
     property bool manuallyActivated: _manualActive
-    readonly property bool autoActivated: _autoActive
+    readonly property bool autoActivated: !_manualActive
+        && (_autoActive || _reactiveAutoActive)
 
     // True when panels should hide (slide-out + mask null + exclusiveZone 0).
     // Always false — auto-detect applies the same effects as manual mode
@@ -107,7 +113,7 @@ Singleton {
         function deactivate(): void { root.deactivate() }
         function status(): string {
             const state = root.active ? "active" : "inactive";
-            const detail = root._manualActive ? "manual" : root._autoActive ? "auto" : "off";
+            const detail = root._manualActive ? "manual" : root.autoActivated ? "auto" : "off";
             return state + " (" + detail + ")";
         }
     }
