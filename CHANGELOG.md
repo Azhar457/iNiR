@@ -13,12 +13,23 @@ things got fixed by people with better eyes than ours. Everything below
 lives on `prerelease` and reaches `main` with the next release.
 
 ### Added
-- A compact wallpaper launcher adds a fast, searchable carousel with live
-  desktop preview, static and animated libraries, and matching ii and Waffle
-  settings. It reuses the grid's wallpaper cards, switches libraries with Tab,
-  keeps keyboard, pointer and IPC navigation on the same selected item, and
-  applies through the normal wallpaper target pipeline without closing. Its
-  softened preview transition stays transient until a wallpaper is applied.
+- A compact wallpaper launcher adds a fast, searchable carousel with static
+  and animated libraries and matching ii and Waffle settings. It reuses the
+  grid's wallpaper cards, switches libraries with Tab, and keeps keyboard,
+  pointer and IPC navigation on the same selected item. Browsing previews each
+  wallpaper live on the desktop — static images and animated ones alike — using
+  the same renderer that will display it once applied, so what you see while
+  navigating is exactly what you get. Closing without applying restores the
+  previous wallpaper. It also scans the folder your current wallpaper lives in,
+  so it is always listed even when it sits outside the wallpaper directory, and
+  opening it makes it your active picker until you switch back to the grid.
+  Previews use your configured wallpaper transition rather than a fixed one, a
+  video wallpaper opens the picker on Animated, and switching libraries
+  crossfades instead of cutting. Carousel cards retain the original inset card
+  treatment and use 2x mipmapped thumbnails for clean downscaling.
+- Video wallpapers now crossfade instead of cutting to black. Switching between
+  two videos keeps the outgoing clip playing until the incoming one has decoded
+  a frame, both when previewing and when applying.
 - Meet Kira, the iNiR mascot: a retro pixel-art cat girl who can live across
   the shell or stay completely out of your way. Everything about her is
   opt-in and off by default; her art pack is a separate ~27 MiB download
@@ -128,8 +139,9 @@ lives on `prerelease` and reaches `main` with the next release.
 - Hidden bar modules no longer reserve ghost space in their group.
 - The right sidebar notification list lost its search field; it crowded the
   list and the waffle center already searches.
-- Settings pages slide directionally, preload only their neighbors (was:
-  all 18 at once), and start non-essential sections collapsed.
+- Settings pages slide directionally, retain the five most recently visited
+  pages instead of rebuilding every category on return, and start
+  non-essential sections collapsed.
 - The Bar layout-presets grid is gone; each click rewrote five keys and
   could stall the shell. The layout editor covers the same ground.
 - Style switches batch their config writes; aurora and angel no longer
@@ -138,6 +150,23 @@ lives on `prerelease` and reaches `main` with the next release.
   contrast instead of outline strokes.
 
 ### Fixed
+- Dense Settings categories no longer rebuild on every revisit. The selected
+  page loads synchronously, recent pages stay in a bounded LRU cache, and the
+  previous page remains visible until the replacement is ready.
+- Video wallpapers use cached first frames in the boot greeting and wallpaper
+  pan editor instead of being passed to `Image` and producing decode errors.
+- Wallpaper launcher cards retain their original inset and accent treatment;
+  video entries use high-resolution cached frames instead of a second embedded
+  playback pipeline, eliminating jagged card previews and coloured edge strips.
+- Hybrid-GPU users who disable GPU monitoring keep VAAPI decoding on the Mesa
+  iGPU instead of silently forcing every Qt Multimedia video through software;
+  explicit user overrides remain untouched.
+- Cancelling or applying a wallpaper while an awww preview is still running no
+  longer lets that stale preview finish last and repaint the wrong image.
+- Material and Aurora backdrop styles no longer keep two video decoders loaded
+  for the same wallpaper when only one style can be visible.
+- Kira keeps the same art family throughout each companion visit, and her
+  downscaled sprites use smooth mipmapped filtering instead of serrated edges.
 - Bar rebuilds log clean, and orientation changes no longer install two
   animations on the same corner radius.
 - Sidebars survive rapid close/reopen cycles, can stay open together, honor

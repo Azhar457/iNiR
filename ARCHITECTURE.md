@@ -68,7 +68,7 @@ modules/                      # 35 UI module directories
 ├── settings/                 # All config UI pages (37 files)
 ├── dock/                     # App dock (all 4 positions)
 ├── overview/                 # Workspace overview + app search
-├── wallpaperLauncher/        # Shared compact wallpaper carousel and preview
+├── wallpaperLauncher/        # Shared compact wallpaper carousel
 ├── waffle/                   # Windows 11 family
 │   ├── bar/                  # Bottom taskbar
 │   ├── startMenu/            # Start menu with search
@@ -152,9 +152,14 @@ docs/                         # User documentation (28 files)
 | `Network` | medium | NetworkManager integration |
 | `Wallpapers` | medium | Wallpaper management + theming pipeline |
 
-Wallpaper launcher previews are session-only state in `Wallpapers`. Both
-background families render the transient path, while only an explicit apply
-updates config and starts the theming pipeline.
+All three wallpaper pickers (grid, coverflow, launcher) apply through
+`Wallpapers.applySelectionTarget()`, so the owning wallpaper engine and theming
+pipeline behave identically for each. The launcher's live preview goes through
+`Wallpapers.previewWallpaper()`: static images are offered to `AwwwBackend`,
+while the same transient path is exposed to the internal background renderer
+for videos, GIFs, parallax, or systems without awww. Neither path writes config
+or regenerates colours, and cancelling resynchronizes the configured wallpaper.
+No picker draws the desktop wallpaper directly.
 
 These are **stability boundaries** — prefer add-only changes, verify all dependents before reshaping.
 
