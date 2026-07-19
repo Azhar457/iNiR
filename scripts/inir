@@ -78,7 +78,7 @@ Quick start:
   inir restart           Restart the shell
   inir logs              View runtime logs (--full: all categories, --debug: foreground debug, -f: follow)
   inir status            Shell status info
-  inir doctor            Health checks
+  inir doctor            Health checks (--perf: runtime graphics/media snapshot)
 
 EOF
 
@@ -767,10 +767,101 @@ _inir_perf_detect_hybrid_runtime() {
     fi
 }
 
+_inir_perf_proc_env_entry() {
+    local pid="$1" key="$2"
+    [[ -r "/proc/$pid/environ" ]] || return 0
+    tr '\0' '\n' < "/proc/$pid/environ" 2>/dev/null | awk -v key="$key" '
+        index($0, key "=") == 1 { print; exit }
+    '
+}
+
+_inir_perf_observed_rhi() {
+    local pid="$1" maps="/proc/$pid/maps" threads has_vulkan=false has_opengl=false
+    threads="$(ps -T -p "$pid" -o comm= 2>/dev/null || true)"
+    if grep -q '^qs:vk' <<< "$threads"; then
+        printf 'vulkan (renderer thread)\n'
+        return
+    fi
+    if grep -q '^qs:gl' <<< "$threads"; then
+        printf 'opengl (renderer thread)\n'
+        return
+    fi
+    if [[ -r "$maps" ]]; then
+        grep -q '/libvulkan\.so' "$maps" 2>/dev/null && has_vulkan=true
+        grep -Eq '/lib(EGL|GLX)|/radeonsi_dri\.so' "$maps" 2>/dev/null && has_opengl=true
+    fi
+    if $has_vulkan && ! $has_opengl; then
+        printf 'vulkan (renderer library)\n'
+    elif $has_opengl && ! $has_vulkan; then
+        printf 'opengl (renderer library)\n'
+    elif $has_vulkan && $has_opengl; then
+        printf 'ambiguous (OpenGL and Vulkan libraries loaded)\n'
+    else
+        printf 'unknown\n'
+    fi
+}
+
+_inir_perf_drm_devices() {
+    local card card_name device_path render render_path render_name driver vendor device boot access
+    for card in /sys/class/drm/card[0-9]*; do
+        card_name="$(basename -- "$card")"
+        [[ "$card_name" =~ ^card[0-9]+$ ]] || continue
+        [[ -d "$card/device" ]] || continue
+        device_path="$(readlink -f "$card/device" 2>/dev/null || true)"
+        [[ -n "$device_path" ]] || continue
+        render_name="none"
+        for render in /sys/class/drm/renderD*; do
+            [[ -d "$render/device" ]] || continue
+            render_path="$(readlink -f "$render/device" 2>/dev/null || true)"
+            if [[ "$render_path" == "$device_path" ]]; then
+                render_name="$(basename -- "$render")"
+                break
+            fi
+        done
+        driver="$(basename -- "$(readlink -f "$card/device/driver" 2>/dev/null || printf unknown)")"
+        vendor="$(cat "$card/device/vendor" 2>/dev/null || printf unknown)"
+        device="$(cat "$card/device/device" 2>/dev/null || printf unknown)"
+        boot="$(cat "$card/device/boot_vga" 2>/dev/null || printf unknown)"
+        access="no"
+        [[ "$render_name" != none && -r "/dev/dri/$render_name" && -w "/dev/dri/$render_name" ]] && access="yes"
+        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+            "$card_name" "$render_name" "$driver" "$vendor" "$device" "$boot" "$access"
+    done
+}
+
+_inir_perf_open_media() {
+    local pid="$1" fd target lower
+    declare -A counts=()
+    for fd in "/proc/$pid"/fd/*; do
+        [[ -e "$fd" ]] || continue
+        target="$(readlink "$fd" 2>/dev/null || true)"
+        [[ -n "$target" ]] || continue
+        target="${target% (deleted)}"
+        lower="${target,,}"
+        case "$lower" in
+            *.mp4|*.webm|*.mkv|*.avi|*.mov|*.gif|*.m4v|*.mpeg|*.mpg)
+                counts["$target"]=$(( ${counts["$target"]:-0} + 1 ))
+                ;;
+        esac
+    done
+    for target in "${!counts[@]}"; do
+        printf '%s\t%s\n' "${counts[$target]}" "$target"
+    done | sort -k2
+}
+
+_inir_perf_layer_names() {
+    local pid="$1" socket_entry socket
+    command -v niri >/dev/null 2>&1 || return 0
+    socket_entry="$(_inir_perf_proc_env_entry "$pid" NIRI_SOCKET)"
+    socket="${socket_entry#*=}"
+    [[ -n "$socket_entry" && -n "$socket" ]] || return 0
+    env NIRI_SOCKET="$socket" niri msg layers 2>/dev/null | awk -F'"' '/Namespace:/ { print $2 }'
+}
+
 # Print a runtime perf snapshot of the running shell. Used by support triage
 # when users report "shell uses too much RAM / CPU / heats up the laptop".
-# Prints process stats, top heap/file mappings, child processes, enabled
-# features, and heuristic recommendations.
+# Prints process stats, graphics/media ownership, top heap/file mappings,
+# child processes, enabled features, and heuristic recommendations.
 _inir_doctor_perf() {
     local pid=""
     if command -v "$qs_bin" >/dev/null 2>&1; then
@@ -956,6 +1047,109 @@ _inir_doctor_perf() {
         printf '  Hybrid dGPU:    none detected\n'
     fi
     printf '  GPU monitoring: %s\n' "$monitor_gpu"
+    printf '\n'
+
+    printf '=== Graphics and media ===\n'
+    local rhi_entry rhi_request render_loop_entry render_loop qt_platform_entry qt_platform
+    local wayland_entry wayland_display ffmpeg_entry ffmpeg_policy ffmpeg_hwaccels
+    local qsg_threads ffmpeg_demuxers ffmpeg_video_renderers ffmpeg_audio_renderers decoder_workers
+    local libva_loaded="no" render_node_fds
+    rhi_entry="$(_inir_perf_proc_env_entry "$pid" QSG_RHI_BACKEND)"
+    rhi_request="${rhi_entry#*=}"
+    [[ -n "$rhi_entry" ]] || rhi_request="auto"
+    render_loop_entry="$(_inir_perf_proc_env_entry "$pid" QSG_RENDER_LOOP)"
+    render_loop="${render_loop_entry#*=}"
+    [[ -n "$render_loop_entry" ]] || render_loop="auto"
+    qt_platform_entry="$(_inir_perf_proc_env_entry "$pid" QT_QPA_PLATFORM)"
+    qt_platform="${qt_platform_entry#*=}"
+    [[ -n "$qt_platform_entry" ]] || qt_platform="auto"
+    wayland_entry="$(_inir_perf_proc_env_entry "$pid" WAYLAND_DISPLAY)"
+    wayland_display="${wayland_entry#*=}"
+    [[ -n "$wayland_entry" ]] || wayland_display="unset"
+    ffmpeg_entry="$(_inir_perf_proc_env_entry "$pid" QT_FFMPEG_DECODING_HW_DEVICE_TYPES)"
+    if [[ -z "$ffmpeg_entry" ]]; then
+        ffmpeg_policy="auto"
+    elif [[ -z "${ffmpeg_entry#*=}" ]]; then
+        ffmpeg_policy="disabled (empty backend list)"
+        recommendations+=("Qt FFmpeg hardware decoding is disabled by an empty QT_FFMPEG_DECODING_HW_DEVICE_TYPES value.")
+    else
+        ffmpeg_policy="${ffmpeg_entry#*=}"
+    fi
+
+    qsg_threads="$(ps -T -p "$pid" -o comm= 2>/dev/null | awk '$0 ~ /^QSGRenderThread/ {count++} END {print count+0}')"
+    ffmpeg_demuxers="$(ps -T -p "$pid" -o comm= 2>/dev/null | awk '$0 ~ /^QFFmpeg::Demuxe/ {count++} END {print count+0}')"
+    ffmpeg_video_renderers="$(ps -T -p "$pid" -o comm= 2>/dev/null | awk '$0 ~ /^QFFmpeg::VideoR/ {count++} END {print count+0}')"
+    ffmpeg_audio_renderers="$(ps -T -p "$pid" -o comm= 2>/dev/null | awk '$0 ~ /^QFFmpeg::AudioR/ {count++} END {print count+0}')"
+    decoder_workers="$(ps -T -p "$pid" -o comm= 2>/dev/null | awk '$0 ~ /^av:/ {count++} END {print count+0}')"
+    [[ -r "/proc/$pid/maps" ]] && grep -q '/libva[^/]*\.so' "/proc/$pid/maps" 2>/dev/null && libva_loaded="yes"
+    render_node_fds="$(for fd in "/proc/$pid"/fd/*; do
+        [[ -e "$fd" ]] || continue
+        readlink "$fd" 2>/dev/null || true
+    done | awk '$0 ~ /^\/dev\/dri\/renderD[0-9]+$/ {count++} END {print count+0}')"
+
+    printf '  RHI requested:        %s\n' "$rhi_request"
+    printf '  RHI observed:         %s\n' "$(_inir_perf_observed_rhi "$pid")"
+    if [[ "$render_loop" == auto && "$qsg_threads" -gt 0 ]]; then
+        render_loop="threaded (observed)"
+    fi
+    printf '  Render loop:          %s (%s QSG render threads)\n' "$render_loop" "$qsg_threads"
+    printf '  Qt platform:          %s | Wayland display: %s\n' "$qt_platform" "$wayland_display"
+    printf '  Qt FFmpeg policy:     %s\n' "$ffmpeg_policy"
+    if command -v ffmpeg >/dev/null 2>&1; then
+        ffmpeg_hwaccels="$(ffmpeg -hide_banner -hwaccels 2>/dev/null | awk 'NR > 1 && NF { values = values (values ? ", " : "") $1 } END { print values }')"
+        printf '  FFmpeg hwaccels:      %s\n' "${ffmpeg_hwaccels:-(none reported)}"
+    else
+        printf '  FFmpeg hwaccels:      ffmpeg unavailable\n'
+    fi
+
+    local vaapi_drivers="" va_driver va_name
+    declare -A vaapi_seen=()
+    for va_driver in /usr/lib/dri/*_drv_video.so /usr/lib64/dri/*_drv_video.so; do
+        [[ -f "$va_driver" ]] || continue
+        va_name="$(basename -- "$va_driver")"
+        [[ -n "${vaapi_seen[$va_name]:-}" ]] && continue
+        vaapi_seen[$va_name]=1
+        vaapi_drivers+="${vaapi_drivers:+, }$va_name"
+    done
+    printf '  VA-API drivers:       %s\n' "${vaapi_drivers:-(none found)}"
+    printf '  VA-API runtime:       libva loaded=%s, render-node FDs=%s\n' "$libva_loaded" "$render_node_fds"
+    printf '  Qt Multimedia:        %s demuxer, %s video, %s audio, %s codec workers\n' \
+        "$ffmpeg_demuxers" "$ffmpeg_video_renderers" "$ffmpeg_audio_renderers" "$decoder_workers"
+
+    printf '  DRM devices:\n'
+    local drm_rows drm_card drm_render drm_driver drm_vendor drm_device drm_boot drm_access
+    drm_rows="$(_inir_perf_drm_devices)"
+    if [[ -n "$drm_rows" ]]; then
+        while IFS=$'\t' read -r drm_card drm_render drm_driver drm_vendor drm_device drm_boot drm_access; do
+            printf '    %s -> %s, driver=%s, vendor=%s, device=%s, boot_vga=%s, render_access=%s\n' \
+                "$drm_card" "$drm_render" "$drm_driver" "$drm_vendor" "$drm_device" "$drm_boot" "$drm_access"
+        done <<< "$drm_rows"
+    else
+        printf '    (none found)\n'
+    fi
+
+    printf '  Open media files:\n'
+    local media_rows media_count media_path duplicate_media=false
+    media_rows="$(_inir_perf_open_media "$pid")"
+    if [[ -n "$media_rows" ]]; then
+        while IFS=$'\t' read -r media_count media_path; do
+            printf '    %s× %s\n' "$media_count" "$media_path"
+            [[ "$media_count" =~ ^[0-9]+$ && "$media_count" -gt 1 ]] && duplicate_media=true
+        done <<< "$media_rows"
+    else
+        printf '    (none)\n'
+    fi
+    $duplicate_media && recommendations+=("The same media file is open more than once inside Quickshell; inspect duplicate visible video surfaces or retained decoders.")
+
+    printf '  Mapped layer surfaces:\n'
+    local layer_names layer_count
+    layer_names="$(_inir_perf_layer_names "$pid")"
+    if [[ -n "$layer_names" ]]; then
+        layer_count="$(printf '%s\n' "$layer_names" | awk 'NF {count++} END {print count+0}')"
+        printf '    %s total: %s\n' "$layer_count" "$(printf '%s\n' "$layer_names" | awk 'NF { value = value (value ? ", " : "") $0 } END { print value }')"
+    else
+        printf '    unavailable (not Niri, missing socket, or compositor query failed)\n'
+    fi
     printf '\n'
 
     printf '=== Child processes ===\n'
