@@ -20,6 +20,7 @@ Item {
     property bool highRes: false
 
     readonly property int effRadius: circle ? Math.round(Math.min(width, height) / 2) : cornerRadius
+    readonly property real _dpr: root.window ? root.window.devicePixelRatio : 1
 
     // ytimg fallback chain: sddefault(640²) → hqdefault(480²) → original. sd/maxres can 404 on
     // some tracks, so we step down on Image.Error instead of risking a broken cover.
@@ -44,6 +45,11 @@ Item {
         asynchronous: true
         cache: true
         fillMode: Image.PreserveAspectCrop
+        // This component appears in long result, album and queue lists. Keep the
+        // decoded bitmap at the physical size it can display instead of retaining
+        // the server's full thumbnail in every delegate.
+        sourceSize.width: Math.max(1, Math.ceil(root.width * root._dpr))
+        sourceSize.height: Math.max(1, Math.ceil(root.height * root._dpr))
         // Step down the ytimg quality tier if a high-res variant isn't available.
         onStatusChanged: if (status === Image.Error && root.highRes && root._ytTier < 2) root._ytTier++
         layer.enabled: true
