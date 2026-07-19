@@ -2596,6 +2596,15 @@ Singleton {
                     // Known ids: system, sliders, toggles, notifications, widgets.
                     // Unknown ids are ignored; missing ids append in default order.
                     property list<string> sectionOrder: ["system", "sliders", "toggles", "notifications", "widgets"]
+                    // Look of the "system" section. "profile" = wallpaper
+                    // banner + avatar + user@host card; "classic" = the flat
+                    // uptime pill next to the button pill.
+                    property string headerStyle: "profile"
+                    // Banner media of the profile header: "wallpaper" (the
+                    // monitor's live wallpaper), "custom" (headerBannerPath),
+                    // "solid" (flat token plate), or "none" (collapse it).
+                    property string headerBanner: "wallpaper"
+                    property string headerBannerPath: ""
                     // Relative allocation of the two elastic zones. Values are
                     // normalized together by the live resize handle.
                     property JsonObject sectionWeights: JsonObject {

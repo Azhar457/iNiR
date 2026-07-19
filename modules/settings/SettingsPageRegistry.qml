@@ -1194,6 +1194,20 @@ Singleton {
         {
             pageIndex: 23, pageName: root.pages[23].name,
             section: Translation.tr("Sidebars"),
+            label: Translation.tr("Right sidebar header"),
+            description: Translation.tr("Profile card with avatar and banner, or the classic uptime row"),
+            keywords: ["sidebar", "header", "profile", "avatar", "uptime", "user", "distro", "classic"]
+        },
+        {
+            pageIndex: 23, pageName: root.pages[23].name,
+            section: Translation.tr("Sidebars"),
+            label: Translation.tr("Header banner"),
+            description: Translation.tr("Live wallpaper, custom media, a solid plate, or no banner at all"),
+            keywords: ["sidebar", "header", "banner", "wallpaper", "video", "gif", "image", "solid", "custom", "picture"]
+        },
+        {
+            pageIndex: 23, pageName: root.pages[23].name,
+            section: Translation.tr("Sidebars"),
             label: Translation.tr("Keep sidebars loaded"),
             description: Translation.tr("Keep sidebar content in memory for faster opening"),
             keywords: ["sidebar", "loaded", "memory", "keep", "preload", "fast"]

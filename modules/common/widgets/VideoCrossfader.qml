@@ -31,6 +31,8 @@ Item {
     property string _loadingSource: ""
     property bool _slotAHasFrame: false
     property bool _slotBHasFrame: false
+    readonly property bool hasFrame: root.activeSlot === 0
+        ? root._slotAHasFrame : root._slotBHasFrame
 
     function _normalized(path: string): string {
         const value = String(path ?? "")

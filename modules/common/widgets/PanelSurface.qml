@@ -37,6 +37,9 @@ Item {
     property bool cardStyle: false
     // Override manual de esquinas; -1 = automático según estilo.
     property real radiusOverride: -1
+    // Some nested cards already have enough separation from fill/shape and do
+    // not need a second outer contour.
+    property bool outlined: true
     // En zzz: true = placa con esquina cortada; false = transparente (cuando el
     // contorno del shell ya lo dibuja otra cosa, p.ej. la barra unificada).
     property bool zzzChamfer: true
@@ -60,13 +63,21 @@ Item {
     // consumidor): gradiente washi + hairline + sheen + glass, dibujada con
     // Appearance directo — modules/common no puede importar qs.modules.pill.
     property bool islandSkin: false
+    // Optional explicit owner for nested surfaces. Empty preserves the global
+    // worldview exactly; panel-local dialects such as Ricelin can opt in
+    // without being restyled by an unrelated global flag.
+    property string surfaceDialect: ""
 
-    readonly property bool _zzz: Appearance.zzzEverywhere
-    readonly property bool _angel: Appearance.angelEverywhere
-    readonly property bool _inir: Appearance.inirEverywhere
-    readonly property bool _aurora: Appearance.auroraEverywhere
-    readonly property bool _cookie: Appearance.cookieEverywhere
-    readonly property bool _island: root.islandSkin && !root._zzz
+    readonly property string _resolvedDialect: root.surfaceDialect.length > 0
+        ? root.surfaceDialect : Appearance.globalStyle
+    readonly property bool _zzz: root._resolvedDialect === "zzz"
+    readonly property bool _angel: root._resolvedDialect === "angel"
+    readonly property bool _inir: root._resolvedDialect === "inir"
+    readonly property bool _aurora: root._resolvedDialect === "aurora" || root._angel
+    readonly property bool _cookie: root._resolvedDialect === "cookie"
+    readonly property bool _island: root.surfaceDialect.length > 0
+        ? root._resolvedDialect === "island"
+        : root.islandSkin && !root._zzz
     readonly property real _islandOpacity: Config.options?.appearance?.island?.opacity ?? 1
     readonly property bool _backdropActive: !root.borderless && Appearance.effectsEnabled
         && ((root.wallpaperBackdrop && root._aurora)
@@ -93,7 +104,7 @@ Item {
         : (root.cardStyle ? Appearance.rounding.normal : Appearance.rounding.small)
 
     // ── Borde ──
-    readonly property int _borderWidth: root.borderless ? 0
+    readonly property int _borderWidth: (root.borderless || !root.outlined) ? 0
         : root.island ? 1
         : root._angel ? Appearance.angel.cardBorderWidth
         : root._inir ? 1
@@ -124,7 +135,7 @@ Item {
         visible: root._zzz && root.zzzChamfer && !root.borderless
         fillColor: root._fill
         strokeColor: Appearance.zzz.hairline
-        strokeWidth: Appearance.zzz.hairlineThick
+        strokeWidth: root.outlined ? Appearance.zzz.hairlineThick : 0
         chamfer: Appearance.zzz.cutCorner
     }
 
@@ -145,7 +156,7 @@ Item {
         anchors.fill: parent
         visible: root._island
         radius: root._radius
-        border.width: 1
+        border.width: root.outlined ? 1 : 0
         border.color: Appearance.colors.colLayer0Border
         gradient: Gradient {
             GradientStop { position: 0.0; color: Qt.alpha(Appearance.colors.colLayer3, root._islandOpacity) }

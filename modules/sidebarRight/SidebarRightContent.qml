@@ -74,9 +74,83 @@ Item {
     property bool reloadButtonEnabled: true
     property bool settingsButtonEnabled: true
 
+    // ─── System header actions ───────────────────────────────────────
+    // Owned here so both header styles (classic pills, profile card) drive
+    // the same debounce state instead of each keeping its own copy.
+    function requestReload(): void {
+        if (!root.reloadButtonEnabled) {
+            _log("[SidebarRight] Reload button still on cooldown, ignoring click");
+            return;
+        }
+
+        _log("[SidebarRight] Reload button clicked");
+        root.reloadButtonEnabled = false;
+        reloadButtonCooldown.restart();
+
+        if (CompositorService.isHyprland) {
+            Hyprland.dispatch("reload");
+        } else if (CompositorService.isNiri) {
+            Quickshell.execDetached(["/usr/bin/niri", "msg", "action", "load-config-file"]);
+        }
+        Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")]);
+    }
+
+    function openSettings(): void {
+        if (!root.settingsButtonEnabled) {
+            _log("[SidebarRight] Settings button still on cooldown, ignoring click");
+            return;
+        }
+
+        _log("[SidebarRight] Settings button clicked");
+        root.settingsButtonEnabled = false;
+        settingsButtonCooldown.restart();
+
+        if (CompositorService.isNiri) {
+            const wins = NiriService.windows || []
+            _log("[SidebarRight] Checking for existing settings window among", wins.length, "windows");
+            for (let i = 0; i < wins.length; i++) {
+                const w = wins[i]
+                if (w.title === "illogical-impulse Settings" && w.app_id === "org.quickshell") {
+                    _log("[SidebarRight] Found existing settings window, focusing it");
+                    GlobalStates.sidebarRightOpen = false;
+                    Qt.callLater(() => {
+                        NiriService.focusWindow(w.id)
+                    })
+                    return
+                }
+            }
+            _log("[SidebarRight] No existing settings window found");
+        }
+
+        _log("[SidebarRight] Opening new settings window via IPC");
+        GlobalStates.sidebarRightOpen = false;
+        Qt.callLater(() => {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]);
+        })
+    }
+
+    Timer {
+        id: reloadButtonCooldown
+        interval: 500
+        onTriggered: {
+            root.reloadButtonEnabled = true;
+            _log("[SidebarRight] Reload button cooldown finished");
+        }
+    }
+
+    Timer {
+        id: settingsButtonCooldown
+        interval: 500
+        onTriggered: {
+            root.settingsButtonEnabled = true;
+            _log("[SidebarRight] Settings button cooldown finished");
+        }
+    }
+
     // ─── Modular sections (sidebar.right.sectionOrder) ───────────────
     // Sanitized: unknown ids dropped, missing ids appended in default order,
     // so a stale or hand-edited config can never blank the sidebar.
+    readonly property string headerStyle: Config.options?.sidebar?.right?.headerStyle ?? "profile"
     readonly property var _sectionDefaultOrder: ["system", "sliders", "toggles", "notifications", "widgets"]
     readonly property var sectionOrder: {
         const def = root._sectionDefaultOrder
@@ -557,7 +631,11 @@ Item {
                         : root.notifsCollapsed ? implicitHeight : 96
                     Layout.preferredHeight: usesElasticPool
                         ? root.sectionWeight(modelData) * 180 : implicitHeight
-                    Layout.topMargin: modelData === "system" ? 5 : 0
+                    // The profile card is a full-bleed card that nests into the
+                    // panel's corner, so its gap must match the 10px side inset
+                    // exactly. The classic pill row keeps its extra breathing
+                    // room, which is what that 5 was for.
+                    Layout.topMargin: (modelData === "system" && root.headerStyle === "classic") ? 5 : 0
                     visible: active
                     active: {
                         if (modelData !== "sliders") return true
@@ -730,7 +808,9 @@ Item {
 
                     sourceComponent: {
                         switch (modelData) {
-                            case "system": return systemSectionComponent
+                            case "system":
+                                return root.headerStyle === "classic"
+                                    ? systemSectionComponent : profileHeaderComponent
                             case "sliders": return slidersSectionComponent
                             case "toggles":
                                 return (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
@@ -763,6 +843,33 @@ Item {
         }
 
         Component { id: systemSectionComponent; SystemButtonRow {} }
+        Component {
+            id: profileHeaderComponent
+            SidebarProfileHeader {
+                editMode: root.editMode
+                sectionEditMode: root.sectionEditMode
+                androidToggles: (Config.options?.sidebar?.quickToggles?.style ?? "classic") === "android"
+                reloadEnabled: root.reloadButtonEnabled
+                settingsEnabled: root.settingsButtonEnabled
+                panelVisible: root.panelVisible
+                panelCardStyle: sidebarRightBackground.cardStyle
+                panelScreen: root.panelScreen
+                surfaceDialect: sidebarRightBackground.surfaceDialect
+                panelRadius: sidebarRightBackground.radius
+                panelInset: root.sidebarPadding
+                atPanelTop: root.sectionOrder[0] === "system"
+                onEditModeRequested: root.editMode = !root.editMode
+                onSectionEditModeRequested: {
+                    root.sectionEditMode = !root.sectionEditMode
+                    if (!root.sectionEditMode) {
+                        root.cancelSectionDrag()
+                        root.cancelSectionResize()
+                    }
+                }
+                onReloadRequested: root.requestReload()
+                onSettingsRequested: root.openSettings()
+            }
+        }
         Component { id: slidersSectionComponent; QuickSliders {} }
         Component { id: classicTogglesComponent; ClassicQuickPanel {} }
         Component { id: androidTogglesComponent; AndroidQuickPanel { editMode: root.editMode } }
@@ -1018,35 +1125,10 @@ Item {
                 enabled: root.reloadButtonEnabled
                 opacity: enabled ? 1.0 : 0.5
                 buttonIcon: "restart_alt"
-                onClicked: {
-                    if (!root.reloadButtonEnabled) {
-                        _log("[SidebarRight] Reload button still on cooldown, ignoring click");
-                        return;
-                    }
-                    
-                    _log("[SidebarRight] Reload button clicked");
-                    root.reloadButtonEnabled = false;
-                    reloadButtonCooldown.restart();
-                    
-                    if (CompositorService.isHyprland) {
-                        Hyprland.dispatch("reload");
-                    } else if (CompositorService.isNiri) {
-                        Quickshell.execDetached(["/usr/bin/niri", "msg", "action", "load-config-file"]);
-                    }
-                    Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")]);
-                }
+                onClicked: root.requestReload()
                 StyledToolTip {
                     position: "left"
                     text: Translation.tr("Reload Quickshell")
-                }
-            }
-            
-            Timer {
-                id: reloadButtonCooldown
-                interval: 500
-                onTriggered: {
-                    root.reloadButtonEnabled = true;
-                    _log("[SidebarRight] Reload button cooldown finished");
                 }
             }
             QuickToggleButton {
@@ -1055,51 +1137,10 @@ Item {
                 enabled: root.settingsButtonEnabled
                 opacity: enabled ? 1.0 : 0.5
                 buttonIcon: "settings"
-                onClicked: {
-                    if (!root.settingsButtonEnabled) {
-                        _log("[SidebarRight] Settings button still on cooldown, ignoring click");
-                        return;
-                    }
-                    
-                    _log("[SidebarRight] Settings button clicked");
-                    root.settingsButtonEnabled = false;
-                    settingsButtonCooldown.restart();
-                    
-                    if (CompositorService.isNiri) {
-                        const wins = NiriService.windows || []
-                        _log("[SidebarRight] Checking for existing settings window among", wins.length, "windows");
-                        for (let i = 0; i < wins.length; i++) {
-                            const w = wins[i]
-                            if (w.title === "illogical-impulse Settings" && w.app_id === "org.quickshell") {
-                                _log("[SidebarRight] Found existing settings window, focusing it");
-                                GlobalStates.sidebarRightOpen = false;
-                                Qt.callLater(() => {
-                                    NiriService.focusWindow(w.id)
-                                })
-                                return
-                            }
-                        }
-                        _log("[SidebarRight] No existing settings window found");
-                    }
-                    
-                    _log("[SidebarRight] Opening new settings window via IPC");
-                    GlobalStates.sidebarRightOpen = false;
-                    Qt.callLater(() => {
-                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]);
-                    })
-                }
+                onClicked: root.openSettings()
                 StyledToolTip {
                     position: "left"
                     text: Translation.tr("Settings")
-                }
-            }
-            
-            Timer {
-                id: settingsButtonCooldown
-                interval: 500
-                onTriggered: {
-                    root.settingsButtonEnabled = true;
-                    _log("[SidebarRight] Settings button cooldown finished");
                 }
             }
             QuickToggleButton {

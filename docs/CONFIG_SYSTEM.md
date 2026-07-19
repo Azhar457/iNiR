@@ -190,6 +190,15 @@ historical feature-left and system-right layout, so no migration script is
 needed. `collapseWidgetsTab` and `collapseEmptyNotifications` remain legacy
 content-aware compatibility options.
 
+### Right sidebar header
+
+`sidebar.right.headerStyle` selects the system section shown at the top of the right sidebar:
+
+- `profile`: avatar, account identity, uptime, actions and optional banner media
+- `classic`: the compact uptime and action row
+
+For the profile style, `sidebar.right.headerBanner` accepts `wallpaper`, `custom`, `solid` or `none`. `sidebar.right.headerBannerPath` stores the local image, GIF or video path used by `custom`. Wallpaper and animated media playback follow the sidebar's active screen and visibility.
+
 ### Right sidebar widgets
 
 `sidebar.right.enabledWidgets` controls the widgets shown in the right sidebar bottom group and compact sidebar.

@@ -1,11 +1,13 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Dialogs
 import Quickshell
 import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
 
 ContentPage {
     id: root
@@ -352,6 +354,79 @@ ContentPage {
                     StyledToolTip {
                         text: Translation.tr("Even out volume across tracks (EBU R128, like YouTube Music). Disable for the unprocessed stream.")
                     }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Right sidebar header")
+                tooltip: Translation.tr("Look of the system section at the top of the right sidebar")
+
+                ConfigSelectionArray {
+                    Layout.fillWidth: false
+                    currentValue: Config.options?.sidebar?.right?.headerStyle ?? "profile"
+                    onSelected: newValue => {
+                        Config.setNestedValue("sidebar.right.headerStyle", newValue);
+                    }
+                    options: [
+                        { displayName: Translation.tr("Profile card"), icon: "account_box", value: "profile" },
+                        { displayName: Translation.tr("Classic"), icon: "view_agenda", value: "classic" }
+                    ]
+                }
+
+                ContentSubsectionLabel {
+                    visible: (Config.options?.sidebar?.right?.headerStyle ?? "profile") === "profile"
+                    text: Translation.tr("Banner")
+                }
+
+                ConfigSelectionArray {
+                    Layout.fillWidth: false
+                    visible: (Config.options?.sidebar?.right?.headerStyle ?? "profile") === "profile"
+                    currentValue: Config.options?.sidebar?.right?.headerBanner ?? "wallpaper"
+                    onSelected: newValue => {
+                        Config.setNestedValue("sidebar.right.headerBanner", newValue);
+                    }
+                    options: [
+                        { displayName: Translation.tr("Wallpaper"), icon: "wallpaper", value: "wallpaper" },
+                        { displayName: Translation.tr("Custom media"), icon: "perm_media", value: "custom" },
+                        { displayName: Translation.tr("Solid"), icon: "format_color_fill", value: "solid" },
+                        { displayName: Translation.tr("None"), icon: "block", value: "none" }
+                    ]
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    visible: (Config.options?.sidebar?.right?.headerStyle ?? "profile") === "profile"
+                        && (Config.options?.sidebar?.right?.headerBanner ?? "wallpaper") === "custom"
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: (Config.options?.sidebar?.right?.headerBannerPath ?? "").length > 0
+                            ? Directories.shortHomePath(Config.options.sidebar.right.headerBannerPath)
+                            : Translation.tr("No media selected")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colSubtext
+                        elide: Text.ElideMiddle
+                        wrapMode: Text.NoWrap
+                    }
+
+                    RippleButtonWithIcon {
+                        materialIcon: "folder_open"
+                        mainText: Translation.tr("Choose")
+                        onClicked: bannerImageDialog.open()
+                    }
+                }
+
+                FileDialog {
+                    id: bannerImageDialog
+                    title: Translation.tr("Choose header media")
+                    fileMode: FileDialog.OpenFile
+                    nameFilters: [
+                        Translation.tr("Images and animations") + " (*.png *.jpg *.jpeg *.webp *.bmp *.avif *.gif *.mp4 *.webm *.mkv *.avi *.mov)",
+                        Translation.tr("All files") + " (*)"
+                    ]
+                    onAccepted: Config.setNestedValue("sidebar.right.headerBannerPath",
+                        FileUtils.trimFileProtocol(String(selectedFile)))
                 }
             }
 
