@@ -16,7 +16,7 @@ CLAUDE.md
 agents/
 kilo.json
 mcp.json
-prompts/
+/prompts/
 Session.md*
 session-*.md
 **/codemap.md
@@ -59,6 +59,12 @@ opencode.json
 .mcp.json
 .memory/
 .codebase-memory/
+
+# Cowork productivity plugin — local task board + memory, never shared
+TASKS.md
+dashboard.html
+memory/
+
 .task/
 .devin/
 .tmp/
@@ -74,14 +80,15 @@ mcp/
 .github/copilot-instructions.md
 .github/instructions/
 
-# ── Go theme generators (built on demand) ────────────────────
-vscode_themegen
-opencode_themegen
-system24_themegen
-zed_themegen
-!scripts/colors/system24_themegen/
-!scripts/colors/zed_themegen/
-!scripts/colors/zed_themegen/main.go
+# ── Go theme-generator binaries (built on demand) ────────────
+/vscode_themegen
+/opencode_themegen
+/system24_themegen
+/zed_themegen
+/scripts/colors/vscode_themegen/vscode_themegen
+/scripts/colors/opencode_themegen/opencode_themegen
+/scripts/colors/system24_themegen/system24_themegen
+/scripts/colors/zed_themegen/zed_themegen
 
 # ── Python ────────────────────────────────────────────────────
 __pycache__/
