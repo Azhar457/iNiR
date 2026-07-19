@@ -350,6 +350,8 @@ Playful mascot companion (needs `mascot.enable` and the companion switch in Sett
 | Function | Description |
 |----------|-------------|
 | `poke` | Ask her to peek from a random edge with a random pose |
+| `status` | Return JSON diagnostics for mood, configured/effective voice, companion state and non-sensitive Screen Time counters |
+| `setVoice <mode>` | Set the idle voice register to `adaptive`, `casual`, `dry`, `composed` or `chaotic` |
 | `appear <pose> <edge>` | Show a specific catalog pose from `left`, `right`, `top` or `bottom` |
 | `appearContextual <pose> <sourceWidget>` | Show near the triggering widget (`battery`, `media`, `update`, `network`, `dnd`). Requires `mascot.companion.contextualPlacement` to be enabled for event reactions; this IPC call bypasses that check for testing. |
 | `appearWithLine <pose> <edge> <line>` | Show a specific pose saying an exact line (used by the bar widget easter eggs) |

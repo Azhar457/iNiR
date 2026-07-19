@@ -3550,6 +3550,80 @@
       "Today I thought about yesterday. Bold, I know."
     ]
   },
+  "voiceLines": {
+    "casual": [
+      "Hey. I was nearby. Allegedly.",
+      "No agenda. Just passing through your pixels.",
+      "You look busy. I'll judge quietly.",
+      "Carry on. I brought absolutely nothing useful.",
+      "I checked in. Social obligation complete.",
+      "Nice little setup you've got here.",
+      "I'm staying for a minute. Don't make it ceremonial.",
+      "What are we doing. Actually, never mind. I'm in.",
+      "I came for the vibes. The vibes need maintenance.",
+      "Tiny break. You, me, no productivity claims.",
+      "I'm listening. Casually. With one ear.",
+      "Okay, this is kind of cozy.",
+      "I approve of whatever this is becoming.",
+      "Nothing urgent. That's why I like it.",
+      "Keep going. I want to see where this lands.",
+      "Hi. That's the whole announcement."
+    ],
+    "dry": [
+      "I had a plan. It expired.",
+      "Today has been extremely today.",
+      "Everything is under control. None of it by me.",
+      "I got ready for this. Regrettable effort.",
+      "One task completed. Emotionally, several.",
+      "I am operating within acceptable disappointment.",
+      "The ambition was present. Briefly.",
+      "I survived another minor inconvenience. Heroic.",
+      "Productivity and I remain on speaking terms.",
+      "I lowered the bar and still arrived late.",
+      "Good news: nothing got dramatically worse.",
+      "I brought confidence. The competence is remote.",
+      "The day is winning, but not elegantly.",
+      "I considered improving. Exhausting concept.",
+      "My schedule says no. My posture agrees.",
+      "We continue. Not proudly, but consistently."
+    ],
+    "composed": [
+      "Proceed. I am paying attention.",
+      "That seems workable. Suspicious, but workable.",
+      "A measured response: hmm.",
+      "I reviewed the situation. It remains a situation.",
+      "No rush. Precision survives longer than enthusiasm.",
+      "The sensible option is available. How unusual.",
+      "I have considered the evidence. It is messy.",
+      "A restrained amount of confidence is justified.",
+      "We can solve this without making it theatrical.",
+      "The result matters more than the performance.",
+      "I recommend one deliberate step. Revolutionary.",
+      "Calm is efficient. I dislike that it works.",
+      "This deserves thought, not panic with branding.",
+      "Noted. Properly this time.",
+      "I remain cautiously impressed.",
+      "Continue. The structure is beginning to behave."
+    ],
+    "chaotic": [
+      "New plan. No, wait. Better bad plan.",
+      "I touched one setting and now we have lore.",
+      "My attention left. I sent the tail after it.",
+      "I have momentum and no destination.",
+      "Hold on. The idea is escaping.",
+      "Everything clicked at once. Terrible sound.",
+      "I found a shortcut. It has consequences.",
+      "There are three thoughts fighting for one sentence.",
+      "I am improvising with alarming confidence.",
+      "Tiny problem. Huge entrance. Correct proportions.",
+      "The plan is alive and refusing instructions.",
+      "I know exactly what I'm doing. Different thing each second.",
+      "We could be reasonable. Counterpoint: this.",
+      "One more adjustment. Famous last words.",
+      "I brought energy. Please provide direction.",
+      "Okay. Weird idea. Stay with me."
+    ]
+  },
   "smartLines": {
     "music-track": [
       "Oh, %1? Acceptable.",
@@ -3687,6 +3761,34 @@
       "The birds will start soon. That's your cue. It was your cue hours ago.",
       "3AM code review: everything is fine and nothing is real.",
       "I'm nocturnal. What's your excuse."
+    ],
+    "screen-time-2h": [
+      "Two hours in. Still respectable. Stretch anyway.",
+      "Two hours of screen time. Your spine sent a memo.",
+      "We've been here two hours. Efficient or trapped. Unclear.",
+      "Two-hour mark. A tiny break would not ruin the plot.",
+      "Two hours logged. Blink manually."
+    ],
+    "screen-time-4h": [
+      "Four hours. The chair is becoming part of the family.",
+      "Four hours logged. Stand up before we merge with the furniture.",
+      "Half a workday in pixels. Very modern. Very horizontal.",
+      "Four hours. Hydration has entered the negotiation.",
+      "The screen got four hours. Borrow five minutes back."
+    ],
+    "screen-time-8h": [
+      "Eight hours. That's a full relationship with the monitor.",
+      "Eight hours logged. The desktop has seen enough of us.",
+      "Full screen-time shift complete. Clock out emotionally.",
+      "Eight hours. Even I am recommending outside air.",
+      "The counter reached eight. No medal. Take the break."
+    ],
+    "break-return": [
+      "%1 minutes away. Acceptable recovery arc.",
+      "Back after %1 minutes. Look at you, briefly offline.",
+      "%1-minute break confirmed. The chair missed you more than I did.",
+      "You vanished for %1 minutes. I guarded the pixels. Poorly.",
+      "%1 minutes without the screen. Character development."
     ]
   },
   "frameScale": {

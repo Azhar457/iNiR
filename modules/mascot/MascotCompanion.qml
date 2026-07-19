@@ -106,11 +106,12 @@ Scope {
     property double _lastShownAt: 0
     property int _clickCount: 0
     property string _contextualSource: ""
-    property var _manifest: ({ idlePicks: [], linesByPose: ({}), idleLines: [], animatedPoses: [], linesByPoseSource: ({}), moodLines: ({}), smartLines: ({}) })
+    property var _manifest: ({ idlePicks: [], linesByPose: ({}), idleLines: [], animatedPoses: [], linesByPoseSource: ({}), moodLines: ({}), voiceLines: ({}), smartLines: ({}) })
 
     property string _lastGameName: ""
-    property string _focusApp: ""
-    property double _focusSince: Date.now()
+    property var _screenTimeMilestonesSeen: []
+    property int _commentedSessionRevision: -1
+    property real _commentedReturnAt: 0
 
     // What she says, by pose. Rendered as a QML bubble — translated,
     // theme-aware, never baked into the image.
@@ -130,6 +131,22 @@ Scope {
         })
     readonly property var _linesByPoseSource: _manifest.linesByPoseSource ?? ({})
     readonly property var _moodLines: _manifest.moodLines ?? ({})
+    readonly property var _voiceLines: _manifest.voiceLines ?? ({})
+    readonly property string _configuredVoiceMode: Config.options?.mascot?.personality?.voiceMode ?? "adaptive"
+    readonly property string _effectiveVoiceMode: {
+        const explicit = ["casual", "dry", "composed", "chaotic"]
+        if (explicit.includes(root._configuredVoiceMode))
+            return root._configuredVoiceMode
+        if (!(Config.options?.mascot?.personality?.enabled ?? true))
+            return "casual"
+        switch (MascotMood.currentMood ?? "neutral") {
+        case "hyper": return "chaotic"
+        case "contemplative": return "composed"
+        case "sleepy":
+        case "snarky": return "dry"
+        default: return "casual"
+        }
+    }
     readonly property var _idleLines: _manifest.idleLines?.length
         ? _manifest.idleLines
         : [
@@ -212,16 +229,20 @@ Scope {
         }
         const pool = _poolForArg(_linesByPose[poseName], hasArg)
         if (pool && pool.length) return Translation.tr(_pickFrom(pool))
-        // Idle peeks only talk sometimes; silence is also personality
+        // Idle peeks only talk sometimes; silence is also personality. Voice
+        // register and mood are separate axes so she can be sleepy-casual,
+        // contemplative-composed, or explicitly pinned by the user.
         if (Math.random() < 0.55) {
-            // 50/50: blend in mood lines if personality is enabled and has the current mood
             const moodEnabled = Config.options?.mascot?.personality?.enabled ?? true
             const mood = moodEnabled ? (MascotMood.currentMood ?? "neutral") : null
             const moodPool = mood ? (root._moodLines[mood] ?? []) : []
+            const voicePool = root._voiceLines[root._effectiveVoiceMode] ?? []
             const custom = Config.options?.mascot?.companion?.customLines ?? []
             const baseLines = _idleLines.concat(custom.filter(l => (l ?? "").length > 0))
-            const useMood = moodPool.length > 0 && Math.random() < 0.5
-            const all = useMood ? moodPool : baseLines
+            const roll = Math.random()
+            const all = moodPool.length > 0 && roll < 0.32 ? moodPool
+                : voicePool.length > 0 && roll < 0.78 ? voicePool
+                : baseLines
             return all.length ? Translation.tr(_pickFrom(all)) : ""
         }
         return ""
@@ -372,8 +393,43 @@ Scope {
         // check needs Battery.available or it reads a desktop as a dead laptop.
         if (Battery.available && Battery.isPluggedIn && Battery.percentage >= 0.97)
             out.push({ key: "battery-full", pose: "presence-idle-loop", edge: "left" })
-        if (commentaryOn && root._focusApp.length > 0 && Date.now() - root._focusSince > 45 * 60 * 1000)
-            out.push({ key: "app-marathon", pose: "sit-laptop", edge: "bottom", arg: root._prettyAppName(root._focusApp) })
+        const screenTimeReady = ScreenTime.enabled && ScreenTime.ready
+        if (commentaryOn && screenTimeReady
+            && ScreenTime.currentSessionSeconds >= 45 * 60
+            && ScreenTime.currentAppName.length > 0
+            && root._commentedSessionRevision !== ScreenTime.sessionRevision) {
+            out.push({
+                key: "app-marathon",
+                pose: "sit-laptop",
+                edge: "bottom",
+                arg: root._prettyAppName(ScreenTime.currentAppName)
+            })
+        }
+        if (commentaryOn && screenTimeReady) {
+            const total = ScreenTime.todayData?.totalSeconds ?? 0
+            const milestones = [
+                { key: "screen-time-8h", seconds: 8 * 3600, pose: "yawn-stretch" },
+                { key: "screen-time-4h", seconds: 4 * 3600, pose: "tea-break" },
+                { key: "screen-time-2h", seconds: 2 * 3600, pose: "stretching-break" }
+            ]
+            for (const milestone of milestones) {
+                if (total >= milestone.seconds
+                    && !root._screenTimeMilestonesSeen.includes(milestone.key)) {
+                    out.push({ key: milestone.key, pose: milestone.pose, edge: "bottom" })
+                    break
+                }
+            }
+            if (ScreenTime.lastReturnAt > root._commentedReturnAt
+                && ScreenTime.lastIdleDurationSeconds >= 5 * 60
+                && Date.now() - ScreenTime.lastReturnAt < 10 * 60 * 1000) {
+                out.push({
+                    key: "break-return",
+                    pose: "welcoming",
+                    edge: "right",
+                    arg: Math.max(5, Math.round(ScreenTime.lastIdleDurationSeconds / 60))
+                })
+            }
+        }
         // Wet weather outside → umbrella commentary (wttr WWO rain/sleet/thunder codes)
         if (Weather.enabled) {
             const wet = ["176", "179", "182", "185", "200", "263", "266", "281", "284", "293", "296", "299", "302", "305", "308", "311", "314", "317", "320", "353", "356", "359", "386", "389", "392", "395"]
@@ -430,6 +486,12 @@ Scope {
                     root._lastContext = c.key
                     root._remember(root._recentContexts, c.key, 6)
                     _remember(_recentPoses, c.pose, 10)
+                    if (c.key.startsWith("screen-time-"))
+                        root._remember(root._screenTimeMilestonesSeen, c.key, 3)
+                    if (c.key === "app-marathon")
+                        root._commentedSessionRevision = ScreenTime.sessionRevision
+                    if (c.key === "break-return")
+                        root._commentedReturnAt = ScreenTime.lastReturnAt
                     return true
                 }
                 return false
@@ -678,18 +740,6 @@ Scope {
         root.reactEvent("gaming")
     }}
 
-    // Track focused app for marathon detection
-    Connections {
-        target: NiriService
-        function onActiveWindowChanged() {
-            const app = NiriService.activeWindow?.app_id ?? ""
-            if (app !== root._focusApp) {
-                root._focusApp = app
-                root._focusSince = Date.now()
-            }
-        }
-    }
-
     // Frantic workspace switching earns commentary
     property int _wsHops: 0
     Connections {
@@ -807,6 +857,37 @@ Scope {
         target: "mascot"
 
         function poke(): void { root.poke() }
+        // Runtime-safe personality diagnostics. Deliberately omits app/window names.
+        function status(): string {
+            return JSON.stringify({
+                enabled: root.companionEnabled,
+                showing: root.showing,
+                pose: root.pose,
+                edge: root.edge,
+                mood: MascotMood.currentMood ?? "neutral",
+                configuredVoiceMode: root._configuredVoiceMode,
+                effectiveVoiceMode: root._effectiveVoiceMode,
+                commentary: root.commentaryOn,
+                screenTime: {
+                    enabled: ScreenTime.enabled,
+                    ready: ScreenTime.ready,
+                    userIdle: ScreenTime.userIdle,
+                    todaySeconds: ScreenTime.todayData?.totalSeconds ?? 0,
+                    sessionSeconds: ScreenTime.currentSessionSeconds,
+                    sessionRevision: ScreenTime.sessionRevision,
+                    lastIdleDurationSeconds: ScreenTime.lastIdleDurationSeconds
+                },
+                seenMilestones: root._screenTimeMilestonesSeen
+            })
+        }
+        // Set the idle conversational register; "adaptive" follows MascotMood.
+        function setVoice(mode: string): string {
+            const valid = ["adaptive", "casual", "dry", "composed", "chaotic"]
+            if (!valid.includes(mode))
+                return "invalid voice mode"
+            Config.setNestedValue("mascot.personality.voiceMode", mode)
+            return mode
+        }
         // Chaos mode: run across the desktop and mess with widgets/panels
         function romp(): void { root.startRomp("romp") }
         // Chase game: she hunts your mouse clicks — click her to catch her

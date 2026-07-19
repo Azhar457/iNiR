@@ -40,7 +40,8 @@ lives on `prerelease` and reaches `main` with the next release.
 - A Mascot settings page in both families: every behavior, reaction and
   placement is configurable, 17 placement groups share a curated collection
   (GIFs included), and custom images and phrases are yours to add. All 208
-  illustrations get a visible role somewhere.
+  illustrations get a visible role somewhere. Her conversational register can
+  follow the current mood or stay casual, dry, composed or chaotic.
 - A live Shell Layout editor: drag the bar, dock, sidebars or Waffle taskbar
   to another screen edge and drop it there; dropping on an occupied edge
   swaps both surfaces. Sidebars and the dock resize live. Settings › Shell

@@ -689,6 +689,7 @@ Singleton {
                     property bool enabled: true // Session-long mood flavor (sleepy/hyper/snarky/contemplative)
                     property int idleMoodIntervalMinutes: 30 // How often mood rolls (with ±50% jitter)
                     property bool commentary: true // Personal observations (3AM commits, uptime, app marathons); off = generic lines only
+                    property string voiceMode: "adaptive" // adaptive | casual | dry | composed | chaotic
                 }
                 property JsonObject chaos: JsonObject {
                     property bool enable: false // Chaos mode: she may run across the desktop and mess with widgets/panels

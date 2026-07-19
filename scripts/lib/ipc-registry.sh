@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 3cb073ab1a41d430
+# IPC.md hash: 7beda3ab69133791
 # Targets: 60
 
 declare -gA IPC_TARGET_DESC=(
@@ -153,7 +153,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [globalActions]="run runWithArgs list search open"
   [keyboard]="switchLayout switchLayoutPrevious getCurrentLayout getLayouts"
   [lock]="activate deactivate status focus"
-  [mascot]="poke romp chase hideSeek tidy appear appearContextual appearWithLine hide"
+  [mascot]="poke status setVoice romp chase hideSeek tidy appear appearContextual appearWithLine hide"
   [mascotMood]="set current"
   [mediaControls]="toggle close open"
   [memory]="collect stats restart dismiss reset"
@@ -282,6 +282,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["lock:status"]="Return lock state (\`locked\`, \`activating\`, or \`unlocked\`)"
   ["lock:focus"]="Refocus the lock screen input"
   ["mascot:poke"]="Ask her to peek from a random edge with a random pose"
+  ["mascot:status"]="Return JSON diagnostics for mood, configured/effective voice, companion state and non-sensitive Screen Time counters"
+  ["mascot:setVoice"]="Set the idle voice register to \`adaptive\`, \`casual\`, \`dry\`, \`composed\` or \`chaotic\`"
   ["mascot:romp"]="Chaos mode: she runs across the desktop and bonks a widget, wrecks one onto the floor, hurls one to a new spot, rampages through several, kicks the bar/dock, or ground-slams so everything rattles. Needs \`mascot.chaos.enable\`; widgets only keep new positions with \`mascot.chaos.allowRearrange\`"
   ["mascot:chase"]="Chase game: she hunts your mouse, every click is a spot she pounces on; click *her* to catch her and win"
   ["mascot:hideSeek"]="Hide-and-seek: she tucks into a spot on the desktop. Click her before the 20s timeout to find her, otherwise she wins by default"
@@ -463,6 +465,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["globalActions:runWithArgs"]="<actionId> <args>"
   ["globalActions:list"]="<category>"
   ["globalActions:search"]="<query>"
+  ["mascot:setVoice"]="<mode>"
   ["mascot:appear"]="<pose> <edge>"
   ["mascot:appearContextual"]="<pose> <sourceWidget>"
   ["mascot:appearWithLine"]="<pose> <edge> <line>"

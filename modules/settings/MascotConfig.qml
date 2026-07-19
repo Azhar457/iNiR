@@ -194,6 +194,30 @@ ContentPage {
                 }
             }
 
+            ContentSubsection {
+                title: Translation.tr("Voice")
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Adaptive follows her mood; fixed modes keep the same conversational register")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                    wrapMode: Text.Wrap
+                }
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.mascot?.personality?.voiceMode ?? "adaptive"
+                    onSelected: newValue => Config.setNestedValue("mascot.personality.voiceMode", newValue)
+                    options: [
+                        { displayName: Translation.tr("Adaptive"), icon: "auto_awesome", value: "adaptive" },
+                        { displayName: Translation.tr("Casual"), icon: "chat", value: "casual" },
+                        { displayName: Translation.tr("Dry"), icon: "coffee", value: "dry" },
+                        { displayName: Translation.tr("Composed"), icon: "notes", value: "composed" },
+                        { displayName: Translation.tr("Chaotic"), icon: "bolt", value: "chaotic" }
+                    ]
+                }
+            }
+
             SettingsSwitch {
                 buttonIcon: "psychology"
                 text: Translation.tr("Mood personality")

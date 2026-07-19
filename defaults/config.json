@@ -1269,7 +1269,8 @@
         "personality": {
             "enabled": true,
             "idleMoodIntervalMinutes": 30,
-            "commentary": true
+            "commentary": true,
+            "voiceMode": "adaptive"
         },
         "chaos": {
             "enable": false,
