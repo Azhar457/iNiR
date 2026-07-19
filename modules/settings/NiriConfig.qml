@@ -3109,6 +3109,7 @@ ContentPage {
                     Layout.fillWidth: true
                     spacing: 8
 
+                    required property int index
                     required property var modelData
 
                     readonly property int _rev: AppLauncher._configRevision
