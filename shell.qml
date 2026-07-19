@@ -46,6 +46,15 @@ ShellRoot {
     property var _voiceSearchService
     property var _fontSyncService
     property var _cavaThemeService
+    // Screen Time must exist for the whole enabled session, not only after its
+    // sidebar page is first opened. It is explicitly materialized after the
+    // first frame and when the user enables tracking later.
+    property var _screenTimeService
+    function _ensureScreenTimeService(): void {
+        if (GlobalStates.deferredPanelsReady
+                && (Config.options?.sidebar?.screenTime?.enable ?? false))
+            root._screenTimeService = ScreenTime
+    }
     // Tier 4: T+1500ms (background features - updates, sync, content services)
     property var _shellUpdatesService
     property var _autostartService
@@ -126,6 +135,7 @@ ShellRoot {
             root._cavaThemeService = CavaTheme;
             Hyprsunset.load();
             GlobalStates.deferredPanelsReady = true;
+            root._ensureScreenTimeService();
             // Boot greeting: show once per session (singleton preserves bootGreetingDone across hot-reload)
             if (!GlobalStates.bootGreetingDone && (Config.options?.bootGreeting?.enable ?? true)) {
                 GlobalStates.bootGreetingOpen = true;
@@ -135,6 +145,13 @@ ShellRoot {
             }
             // Kick off Tier 4 loading
             lateFeaturesTimer.start();
+        }
+    }
+
+    Connections {
+        target: Config
+        function onConfigChanged(): void {
+            root._ensureScreenTimeService()
         }
     }
 

@@ -463,9 +463,7 @@ ContentPage {
                     Component.onCompleted: checked = rightSidebarWidgets.isEnabled("screentime")
                     onClicked: {
                         rightSidebarWidgets.setWidget("screentime", checked)
-                        if (checked) {
-                            Config.setNestedValue("sidebar.screenTime.enable", true)
-                        }
+                        Config.setNestedValue("sidebar.screenTime.enable", checked)
                     }
                 }
             }
