@@ -82,13 +82,23 @@ Scope {
     property int _presentationReadyFrames: 0
     property bool _presentationCold: false
     property bool _renderUpdatesNeeded: true
+    property bool _contentResident: false
+    readonly property int contentIdleUnloadMs: {
+        const override = Number(Quickshell.env("INIR_SIDEBAR_IDLE_UNLOAD_MS"))
+        return Number.isFinite(override) && override >= 250
+            ? Math.round(override) : 300000
+    }
 
     onPresentationOpenChanged: {
         if (root.presentationOpen) {
+            contentUnloadTimer.stop()
+            root._contentResident = true
             renderSuspendTimer.stop()
             root._renderUpdatesNeeded = true
         } else {
             renderSuspendTimer.restart()
+            if (root._contentResident)
+                contentUnloadTimer.restart()
         }
     }
 
@@ -99,6 +109,21 @@ Scope {
         onTriggered: {
             if (!root.presentationOpen)
                 root._renderUpdatesNeeded = false
+        }
+    }
+
+    Timer {
+        id: contentUnloadTimer
+        interval: root.contentIdleUnloadMs
+        onTriggered: {
+            if (root.presentationOpen)
+                return
+            if (sidebarContentLoader.animating) {
+                restart()
+                return
+            }
+            root._contentResident = false
+            root.reportRuntime()
         }
     }
 
@@ -158,6 +183,8 @@ Scope {
             loaderActive: sidebarContentLoader.active,
             loaderStatus: sidebarContentLoader.status,
             contentReady: sidebarContentLoader.item !== null,
+            contentResident: root._contentResident,
+            idleUnloadPending: contentUnloadTimer.running,
             animationType: root.animationType,
             animationRunning: sidebarContentLoader.animating,
             animationTranslateX: Math.round(sidebarContentLoader.animTranslateX),
@@ -246,7 +273,9 @@ Scope {
         // The compositor must receive one closed frame before the open state.
         // Warm content needs one frame; a cold map keeps the historical two
         // frames required for valid Loader geometry.
-        root._presentationCold = !sidebarContentLoader._everMounted
+        root._presentationCold = !root._contentResident
+            || sidebarContentLoader.status !== Loader.Ready
+        root._contentResident = true
         root._presentationRequested = true
         root._presentationReadyFrames = 0
         presentationTimer.restart()
@@ -558,7 +587,7 @@ Scope {
             property bool animating: false
             onAnimatingChanged: root.reportRuntime()
 
-            active: _everMounted
+            active: root._contentResident
             width: Math.max(0, root.effectiveSidebarWidth
                 - Appearance.sizes.hyprlandGapsOut
                 - Appearance.sizes.elevationMargin)
