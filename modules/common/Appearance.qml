@@ -525,6 +525,22 @@ Singleton {
         property color colErrorContainerHover: ColorUtils.mix(m3colors.m3errorContainer, m3colors.m3onErrorContainer, 0.90)
         property color colErrorContainerActive: ColorUtils.mix(m3colors.m3errorContainer, m3colors.m3onErrorContainer, 0.70)
         property color colOnErrorContainer: m3colors.m3onErrorContainer
+
+        // Success and warning existed only on the aurora token set, but the
+        // contrast badges in the theme editor and the colour picker read them
+        // off `colors` — so under every other style they resolved to undefined
+        // and each badge logged "Unable to assign [undefined] to QColor" on
+        // every repaint. zzz keeps its own chip inks: a raw green or orange is
+        // a hex dump in that doctrine, not a console chip.
+        property color colSuccess: m3colors.m3success
+        property color colOnSuccess: m3colors.m3onSuccess
+        property color colSuccessContainer: m3colors.m3successContainer
+        property color colOnSuccessContainer: m3colors.m3onSuccessContainer
+        property color colWarning: m3colors.m3tertiary
+        property color colWarningContainer: root.zzzEverywhere
+            ? root.zzz.secondary : m3colors.m3tertiaryContainer
+        property color colOnWarningContainer: root.zzzEverywhere
+            ? root.zzz.onSecondary : m3colors.m3onTertiaryContainer
     }
 
     rounding: QtObject {

@@ -2112,8 +2112,19 @@ ColumnLayout {
 
             // Header (clickable to expand)
             RowLayout {
+                id: surfaceContainersHeader
                 Layout.fillWidth: true
                 spacing: 8
+
+                property bool surfaceContainersExpanded: false
+
+                // A TapHandler, not a filling MouseArea: a MouseArea declared
+                // here is a layout child, so anchoring it to the row was both a
+                // warning and a stolen cell. Handlers take no geometry.
+                TapHandler {
+                    onTapped: surfaceContainersHeader.surfaceContainersExpanded =
+                        !surfaceContainersHeader.surfaceContainersExpanded
+                }
 
                 Rectangle {
                     width: 28
@@ -2137,18 +2148,14 @@ ColumnLayout {
                     color: Appearance.colors.colOnLayer1
                 }
 
+                // Qualified: unqualified lookup climbs the component scope, not
+                // the parent object, so this resolved against the file root and
+                // threw ReferenceError on every repaint.
                 MaterialSymbol {
-                    text: surfaceContainersExpanded ? "expand_less" : "expand_more"
+                    text: surfaceContainersHeader.surfaceContainersExpanded
+                        ? "expand_less" : "expand_more"
                     iconSize: 20
                     color: Appearance.colors.colSubtext
-                }
-
-                property bool surfaceContainersExpanded: false
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: parent.surfaceContainersExpanded = !parent.surfaceContainersExpanded
                 }
             }
 
@@ -2190,7 +2197,9 @@ ColumnLayout {
                 columns: 2
                 columnSpacing: 8
                 rowSpacing: 4
-                visible: surfaceContainersColumn.children[0].children[4].surfaceContainersExpanded
+                // By id, not by walking children[0].children[4]: that index chain
+                // resolved to undefined and threw on every evaluation.
+                visible: surfaceContainersHeader.surfaceContainersExpanded
 
                 Repeater {
                     model: [

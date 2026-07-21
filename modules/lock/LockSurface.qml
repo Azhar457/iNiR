@@ -1325,25 +1325,31 @@ MouseArea {
                 }
             }
 
-            ZzzPlate {
-                anchors.fill: passwordContainer
-                visible: root._zzz
-                fillColor: loginPasswordField.activeFocus
-                    ? Appearance.colors.colLayer1Hover
-                    : Appearance.colors.colLayer1
-                strokeColor: loginPasswordField.activeFocus
-                    ? Appearance.zzz.accent
-                    : Appearance.zzz.borderColor
-                strokeWidth: Appearance.zzz.hairlineThick
-                chamfer: Appearance.zzz.cutCorner
-            }
-
             Rectangle {
                 id: passwordContainer
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 12
                 width: 300
                 height: 52
+
+                // Inside the container, not a sibling of it. As a sibling this
+                // was a child of the ColumnLayout, so anchoring it to another
+                // layout-managed item was undefined behavior — and it also
+                // claimed a layout cell of its own. It inherits the container's
+                // stagger transform here, which is what it always wanted.
+                ZzzPlate {
+                    anchors.fill: parent
+                    z: -1
+                    visible: root._zzz
+                    fillColor: loginPasswordField.activeFocus
+                        ? Appearance.colors.colLayer1Hover
+                        : Appearance.colors.colLayer1
+                    strokeColor: loginPasswordField.activeFocus
+                        ? Appearance.zzz.accent
+                        : Appearance.zzz.borderColor
+                    strokeWidth: Appearance.zzz.hairlineThick
+                    chamfer: Appearance.zzz.cutCorner
+                }
                 radius: root._zzz ? Appearance.zzz.controlRadius : height / 2
                 color: root._zzz
                     ? "transparent"
