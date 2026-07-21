@@ -1551,86 +1551,6 @@ ContentPage {
                 ? Config.options?.appearance?.globalStyle ?? "material"
                 : derivedStyle
 
-            // Get corner style for current global style
-            function getCornerStyleForGlobalStyle(styleId) {
-                const styles = Config.options?.appearance?.globalStyleCornerStyles
-                if (!styles) return 1
-                switch (styleId) {
-                    case "material": return styles.material ?? 1
-                    case "cards": return styles.cards ?? 3
-                    case "aurora": return styles.aurora ?? 1
-                    case "inir": return styles.inir ?? 1
-                    case "angel": return styles.angel ?? 1
-                    case "zzz": return styles.zzz ?? 0
-                    case "cookie": return styles.cookie ?? 1
-                    default: return 1
-                }
-            }
-
-            // Save corner style for a global style
-            function setCornerStyleForGlobalStyle(styleId, cornerStyle) {
-                Config.setNestedValue(`appearance.globalStyleCornerStyles.${styleId}`, cornerStyle)
-            }
-
-            function _globalStyleValues(styleId) {
-                const cornerStyle = getCornerStyleForGlobalStyle(styleId)
-
-                if (styleId === "cards") {
-                    return {
-                        "dock.cardStyle": true,
-                        "sidebar.cardStyle": true,
-                        "bar.cornerStyle": cornerStyle,
-                    }
-                }
-
-                if (styleId === "aurora") {
-                    return {
-                        "dock.cardStyle": false,
-                        "sidebar.cardStyle": false,
-                        "bar.cornerStyle": cornerStyle,
-                    }
-                }
-
-                if (styleId === "inir") {
-                    return {
-                        "dock.cardStyle": false,
-                        "sidebar.cardStyle": false,
-                        "bar.cornerStyle": cornerStyle,
-                    }
-                }
-
-                if (styleId === "angel") {
-                    // HUG mode (0) is incompatible with angel — force Float (1) if saved as Hug
-                    return {
-                        "dock.cardStyle": false,
-                        "sidebar.cardStyle": false,
-                        "bar.cornerStyle": cornerStyle === 0 ? 1 : cornerStyle,
-                    }
-                }
-
-                if (styleId === "zzz") {
-                    return {
-                        "dock.cardStyle": false,
-                        "sidebar.cardStyle": false,
-                        "bar.cornerStyle": cornerStyle,
-                    }
-                }
-
-                // material
-                return {
-                    "dock.cardStyle": false,
-                    "sidebar.cardStyle": false,
-                    "bar.cornerStyle": cornerStyle,
-                }
-            }
-
-            function _applyGlobalStyle(styleId) {
-                _log("[GlobalStyle] apply", styleId)
-                let values = globalStyleGroup._globalStyleValues(styleId)
-                values["appearance.globalStyle"] = styleId
-                Config.setNestedValues(values)
-            }
-
             ContentSubsection {
                 title: Translation.tr("Style")
 
@@ -1638,7 +1558,7 @@ ContentPage {
                     currentValue: globalStyleGroup.currentStyle
                     onSelected: (newValue) => {
                         _log("[GlobalStyle] selected", newValue)
-                        globalStyleGroup._applyGlobalStyle(newValue)
+                        ThemeService.setGlobalStyle(newValue)
                     }
                     options: [
                         { displayName: Translation.tr("Material"), icon: "tune", value: "material" },

@@ -36,37 +36,8 @@ Singleton {
         Quickshell.execDetached([Quickshell.shellPath("scripts/inir")].concat(args ?? []))
     }
 
-    function _cornerStyleForGlobalStyle(styleId: string): int {
-        const styles = Config.options?.appearance?.globalStyleCornerStyles
-        if (!styles) return styleId === "cards" ? 3 : 1
-        if (styleId === "cards") return styles.cards ?? 3
-        if (styleId === "aurora") return styles.aurora ?? 1
-        if (styleId === "inir") return styles.inir ?? 1
-        if (styleId === "angel") return styles.angel ?? 1
-        if (styleId === "zzz") return styles.zzz ?? 0
-        return styles.material ?? 1
-    }
-
     function applyGlobalStyle(styleId: string): void {
-        let cornerStyle = _cornerStyleForGlobalStyle(styleId)
-        const values = {
-            "appearance.globalStyle": styleId,
-            "dock.cardStyle": false,
-            "sidebar.cardStyle": false,
-            "bar.cornerStyle": cornerStyle,
-        }
-
-        if (styleId === "cards") {
-            values["dock.cardStyle"] = true
-            values["sidebar.cardStyle"] = true
-            values["bar.cornerStyle"] = cornerStyle
-        } else if (styleId === "angel") {
-            values["bar.cornerStyle"] = cornerStyle === 0 ? 1 : cornerStyle
-        } else if (styleId === "zzz") {
-            values["bar.cornerStyle"] = cornerStyle
-        }
-
-        Config.setNestedValues(values)
+        ThemeService.setGlobalStyle(styleId)
     }
 
     function fuzzyQuery(query: string): list<var> {
@@ -399,6 +370,15 @@ Singleton {
             category: "appearance",
             keywords: ["style", "zzz", "zenless", "theme", "yellow", "hazard"],
             execute: () => { root.applyGlobalStyle("zzz") }
+        },
+        {
+            id: "style-cookie",
+            name: Translation.tr("Style: Cookie Shapes"),
+            description: Translation.tr("Switch to Cookie Shapes style"),
+            icon: "cookie",
+            category: "appearance",
+            keywords: ["style", "cookie", "shapes", "theme", "expressive", "morph"],
+            execute: () => { root.applyGlobalStyle("cookie") }
         },
     ]
 
