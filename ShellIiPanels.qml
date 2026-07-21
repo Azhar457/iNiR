@@ -153,7 +153,9 @@ Item {
     }
     OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; retainAfterUse: true; closeGraceMs: 300; component: Overview {} }
     DeferredPanelLoader { identifier: "iiPolkit"; component: Polkit {} }
-    RegionSelectorRouter {}
+    // Shared IPC targets and family-agnostic routers now live in shell.qml,
+    // registered once instead of once per family. See the comment there.
+
     // Keep the lightweight selector root resident. The root already lazily
     // instantiates RegionSelection/AnnotationEditor; wrapping it in a second
     // on-demand loader races the first cold IPC invocation and dismisses it.
@@ -206,14 +208,18 @@ Item {
     // begins, making a bar click look unrelated to the selected preset.
     DeferredPanelLoader { identifier: "iiSidebarLeft"; component: SidebarLeft {} }
     DeferredPanelLoader { identifier: "iiSidebarRight"; component: SidebarRight {} }
-    TilingOverlayRouter {}
+    // Shared IPC targets and family-agnostic routers now live in shell.qml,
+    // registered once instead of once per family. See the comment there.
+
     OnDemandPanelLoader {
         identifier: "iiTilingOverlay"
         open: GlobalStates.tilingOverlayPickerOpen || GlobalStates.tilingOverlayOsdOpen
         closeGraceMs: 250
         component: TilingOverlay {}
     }
-    WallpaperSelectorRouter {}
+    // Shared IPC targets and family-agnostic routers now live in shell.qml,
+    // registered once instead of once per family. See the comment there.
+
     OnDemandPanelLoader { identifier: "iiWallpaperSelector"; open: GlobalStates.wallpaperSelectorOpen; retainAfterUse: true; closeGraceMs: 250; component: WallpaperSelector {} }
     OnDemandPanelLoader { identifier: "iiWallpaperLauncher"; open: GlobalStates.wallpaperLauncherOpen; retainAfterUse: true; closeGraceMs: 250; component: WallpaperLauncher {} }
     OnDemandPanelLoader { identifier: "iiCoverflowSelector"; open: GlobalStates.coverflowSelectorOpen; retainAfterUse: true; closeGraceMs: 300; component: WallpaperCoverflow {} }
@@ -287,64 +293,8 @@ Item {
         }
     }
 
-    IpcHandler {
-        target: "osk"
-        function toggle(): void { GlobalStates.oskOpen = !GlobalStates.oskOpen }
-        function close(): void { GlobalStates.oskOpen = false }
-        function open(): void { GlobalStates.oskOpen = true }
-    }
-
-    IpcHandler {
-        target: "overlay"
-        function toggle(): void { GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
-    }
-
-    IpcHandler {
-        target: "session"
-        function toggle(): void { GlobalStates.sessionOpen = !GlobalStates.sessionOpen }
-        function close(): void { GlobalStates.sessionOpen = false }
-        function open(): void { GlobalStates.sessionOpen = true }
-    }
-
-    IpcHandler {
-        target: "cheatsheet"
-        function toggle(): void { GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen }
-        function close(): void { GlobalStates.cheatsheetOpen = false }
-        function open(): void { GlobalStates.cheatsheetOpen = true }
-    }
-
-    IpcHandler {
-        target: "overview"
-        function toggle(): void {
-            GlobalStates.overviewSearchPrefix = ""
-            GlobalStates.overviewOpen = !GlobalStates.overviewOpen
-        }
-        function close(): void { GlobalStates.overviewOpen = false }
-        function open(): void {
-            GlobalStates.overviewSearchPrefix = ""
-            GlobalStates.overviewOpen = true
-        }
-        function toggleReleaseInterrupt(): void { GlobalStates.superReleaseMightTrigger = false }
-        function clipboardToggle(): void {
-            if (GlobalStates.overviewOpen && GlobalStates.overviewSearchPrefix.length > 0) {
-                GlobalStates.overviewOpen = false
-            } else {
-                GlobalStates.overviewSearchPrefix = Config.options?.search?.prefix?.clipboard ?? ";"
-                GlobalStates.overviewOpen = true
-            }
-        }
-        function actionOpen(): void {
-            GlobalStates.overviewSearchPrefix = Config.options?.search?.prefix?.action ?? "/"
-            GlobalStates.overviewOpen = true
-        }
-    }
-
-    IpcHandler {
-        target: "clipboard"
-        function open(): void { GlobalStates.clipboardOpen = true }
-        function close(): void { GlobalStates.clipboardOpen = false }
-        function toggle(): void { GlobalStates.clipboardOpen = !GlobalStates.clipboardOpen }
-    }
+    // Shared IPC targets and family-agnostic routers now live in shell.qml,
+    // registered once instead of once per family. See the comment there.
 
     Loader {
         active: CompositorService.isHyprland

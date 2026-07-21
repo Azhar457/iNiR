@@ -109,18 +109,24 @@ Item {
     OnDemandPanelLoader { identifier: "iiOnScreenKeyboard"; open: GlobalStates.oskOpen; component: OnScreenKeyboard {} }
     OnDemandPanelLoader { identifier: "iiOverlay"; open: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets; component: Overlay {} }
     OnDemandPanelLoader { identifier: "iiOverview"; open: GlobalStates.overviewOpen; retainAfterUse: true; closeGraceMs: 300; component: Overview {} }
-    RegionSelectorRouter {}
+    // Shared IPC targets and family-agnostic routers now live in shell.qml,
+    // registered once instead of once per family. See the comment there.
+
     // RegionSelector owns its own lazy content. Keep this root resident so a
     // first cold IPC call cannot race two nested on-demand loaders.
     DeferredPanelLoader { identifier: "iiRegionSelector"; component: RegionSelector {} }
     DeferredPanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
-    WallpaperSelectorRouter {}
+    // Shared IPC targets and family-agnostic routers now live in shell.qml,
+    // registered once instead of once per family. See the comment there.
+
     OnDemandPanelLoader { identifier: "iiWallpaperSelector"; open: GlobalStates.wallpaperSelectorOpen; retainAfterUse: true; closeGraceMs: 250; component: WallpaperSelector {} }
     OnDemandPanelLoader { identifier: "iiWallpaperLauncher"; open: GlobalStates.wallpaperLauncherOpen; retainAfterUse: true; closeGraceMs: 250; component: WallpaperLauncher {} }
     OnDemandPanelLoader { identifier: "iiCoverflowSelector"; open: GlobalStates.coverflowSelectorOpen; retainAfterUse: true; closeGraceMs: 300; component: WallpaperCoverflow {} }
     DeferredPanelLoader { identifier: "iiClipboard"; extraCondition: Config.options?.panelFamily !== "waffle"; component: ClipboardModule.ClipboardPanel {} }
     OnDemandPanelLoader { identifier: "iiRecordingOsd"; open: RecorderStatus.isRecording; closeGraceMs: 250; component: RecordingOsd {} }
-    TilingOverlayRouter {}
+    // Shared IPC targets and family-agnostic routers now live in shell.qml,
+    // registered once instead of once per family. See the comment there.
+
     OnDemandPanelLoader {
         identifier: "iiTilingOverlay"
         open: GlobalStates.tilingOverlayPickerOpen || GlobalStates.tilingOverlayOsdOpen
@@ -164,43 +170,8 @@ Item {
         function close(): void { GlobalStates.waffleTaskViewOpen = false }
         function open(): void { GlobalStates.waffleTaskViewOpen = true }
     }
-    IpcHandler {
-        target: "cheatsheet"
-        function toggle(): void { GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen }
-        function close(): void { GlobalStates.cheatsheetOpen = false }
-        function open(): void { GlobalStates.cheatsheetOpen = true }
-    }
-    IpcHandler {
-        target: "osk"
-        function toggle(): void { GlobalStates.oskOpen = !GlobalStates.oskOpen }
-        function close(): void { GlobalStates.oskOpen = false }
-        function open(): void { GlobalStates.oskOpen = true }
-    }
-    IpcHandler {
-        target: "overlay"
-        function toggle(): void { GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
-    }
-    IpcHandler {
-        target: "session"
-        function toggle(): void { GlobalStates.sessionOpen = !GlobalStates.sessionOpen }
-        function close(): void { GlobalStates.sessionOpen = false }
-        function open(): void { GlobalStates.sessionOpen = true }
-    }
-    IpcHandler {
-        target: "overview"
-        function toggle(): void { GlobalStates.searchOpen = !GlobalStates.searchOpen }
-        function close(): void { GlobalStates.searchOpen = false }
-        function open(): void { GlobalStates.searchOpen = true }
-        function toggleReleaseInterrupt(): void { GlobalStates.superReleaseMightTrigger = false }
-        function clipboardToggle(): void {
-            LauncherSearch.ensurePrefix(Config.options?.search?.prefix?.clipboard ?? ";")
-            GlobalStates.searchOpen = true
-        }
-        function actionOpen(): void {
-            LauncherSearch.ensurePrefix(Config.options?.search?.prefix?.action ?? "/")
-            GlobalStates.searchOpen = true
-        }
-    }
+    // Shared IPC targets and family-agnostic routers now live in shell.qml,
+    // registered once instead of once per family. See the comment there.
 
     // Waffle AltSwitcher - handles IPC when panelFamily === "waffle"
     LazyLoader {
