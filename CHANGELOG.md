@@ -88,8 +88,12 @@ lives on `prerelease` and reaches `main` with the next release.
   Interface › Islands tunes radius, opacity, shadow and frosted-glass blur
   in one place, and Settings › Appearance › Ricelin gathers the whole
   washi-and-flame dialect on one page. All of it opt-in.
-- A workspace edge strip: hover rail with live previews, window thumbnails
-  and drag-to-reorder. `workspaceStrip` IPC target.
+- A workspace edge strip: compact grouped rail with stable landscape previews,
+  selected-card app summaries, explicit workspace and window focus controls,
+  drag-to-move, hold-to-close and MPRIS media controls. It centers itself inside
+  the free edge lane, yields bars, docks and same-edge sidebars, and dismisses
+  from the visible surface instead of trapping the pointer in transparent space.
+  Narrow outputs keep the rail and drop the flyout. `workspaceStrip` IPC target.
 - YT Music rebuilt on InnerTube: cookie-less search, home, radio and synced
   lyrics; playback stays on mpv/MPRIS.
 - An autostart manager that reads and writes niri's own
@@ -129,9 +133,15 @@ lives on `prerelease` and reaches `main` with the next release.
   it off if you'd rather spend the charge.
 
 ### Changed
+- Focused Settings groups pages into category cards, opens with an account
+  header, and shows an index of the current page's sections beside it.
 - Pill notifications and OSD can stay inside the resting capsule instead of
   expanding into a larger card. The alternate mode lives in both Pill settings
   sections.
+- Fresh installs start quieter: Focused Settings, lean sidebars, no desktop
+  clock, weather polling or notification sounds until requested, and a shorter
+  Welcome flow built around structure and daily essentials. Workspace Strip is
+  now an explicit preview opt-in instead of a default module.
 - The assistant behaves like a shell feature, not an API client: provider
   cards hide endpoints and raw model codes, shell tools run through a
   bounded registry with typed approvals, and arbitrary bash moved behind an
@@ -168,8 +178,25 @@ lives on `prerelease` and reaches `main` with the next release.
   force-enable transparency. Widget plates keep a minimum scrim so text
   stays legible on any wallpaper, and ZZZ separates surfaces by fill
   contrast instead of outline strokes.
+- External apps now follow the global style, not just the wallpaper palette.
+  ZZZ and Cookie Shapes build their own surface ramps instead of using the
+  Material containers, so GTK, Qt, terminals, editors and the rest were left
+  on a palette the shell had stopped using. Switching styles re-themes them
+  in place without re-extracting colours from the wallpaper.
 
 ### Fixed
+- App theming ran four times per action instead of once. Three code paths
+  each spawned their own pass over every target, so a single wallpaper or
+  theme change sent four parallel waves through GTK, chromium, spicetify and
+  the rest. The theming logs also grew without limit — 25 MB on a long-lived
+  install — and are now capped.
+- Picking a global style from Waffle settings applies the same bar corner
+  style as ii instead of leaving whatever was set. Cookie Shapes reached the
+  command palette and stopped inheriting Material's corner style.
+- `inir ipc globalActions` answered "Target not found" until the command
+  palette had been opened at least once in that session.
+- Backspace inside a settings field no longer navigates away and discards
+  what you typed. Panel opacity keeps the panel readable at its lowest value.
 - Entering fullscreen no longer stretches the Pill bar across the display.
   Automatic Game Mode hides the resting capsule and still lets transient Pill
   feedback appear; the wide game face is reserved for explicit manual mode.
@@ -273,8 +300,10 @@ lives on `prerelease` and reaches `main` with the next release.
   replaced with imperative recomputation.
 - Dark/light choice persists through palette regeneration (#178, partial),
   overview search text no longer clips with scaled fonts (#179), screen
-  recording honors the configured acceleration mode (#181), and `flake.nix`
-  ships a working NixOS/Home Manager payload (#186).
+  recording honors the configured acceleration mode (#181), `flake.nix`
+  ships a working NixOS/Home Manager payload (#186), XEmbed SNI proxy starts
+  immediately so autostart tray icons survive (#187), and brightness detects
+  the active backlight device for AMD GPUs (#188).
 - Lock screen no longer crashes on screen sleep or disconnect, and `lock`
   IPC honors `lock.useHyprlock` (#176).
 - Wi-Fi state parses correctly on non-English locales (`LANG=C`).
@@ -288,13 +317,13 @@ lives on `prerelease` and reaches `main` with the next release.
   last unwashed corners.
 
 ### Issues / PRs
-- Fixed [#174](https://github.com/snowarch/iNiR/issues/174), [#178](https://github.com/snowarch/iNiR/issues/178), [#179](https://github.com/snowarch/iNiR/issues/179), [#181](https://github.com/snowarch/iNiR/issues/181), [#190](https://github.com/snowarch/iNiR/issues/190), [#202](https://github.com/snowarch/iNiR/issues/202).
+- Fixed [#174](https://github.com/snowarch/iNiR/issues/174), [#178](https://github.com/snowarch/iNiR/issues/178), [#179](https://github.com/snowarch/iNiR/issues/179), [#181](https://github.com/snowarch/iNiR/issues/181), [#187](https://github.com/snowarch/iNiR/issues/187), [#188](https://github.com/snowarch/iNiR/issues/188), [#190](https://github.com/snowarch/iNiR/issues/190), [#202](https://github.com/snowarch/iNiR/issues/202).
 - Included contributions from [#176](https://github.com/snowarch/iNiR/pull/176), [#186](https://github.com/snowarch/iNiR/pull/186), [#199](https://github.com/snowarch/iNiR/pull/199), [#200](https://github.com/snowarch/iNiR/pull/200), [#201](https://github.com/snowarch/iNiR/pull/201), [#203](https://github.com/snowarch/iNiR/pull/203).
 
 ### Contributors
 Thanks to [@owarizz](https://github.com/owarizz) for a long run of correctness and resilience fixes: thumbnail hashing, the qalc spawn loop, multi-monitor workspace switching, the mic binding, the wifi retry prompt, the brightness monitor leak, the Super-tap daemon, the memfd counter, and the removal of the dead mpvpaper restore-script machinery ([#199](https://github.com/snowarch/iNiR/pull/199), [#200](https://github.com/snowarch/iNiR/pull/200), [#201](https://github.com/snowarch/iNiR/pull/201), [#203](https://github.com/snowarch/iNiR/pull/203)); [@xdvi](https://github.com/xdvi) for the lock screen crash guard and `lock.useHyprlock` handling ([#176](https://github.com/snowarch/iNiR/pull/176)); and [@Pigbuy](https://github.com/Pigbuy) for repairing the NixOS and Home Manager payload in `flake.nix` ([#186](https://github.com/snowarch/iNiR/pull/186)).
 
-Thanks also to [@Gergish001](https://github.com/Gergish001) for the flexible spacer request ([#174](https://github.com/snowarch/iNiR/issues/174)), [@dvytvs](https://github.com/dvytvs) for the VRR flickering report that turned the switch into a three-way choice ([#202](https://github.com/snowarch/iNiR/issues/202)), and [@tvvano16-dotcom](https://github.com/tvvano16-dotcom) ([#178](https://github.com/snowarch/iNiR/issues/178)), [@KiriVaelorn](https://github.com/KiriVaelorn) ([#179](https://github.com/snowarch/iNiR/issues/179)), [@vkleshnin](https://github.com/vkleshnin) ([#181](https://github.com/snowarch/iNiR/issues/181)) and [@Haretsu-Kimagure](https://github.com/Haretsu-Kimagure) ([#190](https://github.com/snowarch/iNiR/issues/190)) for the reports behind the dark-mode, overview search, recording acceleration and PipeWire crash fixes.
+Thanks also to [@Gergish001](https://github.com/Gergish001) for the flexible spacer request ([#174](https://github.com/snowarch/iNiR/issues/174)), [@dvytvs](https://github.com/dvytvs) for the VRR flickering report that turned the switch into a three-way choice ([#202](https://github.com/snowarch/iNiR/issues/202)), and [@tvvano16-dotcom](https://github.com/tvvano16-dotcom) ([#178](https://github.com/snowarch/iNiR/issues/178)), [@KiriVaelorn](https://github.com/KiriVaelorn) ([#179](https://github.com/snowarch/iNiR/issues/179)), [@vkleshnin](https://github.com/vkleshnin) ([#181](https://github.com/snowarch/iNiR/issues/181)), [@tflori](https://github.com/tflori) ([#187](https://github.com/snowarch/iNiR/issues/187)), [@Vanbayt](https://github.com/Vanbayt) ([#188](https://github.com/snowarch/iNiR/issues/188)) and [@Haretsu-Kimagure](https://github.com/Haretsu-Kimagure) ([#190](https://github.com/snowarch/iNiR/issues/190)) for the reports behind the dark-mode, overview search, recording acceleration, tray autostart, AMD brightness and PipeWire crash fixes.
 
 ## [2.27.0] - 2026-06-11
 
