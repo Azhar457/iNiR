@@ -45,8 +45,8 @@ extras_install_sddm_theme() {
 # - sets global EXTRAS_INIR_WALLS_FIRST_IMAGE to first copied/available image path (or empty)
 extras_install_inir_walls() {
   local walls_repo_url="https://github.com/snowarch/iNiR-Walls.git"
-  local walls_estimated_count=117
-  local walls_estimated_bytes=582018131
+  local walls_estimated_count=148
+  local walls_estimated_bytes=663709943
   local walls_estimated_mib
   walls_estimated_mib=$(awk "BEGIN { printf \"%.1f\", ${walls_estimated_bytes}/1024/1024 }")
 
@@ -76,6 +76,14 @@ extras_install_inir_walls() {
     shopt -s nullglob globstar
     for wall in "${walls_repo_dir}"/**/*.{jpg,jpeg,png,webp,avif}; do
       [[ -f "$wall" ]] || continue
+      # iNiR-Walls generates a 640px WebP per wallpaper under images/thumbs/ for
+      # its gallery page. globstar swept those in as if they were wallpapers.
+      # They also share the exact basename of the image they preview, so the
+      # only thing keeping a thumbnail from landing on a real wallpaper here is
+      # that "images/<name>" happens to sort before "images/thumbs/<name>".
+      # Filtering by extension is not the fix: four wallpapers are genuinely
+      # WebP, one of them 8000x4500.
+      [[ "$wall" == */thumbs/* ]] && continue
       walls_scanned=$((walls_scanned + 1))
       local dest="${user_wallpapers_dir}/$(basename "$wall")"
       if [[ ! -f "$dest" ]] || [[ ! -s "$dest" ]]; then
