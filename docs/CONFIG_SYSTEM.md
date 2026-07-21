@@ -16,6 +16,14 @@ If you do want to edit it directly, it lives at:
 
 Changes you make in the file are picked up automatically within 50ms. No restart needed.
 
+### Fresh-install profile
+
+A new configuration starts deliberately quiet. Settings opens in Focused mode, the left sidebar contains one curated Widgets tab, and the right sidebar starts with connectivity, sliders, notifications, and four daily tools: Calendar, To Do, Calculator, and System Monitor. Weather, desktop widgets, notification sounds, news feeds, wallpaper search, AI, and anime integrations stay off until you enable them.
+
+Workspace Strip is a preview feature and is not part of either panel family's default module set. It remains available in Settings for explicit opt-in. Existing configurations are not rewritten when these fresh-install defaults change.
+
+The Welcome wizard exposes only choices that materially affect the first session. Advanced styles, additional sidebar tabs, and specialized modules remain available in the full Settings view.
+
 ## For contributors
 
 ### The sync rule

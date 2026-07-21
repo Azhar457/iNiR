@@ -27,8 +27,8 @@ Singleton {
     property string bugReportUrl: ""
     property string privacyPolicyUrl: ""
     property string logo: ""
-    property string desktopEnvironment: Quickshell.env("XDG_CURRENT_DESKTOP").trim()
-    property string windowingSystem: Quickshell.env("WAYLAND_DISPLAY").trim().length > 0 ? "Wayland" : "X11"
+    property string desktopEnvironment: String(Quickshell.env("XDG_CURRENT_DESKTOP") ?? "").trim()
+    property string windowingSystem: String(Quickshell.env("WAYLAND_DISPLAY") ?? "").trim().length > 0 ? "Wayland" : "X11"
 
     function refreshIdentity(): void {
         if (getUsername.running || getDisplayName.running)

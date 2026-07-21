@@ -18,12 +18,12 @@ ContentPage {
             "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", 
             "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", 
             "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", 
-            "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiWorkspaceStrip"
+            "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate"
         ],
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
             "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
-            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiWorkspaceStrip"
+            "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard"
         ]
     })
 
@@ -1016,8 +1016,45 @@ ContentPage {
             }
 
             ContentSubsection {
+                title: Translation.tr("Overlay layout")
+                visible: Config.options?.settingsUi?.overlayMode ?? false
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.settingsUi?.overlayStyle ?? "rail"
+                    options: [
+                        { displayName: Translation.tr("Nav rail"), icon: "view_sidebar", value: "rail" },
+                        { displayName: Translation.tr("Focus"), icon: "grid_view", value: "focus" }
+                    ]
+                    onSelected: value => Config.setNestedValue("settingsUi.overlayStyle", value)
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
+                        ? Translation.tr("One page at a time: a grid of every settings page, then the page you pick, full width. Escape steps back.")
+                        : Translation.tr("A persistent category rail beside the page you are editing.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            ContentSubsection {
                 title: Translation.tr("Overlay appearance")
                 visible: Config.options?.settingsUi?.overlayMode ?? false
+
+                ConfigSpinBox {
+                    icon: "blur_on"
+                    text: Translation.tr("Backdrop blur (%)")
+                    value: Config.options?.settingsUi?.overlayAppearance?.backdropBlur ?? 0
+                    from: 0
+                    to: 100
+                    stepSize: 10
+                    onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.backdropBlur", value)
+                    StyledToolTip {
+                        text: Translation.tr("Blur the wallpaper behind the Settings overlay while it is open, using the same glass the rest of the shell paints. 0 turns it off and costs nothing.")
+                    }
+                }
 
                 ConfigSpinBox {
                     icon: "water"
@@ -1032,26 +1069,21 @@ ContentPage {
                     }
                 }
 
+                // Floor is 60, not 20: the panel is a reading surface and the
+                // solid styles carry no backdrop of their own, so anything lower
+                // put the wallpaper straight behind the text. Both settings
+                // hosts clamp on read too, so an older stored value cannot reach
+                // the panel even if this page is never opened.
                 ConfigSpinBox {
                     icon: "opacity"
                     text: Translation.tr("Panel background opacity (%)")
                     value: Math.round((Config.options?.settingsUi?.overlayAppearance?.backgroundOpacity ?? 1.0) * 100)
-                    from: 20
+                    from: 60
                     to: 100
                     stepSize: 5
                     onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.backgroundOpacity", value / 100)
                     StyledToolTip {
-                        text: Translation.tr("Opacity of the Settings panel background. Lower values let the shell show through.")
-                    }
-                }
-
-                ConfigSwitch {
-                    buttonIcon: "blur_on"
-                    text: Translation.tr("Enhanced blur (aurora/angel only)")
-                    checked: Config.options?.settingsUi?.overlayAppearance?.enableBlur ?? false
-                    onCheckedChanged: Config.setNestedValue("settingsUi.overlayAppearance.enableBlur", checked)
-                    StyledToolTip {
-                        text: Translation.tr("Apply extra glass blur behind the Settings panel. Only visible with aurora or angel global style.")
+                        text: Translation.tr("Opacity of the Settings panel background. Lower values let the shell show through; with a glass style it thins the frosted tint instead.")
                     }
                 }
             }

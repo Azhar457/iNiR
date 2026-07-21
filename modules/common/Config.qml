@@ -570,14 +570,14 @@ Singleton {
             id: configOptionsJsonAdapter
 
             // Panel system
-            property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard", "iiWorkspaceStrip", "iiMascotCompanion"]
+            property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard", "iiMascotCompanion"]
             property list<string> knownPanels: [] // Tracks panels the user has seen; used to distinguish "user disabled" from "new in update"
             property string panelFamily: "ii" // "ii" or "waffle"
             property bool familyTransitionAnimation: true // Show animated overlay when switching families
 
             property JsonObject policies: JsonObject {
-                property int ai: 1 // 0: No | 1: Yes | 2: Local
-                property int weeb: 1 // 0: No | 1: Open | 2: Closet
+                property int ai: 0 // 0: No | 1: Yes | 2: Local
+                property int weeb: 0 // 0: No | 1: Open | 2: Closet
             }
 
             property JsonObject ai: JsonObject {
@@ -1147,7 +1147,7 @@ Singleton {
                     // keeps its own overlap order after edit mode closes/restarts.
                     property list<string> layerOrder: []
                     property JsonObject clock: JsonObject {
-                        property bool enable: true
+                        property bool enable: false
                         property bool locked: false
                         property string placementStrategy: "free" // "free", "leastBusy", "mostBusy"
                         property real x: 100
@@ -1713,11 +1713,11 @@ Singleton {
                 property bool bottom: false // Instead of top
                 property int height: 40 // Bar content height in px (pre-scale). 0 keeps the theme default (40). Range: 24–80.
                 property real opacity: 1.0 // Background opacity (0–1). Lets you make the bar translucent without changing global style.
-                property int cornerStyle: 0 // 0: Hug | 1: Float | 2: Plain rectangle
+                property int cornerStyle: 1 // 0: Hug | 1: Float | 2: Plain rectangle
                 property string appearanceStyle: "classic" // "classic" | "islands" (separate floating groups) | "scenic" (gradient scrim) | "frame" (outlined floating frame) | "pill" (morphing centre island, see bar.pill). Horizontal bar only.
                 property int customRounding: -1 // -1: use global theme rounding | 0+: override bar rounding (px)
                 property bool floatStyleShadow: true // Show shadow behind bar when cornerStyle == 1 (Float)
-                property bool borderless: false // true for no grouping of items
+                property bool borderless: true // true for no grouping of items
                 property string topLeftIcon: "distro" // Options: "distro" or any icon name in ~/.config/quickshell/inir/assets/icons
                 property bool showBackground: true
                 property bool showScrollHints: true // Show brightness/volume scroll hints on hover
@@ -1737,15 +1737,15 @@ Singleton {
                 property JsonObject modules: JsonObject {
                     property bool leftSidebarButton: true
                     property bool activeWindow: true
-                    property bool resources: true
+                    property bool resources: false
                     property bool media: true
                     property bool workspaces: true
                     property bool clock: true
-                    property bool utilButtons: true
+                    property bool utilButtons: false
                     property bool battery: true
                     property bool rightSidebarButton: true
                     property bool sysTray: true
-                    property bool weather: true
+                    property bool weather: false
                     property bool taskbar: false
                 }
                 property JsonObject modulesPlacement: JsonObject {
@@ -2317,8 +2317,8 @@ Singleton {
                 property bool keepLeftSidebarLoaded: true
                 property bool instantOpen: false
                 property string animationType: "slide" // "slide" | "fade" | "pop" | "reveal"
-                property bool collapseEmptyNotifications: false // Shrink right sidebar when there are no notifications (default layout)
-                property bool collapseWidgetsTab: false // Shrink left sidebar to its content on tabs with finite height (Widgets)
+                property bool collapseEmptyNotifications: true // Shrink right sidebar when there are no notifications (default layout)
+                property bool collapseWidgetsTab: true // Shrink left sidebar to its content on tabs with finite height (Widgets)
                 property JsonObject shellLayout: JsonObject {
                     property JsonObject feature: JsonObject {
                         property string slot: "left" // "left" | "right"
@@ -2335,7 +2335,7 @@ Singleton {
                 }
                 property bool openFolderOnDownload: false // Open file manager after wallpaper download
                 property JsonObject translator: JsonObject {
-                    property bool enable: true
+                    property bool enable: false
                     property int delay: 300 // Delay before sending request. Reduces (potential) rate limits and lag.
                 }
                 property JsonObject ai: JsonObject {
@@ -2356,7 +2356,7 @@ Singleton {
                 // Wallhaven-specific sidebar module options
                 property JsonObject wallhaven: JsonObject {
                     // Enable/disable the Wallhaven tab in the left sidebar
-                    property bool enable: true
+                    property bool enable: false
                     // Default page size for API search
                     property int limit: 24
                     // Optional API key for NSFW & user-specific filters
@@ -2364,7 +2364,7 @@ Singleton {
                 }
                 // News tab - Google News RSS, geo feed follows the Weather location
                 property JsonObject news: JsonObject {
-                    property bool enable: true
+                    property bool enable: false
                     property string mode: "local" // "local" | "top" | "topic"
                     property string topic: "WORLD"
                 }
@@ -2444,15 +2444,15 @@ Singleton {
                     property bool context: true
                     property bool note: false
                     property bool launch: false
-                    property bool controls: true
-                    property bool status: true
+                    property bool controls: false
+                    property bool status: false
                     property bool crypto: false
-                    property bool wallpaper: true
-                    property bool worldClock: true
+                    property bool wallpaper: false
+                    property bool worldClock: false
                     // ContextCard specific
                     property bool contextShowWeather: true
                     // Widget order (drag to reorder)
-                    property list<string> widgetOrder: ["media", "week", "context", "note", "launch", "controls", "status", "crypto", "wallpaper", "worldclock"]
+                    property list<string> widgetOrder: ["context", "week", "media", "note", "launch", "controls", "status", "crypto", "wallpaper", "worldclock"]
                     // Spacing between widgets (px)
                     property int spacing: 8
 
@@ -2531,7 +2531,7 @@ Singleton {
                     }
                 }
                 property JsonObject cornerOpen: JsonObject {
-                    property bool enable: true
+                    property bool enable: false
                     property bool bottom: false
                     property bool valueScroll: true
                     property bool clickless: false
@@ -2545,7 +2545,7 @@ Singleton {
                 property JsonObject quickToggles: JsonObject {
                     property string style: "android" // Options: classic, android
                     property JsonObject android: JsonObject {
-                        property int columns: 5
+                        property int columns: 4
                         property list<var> toggles: [
                             {
                                 "size": 2,
@@ -2554,30 +2554,14 @@ Singleton {
                             {
                                 "size": 2,
                                 "type": "bluetooth"
-                            },
-                            {
-                                "size": 1,
-                                "type": "idleInhibitor"
-                            },
-                            {
-                                "size": 1,
-                                "type": "mic"
-                            },
-                            {
-                                "size": 2,
-                                "type": "audio"
-                            },
-                            {
-                                "size": 2,
-                                "type": "nightLight"
                             }
                         ]
                     }
                 }
 
                 property JsonObject quickSliders: JsonObject {
-                    property bool enable: false
-                    property bool showMic: false
+                    property bool enable: true
+                    property bool showMic: true
                     property bool showVolume: true
                     property bool showBrightness: true
                 }
@@ -2590,7 +2574,7 @@ Singleton {
 
                 // Right sidebar widget toggles
                 property JsonObject right: JsonObject {
-                    property list<string> enabledWidgets: ["calendar", "todo", "notepad", "calculator", "sysmon", "weather", "timer", "screentime"]
+                    property list<string> enabledWidgets: ["calendar", "todo", "calculator", "sysmon"]
                     // Controls section order for compact layout (drag to reorder)
                     property list<string> controlsSectionOrder: ["sliders", "toggles", "devices", "media", "quickActions"]
                     // Section order for the default layout (modular sidebar).
@@ -2604,7 +2588,7 @@ Singleton {
                     // Banner media of the profile header: "wallpaper" (the
                     // monitor's live wallpaper), "custom" (headerBannerPath),
                     // "solid" (flat token plate), or "none" (collapse it).
-                    property string headerBanner: "wallpaper"
+                    property string headerBanner: "solid"
                     property string headerBannerPath: ""
                     // Relative allocation of the two elastic zones. Values are
                     // normalized together by the live resize handle.
@@ -2711,15 +2695,28 @@ Singleton {
             }
 
             property JsonObject settingsUi: JsonObject {
-                property bool overlayMode: false // true = layer shell overlay (live preview), false = separate window (default)
-                property bool easyMode: false    // true = curated essentials only; nav and sub-sections filter to a friendlier subset
+                property bool overlayMode: true // true = layer shell overlay (live preview), false = separate window
+                // Chrome used in overlay mode. "rail" = persistent nav rail beside a
+                // narrowed content pane; "focus" = drill-down, one page at a time.
+                // Orthogonal to overlayMode: this picks the look, that picks the host.
+                property string overlayStyle: "rail"
+                property bool easyMode: true    // true = curated essentials only; nav and sub-sections filter to a friendlier subset
                 // JSON-encoded [{label, pages:[int]}] — custom nav arrangement; "" = registry defaults.
                 // String on purpose: property var inside JsonObject crashes the VME.
                 property string categories: ""
                 property JsonObject overlayAppearance: JsonObject {
                     property int scrimDim: 35           // % dim of the backdrop scrim behind the settings panel (0-100)
-                    property real backgroundOpacity: 1.0 // opacity of the settings panel background itself (0.2-1.0)
-                    property bool enableBlur: false      // extra blur override for glass background (aurora/angel only)
+                    // Opacity of the settings panel background (0.6-1.0). The
+                    // floor is a legibility contract, not a taste call: the panel
+                    // is a single surface and the cards on it carry the reading
+                    // contrast, so below it the solid styles put a sharp wallpaper
+                    // behind the text and aurora thins to a bare 64 px blur. Both
+                    // settings hosts clamp on read.
+                    property real backgroundOpacity: 1.0
+                    // Blur radius (%) of the backdrop behind the settings overlay,
+                    // painted by the same shared GlassBackground the rest of the
+                    // shell uses. 0 keeps the surface out of the tree entirely.
+                    property int backdropBlur: 0
                 }
             }
 
@@ -2751,7 +2748,7 @@ Singleton {
                 property bool openTerminalOnUpdate: true
             }
             property JsonObject bootGreeting: JsonObject {
-                property bool enable: true
+                property bool enable: false
                 property int autoDismissDelay: 5000
                 property bool showWeather: true
                 property bool showDate: true

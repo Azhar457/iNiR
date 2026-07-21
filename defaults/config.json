@@ -452,7 +452,7 @@
                     "preset": "default"
                 },
                 "dim": 70,
-                "enable": true,
+                "enable": false,
                 "fontFamily": "Space Grotesk",
                 "placementStrategy": "free",
                 "quote": {
@@ -883,16 +883,16 @@
         },
         "modules": {
             "activeWindow": true,
-            "battery": false,
+            "battery": true,
             "clock": true,
             "leftSidebarButton": true,
             "media": true,
-            "resources": true,
+            "resources": false,
             "rightSidebarButton": true,
             "sysTray": true,
             "taskbar": false,
-            "utilButtons": true,
-            "weather": true,
+            "utilButtons": false,
+            "weather": false,
             "workspaces": true
         },
         "opacity": 1.0,
@@ -972,7 +972,7 @@
         "vertical": false,
         "weather": {
             "city": "",
-            "enable": true,
+            "enable": false,
             "enableGPS": false,
             "fetchInterval": 10,
             "manualLat": 0,
@@ -1110,12 +1110,13 @@
     },
     "settingsUi": {
         "overlayMode": true,
-        "easyMode": false,
+        "overlayStyle": "rail",
+        "easyMode": true,
         "categories": "",
         "overlayAppearance": {
             "scrimDim": 35,
             "backgroundOpacity": 1.0,
-            "enableBlur": false
+            "backdropBlur": 0
         }
     },
     "hacks": {
@@ -1483,8 +1484,8 @@
         "keepRightSidebarLoaded": true,
         "instantOpen": false,
         "animationType": "slide",
-        "collapseEmptyNotifications": false,
-        "collapseWidgetsTab": false,
+        "collapseEmptyNotifications": true,
+        "collapseWidgetsTab": true,
         "shellLayout": {
             "feature": {
                 "slot": "left",
@@ -1511,20 +1512,12 @@
                 "columns": 4,
                 "toggles": [
                     {
-                        "size": 1,
-                        "type": "nightLight"
+                        "size": 2,
+                        "type": "network"
                     },
                     {
-                        "size": 1,
-                        "type": "gameMode"
-                    },
-                    {
-                        "size": 1,
-                        "type": "screenSnip"
-                    },
-                    {
-                        "size": 1,
-                        "type": "colorPicker"
+                        "size": 2,
+                        "type": "bluetooth"
                     }
                 ]
             },
@@ -1546,16 +1539,10 @@
         },
         "right": {
             "enabledWidgets": [
-                "dashboard",
                 "calendar",
-                "events",
                 "todo",
-                "notepad",
                 "calculator",
-                "sysmon",
-                "weather",
-                "timer",
-                "screentime"
+                "sysmon"
             ],
             "sectionOrder": [
                 "system",
@@ -1565,7 +1552,7 @@
                 "widgets"
             ],
             "headerStyle": "profile",
-            "headerBanner": "wallpaper",
+            "headerBanner": "solid",
             "headerBannerPath": "",
             "controlsSectionOrder": [
                 "sliders",
@@ -1644,12 +1631,12 @@
             }
         },
         "wallhaven": {
-            "enable": true,
+            "enable": false,
             "limit": 24,
             "apiKey": ""
         },
         "news": {
-            "enable": true,
+            "enable": false,
             "mode": "local",
             "topic": "WORLD"
         },
@@ -1664,14 +1651,14 @@
             "context": true,
             "note": false,
             "launch": false,
-            "controls": true,
-            "status": true,
+            "controls": false,
+            "status": false,
             "crypto": false,
-            "worldClock": true,
+            "worldClock": false,
             "widgetOrder": [
-                "media",
-                "week",
                 "context",
+                "week",
+                "media",
                 "controls",
                 "status",
                 "note",
@@ -1742,7 +1729,7 @@
     },
     "sounds": {
         "battery": false,
-        "notifications": true,
+        "notifications": false,
         "pomodoro": false,
         "theme": "freedesktop",
         "timer": false,
@@ -1917,7 +1904,7 @@
         "stronglyAdviseUpdateThreshold": 200
     },
     "bootGreeting": {
-        "enable": true,
+        "enable": false,
         "autoDismissDelay": 5000,
         "showWeather": true,
         "showDate": true
@@ -2163,7 +2150,6 @@
         "iiClipboard",
         "iiShellUpdate",
         "iiDashboard",
-        "iiWorkspaceStrip",
         "iiMascotCompanion"
     ],
     "workspaceStrip": {

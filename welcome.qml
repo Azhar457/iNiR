@@ -34,7 +34,7 @@ Scope {
         { icon: "waving_hand", title: Translation.tr("Welcome") },
         { icon: "palette", title: Translation.tr("Appearance") },
         { icon: "dashboard", title: Translation.tr("Layout") },
-        { icon: "tune", title: Translation.tr("Features") },
+        { icon: "tune", title: Translation.tr("Essentials") },
         { icon: "celebration", title: Translation.tr("Ready") }
     ]
 
@@ -664,7 +664,7 @@ Scope {
 
         StyledText {
             Layout.alignment: Qt.AlignHCenter
-            text: Translation.tr("Two minutes to make it yours. Skipping is fine, but you'll thank yourself later.")
+            text: Translation.tr("Start calm, choose the essentials, and leave the rest one switch away.")
             color: Appearance.colors.colSubtext
             font.pixelSize: Appearance.font.pixelSize.normal
             wrapMode: Text.WordWrap
@@ -696,7 +696,7 @@ Scope {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: Translation.tr("What you'll dial in")
+                    text: Translation.tr("What this setup covers")
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     font.weight: Font.Medium
                     color: Appearance.colors.colSubtext
@@ -704,10 +704,9 @@ Scope {
 
                 Repeater {
                     model: [
-                        { icon: "palette",       label: Translation.tr("Theme & wallpaper"), desc: Translation.tr("Light/dark, visual style, and your colors") },
-                        { icon: "dashboard",     label: Translation.tr("Layout"),            desc: Translation.tr("Bar, dock, panel family — where things live") },
-                        { icon: "tune",          label: Translation.tr("Features"),          desc: Translation.tr("AI, weather, sounds, time format, and more") },
-                        { icon: "celebration",   label: Translation.tr("Tips for daily use"), desc: Translation.tr("Keyboard shortcuts and one-click actions") }
+                        { icon: "palette",   label: Translation.tr("Look"),       desc: Translation.tr("Theme, wallpaper, and visual style") },
+                        { icon: "dashboard", label: Translation.tr("Structure"),  desc: Translation.tr("Bar, dock, and panel family") },
+                        { icon: "tune",      label: Translation.tr("Essentials"), desc: Translation.tr("Only the daily features worth deciding now") }
                     ]
                     RowLayout {
                         Layout.fillWidth: true
@@ -754,7 +753,7 @@ Scope {
 
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
-                text: Translation.tr("How do you want to see Settings?")
+                text: Translation.tr("How much should Settings show at first?")
                 font.pixelSize: Appearance.font.pixelSize.small
                 font.weight: Font.Medium
                 color: Appearance.colors.colOnSurface
@@ -806,7 +805,7 @@ Scope {
                             }
                             StyledText {
                                 Layout.fillWidth: true
-                                text: Translation.tr("Easy")
+                                text: Translation.tr("Focused")
                                 font.pixelSize: Appearance.font.pixelSize.normal
                                 font.weight: Font.Medium
                                 color: easyCard.selected
@@ -822,7 +821,7 @@ Scope {
                         }
                         StyledText {
                             Layout.fillWidth: true
-                            text: Translation.tr("Just the essentials. Less noise, friendlier for new users. You can switch anytime.")
+                            text: Translation.tr("A shorter navigation with the controls most people need. Recommended for the first run.")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             wrapMode: Text.WordWrap
                             color: easyCard.selected
@@ -880,7 +879,7 @@ Scope {
                             }
                             StyledText {
                                 Layout.fillWidth: true
-                                text: Translation.tr("Advanced")
+                                text: Translation.tr("Complete")
                                 font.pixelSize: Appearance.font.pixelSize.normal
                                 font.weight: Font.Medium
                                 color: advancedCard.selected
@@ -896,7 +895,7 @@ Scope {
                         }
                         StyledText {
                             Layout.fillWidth: true
-                            text: Translation.tr("Everything iNiR has to offer. Recommended if you like to tinker.")
+                            text: Translation.tr("Every page and advanced control. You can switch between both views at any time.")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             wrapMode: Text.WordWrap
                             color: advancedCard.selected
@@ -976,9 +975,17 @@ Scope {
                         { displayName: "Material", icon: "dashboard", value: "material" },
                         { displayName: "Cards", icon: "crop_square", value: "cards" },
                         { displayName: "Aurora", icon: "blur_on", value: "aurora" },
-                        { displayName: "Angel", icon: "auto_awesome", value: "angel" },
                         { displayName: "Inir", icon: "terminal", value: "inir" }
                     ]
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("More experimental styles remain available in Settings.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
                 }
             }
         }
@@ -1173,7 +1180,17 @@ Scope {
         width: 600
         spacing: 16
 
-        Item { Layout.fillHeight: true; Layout.maximumHeight: 16 }
+        Item { Layout.fillHeight: true; Layout.maximumHeight: 12 }
+
+        StyledText {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.maximumWidth: 560
+            text: Translation.tr("Choose the structure now. Fine-grained geometry and styling can wait until the desktop feels familiar.")
+            color: Appearance.colors.colSubtext
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+        }
 
         GridLayout {
             Layout.alignment: Qt.AlignHCenter
@@ -1198,29 +1215,6 @@ Scope {
                         options: [
                             { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: false },
                             { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: true }
-                        ]
-                    }
-                }
-            }
-
-            // Bar style
-            SettingsGroup {
-                Layout.preferredWidth: 260
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-                    RowLayout {
-                        MaterialSymbol { text: "rounded_corner"; iconSize: 18; color: Appearance.colors.colPrimary }
-                        StyledText { text: Translation.tr("Bar Style"); font.pixelSize: Appearance.font.pixelSize.small }
-                    }
-                    ConfigSelectionArray {
-                        Layout.fillWidth: true
-                        currentValue: Config.options?.bar?.cornerStyle ?? 0
-                        onSelected: v => Config.setNestedValue("bar.cornerStyle", v)
-                        options: [
-                            { displayName: Translation.tr("Hug"), icon: "line_curve", value: 0 },
-                            { displayName: Translation.tr("Float"), icon: "crop_free", value: 1 },
-                            { displayName: Translation.tr("Full"), icon: "rectangle", value: 2 }
                         ]
                     }
                 }
@@ -1251,7 +1245,8 @@ Scope {
 
             // Panel family
             SettingsGroup {
-                Layout.preferredWidth: 260
+                Layout.columnSpan: 2
+                Layout.fillWidth: true
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
@@ -1279,16 +1274,18 @@ Scope {
             Layout.alignment: Qt.AlignHCenter
 
             ConfigSwitch {
-                buttonIcon: "visibility"
-                text: Translation.tr("Show bar background")
-                checked: Config.options?.bar?.showBackground ?? false
-                onCheckedChanged: Config.setNestedValue("bar.showBackground", checked)
+                buttonIcon: "dock_to_bottom"
+                text: Translation.tr("Show dock")
+                description: Translation.tr("Three familiar pinned apps, hidden until you approach the edge.")
+                checked: Config.options?.dock?.enable ?? true
+                onToggledByUser: checked => Config.setNestedValue("dock.enable", checked)
             }
             ConfigSwitch {
                 buttonIcon: "auto_awesome_motion"
-                text: Translation.tr("Bar auto-hide")
+                text: Translation.tr("Auto-hide the bar")
+                description: Translation.tr("A quieter desktop; the bar returns from the edge or while holding Super.")
                 checked: Config.options?.bar?.autoHide?.enable ?? false
-                onCheckedChanged: Config.setNestedValue("bar.autoHide.enable", checked)
+                onToggledByUser: checked => Config.setNestedValue("bar.autoHide.enable", checked)
             }
         }
 
@@ -1309,95 +1306,45 @@ Scope {
 
             Item { Layout.preferredHeight: 4 }
 
-            // Row 1 + 2 — main feature toggles (4 + 4)
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.maximumWidth: 560
+                text: Translation.tr("These are the only daily choices worth interrupting the first run for. Everything else stays off until you ask for it.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+            }
+
             RowLayout {
                 Layout.fillWidth: true
                 Layout.maximumWidth: 600
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 20
 
-                // Left column
                 SettingsGroup {
                     Layout.fillWidth: true
 
                     ConfigSwitch {
-                        buttonIcon: "auto_awesome"
-                        text: Translation.tr("AI Assistant")
-                        checked: (Config.options?.policies?.ai ?? 0) >= 1
-                        onCheckedChanged: Config.setNestedValue("policies.ai", checked ? 1 : 0)
-                    }
-                    ConfigSwitch {
-                        buttonIcon: "image"
-                        text: Translation.tr("Anime wallpapers")
-                        checked: (Config.options?.policies?.weeb ?? 0) >= 1
-                        onCheckedChanged: Config.setNestedValue("policies.weeb", checked ? 1 : 0)
-                    }
-                    ConfigSwitch {
                         buttonIcon: "notifications_active"
-                        text: Translation.tr("Sound effects")
-                        checked: Config.options?.sounds?.notifications ?? true
-                        onCheckedChanged: Config.setNestedValue("sounds.notifications", checked)
+                        text: Translation.tr("Notification sounds")
+                        description: Translation.tr("Keep the desktop silent, or add subtle feedback for notifications.")
+                        checked: Config.options?.sounds?.notifications ?? false
+                        onToggledByUser: checked => Config.setNestedValue("sounds.notifications", checked)
                     }
                     ConfigSwitch {
                         buttonIcon: "sports_esports"
-                        text: Translation.tr("Game mode")
+                        text: Translation.tr("Automatic game mode")
+                        description: Translation.tr("Pauses expensive effects while a fullscreen game is active.")
                         checked: Config.options?.gameMode?.autoDetect ?? true
-                        onCheckedChanged: Config.setNestedValue("gameMode.autoDetect", checked)
-                    }
-                }
-
-                // Right column
-                SettingsGroup {
-                    Layout.fillWidth: true
-
-                    ConfigSwitch {
-                        buttonIcon: "dock_to_bottom"
-                        text: Translation.tr("Show dock")
-                        checked: Config.options?.dock?.enable ?? true
-                        onCheckedChanged: Config.setNestedValue("dock.enable", checked)
+                        onToggledByUser: checked => Config.setNestedValue("gameMode.autoDetect", checked)
                     }
                     ConfigSwitch {
                         buttonIcon: "schedule"
                         text: Translation.tr("Desktop clock")
-                        checked: Config.getNestedValue("background.widgets.clock.enable", true)
-                        onCheckedChanged: Config.setNestedValue("background.widgets.clock.enable", checked)
-                    }
-                    ConfigSwitch {
-                        buttonIcon: "bolt"
-                        text: Translation.tr("Reduce animations")
-                        checked: Config.options?.performance?.reduceAnimations ?? false
-                        onCheckedChanged: Config.setNestedValue("performance.reduceAnimations", checked)
-                    }
-                    ConfigSwitch {
-                        buttonIcon: "hearing"
-                        text: Translation.tr("Volume protection")
-                        checked: Config.options?.audio?.protection?.enable ?? true
-                        onCheckedChanged: Config.setNestedValue("audio.protection.enable", checked)
-                    }
-                }
-            }
-
-            // Row 3 — extra toggles (night light, translator, weather, autohide)
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.maximumWidth: 600
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 20
-
-                SettingsGroup {
-                    Layout.fillWidth: true
-
-                    ConfigSwitch {
-                        buttonIcon: "dark_mode"
-                        text: Translation.tr("Night light (auto)")
-                        checked: Config.options?.light?.night?.automatic ?? false
-                        onCheckedChanged: Config.setNestedValue("light.night.automatic", checked)
-                    }
-                    ConfigSwitch {
-                        buttonIcon: "translate"
-                        text: Translation.tr("Sidebar translator")
-                        checked: Config.options?.sidebar?.translator?.enable ?? true
-                        onCheckedChanged: Config.setNestedValue("sidebar.translator.enable", checked)
+                        description: Translation.tr("Adds a quiet clock to the wallpaper. The bar clock remains available either way.")
+                        checked: Config.getNestedValue("background.widgets.clock.enable", false)
+                        onToggledByUser: checked => Config.setNestedValue("background.widgets.clock.enable", checked)
                     }
                 }
 
@@ -1406,54 +1353,24 @@ Scope {
 
                     ConfigSwitch {
                         buttonIcon: "cloud"
-                        text: Translation.tr("Weather widget")
+                        text: Translation.tr("Weather")
+                        description: Translation.tr("Shows weather in the bar and glance cards after location resolves.")
                         checked: Config.options?.bar?.weather?.enable ?? false
-                        onCheckedChanged: Config.setNestedValue("bar.weather.enable", checked)
+                        onToggledByUser: checked => Config.setNestedValue("bar.weather.enable", checked)
                     }
                     ConfigSwitch {
-                        buttonIcon: "auto_awesome_motion"
-                        text: Translation.tr("Auto-hide bar")
-                        checked: Config.options?.bar?.autoHide?.enable ?? false
-                        onCheckedChanged: Config.setNestedValue("bar.autoHide.enable", checked)
+                        buttonIcon: "bolt"
+                        text: Translation.tr("Reduce animations")
+                        description: Translation.tr("Calmer motion and less graphics work on slower hardware.")
+                        checked: Config.options?.performance?.reduceAnimations ?? false
+                        onToggledByUser: checked => Config.setNestedValue("performance.reduceAnimations", checked)
                     }
-                }
-            }
-
-            // Time & locale subsection
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.maximumWidth: 600
-                Layout.alignment: Qt.AlignHCenter
-                spacing: 6
-
-                StyledText {
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.topMargin: 4
-                    text: Translation.tr("Time format")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
-                }
-
-                ConfigSelectionArray {
-                    Layout.alignment: Qt.AlignHCenter
-                    currentValue: Config.getNestedValue("background.widgets.clock.timeFormat", "system")
-                    onSelected: v => Config.setNestedValue("background.widgets.clock.timeFormat", v)
-                    options: [
-                        { displayName: Translation.tr("System"),  icon: "settings",    value: "system" },
-                        { displayName: Translation.tr("24-hour"), icon: "schedule",    value: "24h" },
-                        { displayName: Translation.tr("12-hour"), icon: "nights_stay", value: "12h" }
-                    ]
-                }
-
-                SettingsGroup {
-                    Layout.fillWidth: true
-                    Layout.topMargin: 4
-
                     ConfigSwitch {
-                        buttonIcon: "more_time"
-                        text: Translation.tr("Show seconds in clock")
-                        checked: Config.getNestedValue("background.widgets.clock.showSeconds", false)
-                        onCheckedChanged: Config.setNestedValue("background.widgets.clock.showSeconds", checked)
+                        buttonIcon: "hearing"
+                        text: Translation.tr("Volume protection")
+                        description: Translation.tr("Prevents sudden output jumps without changing normal volume control.")
+                        checked: Config.options?.audio?.protection?.enable ?? true
+                        onToggledByUser: checked => Config.setNestedValue("audio.protection.enable", checked)
                     }
                 }
             }
@@ -1497,12 +1414,12 @@ Scope {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.maximumWidth: 540
                 horizontalAlignment: Text.AlignHCenter
-                text: Translation.tr("Bookmark these — your desktop will feel instantly faster once they're muscle memory.")
+                text: Translation.tr("Four shortcuts cover most daily navigation. The full list is always one key away.")
                 color: Appearance.colors.colSubtext
                 wrapMode: Text.WordWrap
             }
 
-            // Two cards side by side: shortcuts + CLI tips
+            // Two cards side by side: shortcuts + first actions
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 8
@@ -1550,8 +1467,6 @@ Scope {
                                 { keys: "Super+/",     desc: Translation.tr("All shortcuts") },
                                 { keys: "Super+Space", desc: Translation.tr("App launcher") },
                                 { keys: "Super+,",     desc: Translation.tr("Settings") },
-                                { keys: "Super+T",     desc: Translation.tr("Terminal") },
-                                { keys: "Super+E",     desc: Translation.tr("File manager") },
                                 { keys: "Super+V",     desc: Translation.tr("Clipboard history") }
                             ]
                             RowLayout {
@@ -1620,6 +1535,13 @@ Scope {
                         Repeater {
                             model: [
                                 {
+                                    icon: "tune",
+                                    label: Translation.tr("Open quick settings"),
+                                    sub: Translation.tr("Wi-Fi, audio, brightness"),
+                                    target: "controlPanel",
+                                    fn: "toggle"
+                                },
+                                {
                                     icon: "wallpaper",
                                     label: Translation.tr("Pick a wallpaper"),
                                     sub: Translation.tr("Browse and apply"),
@@ -1627,24 +1549,10 @@ Scope {
                                     fn: "toggle"
                                 },
                                 {
-                                    icon: "notifications_active",
-                                    label: Translation.tr("Test a notification"),
-                                    sub: Translation.tr("See how popups look"),
-                                    target: "notifications",
-                                    fn: "test"
-                                },
-                                {
                                     icon: "keyboard",
                                     label: Translation.tr("Show all shortcuts"),
                                     sub: Translation.tr("Cheatsheet overlay"),
                                     target: "cheatsheet",
-                                    fn: "toggle"
-                                },
-                                {
-                                    icon: "tune",
-                                    label: Translation.tr("Open quick settings"),
-                                    sub: Translation.tr("Wi-Fi, audio, brightness"),
-                                    target: "controlPanel",
                                     fn: "toggle"
                                 }
                             ]
@@ -1798,7 +1706,7 @@ Scope {
                         anchors.centerIn: parent
                         spacing: 8
                         MaterialSymbol { text: "menu_book"; iconSize: 16 }
-                        StyledText { text: Translation.tr("iNiR Wiki"); font.pixelSize: Appearance.font.pixelSize.small }
+                        StyledText { text: Translation.tr("Documentation"); font.pixelSize: Appearance.font.pixelSize.small }
                     }
                 }
 
@@ -1812,23 +1720,10 @@ Scope {
                         anchors.centerIn: parent
                         spacing: 8
                         MaterialSymbol { text: "bug_report"; iconSize: 16 }
-                        StyledText { text: Translation.tr("Report bug"); font.pixelSize: Appearance.font.pixelSize.small }
+                        StyledText { text: Translation.tr("Report issue"); font.pixelSize: Appearance.font.pixelSize.small }
                     }
                 }
 
-                RippleButton {
-                    implicitWidth: 120; implicitHeight: 38
-                    buttonRadius: Appearance.rounding.small
-                    colBackground: Appearance.colors.colLayer2
-                    colBackgroundHover: Appearance.colors.colLayer2Hover
-                    onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir")
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 8
-                        StyledText { text: "󰊤"; font.family: Appearance.font.family.iconNerd; font.pixelSize: 16 }
-                        StyledText { text: "GitHub"; font.pixelSize: Appearance.font.pixelSize.small }
-                    }
-                }
             }
 
             Item { Layout.preferredHeight: 8 }
