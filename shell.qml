@@ -16,6 +16,9 @@ import qs.modules.common
 import qs.modules.altSwitcher
 import qs.modules.closeConfirm
 import qs.modules.settings
+import qs.modules.regionSelector
+import qs.modules.tilingOverlay
+import qs.modules.wallpaperSelector
 
 import QtQuick
 import Quickshell
@@ -394,6 +397,107 @@ ShellRoot {
     // Load ONLY the active family panels to reduce startup time.
     // Using `source:` instead of `component:` to avoid parsing inactive family at compile time.
     // This saves ~135 file parses when using ii family (waffle not parsed) and vice versa.
+    // Family-agnostic IPC routers. Both panel files used to instantiate their
+    // own copy, so during a family switch — when the outgoing loader is still
+    // being torn down — two instances existed and Quickshell dropped one
+    // handler per target (region, tiling, wallpaperSelector, coverflowSelector).
+    // One owner here is valid whichever family is loaded.
+    LazyLoader { active: Config.ready; component: RegionSelectorRouter {} }
+    LazyLoader { active: Config.ready; component: TilingOverlayRouter {} }
+    LazyLoader { active: Config.ready; component: WallpaperSelectorRouter {} }
+
+    // Same reason as the routers: both panel files declared these, so every
+    // family switch registered them twice and Quickshell kept whichever won the
+    // race — sometimes the handler belonging to the family being torn down.
+    // The four below were byte-identical in both files; only overview differs,
+    // so it branches here instead of existing twice.
+    IpcHandler {
+        target: "osk"
+        function toggle(): void { GlobalStates.oskOpen = !GlobalStates.oskOpen }
+        function close(): void { GlobalStates.oskOpen = false }
+        function open(): void { GlobalStates.oskOpen = true }
+    }
+
+    IpcHandler {
+        target: "overlay"
+        function toggle(): void { GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
+    }
+
+    IpcHandler {
+        target: "session"
+        function toggle(): void { GlobalStates.sessionOpen = !GlobalStates.sessionOpen }
+        function close(): void { GlobalStates.sessionOpen = false }
+        function open(): void { GlobalStates.sessionOpen = true }
+    }
+
+    IpcHandler {
+        target: "cheatsheet"
+        function toggle(): void { GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen }
+        function close(): void { GlobalStates.cheatsheetOpen = false }
+        function open(): void { GlobalStates.cheatsheetOpen = true }
+    }
+
+    IpcHandler {
+        target: "clipboard"
+        function _isWaffle(): bool { return (Config.options?.panelFamily ?? "ii") === "waffle" }
+        function open(): void {
+            if (_isWaffle()) GlobalStates.waffleClipboardOpen = true
+            else GlobalStates.clipboardOpen = true
+        }
+        function close(): void {
+            if (_isWaffle()) GlobalStates.waffleClipboardOpen = false
+            else GlobalStates.clipboardOpen = false
+        }
+        function toggle(): void {
+            if (_isWaffle()) GlobalStates.waffleClipboardOpen = !GlobalStates.waffleClipboardOpen
+            else GlobalStates.clipboardOpen = !GlobalStates.clipboardOpen
+        }
+    }
+
+    IpcHandler {
+        target: "overview"
+        function _isWaffle(): bool { return (Config.options?.panelFamily ?? "ii") === "waffle" }
+        function toggle(): void {
+            if (_isWaffle()) { GlobalStates.searchOpen = !GlobalStates.searchOpen; return }
+            GlobalStates.overviewSearchPrefix = ""
+            GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+        }
+        function close(): void {
+            if (_isWaffle()) { GlobalStates.searchOpen = false; return }
+            GlobalStates.overviewOpen = false
+        }
+        function open(): void {
+            if (_isWaffle()) { GlobalStates.searchOpen = true; return }
+            GlobalStates.overviewSearchPrefix = ""
+            GlobalStates.overviewOpen = true
+        }
+        function toggleReleaseInterrupt(): void { GlobalStates.superReleaseMightTrigger = false }
+        function clipboardToggle(): void {
+            const prefix = Config.options?.search?.prefix?.clipboard ?? ";"
+            if (_isWaffle()) {
+                LauncherSearch.ensurePrefix(prefix)
+                GlobalStates.searchOpen = true
+                return
+            }
+            if (GlobalStates.overviewOpen && GlobalStates.overviewSearchPrefix.length > 0) {
+                GlobalStates.overviewOpen = false
+            } else {
+                GlobalStates.overviewSearchPrefix = prefix
+                GlobalStates.overviewOpen = true
+            }
+        }
+        function actionOpen(): void {
+            const prefix = Config.options?.search?.prefix?.action ?? "/"
+            if (_isWaffle()) {
+                LauncherSearch.ensurePrefix(prefix)
+                GlobalStates.searchOpen = true
+                return
+            }
+            GlobalStates.overviewSearchPrefix = prefix
+            GlobalStates.overviewOpen = true
+        }
+    }
+
     LazyLoader {
         active: Config.ready && (Config.options?.panelFamily ?? "ii") !== "waffle"
         source: "ShellIiPanels.qml"
@@ -487,6 +591,14 @@ ShellRoot {
     }
 
     function startFamilyTransition(targetFamily: string, direction: string) {
+        // A transition that never finished used to wedge every later switch:
+        // the guard stayed true, so this returned silently, and because the
+        // overlay was never armed its own watchdog could not run either. If the
+        // overlay is not actually up, the flag is stale — clear it and proceed.
+        if (_transitionInProgress && !GlobalStates.familyTransitionActive) {
+            console.warn("[FamilyTransition] stale in-progress flag cleared")
+            _transitionInProgress = false
+        }
         if (_transitionInProgress) return
 
         // If animation is disabled, switch instantly
