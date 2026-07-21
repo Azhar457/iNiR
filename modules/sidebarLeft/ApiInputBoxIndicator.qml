@@ -20,8 +20,11 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Appearance.rounding.small
+        // The chat input wrapper this sits on is painted colLayer2 under material
+        // (aurora and angel give it their own surface), so a raw colLayer2 hover
+        // was the same colour as its background and the state never appeared.
         color: indicatorMA.containsMouse && root.interactive
-            ? Appearance.colors.colLayer2 : "transparent"
+            ? Appearance.colors.colLayer2Hover : "transparent"
         Behavior on color {
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
         }
