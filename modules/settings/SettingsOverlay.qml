@@ -396,14 +396,16 @@ Scope {
         function onCurrentDestinationChanged(): void { root.applyDevDestination() }
     }
 
-    IpcHandler {
-        target: "settingsNav"
-        function page(index: int): void {
-            GlobalStates.settingsOverlayOpen = true
-            root.overlayCurrentPage = index
+    // settingsNav is owned by shell.qml — see the comment there.
+    Connections {
+        target: GlobalStates
+        function onSettingsOverlayRequestedPageChanged() {
+            const requested = GlobalStates.settingsOverlayRequestedPage ?? -1
+            if (requested < 0 || !root.settingsOpen)
+                return
+            root.overlayCurrentPage = requested
+            GlobalStates.settingsOverlayRequestedPage = -1
         }
-        function count(): int { return root.overlayPages.length }
-        function current(): int { return root.overlayCurrentPage }
     }
 
     Loader {
@@ -430,6 +432,38 @@ Scope {
                 bottom: true
                 left: true
                 right: true
+            }
+
+            // Blurred backdrop — see SettingsFocus for the contract. Both overlay
+            // layouts read the same setting, so the option in Settings UI means
+            // the same thing whichever chrome is selected.
+            readonly property int backdropBlur:
+                Config.options?.settingsUi?.overlayAppearance?.backdropBlur ?? 0
+
+            Loader {
+                anchors.fill: parent
+                z: -1
+                active: settingsPanel.backdropBlur > 0 && Appearance.effectsEnabled
+                visible: active && (GlobalStates.settingsOverlayOpen ?? false)
+
+                sourceComponent: GlassBackground {
+                    anchors.fill: parent
+                    radius: 0
+                    forceBackdrop: true
+                    blurStrength: settingsPanel.backdropBlur / 100
+                    screenX: 0
+                    screenY: 0
+                    screenWidth: settingsPanel.width
+                    screenHeight: settingsPanel.height
+                    fallbackColor: "transparent"
+                    auroraTransparency: 0.35
+
+                    opacity: (GlobalStates.settingsOverlayOpen ?? false) ? 1 : 0
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    }
+                }
             }
 
             // Global Escape key shortcut (works regardless of focus)
@@ -510,7 +544,13 @@ Scope {
 
                 readonly property real maxCardWidth: Math.min(1100, Math.max(820, settingsPanel.width * 0.7))
                 readonly property real maxCardHeight: Math.min(840, Math.max(600, settingsPanel.height * 0.82))
-                readonly property real panelBgOpacity: Config.options?.settingsUi?.overlayAppearance?.backgroundOpacity ?? 1.0
+                // Clamped, not read raw: the control used to bottom out at 20%,
+                // which left the solid styles showing a sharp wallpaper through
+                // the text and reduced aurora's tint to a raw 64 px blur. The
+                // panel is one surface — the cards on it carry the reading
+                // contrast — so the panel itself has to stay a real backdrop.
+                readonly property real panelBgOpacity: Math.max(0.6,
+                    Config.options?.settingsUi?.overlayAppearance?.backgroundOpacity ?? 1.0)
 
                 anchors.centerIn: parent
                 width: maxCardWidth
@@ -523,11 +563,18 @@ Scope {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot }
                 }
-                // backgroundOpacity only applies to glass styles (aurora/angel) — solid styles stay opaque
+                // overlayAppearance.backgroundOpacity reaches every style: glass
+                // modulates the blur's transparentize below, solid styles take it
+                // on this fill's alpha. It must never ride on Item opacity —
+                // that is inherited by children and would dim the whole UI
+                // instead of the panel background. At the default 1.0 both paths
+                // are identity, so no style changes appearance.
                 color: Appearance.auroraEverywhere ? "transparent"
-                     : Appearance.inirEverywhere ? Appearance.inir.colLayer0
-                     : Appearance.zzzEverywhere ? Appearance.zzz.chrome
-                     : Appearance.colors.colLayer0Base
+                     : CF.ColorUtils.applyAlpha(
+                         Appearance.inirEverywhere ? Appearance.inir.colLayer0
+                       : Appearance.zzzEverywhere ? Appearance.zzz.chrome
+                       : Appearance.colors.colLayer0Base,
+                         settingsCard.panelBgOpacity)
                 clip: true
 
                 border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
@@ -576,9 +623,17 @@ Scope {
                     // regular opaque surface only while effects are suspended.
                     fallbackColor: Appearance.effectsEnabled
                         ? "transparent" : Appearance.colors.colLayer0Base
-                    auroraTransparency: Appearance.angelEverywhere
-                        ? Appearance.angel.panelTransparentize
-                        : Appearance.aurora.overlayTransparentize
+                    // Modulates the style's tuned baseline rather than replacing
+                    // it: 1.0 keeps glass exactly as the style designed it, lower
+                    // values push toward fully transparent. A plain
+                    // `1 - backgroundOpacity` would make the default MORE opaque
+                    // than the style intends and flatten aurora's glass.
+                    auroraTransparency: {
+                        const base = Appearance.angelEverywhere
+                            ? Appearance.angel.panelTransparentize
+                            : Appearance.aurora.overlayTransparentize
+                        return base + (1 - base) * (1 - settingsCard.panelBgOpacity)
+                    }
                     radius: parent.radius
                 }
 
@@ -1801,6 +1856,8 @@ Scope {
         root._slideDir = root.overlayCurrentPage > root._prevPage ? 1 : -1
         root._prevPage = root.overlayCurrentPage
         root._persistOverlayPage()
+        // Published for settingsNav, which shell.qml owns for both chromes.
+        GlobalStates.settingsOverlayCurrentPage = root.overlayCurrentPage
     }
 
     Connections {

@@ -311,7 +311,7 @@ Navigate the settings overlay to a specific page (same as clicking the nav rail)
 |----------|-------------|
 | `page(index)` | Open the overlay and jump to page `index` |
 | `count` | Number of settings pages |
-| `current` | Current page index |
+| `current` | Current page index, or `-1` when no page is open |
 
 ```sh
 inir ipc settingsNav page 5

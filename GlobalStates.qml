@@ -42,6 +42,7 @@ Singleton {
     property bool clipboardOpen: false
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
+    property int settingsOverlayCurrentPage: -1 // Published by whichever overlay chrome is loaded
     property bool regionSelectorOpen: false
     property var regionSelectorAction: 0
     property var regionSelectorMode: 0

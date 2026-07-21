@@ -37,6 +37,7 @@ ShellRoot {
     property var _powerProfilePersistence: PowerProfilePersistence
     property var _devNavigationService: DevNavigation
     property var _shellEditSessionService: ShellEditSession
+    property var _globalActionsService
 
     // Deferred singletons — initialized after first frame to reduce boot contention
     // Tier 3: T+500ms (display/interaction services)
@@ -85,6 +86,11 @@ ShellRoot {
         DevNavigation.registerSettingsPages(SettingsPageRegistry.pages);
         // Force MemoryPressureService instantiation for IPC (#164)
         void MemoryPressureService.enabled;
+        // Same reason: GlobalActions owns the `globalActions` IPC target and is
+        // otherwise only constructed when the command palette first opens, so
+        // scripts and keybinds got "Target not found" until then. Tier 0 also
+        // keeps the gap after a config reload as short as every other handler's.
+        root._globalActionsService = GlobalActions;
         
         // Reset shell entry state (hot-reload may preserve singletons)
         GlobalStates.shellEntryReady = false;
@@ -349,10 +355,36 @@ ShellRoot {
         }
     }
 
-    // Settings overlay panel (loaded only when overlay mode is enabled)
+    // One owner for settingsNav, here rather than inside a chrome. Both overlay
+    // layouts used to declare this target themselves; switching layouts leaves
+    // the outgoing host alive for a moment, so Quickshell saw two registrations
+    // and silently dropped one — the caller then hit whichever survived. Routing
+    // through GlobalStates keeps the target valid no matter which chrome, or
+    // none, is loaded.
+    IpcHandler {
+        target: "settingsNav"
+        function page(index: int): void {
+            GlobalStates.settingsOverlayRequestedPage = index
+            GlobalStates.settingsOverlayOpen = true
+        }
+        function count(): int { return SettingsPageRegistry.pages.length }
+        function current(): int { return GlobalStates.settingsOverlayCurrentPage }
+    }
+
+    // Settings overlay panel (loaded only when overlay mode is enabled).
+    // overlayStyle picks the chrome; two sibling loaders instead of a
+    // conditional `component:` so only the selected one is ever constructed.
+    // Any unrecognised style falls back to the nav rail.
     LazyLoader {
         active: Config.ready && (Config.options?.settingsUi?.overlayMode ?? false)
+            && (Config.options?.settingsUi?.overlayStyle ?? "rail") !== "focus"
         component: SettingsOverlay {}
+    }
+
+    LazyLoader {
+        active: Config.ready && (Config.options?.settingsUi?.overlayMode ?? false)
+            && (Config.options?.settingsUi?.overlayStyle ?? "rail") === "focus"
+        component: SettingsFocus {}
     }
 
     // === Panel Loaders ===
@@ -389,7 +421,7 @@ ShellRoot {
             "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
             "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar",
             "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiRecordingOsd", "iiDashboard",
-            "iiWorkspaceStrip", "iiMascotCompanion"
+            "iiMascotCompanion"
         ],
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
@@ -397,7 +429,7 @@ ShellRoot {
             // Note: wAltSwitcher is always loaded when waffle is active (not in this list)
             "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
             "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard",
-            "iiWorkspaceStrip", "iiMascotCompanion"
+            "iiMascotCompanion"
         ]
     })
 
