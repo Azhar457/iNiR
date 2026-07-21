@@ -2073,6 +2073,8 @@ Scope {
                         sourceComponent: WidgetManagerPanel {
                             canvasWidth: widgetManagerPanel.parent?.width ?? 800
                             canvasHeight: widgetManagerPanel.parent?.height ?? 600
+                            screenWidth: bgRoot.screen.width
+                            screenHeight: bgRoot.screen.height
                         }
                     }
                 }

@@ -1023,8 +1023,22 @@ AbstractWidget {
             }
 
             PanelSurface {
+                id: editPopoverSurface
                 anchors.fill: parent
                 elevation: 2
+                // Floats straight on the wallpaper like the widget manager panel:
+                // without a backdrop the aurora/angel fill is a hole, not glass.
+                wallpaperBackdrop: true
+                readonly property point _screenPos: {
+                    void root.x; void root.y;
+                    void editPopoverPanel.x; void editPopoverPanel.y;
+                    void editPopoverPanel.width; void editPopoverPanel.height;
+                    return editPopoverSurface.mapToItem(null, 0, 0)
+                }
+                backdropScreenX: _screenPos.x
+                backdropScreenY: _screenPos.y
+                backdropScreenWidth: root.screenWidth
+                backdropScreenHeight: root.screenHeight
                 radiusOverride: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
                     : Appearance.inirEverywhere ? Appearance.inir.roundingNormal

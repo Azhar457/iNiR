@@ -15,6 +15,12 @@ Item {
     // Canvas bounds for clamping
     property real canvasWidth: 800
     property real canvasHeight: 600
+
+    // Output geometry for the glass backdrop. This panel floats straight on the
+    // wallpaper, so under aurora and angel its translucent fill needs the blurred
+    // crop behind it — without one the wallpaper reads through sharp.
+    property real screenWidth: 1920
+    property real screenHeight: 1080
     readonly property bool _widgetBlurAvailable: Appearance.effectsEnabled
         && (Appearance.angelEverywhere
             || (Appearance.auroraEverywhere && !Appearance.inirEverywhere)
@@ -70,6 +76,18 @@ Item {
         id: _bgCard
         anchors.fill: parent
         elevation: 1
+        wallpaperBackdrop: true
+        // mapToItem is a plain call, not a tracked dependency: the panel is
+        // positioned by its Loader, so the binding has to name what moves it.
+        readonly property point _screenPos: {
+            void root.x; void root.y; void root.width; void root.height;
+            void (root.parent?.x ?? 0); void (root.parent?.y ?? 0);
+            return _bgCard.mapToItem(null, 0, 0)
+        }
+        backdropScreenX: _screenPos.x
+        backdropScreenY: _screenPos.y
+        backdropScreenWidth: root.screenWidth
+        backdropScreenHeight: root.screenHeight
         radiusOverride: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
