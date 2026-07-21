@@ -438,6 +438,10 @@ Scope {
         }
         readonly property string wallpaperThumbnailPath: bgRoot.backgroundOptions.thumbnailPath ?? bgRoot.wallpaperPathRaw
         readonly property bool enableAnimation: bgRoot.backgroundOptions.enableAnimation ?? true
+        // True while ii is the family actually painting the screen. The family
+        // LazyLoader can retain the inactive tree, so every heavy source in here
+        // has to ask, not assume.
+        readonly property bool _familyOwnsScreen: (Config.options?.panelFamily ?? "ii") !== "waffle"
         property bool wallpaperIsVideo: wallpaperPathRaw.endsWith(".mp4") || wallpaperPathRaw.endsWith(".webm") || wallpaperPathRaw.endsWith(".mkv") || wallpaperPathRaw.endsWith(".avi") || wallpaperPathRaw.endsWith(".mov")
         property bool wallpaperIsGif: wallpaperPathRaw.toLowerCase().endsWith(".gif")
         property string wallpaperPath: bgRoot.wallpaperPathRaw
@@ -1191,8 +1195,15 @@ Scope {
                         enabled: Appearance.animationsEnabled
                         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                     }
+                    // The family loader can keep this whole tree alive after a
+                    // switch, and nothing else in these gates knows which family
+                    // owns the screen — so both backgrounds kept a 4K video
+                    // decoding at once and every switch added another. Clearing
+                    // the source releases the decoder outright instead of only
+                    // pausing it; the transition overlay covers the swap.
                     source: {
                         if (bgRoot.wallpaperSafetyTriggered || !bgRoot.wallpaperIsVideo || bgRoot.backdropActive) return "";
+                        if (!bgRoot._familyOwnsScreen) return "";
                         return bgRoot.wallpaperPathRaw;
                     }
                     fillMode: VideoOutput.PreserveAspectCrop
@@ -1200,6 +1211,7 @@ Scope {
                     transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
                     shouldPlay: bgRoot.enableAnimation && !GlobalStates.screenLocked
                         && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
+                        && bgRoot._familyOwnsScreen
                         && visible
 
                     layer.enabled: Appearance.effectsEnabled && (bgRoot.effectsOptions.enableAnimatedBlur ?? false) && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
