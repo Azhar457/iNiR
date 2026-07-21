@@ -80,6 +80,18 @@ ContentPage {
                 }
             }
 
+            SettingsSwitch {
+                buttonIcon: "unfold_less"
+                text: Translation.tr("Compact notifications and OSD")
+                enabled: root.pillActive && ((Config.options?.bar?.pill?.toasts ?? true)
+                    || (Config.options?.bar?.pill?.osd ?? true))
+                checked: Config.options?.bar?.pill?.compactAnnounces ?? false
+                onCheckedChanged: Config.setNestedValue("bar.pill.compactAnnounces", checked)
+                StyledToolTip {
+                    text: Translation.tr("Keep transient notifications and OSD feedback inside the resting pill instead of expanding into a larger card.")
+                }
+            }
+
             ContentSubsection {
                 title: Translation.tr("Optional surfaces")
 

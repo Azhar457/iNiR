@@ -816,6 +816,7 @@
             },
             "toasts": true,
             "osd": true,
+            "compactAnnounces": false,
             "modules": {
                 "workspaces": true,
                 "weather": true,

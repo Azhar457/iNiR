@@ -12,6 +12,7 @@ Item {
     property string screenName: ""
     property bool suppressed: false
     property bool expanded: false
+    property bool compact: false
     property bool flashing: false
     property string kind: "volume"
     property bool armed: false
@@ -360,9 +361,11 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             // Fit inside whatever height the host grants (bar mode keeps the
             // bar's own geometry, slightly shorter than the capsule face).
-            width: Math.min(44 * root.s, trackRow.height - 8 * root.s)
+            width: root.compact
+                ? Math.min(22 * root.s, trackRow.height)
+                : Math.min(44 * root.s, trackRow.height - 8 * root.s)
             height: width
-            radius: 9 * root.s
+            radius: (root.compact ? 6 : 9) * root.s
             color: PillTheme.tileBg
 
             Image {
@@ -399,7 +402,7 @@ Item {
                 height: 18 * root.s
                 radius: width / 2
                 color: Qt.alpha(PillTheme.cardBot, 0.8)
-                visible: srcIcon.status === Image.Ready
+                visible: !root.compact && srcIcon.status === Image.Ready
 
                 Image {
                     id: srcIcon
@@ -419,17 +422,17 @@ Item {
             id: trackCtrl
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 18 * root.s
-            height: 18 * root.s
+            width: (root.compact ? 15 : 18) * root.s
+            height: width
             name: root.subjectPlaying ? "play" : "pause"
             color: root.subjectPlaying ? PillTheme.vermLit : PillTheme.iconDim
         }
 
         Column {
             anchors.left: coverBox.right
-            anchors.leftMargin: 12 * root.s
+            anchors.leftMargin: (root.compact ? 8 : 12) * root.s
             anchors.right: trackCtrl.left
-            anchors.rightMargin: 12 * root.s
+            anchors.rightMargin: (root.compact ? 8 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
             spacing: 3 * root.s
 
@@ -438,7 +441,7 @@ Item {
                 text: root.subjectHas ? root.subjectTitle : "Nothing playing"
                 color: PillTheme.cream
                 font.family: PillTheme.font
-                font.pixelSize: 14 * root.s
+                font.pixelSize: (root.compact ? 10.5 : 14) * root.s
                 font.weight: Font.DemiBold
                 maximumLineCount: 1
                 elide: Text.ElideRight
@@ -452,7 +455,7 @@ Item {
                 font.pixelSize: 11 * root.s
                 maximumLineCount: 1
                 elide: Text.ElideRight
-                visible: text.length > 0
+                visible: !root.compact && text.length > 0
             }
         }
     }
@@ -641,7 +644,7 @@ Item {
             text: root.recordStarted ? "Recording started" : "Recording stopped"
             color: PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: 11.5 * root.s
+            font.pixelSize: (root.compact ? 10.5 : 11.5) * root.s
             font.weight: Font.DemiBold
             elide: Text.ElideRight
             maximumLineCount: 1

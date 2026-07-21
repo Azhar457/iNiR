@@ -129,6 +129,9 @@ lives on `prerelease` and reaches `main` with the next release.
   it off if you'd rather spend the charge.
 
 ### Changed
+- Pill notifications and OSD can stay inside the resting capsule instead of
+  expanding into a larger card. The alternate mode lives in both Pill settings
+  sections.
 - The assistant behaves like a shell feature, not an API client: provider
   cards hide endpoints and raw model codes, shell tools run through a
   bounded registry with typed approvals, and arbitrary bash moved behind an
@@ -167,6 +170,9 @@ lives on `prerelease` and reaches `main` with the next release.
   contrast instead of outline strokes.
 
 ### Fixed
+- Entering fullscreen no longer stretches the Pill bar across the display.
+  Automatic Game Mode hides the resting capsule and still lets transient Pill
+  feedback appear; the wide game face is reserved for explicit manual mode.
 - Optional Kira art updates are staged and verified before installation, keep
   the shell-owned manifest untouched, and repair missing or corrupt assets even
   when the published release tag has not changed.

@@ -3,6 +3,8 @@ import QtQuick
 import Quickshell
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
+import qs.modules.common.widgets
 
 /**
  * Toast content for the morphing pill body: icon tile, app eyebrow, summary
@@ -16,12 +18,21 @@ Item {
     id: root
 
     property real s: 1
+    property bool compact: false
     property bool live: true
     required property var notif
 
     /** iNiR exposes urgency as a string, not the Quickshell enum. */
     readonly property bool critical: String(notif.urgency) === "Critical"
     readonly property var acts: (notif.actions ?? []).filter(a => a.text.length > 0)
+    readonly property string iconSource: PillNotifs.iconFor(notif)
+    readonly property string imageValue: String(notif.image ?? "")
+    readonly property bool imageIsIconHint: imageValue.startsWith("image://icon/")
+    readonly property string defaultMaterialSymbol: NotificationUtils.findSuitableMaterialSymbol("")
+    readonly property string materialSymbol: NotificationUtils.findSuitableMaterialSymbol(
+        `${String(notif.appName ?? "")} ${String(notif.summary ?? "")}`)
+    readonly property bool preferMaterialSymbol: !notif.appIcon && imageIsIconHint
+        && materialSymbol !== defaultMaterialSymbol
 
     implicitHeight: Math.max(iconTile.height, col.implicitHeight)
 
@@ -52,9 +63,10 @@ Item {
         id: iconTile
         anchors.left: parent.left
         anchors.top: parent.top
-        width: 28 * root.s
-        height: 28 * root.s
-        radius: 9 * root.s
+        anchors.topMargin: root.compact ? 2 * root.s : 0
+        width: (root.compact ? 22 : 28) * root.s
+        height: width
+        radius: (root.compact ? 7 : 9) * root.s
         color: PillTheme.tileBg
         border.width: 1
         border.color: PillTheme.border
@@ -62,22 +74,21 @@ Item {
         Image {
             id: toastImg
             anchors.fill: parent
-            anchors.margins: root.notif.image ? 0 : 6 * root.s
-            source: PillNotifs.iconFor(root.notif)
+            anchors.margins: root.imageValue.length > 0 && !root.imageIsIconHint
+                ? 0 : (root.compact ? 4 : 6) * root.s
+            source: root.iconSource
             sourceSize.width: 56
             sourceSize.height: 56
             fillMode: Image.PreserveAspectCrop
             smooth: true
-            visible: source.toString().length > 0
+            visible: !root.preferMaterialSymbol && status === Image.Ready
         }
 
-        Rectangle {
+        MaterialSymbol {
             anchors.centerIn: parent
             visible: !toastImg.visible
-            width: 7 * root.s
-            height: 7 * root.s
-            radius: 2 * root.s
-            rotation: 45
+            text: root.materialSymbol
+            iconSize: (root.compact ? 15 : 17) * root.s
             color: root.critical ? PillTheme.vermLit : PillTheme.verm
         }
     }
@@ -86,6 +97,7 @@ Item {
         id: dismiss
         anchors.right: parent.right
         anchors.top: parent.top
+        visible: !root.compact
         text: "✕"
         color: dismissArea.containsMouse ? PillTheme.cream : PillTheme.dim
         font.family: PillTheme.font
@@ -109,13 +121,15 @@ Item {
         id: col
         anchors.left: iconTile.right
         anchors.leftMargin: 10 * root.s
-        anchors.right: dismiss.left
-        anchors.rightMargin: 8 * root.s
+        anchors.right: root.compact ? parent.right : dismiss.left
+        anchors.rightMargin: root.compact ? 0 : 8 * root.s
         anchors.top: parent.top
+        anchors.topMargin: root.compact ? 5 * root.s : 0
         spacing: 3 * root.s
 
         Text {
             width: parent.width
+            visible: !root.compact
             text: (root.notif.appName && root.notif.appName.length) ? root.notif.appName : "System"
             color: PillTheme.dim
             font.family: PillTheme.font
@@ -158,7 +172,7 @@ Item {
                 text: root.notif.summary
                 color: PillTheme.cream
                 font.family: PillTheme.font
-                font.pixelSize: 11.5 * root.s
+                font.pixelSize: (root.compact ? 10.5 : 11.5) * root.s
                 font.weight: Font.DemiBold
                 maximumLineCount: 1
                 elide: Text.ElideRight
@@ -167,7 +181,7 @@ Item {
 
         Text {
             width: parent.width
-            visible: root.notif.body.length > 0
+            visible: !root.compact && root.notif.body.length > 0
             text: root.notif.body
             color: PillTheme.dim
             font.family: PillTheme.font
@@ -179,7 +193,7 @@ Item {
         }
 
         Row {
-            visible: root.acts.length > 0
+            visible: !root.compact && root.acts.length > 0
             spacing: 6 * root.s
             topPadding: 4 * root.s
 

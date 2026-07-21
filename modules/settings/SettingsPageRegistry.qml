@@ -526,8 +526,8 @@ Singleton {
             pageIndex: 2, pageName: root.pages[2].name,
             section: Translation.tr("Positioning"),
             label: Translation.tr("Pill options"),
-            description: Translation.tr("Morphing pill bar: bar mode, scale, opacity, gaps, glyphs, surfaces"),
-            keywords: ["pill", "bar", "morph", "island", "kanji", "glyph", "visualizer", "sysmon", "system", "clipboard", "scale", "gap", "expanded", "persistent"]
+            description: Translation.tr("Morphing pill bar: bar mode, compact notifications, scale, opacity, gaps, glyphs and surfaces"),
+            keywords: ["pill", "bar", "morph", "island", "kanji", "glyph", "visualizer", "sysmon", "system", "clipboard", "scale", "gap", "expanded", "persistent", "compact", "toast", "osd", "notification"]
         },
         {
             pageIndex: 2, pageName: root.pages[2].name,
@@ -554,8 +554,8 @@ Singleton {
             pageIndex: 21, pageName: root.pages[21].name,
             section: Translation.tr("Pill bar"),
             label: Translation.tr("Ricelin dialect"),
-            description: Translation.tr("Pill bar, bar mode and optional surfaces: glance, launcher, clipboard, sysmon, recorder"),
-            keywords: ["ricelin", "pill", "bar", "mode", "glance", "today", "launcher", "apps", "recorder", "record", "clipboard", "sysmon", "surfaces", "washi", "flame", "toast", "osd"]
+            description: Translation.tr("Pill bar, compact notifications and optional surfaces: glance, launcher, clipboard, sysmon, recorder"),
+            keywords: ["ricelin", "pill", "bar", "mode", "glance", "today", "launcher", "apps", "recorder", "record", "clipboard", "sysmon", "surfaces", "washi", "flame", "toast", "osd", "compact", "notification"]
         },
         {
             pageIndex: 21, pageName: root.pages[21].name,

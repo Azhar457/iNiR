@@ -103,6 +103,7 @@ Item {
     // (ShellIiPanels re-enables it), so nothing goes silent.
     readonly property bool toastActive: (Config.options?.bar?.pill?.toasts ?? true) && PillNotifs.popups.length > 0
     readonly property bool osdActive: osd.flashing
+    readonly property bool compactAnnounces: Config.options?.bar?.pill?.compactAnnounces ?? false
 
     /**
      * Latch-once lazy load. Every surface sleeps in an inactive Loader until its
@@ -149,7 +150,10 @@ Item {
     property string linkInitialView: "main"
     onSurfaceChanged: if (surface !== "link") linkInitialView = "main"
 
-    readonly property bool gameMode: GameMode.active
+    // The wide game face is an explicit manual mode. Automatic fullscreen
+    // detection only hides the resting pill; it must never stretch the pill
+    // across the display merely because an app entered fullscreen.
+    readonly property bool manualGameFace: GameMode.manuallyActivated
 
     /**
      * A fullscreen window on this pill's active workspace hides the resting
@@ -182,12 +186,12 @@ Item {
     }
 
     /**
-     * Mode ladder. An open surface always wins; game mode docks the pill into a
-     * flush bar; an arriving toast takes the resting pill over, but never
-     * interrupts a pinned or hovered one.
+     * Mode ladder. An open surface always wins; explicit manual Game Mode can
+     * dock the pill into its wide face; automatic fullscreen only hides the
+     * resting pill. Transient feedback still appears unless the pill is held.
      */
     readonly property string mode: surfaceOpen && surfaces[surface] !== undefined ? surface
-        : (gameMode ? "game"
+        : (manualGameFace && !fsCovered ? "game"
         : (osdActive && !held ? "osd"
         : (toastActive && !held ? "toast"
         : (expanded ? "hover" : "rest"))))
@@ -210,7 +214,9 @@ Item {
         precision: PillTheme.clockSeconds ? SystemClock.Seconds : SystemClock.Minutes
     }
 
-    property real morphRadius: (mode === "rest" || mode === "hover" || mode === "game") ? restCorner : openCorner
+    readonly property bool compactAnnounceMode: compactAnnounces && (mode === "osd" || mode === "toast")
+    property real morphRadius: (mode === "rest" || mode === "hover" || mode === "game" || compactAnnounceMode)
+        ? restCorner : openCorner
 
     /**
      * Target geometry for the non-surface morph modes. Surface sizes come from
@@ -218,21 +224,17 @@ Item {
      * surface item. Thunks so the properties they read register as live deps.
      */
     /**
-     * In bar mode the transient faces (OSD, toast) keep the bar's own geometry
-     * and cross-fade in place instead of shrinking the whole bar down to a
-     * capsule and back on every volume key. The OSD rows anchor to the pill's
-     * edges, so a volume/brightness flash becomes a filament burning across the
-     * full bar width; only a tall face (track art, a long toast) grows height.
+     * Transient feedback normally receives enough room for its complete card.
+     * Compact announces use the exact resting capsule geometry instead, in both
+     * normal and bar mode, and simplify their content to what can fit there.
      */
     readonly property var modeSize: ({
         hover: () => Qt.size(hoverW, hoverH),
         game: () => Qt.size(gameW, gameH),
-        // Announces are compact and centred in every mode (maintainer call,
-        // 2026-07-11): in bar mode the bar morphs down to the capsule face for
-        // the flash and glides back, instead of stretching the announce across
-        // the full bar width.
-        osd: () => Qt.size(osd.desiredW, osd.desiredH),
+        osd: () => compactAnnounces ? Qt.size(restW, restH) : Qt.size(osd.desiredW, osd.desiredH),
         toast: () => {
+            if (compactAnnounces)
+                return Qt.size(restW, restH);
             const th = toastLoader.item ? toastLoader.item.implicitHeight + 24 * s : restH;
             return Qt.size(toastW, th);
         }
@@ -1221,11 +1223,12 @@ Item {
     PillOsd {
         id: osd
         anchors.fill: parent
-        anchors.topMargin: 12 * pill.s
-        anchors.leftMargin: 18 * pill.s
-        anchors.rightMargin: 18 * pill.s
-        anchors.bottomMargin: 12 * pill.s
+        anchors.topMargin: (pill.compactAnnounceMode ? 7 : 12) * pill.s
+        anchors.leftMargin: (pill.compactAnnounceMode ? 12 : 18) * pill.s
+        anchors.rightMargin: (pill.compactAnnounceMode ? 12 : 18) * pill.s
+        anchors.bottomMargin: (pill.compactAnnounceMode ? 7 : 12) * pill.s
         s: pill.s
+        compact: pill.compactAnnounceMode
         screenName: pill.screenName
         suppressed: pill.surfaceOpen || pill.held
         expanded: pill.expanded
@@ -1386,10 +1389,10 @@ Item {
         id: toastLoader
         active: pill.toastActive
         anchors.fill: parent
-        anchors.topMargin: 12 * pill.s
-        anchors.leftMargin: 16 * pill.s
-        anchors.rightMargin: 16 * pill.s
-        anchors.bottomMargin: 12 * pill.s
+        anchors.topMargin: (pill.compactAnnounceMode ? 6 : 12) * pill.s
+        anchors.leftMargin: (pill.compactAnnounceMode ? 8 : 16) * pill.s
+        anchors.rightMargin: (pill.compactAnnounceMode ? 8 : 16) * pill.s
+        anchors.bottomMargin: (pill.compactAnnounceMode ? 6 : 12) * pill.s
         enabled: pill.mode === "toast"
         opacity: pill.mode === "toast" ? 1 : 0
         visible: opacity > 0.01
@@ -1397,6 +1400,7 @@ Item {
 
         sourceComponent: Toast {
             s: pill.s
+            compact: pill.compactAnnounceMode
             live: pill.mode === "toast"
             notif: PillNotifs.popups[PillNotifs.popups.length - 1]
         }

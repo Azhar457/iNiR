@@ -1637,6 +1637,7 @@ Singleton {
                     property bool musicViz: true // Swap the rest glyph for a live cava spectrum
                     property bool toasts: true // Notification toasts take over the resting pill
                     property bool osd: true // Volume/brightness/mic/workspace changes flash on the pill
+                    property bool compactAnnounces: false // Keep toast/OSD faces at the resting pill size
                     property real rowSpacing: 20 // Air between the hover row's groups (workspaces | clock | status), px
                     property real iconSpacing: 12 // Air between the status icons, px
                     property real iconSize: 17 // Icon size of the pill's furniture, px
