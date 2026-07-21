@@ -32,7 +32,7 @@ PanelSurface {
     borderless: islandChrome
     // Aurora stock dialect: frosted wallpaper behind the translucent card.
     wallpaperBackdrop: true
-    implicitHeight: column.implicitHeight + 32
+    implicitHeight: column.implicitHeight + 28
 
     function mix(a, b, t) {
         return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1)
@@ -120,20 +120,25 @@ PanelSurface {
             left: parent.left
             right: parent.right
             verticalCenter: parent.verticalCenter
-            leftMargin: 16
-            rightMargin: 16
+            leftMargin: 14
+            rightMargin: 14
         }
-        spacing: 12
+        spacing: 10
 
-        // Header: album art + track identity.
-        Row {
+        // Compact identity header. Playback state is an actual control rather
+        // than a second tracked label competing with the title for width.
+        Item {
             width: parent.width
-            spacing: 12
+            height: 54
 
             Item {
-                width: 60
-                height: 60
-                anchors.verticalCenter: parent.verticalCenter
+                id: artFrame
+                anchors {
+                    left: parent.left
+                    verticalCenter: parent.verticalCenter
+                }
+                width: 54
+                height: 54
 
                 Rectangle {
                     id: artBg
@@ -144,8 +149,6 @@ PanelSurface {
                 Image {
                     id: art
                     anchors.fill: parent
-                    // Cached, resolved square art (handles YT Music too) instead of
-                    // the raw MPRIS url, decoded at ×2 so it stays crisp.
                     source: MediaArtwork.displaySource
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
@@ -167,61 +170,75 @@ PanelSurface {
                 MaterialSymbol {
                     anchors.centerIn: parent
                     text: "music_note"
-                    iconSize: 26
+                    iconSize: 24
                     color: Appearance.colors.colOnLayer2
                     visible: !art.visible
                     opacity: 0.7
                 }
             }
 
+            RippleButton {
+                id: headerPlay
+                anchors {
+                    right: parent.right
+                    verticalCenter: parent.verticalCenter
+                }
+                implicitWidth: 32
+                implicitHeight: 32
+                buttonRadius: media._zzz
+                    ? Appearance.zzz.controlRadius : Appearance.rounding.full
+                enabled: media.player !== null
+                colBackground: media._zzz
+                    ? Appearance.zzz.bg3 : Appearance.colors.colLayer2
+                colBackgroundHover: media._zzz
+                    ? Appearance.zzz.bg4 : Appearance.colors.colLayer2Hover
+                colRipple: media._zzz
+                    ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                downAction: () => media.player?.togglePlaying()
+
+                contentItem: MaterialSymbol {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    fill: 1
+                    text: media.isPlaying ? "pause" : "play_arrow"
+                    iconSize: 18
+                    color: media._zzz
+                        ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                }
+
+                StyledToolTip {
+                    text: media.isPlaying
+                        ? Translation.tr("Pause") : Translation.tr("Play")
+                }
+            }
+
             Column {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 72
+                anchors {
+                    left: artFrame.right
+                    right: headerPlay.left
+                    verticalCenter: parent.verticalCenter
+                    leftMargin: 10
+                    rightMargin: 10
+                }
                 spacing: 1
 
-                // Kicker + right-aligned playback state in dim tracked caps.
-                Item {
-                    width: parent.width
-                    height: kicker.implicitHeight
-
-                    StyledText {
-                        id: kicker
-                        anchors.left: parent.left
-                        anchors.right: playState.left
-                        anchors.rightMargin: 8
-                        text: Translation.tr("Now playing").toUpperCase()
-                        elide: Text.ElideRight
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.weight: Font.DemiBold
-                        font.letterSpacing: 1.6
-                        color: media._zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary
-                    }
-                    StyledText {
-                        id: playState
-                        anchors.right: parent.right
-                        anchors.baseline: kicker.baseline
-                        text: (media.isPlaying
-                            ? Translation.tr("Playing") : Translation.tr("Paused")).toUpperCase()
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.weight: Font.Bold
-                        font.letterSpacing: 1.0
-                        color: media._zzz ? Appearance.zzz.onColor : PillTheme.dim
-                        opacity: 0.85
-                    }
-                }
                 StyledText {
                     width: parent.width
-                    text: StringUtils.cleanMusicTitle(media.player?.trackTitle ?? "") || Translation.tr("Unknown track")
+                    text: StringUtils.cleanMusicTitle(media.player?.trackTitle ?? "")
+                        || Translation.tr("Unknown track")
                     elide: Text.ElideRight
+                    wrapMode: Text.NoWrap
                     maximumLineCount: 1
                     font.pixelSize: Appearance.font.pixelSize.large
                     font.weight: Font.Bold
-                    color: media._zzz ? Appearance.zzz.onColor : Appearance.colors.colOnLayer1
+                    color: media._zzz
+                        ? Appearance.zzz.onColor : Appearance.colors.colOnLayer1
                 }
                 StyledText {
                     width: parent.width
                     text: media.player?.trackArtist ?? ""
                     elide: Text.ElideRight
+                    wrapMode: Text.NoWrap
                     maximumLineCount: 1
                     font.pixelSize: Appearance.font.pixelSize.small
                     color: Appearance.colors.colSubtext
@@ -336,7 +353,7 @@ PanelSurface {
         Row {
             visible: media.islandChrome
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 24
+            spacing: 20
 
             KanjiSkip {
                 kanjiText: "前"
@@ -348,8 +365,8 @@ PanelSurface {
             Rectangle {
                 id: seal
                 anchors.verticalCenter: parent.verticalCenter
-                width: 44
-                height: 44
+                width: 40
+                height: 40
                 radius: PillMotion.rSmall
                 rotation: -1.5
 
@@ -373,7 +390,7 @@ PanelSurface {
                     text: media.isPlaying ? PillTheme.glyph("media") : PillTheme.glyph("mediaPaused")
                     color: PillTheme.bright
                     font.family: PillTheme.fontJp
-                    font.pixelSize: 20
+                    font.pixelSize: 18
                     font.weight: Font.DemiBold
                 }
                 MaterialSymbol {
@@ -381,7 +398,7 @@ PanelSurface {
                     anchors.centerIn: parent
                     fill: 1
                     text: media.isPlaying ? "pause" : "play_arrow"
-                    iconSize: 22
+                    iconSize: 20
                     color: PillTheme.bright
                 }
 
@@ -409,7 +426,7 @@ PanelSurface {
         Row {
             visible: !media.islandChrome
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 14
+            spacing: 12
 
             Repeater {
                 model: [
@@ -421,7 +438,7 @@ PanelSurface {
                 RippleButton {
                     required property var modelData
                     readonly property bool isPlay: modelData.icon === "__playpause"
-                    readonly property real size: isPlay ? 46 : 38
+                    readonly property real size: isPlay ? 42 : 34
                     implicitWidth: size
                     implicitHeight: size
                     buttonRadius: isPlay

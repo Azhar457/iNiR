@@ -29,6 +29,25 @@ ContentPage {
         title: Translation.tr("Edge behavior")
 
         SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Optional edge navigator, disabled on fresh installs. Move the pointer to the configured edge, hover a workspace to inspect it, click its card to switch, click a window to focus it, drag it to another card to move it, and hold × to close.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                wrapMode: Text.WordWrap
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                text: CompositorService.isNiri
+                    ? Translation.tr("Window snapshots refresh when the strip opens.")
+                    : Translation.tr("Window snapshots are available on Niri; workspace navigation and app icons remain available here.")
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.smallest
+                wrapMode: Text.WordWrap
+                opacity: 0.78
+            }
+
             SettingsSwitch {
                 buttonIcon: "dock_to_right"
                 text: Translation.tr("Enable workspace strip")

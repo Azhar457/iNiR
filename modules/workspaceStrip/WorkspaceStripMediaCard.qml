@@ -8,8 +8,8 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.pill
 
-// Square album-art thumbnail at the head of the rail — the now-playing entry.
-// Selecting it swaps the side flyout to the media player.
+// Compact landscape album-art entry at the head of the rail. The full square
+// artwork belongs to the flyout; the rail keeps one stable rhythm throughout.
 Item {
     id: card
 
@@ -34,9 +34,8 @@ Item {
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
     readonly property color _ringColor: _zzz
-        ? (isPlaying ? Appearance.zzz.accent : Appearance.zzz.hairlineStrong)
-        : isPlaying ? Appearance.colors.colPrimary
-        : selected ? Appearance.colors.colOutline
+        ? ((isPlaying || selected) ? Appearance.zzz.accent : Appearance.zzz.hairlineStrong)
+        : (isPlaying || selected) ? Appearance.colors.colPrimary
         : islandChrome ? PillTheme.border
         : Appearance.colors.colOutlineVariant
 
@@ -71,7 +70,11 @@ Item {
         anchors.fill: parent
         visible: !card._zzz
         radius: card._radius
-        color: Appearance.colors.colLayer2
+        color: card.selected ? Appearance.colors.colLayer2Hover : Appearance.colors.colLayer2
+        Behavior on color {
+            enabled: Appearance.animationsEnabled
+            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
     }
     ZzzPlate {
         anchors.fill: parent

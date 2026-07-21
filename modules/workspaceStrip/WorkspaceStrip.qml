@@ -13,6 +13,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.pill
+import qs.modules.waffle.looks
 
 // Edge-hover workspace navigator with window thumbnails and a now-playing
 // media flyout.
@@ -88,15 +89,97 @@ Scope {
             property var modelData: stripLoader.modelData
 
             readonly property string screenName: modelData?.name ?? ""
+            readonly property int screenWidth: modelData?.width ?? 1920
+            readonly property int screenHeight: modelData?.height ?? 1080
             readonly property bool isRight: (Config.options?.workspaceStrip?.side ?? "right") === "right"
+            readonly property string edgeSlot: isRight ? "right" : "left"
+
+            function outputEnabled(configuredOutputs): bool {
+                if (!Array.isArray(configuredOutputs) || configuredOutputs.length === 0)
+                    return true
+                if (screenName.length > 0 && configuredOutputs.includes(screenName))
+                    return true
+                const currentNames = Quickshell.screens.map(screen => screen?.name ?? "")
+                return !configuredOutputs.some(name => currentNames.includes(name))
+            }
+
+            readonly property bool waffleBarShown:
+                (Config.options?.panelFamily ?? "ii") === "waffle"
+                && (Config.options?.enabledPanels ?? []).includes("wBar")
+                && (GlobalStates.barOpen ?? true)
+                && outputEnabled(Config.options?.waffles?.bar?.screenList ?? [])
+            readonly property var panelInsets: {
+                if ((Config.options?.panelFamily ?? "ii") === "ii")
+                    return ShellLayoutController.desktopInsets(screenName)
+                const insets = ({ left: 0, top: 0, right: 0, bottom: 0 })
+                if (waffleBarShown) {
+                    const edge = (Config.options?.waffles?.bar?.bottom ?? true)
+                        ? "bottom" : "top"
+                    insets[edge] = Looks.scaledBar(48, modelData)
+                }
+                return insets
+            }
+            readonly property int rawTopPanelInset: Math.max(0, panelInsets?.top ?? 0)
+            readonly property int rawBottomPanelInset: Math.max(0, panelInsets?.bottom ?? 0)
+            readonly property int rawSidePanelInset: Math.max(0,
+                isRight ? (panelInsets?.right ?? 0) : (panelInsets?.left ?? 0))
+            readonly property bool edgeSidebarOpen:
+                (Config.options?.panelFamily ?? "ii") === "ii"
+                && ShellLayoutController.sidebarOpenAtSlot(edgeSlot)
+            readonly property string notificationPosition:
+                Config.options?.notifications?.position ?? "topRight"
+            readonly property bool edgeNotificationOpen:
+                (Notifications.popupList?.length ?? 0) > 0
+                && (isRight ? notificationPosition.endsWith("Right")
+                    : notificationPosition.endsWith("Left"))
+            readonly property bool dominantSurfaceOpen:
+                GlobalStates.screenLocked
+                || GlobalStates.sessionOpen
+                || GlobalStates.overviewOpen
+                || GlobalStates.altSwitcherOpen
+                || GlobalStates.regionSelectorOpen
+                || GlobalStates.annotationEditorOpen
+                || GlobalStates.settingsOverlayOpen
+                || GlobalStates.wallpaperSelectorOpen
+                || GlobalStates.wallpaperLauncherOpen
+                || GlobalStates.coverflowSelectorOpen
+                || GlobalStates.overlayOpen
+                || GlobalStates.controlPanelOpen
+                || GlobalStates.dashboardOpen
+                || GlobalStates.clipboardOpen
+                || GlobalStates.cheatsheetOpen
+                || GlobalStates.mediaControlsOpen
+                || GlobalStates.oskOpen
+                || GlobalStates.tilingOverlayPickerOpen
+                || GlobalStates.searchOpen
+                || GlobalStates.waffleActionCenterOpen
+                || GlobalStates.waffleNotificationCenterOpen
+                || GlobalStates.waffleWidgetsOpen
+                || GlobalStates.waffleAltSwitcherOpen
+                || GlobalStates.waffleClipboardOpen
+                || GlobalStates.waffleTaskViewOpen
+                || GlobalStates.widgetEditMode
+                || GlobalStates.shellLayoutEditMode
+            readonly property bool suppressed: edgeSidebarOpen
+                || edgeNotificationOpen || dominantSurfaceOpen
+
             readonly property int previewSize: Math.max(64, Config.options?.workspaceStrip?.previewSize ?? 150)
             // panelWidth is clamped below to whatever actually fits rail + flyout
             // for the chosen previewSize (see _minPanelWidth); a too-small value
             // would push the side flyout off the window or onto the rail.
             readonly property int configPanelWidth: Math.max(360, Config.options?.workspaceStrip?.panelWidth ?? 480)
-            readonly property int _minFlyoutWidth: 196
-            readonly property int _minPanelWidth: railWidth + edgeMargin * 2 + _minFlyoutWidth + 14
-            readonly property int panelWidth: Math.max(_minPanelWidth, configPanelWidth)
+            // Window titles already elide at this width; the gap the flyout now
+            // keeps from the rail comes out of the panel, not out of the card.
+            readonly property int _minFlyoutWidth: 296
+            readonly property int _minPanelWidth: railWidth + edgeMargin
+                + railPlateInset + flyoutGap + _minFlyoutWidth + edgeMargin
+            readonly property int _minimumRailHostWidth: railWidth + edgeMargin * 2
+            readonly property int sidePanelInset: Math.min(rawSidePanelInset,
+                Math.max(0, screenWidth - _minimumRailHostWidth))
+            readonly property int _maxPanelWidth: Math.max(_minimumRailHostWidth,
+                screenWidth - sidePanelInset)
+            readonly property int panelWidth: Math.min(
+                Math.max(_minPanelWidth, configPanelWidth), _maxPanelWidth)
             readonly property int triggerZone: Math.max(1, Config.options?.workspaceStrip?.triggerWidth ?? 6)
             readonly property int openDelay: Math.max(1, Config.options?.workspaceStrip?.openDelay ?? 110)
             readonly property int closeDelay: Math.max(1, Config.options?.workspaceStrip?.closeDelay ?? 320)
@@ -123,18 +206,58 @@ Scope {
             // continuous touchpad scrolls without skittering on micro-movements.
             property real _scrollAccum: 0
 
-            // Landscape card geometry — windows are landscape, so a 16:10 thumbnail
-            // shows their real shape instead of a cropped vertical slice. The media
-            // card is square (album art) and overrides this ratio itself.
+            // One stable 16:10 rhythm for every rail entry. Selection grows only
+            // enough to acknowledge hover; hierarchy comes from fill, ring and the
+            // flyout instead of making the list jump visually.
             readonly property real cardRatio: 0.625
             readonly property int cardBaseW: previewSize
             readonly property int cardBaseH: Math.round(previewSize * cardRatio)
-            readonly property int cardSelW: Math.round(previewSize * 1.22)
+            readonly property int cardSelW: Math.round(previewSize * 1.08)
             readonly property int cardSelH: Math.round(cardSelW * cardRatio)
             readonly property int railWidth: cardSelW + 16
             readonly property int edgeMargin: 12
+            // The rail plate bleeds half a margin past the flickable on each side;
+            // the flyout has to clear that plate, not the flickable, or it lands on
+            // the navigator instead of beside it.
+            readonly property int railPlateInset: Math.round(edgeMargin / 2)
+            readonly property int flyoutGap: edgeMargin
+            readonly property int cardSpacing: Math.max(8, Math.round(previewSize * 0.06))
+            readonly property int _minimumUsableHeight: Math.min(screenHeight,
+                Math.max(320, cardBaseH * 2 + edgeMargin * 3))
+            readonly property int _verticalMarginBudget: Math.max(0,
+                screenHeight - _minimumUsableHeight)
+            readonly property int _rawVerticalInsetTotal:
+                rawTopPanelInset + rawBottomPanelInset
+            readonly property real _verticalInsetScale:
+                _rawVerticalInsetTotal > _verticalMarginBudget
+                    && _rawVerticalInsetTotal > 0
+                ? _verticalMarginBudget / _rawVerticalInsetTotal : 1
+            readonly property int topPanelInset: Math.round(
+                rawTopPanelInset * _verticalInsetScale)
+            readonly property int bottomPanelInset: Math.round(
+                rawBottomPanelInset * _verticalInsetScale)
+            // The layer-shell window itself is inset away from persistent panels.
+            // Inside that safe rectangle the rail occupies a centered interaction
+            // lane. The larger lower inset still protects desktop widgets, but no
+            // longer pins a short workspace list directly below the top bar.
+            readonly property int railTopInset: edgeMargin
+            readonly property int railBottomInset: cardBaseH + edgeMargin * 2
+            readonly property int railLaneHeight: Math.max(cardBaseH,
+                stripContent.height - railTopInset - railBottomInset)
             readonly property int railInset: panelWidth - railWidth - edgeMargin
-            readonly property int detailWidth: Math.max(190, railInset - edgeMargin + 14)
+            // Inner edge of the lane the flyout may occupy: the rail plate's outer
+            // face, pulled back by one gap.
+            readonly property int flyoutInnerEdge: isRight
+                ? railInset - railPlateInset - flyoutGap
+                : railWidth + edgeMargin + railPlateInset + flyoutGap
+            readonly property int _availableFlyoutWidth: isRight
+                ? flyoutInnerEdge - edgeMargin
+                : panelWidth - flyoutInnerEdge - edgeMargin
+            readonly property bool flyoutFits: _availableFlyoutWidth >= 190
+            readonly property int detailWidth: Math.max(190, _availableFlyoutWidth)
+            readonly property real windowScreenX: isRight
+                ? screenWidth - sidePanelInset - width : sidePanelInset
+            readonly property real windowScreenY: topPanelInset
 
             // Now-playing entry at the head of the rail.
             readonly property int mediaKey: -100
@@ -170,10 +293,27 @@ Scope {
                 return map
             }
 
-            readonly property bool shown: root.ipcOpen || _hoverOpen
+            readonly property bool shown: !suppressed && (root.ipcOpen || _hoverOpen)
             property bool _hoverOpen: false
             property int _hoveredKey: -1
             property Item _selDelegate: null
+
+            function pointInside(item, px: real, py: real, margin: real): bool {
+                if (!item || !item.visible)
+                    return false
+                const pos = item.mapToItem(stripContent, 0, 0)
+                return px >= pos.x - margin
+                    && px <= pos.x + item.width + margin
+                    && py >= pos.y - margin
+                    && py <= pos.y + item.height + margin
+            }
+
+            function pointerOnSurface(px: real, py: real): bool {
+                const bridge = Math.max(10, edgeMargin)
+                return pointInside(railSurface, px, py, bridge)
+                    || pointInside(detailFlyout, px, py, bridge)
+                    || pointInside(mediaFlyout, px, py, bridge)
+            }
 
             function keyFor(ws, index: int): int {
                 const id = ws?.id ?? 0
@@ -304,12 +444,16 @@ Scope {
 
             screen: modelData
             implicitWidth: panelWidth
-            implicitHeight: modelData.height
+            implicitHeight: Math.max(1,
+                screenHeight - topPanelInset - bottomPanelInset)
             visible: !GameMode.shouldHidePanels
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:workspaceStrip"
-            WlrLayershell.layer: WlrLayer.Top
+            // This is a transient navigator, not desktop chrome. Overlay keeps it
+            // above bars and docks; layer margins below keep those panels fully
+            // visible and interactive instead of covering them with the host.
+            WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
             anchors {
@@ -317,6 +461,12 @@ Scope {
                 bottom: true
                 right: isRight
                 left: !isRight
+            }
+            margins {
+                top: topPanelInset
+                bottom: bottomPanelInset
+                right: isRight ? sidePanelInset : 0
+                left: isRight ? 0 : sidePanelInset
             }
 
             // The sliding container IS the input mask AND the hover detector, all
@@ -327,7 +477,10 @@ Scope {
             // separate objects (a HoverHandler, a mask Item, and content.x) and the
             // mask read the content's geometry a frame late, which dropped hover
             // mid-animation and oscillated open/closed under heavier styles.
-            mask: Region { item: GameMode.shouldHidePanels ? emptyMask : stripContent }
+            mask: Region {
+                item: GameMode.shouldHidePanels || stripWindow.suppressed
+                    ? emptyMask : stripContent
+            }
 
             Item { id: emptyMask; width: 0; height: 0 }
 
@@ -339,12 +492,25 @@ Scope {
                 }
             }
 
-            // Reset the selection to the active workspace each time it opens.
-            // Clear _selDelegate so the flyout doesn't reference a stale delegate.
-            onShownChanged: if (!shown) {
+            // Reset the selection to the active workspace each time it closes.
+            // On open, classify the stationary pointer after geometry settles so
+            // the transparent host never becomes an accidental hover trap.
+            onShownChanged: {
+                if (!shown) {
+                    pointerIntentSettleTimer.stop()
+                    _hoveredKey = -1
+                    _selDelegate = null
+                    _scrollAccum = 0
+                    stripContent.pointerOnSurface = false
+                } else {
+                    pointerIntentSettleTimer.restart()
+                }
+            }
+            onSuppressedChanged: if (suppressed) {
+                openTimer.stop()
+                closeTimer.stop()
+                _hoverOpen = false
                 _hoveredKey = -1
-                _selDelegate = null
-                _scrollAccum = 0
             }
 
             Timer {
@@ -357,11 +523,25 @@ Scope {
                 }
             }
             Timer {
-                id: closeTimer
-                interval: stripWindow.closeDelay
+                id: pointerIntentSettleTimer
+                interval: Math.max(1, Appearance.animation.elementMoveEnter.duration)
                 onTriggered: {
-                    if (!stripContent.containsMouse && !root.ipcOpen
-                            && !windowDragProxy.dragging)
+                    if (stripWindow.shown && stripContent.containsMouse)
+                        stripContent.updatePointerIntent(
+                            stripContent.mouseX, stripContent.mouseY)
+                }
+            }
+            Timer {
+                id: closeTimer
+                // Leaving the actual cards/flyout is an intentional dismissal and
+                // should feel immediate. Leaving the complete layer window keeps
+                // the configured grace period for forgiving diagonal travel.
+                interval: stripContent.containsMouse && !stripContent.pointerOnSurface
+                    ? Math.min(stripWindow.closeDelay, 170)
+                    : stripWindow.closeDelay
+                onTriggered: {
+                    if ((!stripContent.containsMouse || !stripContent.pointerOnSurface)
+                            && !root.ipcOpen && !windowDragProxy.dragging)
                         stripWindow._hoverOpen = false
                 }
             }
@@ -399,30 +579,52 @@ Scope {
                 anchors.right: stripWindow.isRight ? parent.right : undefined
                 anchors.left: stripWindow.isRight ? undefined : parent.left
 
+                property bool pointerOnSurface: false
+
+                function updatePointerIntent(px: real, py: real): void {
+                    if (!stripWindow.shown) {
+                        pointerOnSurface = false
+                        return
+                    }
+                    if (pointerIntentSettleTimer.running) {
+                        pointerOnSurface = true
+                        closeTimer.stop()
+                        return
+                    }
+                    pointerOnSurface = stripWindow.pointerOnSurface(px, py)
+                    if (pointerOnSurface) {
+                        closeTimer.stop()
+                    } else if (!root.ipcOpen && !windowDragProxy.dragging) {
+                        closeTimer.restart()
+                    }
+                }
+
                 readonly property real hideOffset: stripWindow.shown
                     ? 0 : (stripWindow.panelWidth - stripWindow.triggerZone)
                 anchors.rightMargin: stripWindow.isRight ? -hideOffset : 0
                 anchors.leftMargin: stripWindow.isRight ? 0 : -hideOffset
 
-                // The slide MUST be monotonic. Because this item is also the hover
-                // detector and input mask, any overshoot past the target (the ZZZ
-                // elementMoveEnter curve overshoots to 1.56) momentarily pushes the
-                // panel back out of the pointer, dropping hover and oscillating the
-                // strip open/closed. zzz keeps its snap; everything else rides the
-                // Ricelin liquid-morph curve — front-loaded with a long settle,
-                // and strictly non-overshoot, so the anti-flicker contract holds.
-                readonly property int _slideDuration: Appearance.zzzEverywhere
+                // Match the dock's spatial language on entry, then use the proper
+                // shorter exit motion instead of replaying the long entrance in
+                // reverse. Overshooting styles are clamped to the monotonic curve
+                // because this moving item also owns the input mask.
+                readonly property int _slideDuration: stripWindow.shown
                     ? Appearance.animation.elementMoveEnter.duration
-                    : PillMotion.glide
-                readonly property var _slideCurve: Appearance.zzzEverywhere
-                    ? Appearance.animationCurves.zzzSnap
-                    : PillMotion.morphCurve
+                    : Appearance.animation.elementMoveExit.duration
+                readonly property int _slideType: stripWindow.shown
+                    ? Appearance.animation.elementMoveEnter.type
+                    : Appearance.animation.elementMoveExit.type
+                readonly property var _slideCurve: stripWindow.shown
+                    ? (Appearance.zzzEverywhere
+                        ? Appearance.animationCurves.emphasizedDecel
+                        : Appearance.animation.elementMoveEnter.bezierCurve)
+                    : Appearance.animation.elementMoveExit.bezierCurve
 
                 Behavior on anchors.rightMargin {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation {
                         duration: stripContent._slideDuration
-                        easing.type: Easing.BezierSpline
+                        easing.type: stripContent._slideType
                         easing.bezierCurve: stripContent._slideCurve
                     }
                 }
@@ -430,16 +632,21 @@ Scope {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation {
                         duration: stripContent._slideDuration
-                        easing.type: Easing.BezierSpline
+                        easing.type: stripContent._slideType
                         easing.bezierCurve: stripContent._slideCurve
                     }
                 }
-
+                onPositionChanged: mouse => updatePointerIntent(mouse.x, mouse.y)
                 onContainsMouseChanged: {
                     if (containsMouse) {
-                        closeTimer.stop()
-                        if (!stripWindow.shown) openTimer.restart()
+                        if (!stripWindow.shown) {
+                            closeTimer.stop()
+                            openTimer.restart()
+                        } else {
+                            updatePointerIntent(mouseX, mouseY)
+                        }
                     } else {
+                        pointerOnSurface = false
                         openTimer.stop()
                         if (stripWindow.shown && !root.ipcOpen && !windowDragProxy.dragging)
                             closeTimer.restart()
@@ -471,6 +678,7 @@ Scope {
                         : stripContent.height / 2
 
                     visible: stripWindow.shown && stripWindow.showMetadata
+                        && stripWindow.flyoutFits
                         && sel !== null && !stripWindow.selIsMedia
                     islandChrome: stripWindow.islandChrome
 
@@ -480,12 +688,10 @@ Scope {
                         void x; void y; void stripContent.x;
                         return mapToItem(null, 0, 0)
                     }
-                    backdropScreenX: (stripWindow.isRight
-                        ? (stripWindow.modelData?.width ?? stripWindow.width) - stripWindow.width
-                        : 0) + _screenPos.x
-                    backdropScreenY: _screenPos.y
-                    backdropScreenWidth: stripWindow.modelData?.width ?? 1920
-                    backdropScreenHeight: stripWindow.modelData?.height ?? 1080
+                    backdropScreenX: stripWindow.windowScreenX + _screenPos.x
+                    backdropScreenY: stripWindow.windowScreenY + _screenPos.y
+                    backdropScreenWidth: stripWindow.screenWidth
+                    backdropScreenHeight: stripWindow.screenHeight
                     showAppIcons: stripWindow.showAppIcons
                     showPreviews: stripWindow.showPreviews
                     dragProxy: windowDragProxy
@@ -496,14 +702,22 @@ Scope {
                     wsWindows: sel?.cardWsWindows ?? []
                     isActiveWs: sel?.cardIsActiveWs ?? false
 
+                    onWorkspaceActivated: {
+                        const selected = stripWindow._selDelegate
+                        if (selected?.cardWorkspace)
+                            stripWindow.switchWorkspace(selected.cardWorkspace, selected.cardIndex)
+                    }
                     onWindowActivated: win => stripWindow.focusWindow(win)
                     onWindowCloseRequested: win => stripWindow.closeWindow(win)
 
                     width: stripWindow.detailWidth
                     x: stripWindow.isRight
-                        ? stripWindow.railInset + 14 - width
-                        : stripWindow.railWidth + stripWindow.edgeMargin - 14
-                    y: Math.max(8, Math.min(stripContent.height - height - 8, selCenterY - height / 2))
+                        ? stripWindow.flyoutInnerEdge - width
+                        : stripWindow.flyoutInnerEdge
+                    y: Math.max(stripWindow.railTopInset,
+                        Math.min(stripContent.height - stripWindow.railBottomInset - height,
+                            selCenterY - height / 2))
+                    z: 4
                     opacity: visible ? 1 : 0
                     // Morph, don't pop: the flyout settles in from the rail side.
                     scale: visible ? 1 : 0.96
@@ -515,6 +729,11 @@ Scope {
                         enabled: Appearance.animationsEnabled
                         NumberAnimation { duration: 90; easing.type: Easing.OutCubic }
                     }
+                    // Height stays instant on purpose, for the same reason the rail
+                    // slot keeps a constant height: the flyout must not reflow under
+                    // the pointer. Animating it made `y` — which is derived from
+                    // height — retarget every frame, restarting its own Behavior each
+                    // time, and turned every late-resolving app icon into a hop.
                     Behavior on opacity {
                         enabled: Appearance.animationsEnabled
                         NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
@@ -538,25 +757,27 @@ Scope {
                         ? railFlick.y + sel.y + sel.height / 2 - railFlick.contentY
                         : stripContent.height / 2
 
-                    visible: stripWindow.shown && stripWindow.selIsMedia && stripWindow.hasPlayer
+                    visible: stripWindow.shown && stripWindow.flyoutFits
+                        && stripWindow.selIsMedia && stripWindow.hasPlayer
                     islandChrome: stripWindow.islandChrome
 
                     readonly property point _screenPos: {
                         void x; void y; void stripContent.x;
                         return mapToItem(null, 0, 0)
                     }
-                    backdropScreenX: (stripWindow.isRight
-                        ? (stripWindow.modelData?.width ?? stripWindow.width) - stripWindow.width
-                        : 0) + _screenPos.x
-                    backdropScreenY: _screenPos.y
-                    backdropScreenWidth: stripWindow.modelData?.width ?? 1920
-                    backdropScreenHeight: stripWindow.modelData?.height ?? 1080
+                    backdropScreenX: stripWindow.windowScreenX + _screenPos.x
+                    backdropScreenY: stripWindow.windowScreenY + _screenPos.y
+                    backdropScreenWidth: stripWindow.screenWidth
+                    backdropScreenHeight: stripWindow.screenHeight
 
                     width: stripWindow.detailWidth
                     x: stripWindow.isRight
-                        ? stripWindow.railInset + 14 - width
-                        : stripWindow.railWidth + stripWindow.edgeMargin - 14
-                    y: Math.max(8, Math.min(stripContent.height - height - 8, selCenterY - height / 2))
+                        ? stripWindow.flyoutInnerEdge - width
+                        : stripWindow.flyoutInnerEdge
+                    y: Math.max(stripWindow.railTopInset,
+                        Math.min(stripContent.height - stripWindow.railBottomInset - height,
+                            selCenterY - height / 2))
+                    z: 4
                     opacity: visible ? 1 : 0
                     scale: visible ? 1 : 0.96
                     transformOrigin: stripWindow.isRight ? Item.Right : Item.Left
@@ -579,13 +800,65 @@ Scope {
                     }
                 }
 
-                // ── Vertical, scrollable thumbnail rail (flush against the edge) ──
+                // One restrained plate groups the navigator without turning every
+                // thumbnail into an unrelated floating object. PanelSurface keeps
+                // each global style in its own worldview; islandChrome opts into
+                // the existing shared Ricelin face.
+                PanelSurface {
+                    id: railSurface
+                    x: railFlick.x - stripWindow.edgeMargin / 2
+                    y: railFlick.y - stripWindow.edgeMargin
+                    width: railFlick.width + stripWindow.edgeMargin
+                    height: railFlick.height + stripWindow.edgeMargin * 2
+                    z: 1
+                    visible: stripWindow.shown || opacity > 0
+                    // Opacity drives the open/close transition only. A resting
+                    // multiplier here punched the wallpaper through the navigator
+                    // even with transparency switched off, because the style's own
+                    // fill (colLayer0) already encodes the user's setting and only
+                    // aurora and angel put a blurred backdrop behind it.
+                    opacity: stripWindow.shown ? 1 : 0
+                    scale: stripWindow.shown ? 1 : 0.985
+                    transformOrigin: stripWindow.isRight ? Item.Right : Item.Left
+                    elevation: 0
+                    cardStyle: true
+                    outlined: !Appearance.zzzEverywhere
+                    islandSkin: stripWindow.islandChrome
+                    surfaceDialect: stripWindow.islandChrome ? "island" : ""
+                    wallpaperBackdrop: true
+
+                    readonly property point _screenPos: {
+                        void x; void y; void stripContent.x;
+                        return mapToItem(null, 0, 0)
+                    }
+                    backdropScreenX: stripWindow.windowScreenX + _screenPos.x
+                    backdropScreenY: stripWindow.windowScreenY + _screenPos.y
+                    backdropScreenWidth: stripWindow.screenWidth
+                    backdropScreenHeight: stripWindow.screenHeight
+
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
+                    Behavior on scale {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: PillMotion.fast
+                            easing.type: PillMotion.easeStandard
+                        }
+                    }
+                }
+
+                // ── Vertical, scrollable thumbnail rail ──
                 Flickable {
                     id: railFlick
                     width: stripWindow.railWidth
-                    height: Math.min(railColumn.implicitHeight, stripContent.height - 24)
-                    anchors.verticalCenter: parent.verticalCenter
+                    height: Math.min(railColumn.implicitHeight,
+                        stripWindow.railLaneHeight)
+                    y: stripWindow.railTopInset + Math.max(0,
+                        (stripWindow.railLaneHeight - height) / 2)
                     x: stripWindow.isRight ? stripWindow.railInset : stripWindow.edgeMargin
+                    z: 2
                     contentHeight: railColumn.implicitHeight
                     contentWidth: width
                     boundsBehavior: Flickable.StopAtBounds
@@ -673,18 +946,16 @@ Scope {
                     Column {
                         id: railColumn
                         width: parent.width
-                        spacing: 8
+                        spacing: stripWindow.cardSpacing
 
                         // Now-playing media card.
                         Item {
                             id: mediaSlot
                             visible: stripWindow.hasPlayer
                             width: stripWindow.railWidth
-                            // Constant slot height: selection growth never reflows
-                            // the rail — a moving list under the pointer is what made
-                            // hover selection jump between slots. The card overflows
-                            // its slot instead (z-stacked, clip off).
-                            height: visible ? stripWindow.cardBaseW : 0
+                            // Media follows the same landscape rhythm as workspaces;
+                            // the full artwork already lives in the flyout.
+                            height: visible ? stripWindow.cardBaseH : 0
                             z: isSelected ? 10 : 1
 
                             readonly property bool isSelected: stripWindow.selIsMedia
@@ -705,11 +976,18 @@ Scope {
                                 isRight: stripWindow.isRight
                                 islandChrome: stripWindow.islandChrome
                                 width: mediaSlot.isSelected ? stripWindow.cardSelW : stripWindow.cardBaseW
-                                height: width
+                                height: mediaSlot.isSelected ? stripWindow.cardSelH : stripWindow.cardBaseH
                                 anchors.verticalCenter: parent.verticalCenter
-                                x: stripWindow.isRight ? stripWindow.railWidth - width : 0
+                                x: (stripWindow.railWidth - width) / 2
 
                                 Behavior on width {
+                                    enabled: Appearance.animationsEnabled
+                                    NumberAnimation {
+                                        duration: PillMotion.fast
+                                        easing.type: PillMotion.easeStandard
+                                    }
+                                }
+                                Behavior on height {
                                     enabled: Appearance.animationsEnabled
                                     NumberAnimation {
                                         duration: PillMotion.fast
@@ -723,6 +1001,7 @@ Scope {
                             // Full-row hover, same reasoning as the workspace slots.
                             HoverHandler {
                                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                cursorShape: Qt.PointingHandCursor
                                 onHoveredChanged: if (hovered) stripWindow._hoveredKey = stripWindow.mediaKey
                             }
                         }
@@ -781,7 +1060,7 @@ Scope {
                                     width: slot.isSelected ? stripWindow.cardSelW : stripWindow.cardBaseW
                                     height: slot.isSelected ? stripWindow.cardSelH : stripWindow.cardBaseH
                                     anchors.verticalCenter: parent.verticalCenter
-                                    x: stripWindow.isRight ? stripWindow.railWidth - width : 0
+                                    x: (stripWindow.railWidth - width) / 2
 
                                     Behavior on width {
                                         enabled: Appearance.animationsEnabled
@@ -823,6 +1102,7 @@ Scope {
                                 // travel feel imprecise.
                                 HoverHandler {
                                     acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                    cursorShape: Qt.PointingHandCursor
                                     onHoveredChanged: if (hovered) stripWindow._hoveredKey = slot.wsKey
                                 }
                             }
@@ -852,7 +1132,7 @@ Scope {
                                 width: stripWindow.cardBaseW
                                 height: parent.height
                                 anchors.verticalCenter: parent.verticalCenter
-                                x: stripWindow.isRight ? stripWindow.railWidth - width : 0
+                                x: (stripWindow.railWidth - width) / 2
 
                                 readonly property bool _zzz: Appearance.zzzEverywhere
                                 readonly property bool _hot: newWsDrop.containsDrag

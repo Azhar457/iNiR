@@ -60,6 +60,22 @@ Item {
         : (focusedWindow?.appId ?? "")
     readonly property string focusedTitle: focusedWindow?.title
         || focusedAppId || Translation.tr("Empty workspace")
+    // Distinct app identities for the selected-card stack. The strip already
+    // owns the workspace window slice, so this is a tiny local projection and
+    // does not trigger any extra preview capture or service lookup.
+    readonly property var visibleAppIds: {
+        if (!showAppIcons) return []
+        const ids = []
+        const seen = ({})
+        for (let i = 0; i < wsWindows.length && ids.length < 3; i++) {
+            const win = wsWindows[i]
+            const appId = _isNiri ? (win?.app_id ?? "") : (win?.appId ?? "")
+            if (appId.length === 0 || seen[appId]) continue
+            seen[appId] = true
+            ids.push(appId)
+        }
+        return ids
+    }
 
     // ── Per-style frame tokens ──
     readonly property bool _zzz: Appearance.zzzEverywhere
@@ -70,21 +86,18 @@ Item {
     readonly property color _ringColor: dropTargeted
         ? (_zzz ? Appearance.zzz.accent : Appearance.colors.colPrimary)
         : _zzz
-        ? (isActiveWs ? Appearance.zzz.accent : Appearance.zzz.hairlineStrong)
-        : isActiveWs ? Appearance.colors.colPrimary
-        : selected ? Appearance.colors.colOutline
+        ? ((isActiveWs || selected) ? Appearance.zzz.accent : Appearance.zzz.hairlineStrong)
+        : (isActiveWs || selected) ? Appearance.colors.colPrimary
         : islandChrome ? PillTheme.border
         : Appearance.colors.colOutlineVariant
 
     z: selected ? 10 : 1
     // No sub-pixel scale: a fractional `scale` resamples the whole layered card
     // (preview + icon) every frame and is what made the app icons look blurry.
-    opacity: selected || isActiveWs ? 1 : 0.82
-
-    Behavior on opacity {
-        enabled: Appearance.animationsEnabled
-        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-    }
+    // The resting state also dims the preview only (see clipBox): fading the whole
+    // card made its plate translucent too, so the wallpaper came through the one
+    // surface the thumbnail needs to sit on.
+    readonly property real contentDim: selected || isActiveWs ? 1 : 0.82
 
     StyledRectangularShadow {
         target: clipBox
@@ -99,7 +112,9 @@ Item {
         radius: card._radius
         // The card only signalled hover through its border and opacity, which reads
         // as nothing under the Material style. Lift the fill with the state layer.
-        color: card.selected ? Appearance.colors.colLayer0Hover : Appearance.colors.colLayer0
+        // One layer above the rail plate (PanelSurface at elevation 0 = colLayer0):
+        // at the same layer the two solid surfaces stack and neither reads.
+        color: card.selected ? Appearance.colors.colLayer1Hover : Appearance.colors.colLayer1
         Behavior on color {
             enabled: Appearance.animationsEnabled
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
@@ -112,7 +127,8 @@ Item {
     ZzzPlate {
         anchors.fill: parent
         visible: card._zzz
-        fillColor: Appearance.zzz.bg0
+        // Same reason as the Material branch: the rail plate is already bg0.
+        fillColor: card.selected ? Appearance.zzz.bg3 : Appearance.zzz.bg2
         chamfer: card.selected ? Appearance.zzz.cutCorner : Appearance.zzz.cutCorner * 0.5
         chamferBottomRight: card.isRight && !Appearance.zzz.round
         chamferBottomLeft: !card.isRight && !Appearance.zzz.round
@@ -121,6 +137,11 @@ Item {
     Item {
         id: clipBox
         anchors.fill: parent
+        opacity: card.contentDim
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+        }
         layer.enabled: card.shown
         layer.effect: GE.OpacityMask {
             maskSource: Item {
@@ -160,7 +181,7 @@ Item {
             smooth: true
             mipmap: true
             visible: card.showPreviews && url.length > 0
-            opacity: 1
+            opacity: ready ? 1 : 0
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
@@ -199,14 +220,24 @@ Item {
             implicitSize: Math.round(Math.min(parent.width, parent.height) * 0.42)
             source: card.showAppIcons && card.focusedAppId.length > 0
                 ? AppSearch.getIconSource(card.focusedAppId) : ""
-            visible: !preview.visible
-            opacity: 0.7
+            visible: !preview.ready && source.toString().length > 0
+            opacity: 0.72
+        }
+
+        MaterialSymbol {
+            anchors.centerIn: parent
+            text: "space_dashboard"
+            iconSize: Math.round(Math.min(parent.width, parent.height) * 0.34)
+            color: card._zzz ? Appearance.zzz.onColor : Appearance.colors.colSubtext
+            visible: !preview.ready
+                && (!card.showAppIcons || card.focusedAppId.length === 0)
+            opacity: card.wsWindows.length === 0 ? 0.5 : 0.7
         }
 
         // Bottom scrim so the number badge stays legible over busy previews.
         Rectangle {
             anchors.fill: parent
-            visible: preview.visible
+            visible: preview.ready
             gradient: Gradient {
                 GradientStop { position: 0.55; color: "transparent" }
                 GradientStop { position: 1; color: ColorUtils.transparentize(Appearance.colors.colScrim, 0.5) }
@@ -243,9 +274,12 @@ Item {
         radius: card._zzz ? Appearance.zzz.controlRadius
             : card.islandChrome ? PillMotion.rSmall : Appearance.rounding.small
         color: card._zzz
-            ? (card.isActiveWs ? Appearance.zzz.sticker : Appearance.zzz.bg4)
-            : (card.isActiveWs && !card.islandChrome) ? Appearance.colors.colPrimary
-            : ColorUtils.transparentize(Appearance.colors.colLayer3, 0.15)
+            ? (card.isActiveWs ? Appearance.zzz.sticker
+                : card.selected ? Appearance.zzz.bg4 : Appearance.zzz.bg3)
+            : card.isActiveWs ? Appearance.colors.colPrimary
+            : card.selected
+                ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.78)
+                : ColorUtils.transparentize(Appearance.colors.colLayer3, 0.15)
         // Island chrome: the active workspace burns — lit-top vermilion ramp.
         property Gradient _lit: Gradient {
             GradientStop { position: 0.0; color: PillTheme.vermLit }
@@ -261,9 +295,46 @@ Item {
             font.weight: Font.Bold
             font.features: { "tnum": 1 }
             color: card._zzz
-                ? (card.isActiveWs ? Appearance.zzz.onSticker : Appearance.zzz.onColor)
+                ? (card.isActiveWs ? Appearance.zzz.onSticker
+                    : card.selected ? Appearance.zzz.accent : Appearance.zzz.onColor)
                 : card.isActiveWs ? Appearance.colors.colOnPrimary
+                : card.selected ? Appearance.colors.colPrimary
                 : Appearance.colors.colOnLayer3
+        }
+    }
+
+    // App stack on the selected card. This makes the App icons setting honest:
+    // it represents the workspace, not only the focused window fallback.
+    Rectangle {
+        anchors {
+            bottom: parent.bottom
+            left: card.isRight ? parent.left : undefined
+            right: card.isRight ? undefined : parent.right
+            margins: 6
+        }
+        visible: card.selected && card.visibleAppIds.length > 1
+        width: appIconRow.implicitWidth + 10
+        height: 26
+        radius: card._zzz ? Appearance.zzz.controlRadius : Appearance.rounding.full
+        color: ColorUtils.transparentize(
+            card._zzz ? Appearance.zzz.bg4 : Appearance.colors.colLayer3, 0.08)
+        border.width: card._zzz ? Appearance.zzz.hairline : 0
+        border.color: card._zzz ? Appearance.zzz.hairlineStrong : "transparent"
+
+        Row {
+            id: appIconRow
+            anchors.centerIn: parent
+            spacing: 4
+
+            Repeater {
+                model: card.visibleAppIds
+
+                IconImage {
+                    required property string modelData
+                    implicitSize: 16
+                    source: AppSearch.getIconSource(modelData)
+                }
+            }
         }
     }
 

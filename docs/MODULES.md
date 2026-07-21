@@ -60,7 +60,7 @@ Users can disable any panel from Settings without touching config files.
 | `tilingOverlay/` | `iiTilingOverlay` | Tiling hints overlay. |
 | `shellUpdate/` | `iiShellUpdate` | Shell update notification banner. |
 | `recordingOsd/` | `iiRecordingOsd` | Screen recording indicator (disabled by default). |
-| `workspaceStrip/` | `iiWorkspaceStrip` | Hover-triggered edge strip with live workspace previews, window thumbnails, drag-to-reorder, and media cards. Shared with waffle. IPC target `workspaceStrip`. |
+| `workspaceStrip/` | `iiWorkspaceStrip` | Optional edge navigator with cached workspace previews, selected-card app summaries, window focus and close controls, drag-to-move, scroll navigation, and MPRIS media controls. Hover the configured edge to open it, then hover a card to inspect that workspace. Shared with waffle. IPC target `workspaceStrip`. |
 | `mascot/` | `iiMascotCompanion` | Playful full-body mascot companion: peeks from screen edges, reacts to shell events (music, battery, network, updates, notifications, screenshots, gaming, unlock), plays chase/hide-and-seek, and can physically interact with desktop widgets in chaos mode. Curated poses and per-surface overrides live in Settings › Mascot; a desktop widget variant lives in Settings › Widgets. Never over fullscreen, game mode, lock or session screens. Shared with waffle. IPC targets `mascot`, `mascotMood`. |
 
 ## Waffle Panels

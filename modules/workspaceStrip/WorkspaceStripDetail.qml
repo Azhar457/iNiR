@@ -39,6 +39,7 @@ PanelSurface {
     // dragged onto a rail card. Null disables drag-to-move.
     property Item dragProxy: null
 
+    signal workspaceActivated()
     signal windowActivated(var win)
     signal windowCloseRequested(var win)
 
@@ -121,7 +122,9 @@ PanelSurface {
 
             Column {
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - (appIcon.visible ? appIcon.implicitSize + 10 : 0)
+                width: parent.width
+                    - (appIcon.visible ? appIcon.implicitSize + 10 : 0)
+                    - (activateWorkspace.visible ? activateWorkspace.implicitWidth + 10 : 0)
                 spacing: 1
 
                 Item {
@@ -185,6 +188,36 @@ PanelSurface {
                     font.pixelSize: Appearance.font.pixelSize.large
                     font.weight: Font.Bold
                     color: detail._zzz ? Appearance.zzz.onColor : Appearance.colors.colOnLayer1
+                }
+            }
+
+            RippleButton {
+                id: activateWorkspace
+                anchors.verticalCenter: parent.verticalCenter
+                visible: !detail.isActiveWs && detail.wsIndex > 0
+                implicitWidth: 32
+                implicitHeight: 32
+                buttonRadius: detail._zzz
+                    ? Appearance.zzz.controlRadius : Appearance.rounding.full
+                colBackground: detail._zzz
+                    ? Appearance.zzz.bg3 : Appearance.colors.colLayer2
+                colBackgroundHover: detail._zzz
+                    ? Appearance.zzz.bg4 : Appearance.colors.colLayer2Hover
+                colRipple: detail._zzz
+                    ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                onClicked: detail.workspaceActivated()
+
+                contentItem: MaterialSymbol {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: "desktop_windows"
+                    iconSize: 18
+                    color: detail._zzz
+                        ? Appearance.zzz.accent : Appearance.colors.colPrimary
+                }
+
+                StyledToolTip {
+                    text: Translation.tr("Switch to workspace %1").arg(detail.wsName)
                 }
             }
         }
@@ -296,8 +329,15 @@ PanelSurface {
                                 ? (row.winFocused ? Appearance.zzz.bg3
                                     : rowLit ? Appearance.zzz.bg2 : "transparent")
                                 : (row.winFocused || rowLit)
+                                // The flyout is a PanelSurface at elevation 2, so its
+                                // own fill IS colLayer2 — laying colLayer2 back over
+                                // itself at any alpha composites to exactly colLayer2
+                                // and the state vanished (1.00:1). Only aurora and
+                                // angel hid it, because their layer tokens carry alpha
+                                // of their own. colLayer2Hover is the state layer for
+                                // this surface: colLayer2 lifted toward its ink.
                                 ? (detail.islandChrome ? PillTheme.frameBg
-                                    : ColorUtils.transparentize(Appearance.colors.colLayer2, 0.25))
+                                    : Appearance.colors.colLayer2Hover)
                                 : "transparent"
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
@@ -516,6 +556,7 @@ PanelSurface {
                             anchors.rightMargin: closeBtn.visible ? closeBtn.width + 10 : 0
                             hoverEnabled: false
                             preventStealing: true
+                            cursorShape: _dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
                             property real _pressX: 0
                             property real _pressY: 0
@@ -557,6 +598,17 @@ PanelSurface {
                     }
                 }
             }
+        }
+
+        StyledText {
+            visible: detail.wsWindows.length > 0
+            width: parent.width
+            text: Translation.tr("Click to focus, drag to move, hold × to close")
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            font.pixelSize: Appearance.font.pixelSize.smallest
+            color: detail._zzz ? Appearance.zzz.onColor : Appearance.colors.colSubtext
+            opacity: 0.72
         }
 
         // ── Active-state filament: thread track, warm gradient fill and a lit
