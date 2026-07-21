@@ -873,6 +873,33 @@ Singleton {
         thumbgenDebounce.restart()
     }
 
+    // A still frame owned by iNiR, not the shared freedesktop thumbnail cache.
+    // Both write to ~/.cache/thumbnails/<size>/<md5>.png, and the desktop's own
+    // video thumbnailer decorates its output with a film-strip border — whoever
+    // wrote first won, so a surface that wants a clean frame could not rely on
+    // that path. The generator here is the same ffmpeg call, private location.
+    function videoStillPath(filePath: string): string {
+        const clean = FileUtils.trimFileProtocol(String(filePath ?? ""))
+        if (!clean) return ""
+        return `${Directories.stateUserPath}/generated/wallpaper/still-${MD5.hash(clean)}.png`
+    }
+
+    function ensureVideoStill(filePath: string): void {
+        const clean = FileUtils.trimFileProtocol(String(filePath ?? ""))
+        if (!clean || !root.isVideoFile(clean)) return
+        const outputPath = root.videoStillPath(clean)
+        if (!outputPath) return
+
+        const key = `still:${clean}`
+        if (root._singleThumbPending[key]) return
+        const pending = Object.assign({}, root._singleThumbPending)
+        pending[key] = true
+        root._singleThumbPending = pending
+        root._singleThumbQueue.push({ key: key, filePath: clean, size: "large", outputPath: outputPath })
+        if (!_singleThumbProc.running)
+            _processNextSingleThumb()
+    }
+
     function ensureThumbnailForPath(filePath: string, size = "large") {
         const normalizedPath = FileUtils.trimFileProtocol(String(filePath ?? ""))
         if (!normalizedPath || normalizedPath.length === 0) return
