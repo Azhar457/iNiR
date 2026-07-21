@@ -19,7 +19,12 @@ import qs.modules.pill
 
 Scope {
     id: root
-    property bool pinned: Config.options?.dock?.pinnedOnStartup ?? false
+    // pinnedOnStartup pins the dock for the whole session, which conflicts
+    // with hover-reveal (a pinned dock can never hide). Let hover-reveal win
+    // so the dock actually hides when the user asks it to; pinnedOnStartup
+    // only applies when reveal mode is "Empty workspace".
+    property bool pinned: (Config.options?.dock?.pinnedOnStartup ?? false)
+        && !(Config.options?.dock?.hoverToReveal ?? false)
     readonly property string position: Config.options?.dock?.position ?? "bottom"
     readonly property bool isVertical: root.position === "left" || root.position === "right"
     readonly property bool isTop: root.position === "top"

@@ -81,6 +81,7 @@ ContentPage {
                 }
                 ContentSubsection {
                     title: Translation.tr("Reveal behavior")
+                    tooltip: Translation.tr("When the dock shows. Hover hides it until you reach the screen edge; Empty workspace keeps it visible on an empty desktop.")
 
                     ConfigSelectionArray {
                         currentValue: Config.options?.dock?.hoverToReveal ?? true
@@ -95,38 +96,41 @@ ContentPage {
                     SettingsSwitch {
                         buttonIcon: "desktop_windows"
                         text: Translation.tr("Show on desktop")
+                        // In Hover mode the dock is already hidden by default, so
+                        // this only matters for Empty workspace mode.
+                        enabled: !(Config.options?.dock?.hoverToReveal ?? true)
                         checked: Config.options?.dock?.showOnDesktop ?? true
                         onCheckedChanged: Config.setNestedValue('dock.showOnDesktop', checked)
                         StyledToolTip {
-                            text: Translation.tr("Show dock when no window is focused")
+                            text: Translation.tr("Show dock when no window is focused (Empty workspace mode only)")
+                        }
+                    }
+                    SettingsSwitch {
+                        buttonIcon: "keep"
+                        text: Translation.tr("Pinned on startup")
+                        // A pinned dock can never hide, which cancels Hover reveal.
+                        // Disable it under Hover so the contradiction is visible.
+                        enabled: !(Config.options?.dock?.hoverToReveal ?? true)
+                        checked: Config.options.dock.pinnedOnStartup
+                        onCheckedChanged: {
+                            Config.setNestedValue("dock.pinnedOnStartup", checked);
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Keep dock visible at all times (Empty workspace mode only)")
                         }
                     }
                 }
             }
 
-            ConfigRow {
-                uniform: true
-                SettingsSwitch {
-                    buttonIcon: "keep"
-                    text: Translation.tr("Pinned on startup")
-                    checked: Config.options.dock.pinnedOnStartup
-                    onCheckedChanged: {
-                        Config.setNestedValue("dock.pinnedOnStartup", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Keep dock visible when the shell starts")
-                    }
+            SettingsSwitch {
+                buttonIcon: "colors"
+                text: Translation.tr("Tint app icons")
+                checked: Config.options.dock.monochromeIcons
+                onCheckedChanged: {
+                    Config.setNestedValue("dock.monochromeIcons", checked);
                 }
-                SettingsSwitch {
-                    buttonIcon: "colors"
-                    text: Translation.tr("Tint app icons")
-                    checked: Config.options.dock.monochromeIcons
-                    onCheckedChanged: {
-                        Config.setNestedValue("dock.monochromeIcons", checked);
-                    }
-                    StyledToolTip {
-                        text: Translation.tr("Apply accent color tint to dock app icons")
-                    }
+                StyledToolTip {
+                    text: Translation.tr("Apply accent color tint to dock app icons")
                 }
             }
             SettingsSwitch {
