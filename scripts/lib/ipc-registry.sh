@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 7beda3ab69133791
+# IPC.md hash: 5d9562b880b2ed92
 # Targets: 60
 
 declare -gA IPC_TARGET_DESC=(
@@ -355,7 +355,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["settings:toggle"]="Toggle settings (overlay mode toggles, window mode opens)"
   ["settingsNav:page"]=""
   ["settingsNav:count"]="Number of settings pages"
-  ["settingsNav:current"]="Current page index"
+  ["settingsNav:current"]="Current page index, or \`-1\` when no page is open"
   ["shellLayout:toggle"]="Enter or leave shell edit mode"
   ["shellLayout:open"]="Enter shell edit mode on the focused output"
   ["shellLayout:openOn"]="Enter shell edit mode on a named output"
