@@ -34,9 +34,9 @@ Rectangle {
     // non-blurred resources widget while keeping a frosted-glass clock, etc.
     property bool surfaceUseBlur: true
 
-    // Power management: when false, disable expensive blur operations.
-    // Parent widgets should bind this to their powerActive property.
-    property bool powerActive: WidgetPowerManager.widgetsActive
+    // Follow the owning widget's per-output power state. Standalone surfaces
+    // keep the global summary as a compatibility fallback.
+    property bool powerActive: parent?.powerActive ?? WidgetPowerManager.widgetsActive
 
     // The glass behind a widget is a screen-sized crop of the wallpaper, and
     // every WidgetSurface keeps its own copy plus its own screen-sized FBO (see

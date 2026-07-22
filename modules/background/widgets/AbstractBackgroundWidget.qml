@@ -442,11 +442,10 @@ AbstractWidget {
     // Widgets should check these properties before running expensive operations
     // (blur layers, animations, Cava subscriptions, frequent timers)
 
-    // True when widgets should be fully active (no fullscreen, no gamemode, not covered)
-    readonly property bool powerActive: WidgetPowerManager.widgetsActive
-
-    // True when widgets should reduce activity (lower precision clocks, longer intervals)
-    readonly property bool powerReduced: WidgetPowerManager.reducedMode
+    // Fullscreen and window-presence triggers are scoped to this widget's output.
+    // Manual GameMode remains intentionally global.
+    readonly property bool powerActive: WidgetPowerManager.widgetsActiveForOutput(root.outputName)
+    readonly property bool powerReduced: WidgetPowerManager.reducedModeForOutput(root.outputName)
 
     // Effective animation state: animations enabled AND power active
     readonly property bool animationsActive: Appearance.animationsEnabled && root.powerActive

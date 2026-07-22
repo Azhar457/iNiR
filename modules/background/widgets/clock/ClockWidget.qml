@@ -380,6 +380,7 @@ AbstractBackgroundWidget {
                     implicitSize: Math.round(Number(root._readConfigKey("cookie.size") ?? 230)
                         * root.scaleFactor)
                     scaleFactor: root.scaleFactor
+                    powerActive: root.powerActive
                     colBackground: root.cookieFace
                     colOnBackground: root.cookieInk
                     colBackgroundInfo: root.cookieInfo

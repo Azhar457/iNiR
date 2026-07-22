@@ -14,6 +14,7 @@ Item {
     property color color: Appearance.colors.colPrimary
     property alias strokeWidth: shapePath.strokeWidth
     property bool constantlyRotate: false
+    property bool powerActive: WidgetPowerManager.widgetsActive
 
     implicitWidth: implicitSize
     implicitHeight: implicitSize
@@ -22,7 +23,7 @@ Item {
 
     Loader {
         // Only load FrameAnimation when actively rotating AND power is on
-        active: constantlyRotate && WidgetPowerManager.widgetsActive
+        active: constantlyRotate && root.powerActive
         sourceComponent: FrameAnimation {
             running: true
             onTriggered: {

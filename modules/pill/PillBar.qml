@@ -45,12 +45,23 @@ Scope {
     }
 
     readonly property var surfaceNames: ["power", "media", "battery", "calendar", "link", "mixer", "sysmon", "clipboard", "glance", "launcher", "recorder"]
+    readonly property var targetScreens: {
+        const screens = Quickshell.screens;
+        const list = Config.options?.bar?.screenList ?? [];
+        if (!list || list.length === 0)
+            return screens;
+        const matchedScreens = screens.filter(screen => {
+            const screenName = screen?.name ?? "";
+            return screenName.length > 0 && list.includes(screenName);
+        });
+        return matchedScreens.length > 0 ? matchedScreens : screens;
+    }
 
     function focusedScreenName() {
         const focused = CompositorService.isNiri ? NiriService.currentOutput : (Hyprland.focusedMonitor?.name ?? "");
-        if (focused.length > 0 && Quickshell.screens.some(s => s.name === focused))
+        if (focused.length > 0 && root.targetScreens.some(screen => screen.name === focused))
             return focused;
-        return Quickshell.screens.length > 0 ? Quickshell.screens[0].name : "";
+        return root.targetScreens.length > 0 ? root.targetScreens[0].name : "";
     }
 
     function openSurfaceByName(surface) {
@@ -100,7 +111,7 @@ Scope {
     }
 
     Variants {
-        model: Quickshell.screens
+        model: root.targetScreens
 
         PanelWindow {
             id: reserve
@@ -135,7 +146,7 @@ Scope {
     }
 
     Variants {
-        model: Quickshell.screens
+        model: root.targetScreens
 
         PanelWindow {
             id: overlay

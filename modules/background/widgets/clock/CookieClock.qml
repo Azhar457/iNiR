@@ -28,6 +28,7 @@ Item {
     readonly property string dateStyle: Config.getNestedValue("background.widgets.clock.cookie.dateStyle", "bubble")
 
     property real scaleFactor: 1.0
+    property bool powerActive: WidgetPowerManager.widgetsActive
     property real implicitSize: Math.round((Config.getNestedValue("background.widgets.clock.cookie.size", 230)) * scaleFactor)
 
     // ── Style-dispatched colors (overridable from parent) ──
@@ -131,7 +132,7 @@ Item {
     readonly property bool _drawFaceDirectly: Appearance.zzzEverywhere || !Appearance.effectsEnabled
     property real faceRotation: 0
     RotationAnimation on faceRotation {
-        running: root.constantlyRotate && WidgetPowerManager.widgetsActive
+        running: root.constantlyRotate && root.powerActive
         duration: 30000
         easing.type: Easing.Linear
         loops: Animation.Infinite
@@ -156,6 +157,7 @@ Item {
             implicitSize: root.implicitSize
             sides: root.sides
             color: root.colBackground
+            powerActive: root.powerActive
         }
     }
     Loader {
