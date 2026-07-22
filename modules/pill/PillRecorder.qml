@@ -9,8 +9,8 @@ import qs.modules.common
  * Recorder surface: start/stop screen recording from the pill. Upstream's
  * recorder carried its own 1400-line wf-recorder pipeline; iNiR already owns
  * one (scripts/videos/record.sh + RecorderStatus), so this surface is a thin
- * Ricelin-dialect face over that — two capture actions, a sound toggle, and a
- * live elapsed counter while a recording runs.
+ * Ricelin-dialect face over that — two capture actions, the configured audio
+ * profile, and a live elapsed counter while a recording runs.
  */
 PillSurface {
     id: root
@@ -21,7 +21,17 @@ PillSurface {
     mBottom: 14
 
     readonly property bool recording: RecorderStatus.isRecording
-    property bool withSound: false
+    readonly property string audioMode: RecorderStatus.configuredAudioMode
+    readonly property bool withSound: audioMode !== "none"
+
+    function audioModeLabel(mode) {
+        switch (mode) {
+        case "microphone": return Translation.tr("Microphone")
+        case "both": return Translation.tr("System + microphone")
+        case "none": return Translation.tr("No audio")
+        default: return Translation.tr("System audio")
+        }
+    }
 
     readonly property string elapsed: {
         const t = Math.max(0, RecorderStatus.elapsedSeconds);
@@ -44,7 +54,7 @@ PillSurface {
     }
 
     function stop() {
-        Quickshell.execDetached(["/usr/bin/pkill", "-SIGINT", "wf-recorder"]);
+        Quickshell.execDetached(["/usr/bin/bash", Directories.recordScriptPath, "--stop"]);
         RecorderStatus.scheduleQuickCheck();
     }
 
@@ -225,13 +235,13 @@ PillSurface {
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.withSound = !root.withSound
+                    onClicked: RecorderStatus.setConfiguredAudioMode(root.withSound ? "none" : "system")
                 }
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: Translation.tr("System sound")
+                text: root.audioModeLabel(root.audioMode)
                 color: root.withSound ? PillTheme.cream : PillTheme.dim
                 font.family: PillTheme.font
                 font.pixelSize: 10.5 * root.s

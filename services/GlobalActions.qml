@@ -409,16 +409,17 @@ Singleton {
         {
             id: "screen-record",
             name: Translation.tr("Toggle Screen Recording"),
-            description: Translation.tr("Start or stop screen recording with wf-recorder"),
+            description: Translation.tr("Start or stop fullscreen recording with the configured audio profile"),
             icon: "videocam",
             category: "tools",
-            keywords: ["record", "screen", "video", "capture", "wf-recorder"],
+            keywords: ["record", "screen", "video", "capture", "wf-recorder", "audio", "microphone", "mic"],
             execute: () => {
-                if (RecorderStatus.isRecording) {
-                    Quickshell.execDetached(["/usr/bin/pkill", "-SIGINT", "wf-recorder"])
-                } else {
-                    Quickshell.execDetached(["/usr/bin/bash", Directories.recordScriptPath])
-                }
+                const args = ["/usr/bin/bash", Directories.recordScriptPath]
+                if (RecorderStatus.isRecording)
+                    args.push("--stop")
+                else
+                    args.push("--fullscreen", "--sound")
+                Quickshell.execDetached(args)
                 RecorderStatus.scheduleQuickCheck()
             }
         },

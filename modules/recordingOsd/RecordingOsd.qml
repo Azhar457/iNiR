@@ -16,6 +16,9 @@ Scope {
     property bool isVertical: false
     property bool collapsed: false
     readonly property bool autoHide: Config.options?.screenRecord?.recordingOsd?.autoHide ?? false
+    readonly property string audioMode: RecorderStatus.effectiveAudioMode
+    readonly property bool usesSystemAudio: audioMode === "system" || audioMode === "both"
+    readonly property bool usesMicrophone: audioMode === "microphone" || audioMode === "both"
     property bool revealed: true
     property bool osdTargetHovered: false
 
@@ -35,7 +38,8 @@ Scope {
     }
 
     function stopRecording(): void {
-        Quickshell.execDetached(["/usr/bin/pkill", "-SIGINT", "wf-recorder"])
+        Quickshell.execDetached([Directories.recordScriptPath, "--stop"])
+        RecorderStatus.scheduleQuickCheck()
     }
 
     Connections {
@@ -288,18 +292,18 @@ Scope {
                         tooltip: Translation.tr("Stop recording")
                     }
 
-                    OsdSeparator { isVertical: false; visible: !root.collapsed }
+                    OsdSeparator { isVertical: false; visible: !root.collapsed && root.audioMode !== "none" }
 
                     OsdPillButton {
-                        visible: !root.collapsed
+                        visible: !root.collapsed && root.usesSystemAudio
                         iconName: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
                         dimmed: Audio.sink?.audio?.muted ?? false
                         onClicked: Audio.toggleMute()
                         tooltip: Audio.sink?.audio?.muted
-                            ? Translation.tr("Unmute audio") : Translation.tr("Mute audio")
+                            ? Translation.tr("Unmute system audio") : Translation.tr("Mute system audio")
                     }
                     OsdPillButton {
-                        visible: !root.collapsed
+                        visible: !root.collapsed && root.usesMicrophone
                         iconName: Audio.micMuted ? "mic_off" : "mic"
                         dimmed: Audio.micMuted
                         onClicked: Audio.toggleMicMute()
@@ -334,18 +338,18 @@ Scope {
                         tooltip: Translation.tr("Stop recording")
                     }
 
-                    OsdSeparator { isVertical: true; visible: !root.collapsed }
+                    OsdSeparator { isVertical: true; visible: !root.collapsed && root.audioMode !== "none" }
 
                     OsdPillButton {
-                        visible: !root.collapsed
+                        visible: !root.collapsed && root.usesSystemAudio
                         iconName: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
                         dimmed: Audio.sink?.audio?.muted ?? false
                         onClicked: Audio.toggleMute()
                         tooltip: Audio.sink?.audio?.muted
-                            ? Translation.tr("Unmute audio") : Translation.tr("Mute audio")
+                            ? Translation.tr("Unmute system audio") : Translation.tr("Mute system audio")
                     }
                     OsdPillButton {
-                        visible: !root.collapsed
+                        visible: !root.collapsed && root.usesMicrophone
                         iconName: Audio.micMuted ? "mic_off" : "mic"
                         dimmed: Audio.micMuted
                         onClicked: Audio.toggleMicMute()

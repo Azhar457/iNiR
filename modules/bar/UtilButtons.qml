@@ -60,8 +60,13 @@ Item {
                     anchors.fill: parent
 
                     onClicked: {
-                        // Let the script handle everything (notifications, state, etc)
-                        Quickshell.execDetached([Directories.recordScriptPath, "--fullscreen", "--sound"])
+                        const args = [Directories.recordScriptPath]
+                        if (recordButtonWrapper.isRecording)
+                            args.push("--stop")
+                        else
+                            args.push("--fullscreen", "--sound")
+                        Quickshell.execDetached(args)
+                        RecorderStatus.scheduleQuickCheck()
                     }
 
                     Item {

@@ -1277,7 +1277,7 @@ Singleton {
             section: Translation.tr("Screen Recording"),
             label: Translation.tr("Screen recording"),
             description: Translation.tr("Screen recording settings and shortcuts"),
-            keywords: ["screen", "record", "recording", "video", "capture", "wf-recorder", "discord", "compress", "10mb"]
+            keywords: ["screen", "record", "recording", "video", "capture", "wf-recorder", "audio", "system sound", "desktop audio", "microphone", "mic", "mix", "pipewire", "discord", "compress", "10mb"]
         },
         {
             pageIndex: 6, pageName: root.pages[6].name,

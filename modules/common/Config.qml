@@ -2669,7 +2669,10 @@ Singleton {
                 property int fps: 60
                 property int videoBitrateKbps: 12000
                 property int audioBitrateKbps: 192
-                property string audioSource: ""
+                property string audioMode: "system" // "none" | "system" | "microphone" | "both"
+                property string audioSource: "" // Legacy single-source override; retained for existing configs
+                property string systemAudioSource: "" // Empty = default sink monitor
+                property string microphoneSource: "" // Empty = default non-monitor source
                 property string audioBackend: ""
                 property int audioSampleRate: 48000
                 property string pixelFormat: "yuv420p"

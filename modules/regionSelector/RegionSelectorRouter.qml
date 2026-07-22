@@ -55,7 +55,7 @@ Scope {
             GlobalShortcut { name: "regionSearch"; description: "Searches the selected region"; onPressed: root.search() }
             GlobalShortcut { name: "regionOcr"; description: "Recognizes text in the selected region"; onPressed: root.ocr() }
             GlobalShortcut { name: "regionRecord"; description: "Records the selected region"; onPressed: root.record() }
-            GlobalShortcut { name: "regionRecordWithSound"; description: "Records the selected region with sound"; onPressed: root.recordWithSound() }
+            GlobalShortcut { name: "regionRecordWithSound"; description: "Records the selected region with the configured audio profile"; onPressed: root.recordWithSound() }
             GlobalShortcut { name: "regionMenu"; description: "Opens the unified snip menu"; onPressed: root.menu() }
         }
     }

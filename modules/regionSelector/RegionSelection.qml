@@ -299,7 +299,7 @@ PanelWindow {
     onPreparationDoneChanged: {
         if (!preparationDone) return;
         if (root.isRecording && root.recordingShouldStop) {
-            Quickshell.execDetached([Directories.recordScriptPath]);
+            Quickshell.execDetached([Directories.recordScriptPath, "--stop"]);
             root.dismiss();
             return;
         }
