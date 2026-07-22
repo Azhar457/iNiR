@@ -4952,5 +4952,20 @@
   "to full": "to full",
   "today": "today",
   "— out of the sidebar, still searchable": "— out of the sidebar, still searchable",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic)."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).",
+  "Bring next overlapping widget forward (%1)": "Вивести наступний перекривний віджет на передній план (%1)",
+  "Browse poses": "Переглянути пози",
+  "Buttons": "Кнопки",
+  "Duplicate": "Дублювати",
+  "Featured": "Вибране",
+  "Gallery": "Галерея",
+  "Hide gallery": "Сховати галерею",
+  "Loading…": "Завантаження…",
+  "Loops": "Цикли",
+  "Manual": "Вручну",
+  "Manual-only collection pose": "Поза колекції лише для ручного вибору",
+  "Manual-only poses never rotate automatically": "Пози лише для ручного вибору не змінюються автоматично",
+  "Open article": "Відкрити статтю",
+  "Pixel": "Піксель",
+  "Street": "Вулиця"
 }

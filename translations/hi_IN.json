@@ -4952,5 +4952,20 @@
   "to full": "to full",
   "today": "today",
   "— out of the sidebar, still searchable": "— out of the sidebar, still searchable",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic)."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).",
+  "Bring next overlapping widget forward (%1)": "अगले ओवरलैप होते विजेट को आगे लाएँ (%1)",
+  "Browse poses": "पोज़ देखें",
+  "Buttons": "बटन",
+  "Duplicate": "डुप्लिकेट",
+  "Featured": "विशेष",
+  "Gallery": "गैलरी",
+  "Hide gallery": "गैलरी छिपाएँ",
+  "Loading…": "लोड हो रहा है…",
+  "Loops": "लूप",
+  "Manual": "मैन्युअल",
+  "Manual-only collection pose": "केवल मैन्युअल संग्रह पोज़",
+  "Manual-only poses never rotate automatically": "केवल मैन्युअल पोज़ अपने-आप नहीं बदलते",
+  "Open article": "लेख खोलें",
+  "Pixel": "पिक्सेल",
+  "Street": "सड़क"
 }

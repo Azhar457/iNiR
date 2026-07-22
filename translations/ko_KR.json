@@ -4952,5 +4952,20 @@
   "to full": "to full",
   "today": "today",
   "— out of the sidebar, still searchable": "— out of the sidebar, still searchable",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic)."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).",
+  "Bring next overlapping widget forward (%1)": "다음 겹친 위젯을 앞으로 가져오기 (%1)",
+  "Browse poses": "포즈 둘러보기",
+  "Buttons": "버튼",
+  "Duplicate": "복제",
+  "Featured": "추천",
+  "Gallery": "갤러리",
+  "Hide gallery": "갤러리 숨기기",
+  "Loading…": "불러오는 중…",
+  "Loops": "반복",
+  "Manual": "수동",
+  "Manual-only collection pose": "수동 전용 컬렉션 포즈",
+  "Manual-only poses never rotate automatically": "수동 전용 포즈는 자동으로 전환되지 않음",
+  "Open article": "문서 열기",
+  "Pixel": "픽셀",
+  "Street": "거리"
 }

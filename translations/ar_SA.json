@@ -4952,5 +4952,20 @@
   "to full": "إلى الامتلاء",
   "today": "اليوم",
   "— out of the sidebar, still searchable": "— خارج الشريط الجانبي، ويبقى قابلاً للبحث",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ يكتشف توزيعتك تلقائيًا. وإلا أدخل أي اسم أيقونة (يُبحث عنه كـ <name>-symbolic)."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ يكتشف توزيعتك تلقائيًا. وإلا أدخل أي اسم أيقونة (يُبحث عنه كـ <name>-symbolic).",
+  "Bring next overlapping widget forward (%1)": "إحضار الودجت المتداخل التالي إلى الأمام (%1)",
+  "Browse poses": "تصفّح الوضعيات",
+  "Buttons": "الأزرار",
+  "Duplicate": "تكرار",
+  "Featured": "مميّز",
+  "Gallery": "المعرض",
+  "Hide gallery": "إخفاء المعرض",
+  "Loading…": "جارٍ التحميل…",
+  "Loops": "التكرارات",
+  "Manual": "يدوي",
+  "Manual-only collection pose": "وضعية من المجموعة للاختيار اليدوي فقط",
+  "Manual-only poses never rotate automatically": "الوضعيات اليدوية فقط لا تتبدّل تلقائيًا",
+  "Open article": "فتح المقالة",
+  "Pixel": "بكسل",
+  "Street": "شارع"
 }

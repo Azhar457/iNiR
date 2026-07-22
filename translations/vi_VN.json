@@ -4952,5 +4952,20 @@
   "to full": "to full",
   "today": "today",
   "— out of the sidebar, still searchable": "— out of the sidebar, still searchable",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic)."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).",
+  "Bring next overlapping widget forward (%1)": "Đưa tiện ích chồng lấp tiếp theo lên trước (%1)",
+  "Browse poses": "Duyệt tư thế",
+  "Buttons": "Nút",
+  "Duplicate": "Nhân bản",
+  "Featured": "Nổi bật",
+  "Gallery": "Thư viện",
+  "Hide gallery": "Ẩn thư viện",
+  "Loading…": "Đang tải…",
+  "Loops": "Lặp",
+  "Manual": "Thủ công",
+  "Manual-only collection pose": "Tư thế bộ sưu tập chỉ chọn thủ công",
+  "Manual-only poses never rotate automatically": "Các tư thế chỉ chọn thủ công không bao giờ tự xoay vòng",
+  "Open article": "Mở bài viết",
+  "Pixel": "Pixel",
+  "Street": "Đường phố"
 }

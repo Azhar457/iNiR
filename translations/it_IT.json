@@ -4952,5 +4952,20 @@
   "to full": "a schermo intero",
   "today": "oggi",
   "— out of the sidebar, still searchable": "— fuori dalla barra laterale, ancora ricercabile",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ rileva automaticamente la tua distribuzione. Altrimenti inserisci qualsiasi nome di icona (cercato come <nome>-simbolico)."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ rileva automaticamente la tua distribuzione. Altrimenti inserisci un nome di icona qualsiasi (cercato come <name>-symbolic).",
+  "Bring next overlapping widget forward (%1)": "Porta in primo piano il prossimo widget sovrapposto (%1)",
+  "Browse poses": "Sfoglia le pose",
+  "Buttons": "Pulsanti",
+  "Duplicate": "Duplica",
+  "Featured": "In evidenza",
+  "Gallery": "Galleria",
+  "Hide gallery": "Nascondi galleria",
+  "Loading…": "Caricamento…",
+  "Loops": "Cicli",
+  "Manual": "Manuale",
+  "Manual-only collection pose": "Posa della raccolta disponibile solo manualmente",
+  "Manual-only poses never rotate automatically": "Le pose solo manuali non cambiano mai automaticamente",
+  "Open article": "Apri articolo",
+  "Pixel": "Pixel",
+  "Street": "Strada"
 }

@@ -4952,5 +4952,20 @@
   "to full": "to full",
   "today": "today",
   "— out of the sidebar, still searchable": "— out of the sidebar, still searchable",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic)."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).",
+  "Bring next overlapping widget forward (%1)": "Вывести следующий перекрывающийся виджет на передний план (%1)",
+  "Browse poses": "Просмотреть позы",
+  "Buttons": "Кнопки",
+  "Duplicate": "Дублировать",
+  "Featured": "Избранное",
+  "Gallery": "Галерея",
+  "Hide gallery": "Скрыть галерею",
+  "Loading…": "Загрузка…",
+  "Loops": "Циклы",
+  "Manual": "Вручную",
+  "Manual-only collection pose": "Поза коллекции только для ручного выбора",
+  "Manual-only poses never rotate automatically": "Позы только для ручного выбора не меняются автоматически",
+  "Open article": "Открыть статью",
+  "Pixel": "Пиксель",
+  "Street": "Улица"
 }

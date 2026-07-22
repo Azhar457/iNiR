@@ -4952,5 +4952,20 @@
   "to full": "to full",
   "today": "today",
   "— out of the sidebar, still searchable": "— out of the sidebar, still searchable",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic)."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).",
+  "Bring next overlapping widget forward (%1)": "将下一个重叠的小组件移到最前 (%1)",
+  "Browse poses": "浏览姿势",
+  "Buttons": "按钮",
+  "Duplicate": "复制",
+  "Featured": "精选",
+  "Gallery": "图库",
+  "Hide gallery": "隐藏图库",
+  "Loading…": "加载中…",
+  "Loops": "循环",
+  "Manual": "手动",
+  "Manual-only collection pose": "仅限手动选择的收藏姿势",
+  "Manual-only poses never rotate automatically": "仅限手动选择的姿势不会自动轮换",
+  "Open article": "打开文章",
+  "Pixel": "像素",
+  "Street": "街头"
 }

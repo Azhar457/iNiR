@@ -4952,5 +4952,20 @@
   "to full": "to full",
   "today": "today",
   "— out of the sidebar, still searchable": "— out of the sidebar, still searchable",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic)."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).",
+  "Bring next overlapping widget forward (%1)": "הבא את הווידג'ט החופף הבא לחזית (%1)",
+  "Browse poses": "עיון בתנוחות",
+  "Buttons": "כפתורים",
+  "Duplicate": "שכפול",
+  "Featured": "מומלץ",
+  "Gallery": "גלריה",
+  "Hide gallery": "הסתרת הגלריה",
+  "Loading…": "טוען…",
+  "Loops": "לולאות",
+  "Manual": "ידני",
+  "Manual-only collection pose": "תנוחת אוסף לבחירה ידנית בלבד",
+  "Manual-only poses never rotate automatically": "תנוחות ידניות בלבד אינן מתחלפות אוטומטית",
+  "Open article": "פתיחת הכתבה",
+  "Pixel": "פיקסל",
+  "Street": "רחוב"
 }
