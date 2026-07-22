@@ -118,16 +118,17 @@ def _scan_qml_file(path: Path) -> list[IpcTarget]:
                 m = _RE_FUNCTION.search(line)
                 if m and brace_depth >= 1:
                     fname = m.group(1)
-                    raw_args = m.group(2).strip()
-                    args = []
-                    if raw_args:
-                        for part in raw_args.split(","):
-                            part = part.strip()
-                            # QML style: "name: type" or just "name"
-                            arg_name = part.split(":")[0].strip()
-                            if arg_name:
-                                args.append(arg_name)
-                    functions.append(IpcFunction(name=fname, args=args))
+                    if not fname.startswith("_"):
+                        raw_args = m.group(2).strip()
+                        args = []
+                        if raw_args:
+                            for part in raw_args.split(","):
+                                part = part.strip()
+                                # QML style: "name: type" or just "name"
+                                arg_name = part.split(":")[0].strip()
+                                if arg_name:
+                                    args.append(arg_name)
+                        functions.append(IpcFunction(name=fname, args=args))
 
                 j += 1
 
