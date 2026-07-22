@@ -109,9 +109,20 @@ Scope {
                 opacity: root._presentedOpen ? 1 : 0
                 visible: opacity > 0.001
 
+                // The scrim fades a little slower than the content on the way out, so
+                // the dimmed backdrop lingers under the dissolving panel instead of
+                // snapping the desktop back before the surface has left.
                 Behavior on opacity {
                     enabled: Appearance.animationsEnabled
-                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                    animation: NumberAnimation {
+                        duration: root._presentedOpen
+                            ? Appearance.animation.elementMoveEnter.duration
+                            : Appearance.animation.elementMoveExit.duration
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root._presentedOpen
+                            ? Appearance.animationCurves.standardDecel
+                            : Appearance.animationCurves.standardAccel
+                    }
                 }
             }
 
@@ -242,40 +253,51 @@ Scope {
                 layer.enabled: Appearance.shouldDesaturate("overlays") && columnLayout.visible
                 layer.effect: ShellDesaturationEffect {}
 
-                // One 0..1 driver so the surface unfolds as a single coherent morph
-                // instead of three separately-eased transforms. Enter uses the
-                // per-style spatial preset (elementMoveEnter already branches:
-                // cookieSpring bounce, zzzOvershoot punch, emphasizedDecel glide for
-                // material/inir/aurora/angel), so each worldview morphs with its own
-                // gesture; exit uses the crisp accel preset. Overshoot in the spring
-                // curves pushes progress slightly past 1, which the anisotropic scale
-                // turns into a subtle settle — the morph, not a uniform zoom.
-                readonly property var openMotion: root._presentedOpen
-                    ? Appearance.animation.elementMoveEnter
-                    : Appearance.animation.elementMoveExit
+                // One 0..1 driver so the surface unfolds as a single coherent morph.
+                // Enter rides the per-style spatial spring (elementMoveEnter branches:
+                // cookieSpring bounce, zzzOvershoot punch, emphasizedDecel glide), so
+                // each worldview opens in its own character and the overshoot past 1
+                // becomes a subtle settle on the anisotropic scale. Exit is a clean
+                // decel: it moves decisively at the start and eases into closed, and
+                // because opacity leads OUT (below) the slow tail is already invisible
+                // — the surface dissolves upward toward the search bar instead of
+                // visibly squishing to nothing, which is what made the old close ugly.
+                readonly property int motionDuration: root._presentedOpen
+                    ? Appearance.animation.elementMoveEnter.duration
+                    : Appearance.animation.elementMoveExit.duration
+                readonly property var motionCurve: root._presentedOpen
+                    ? Appearance.animation.elementMoveEnter.bezierCurve
+                    : Appearance.animationCurves.emphasizedDecel
                 property real openProgress: root._presentedOpen ? 1 : 0
-                opacity: Math.min(1, openProgress * 1.35) // opacity leads the unfold
+
+                // Direction-aware opacity. Open: leads in, fully legible by 70% of the
+                // unfold. Close: leads out, fully faded by the time the surface has
+                // receded ~45%, so the slow decel tail collapses invisibly.
+                opacity: root._presentedOpen
+                    ? Math.min(1, openProgress / 0.7)
+                    : Math.max(0, (openProgress - 0.45) / 0.55)
                 visible: openProgress > 0.001
 
                 transform: [
                     Scale {
                         origin.x: columnLayout.width / 2
                         origin.y: 0
-                        // Anisotropic unfold: the vertical axis travels further than
-                        // the horizontal, so the panel reads as morphing open from the
-                        // search bar downward rather than scaling as a block.
-                        xScale: 0.965 + 0.035 * columnLayout.openProgress
-                        yScale: 0.84 + 0.16 * columnLayout.openProgress
+                        // Gentle anisotropy — the vertical axis travels a touch further
+                        // than the horizontal so the panel reads as unfolding from the
+                        // search bar downward, without the heavy squish of a big yScale.
+                        xScale: 0.975 + 0.025 * columnLayout.openProgress
+                        yScale: 0.93 + 0.07 * columnLayout.openProgress
                     },
-                    Translate { y: (1 - columnLayout.openProgress) * -14 }
+                    // Recede toward the search-bar anchor at the top.
+                    Translate { y: (1 - columnLayout.openProgress) * -12 }
                 ]
 
                 Behavior on openProgress {
                     enabled: Appearance.animationsEnabled
                     NumberAnimation {
-                        duration: columnLayout.openMotion.duration
-                        easing.type: columnLayout.openMotion.type
-                        easing.bezierCurve: columnLayout.openMotion.bezierCurve
+                        duration: columnLayout.motionDuration
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: columnLayout.motionCurve
                     }
                 }
                 
