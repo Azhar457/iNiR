@@ -127,10 +127,17 @@ Item {
                 width: background.width
                 height: background.height
                 visible: false
+                Rectangle {
+                    anchors.fill: parent
+                    visible: !root.zzzEverywhere
+                    radius: background.radius
+                    color: "white"
+                }
                 ZzzPlate {
                     anchors.fill: parent
-                    chamfer: root.zzzEverywhere ? Appearance.zzz.cutCorner : 0
-                    chamferBottomRight: root.zzzEverywhere && !Appearance.zzz.round
+                    visible: root.zzzEverywhere
+                    chamfer: Appearance.zzz.cutCorner
+                    chamferBottomRight: !Appearance.zzz.round
                     fillColor: "white"
                 }
             }
