@@ -39,8 +39,8 @@ lives on `prerelease` and reaches `main` with the next release.
   brave, `inir mascot tidy` when you regret it.
 - A Mascot settings page in both families: every behavior, reaction and
   placement is configurable, 17 placement groups share a curated collection
-  (GIFs included), and custom images and phrases are yours to add. All 208
-  illustrations get a visible role somewhere. Manual surface choices now show
+  (GIFs included), and custom images and phrases are yours to add. The 354-pose
+  pack is mapped through the runtime catalog. Manual surface choices now show
   the exact selected catalog art instead of being replaced by an automatic
   full-body fallback. Her conversational register can follow the current mood
   or stay casual, dry, composed or chaotic.
@@ -84,6 +84,9 @@ lives on `prerelease` and reaches `main` with the next release.
   you hover, docks flush in game mode, and hosts its own OSD and toasts.
   Nearly every part of it is configurable, down to each kanji. Design
   language adapted from Ricelin, credited in the README. `pill` IPC target.
+- Screen recording now supports no audio, system audio, microphone or a live
+  system-plus-microphone mix. Both settings families expose source selection,
+  runtime fallback state and the same profile used by the recorder surfaces.
 - The island skin can dress the dock, both sidebars and search; Settings ›
   Interface › Islands tunes radius, opacity, shadow and frosted-glass blur
   in one place, and Settings › Appearance › Ricelin gathers the whole
@@ -183,6 +186,9 @@ lives on `prerelease` and reaches `main` with the next release.
   Material containers, so GTK, Qt, terminals, editors and the rest were left
   on a palette the shell had stopped using. Switching styles re-themes them
   in place without re-extracting colours from the wallpaper.
+- Public documentation now lives in the GitHub Wiki as plain Markdown. The
+  repository keeps the source pages and a local sync helper instead of a
+  second MkDocs and GitHub Pages build pipeline.
 
 ### Fixed
 - App theming ran four times per action instead of once. Three code paths
@@ -200,6 +206,13 @@ lives on `prerelease` and reaches `main` with the next release.
 - Entering fullscreen no longer stretches the Pill bar across the display.
   Automatic Game Mode hides the resting capsule and still lets transient Pill
   feedback appear; the wide game face is reserved for explicit manual mode.
+- The Pill bar now honors the same output allowlist as the classic bar instead
+  of creating reserve and overlay surfaces on every connected monitor.
+- Desktop-widget power saving is scoped to the widget's own output on Niri. A
+  fullscreen window on one monitor no longer pauses widgets on another;
+  explicit manual Game Mode remains global.
+- Workspace indicators rebuild cleanly after config reloads instead of feeding
+  transient undefined values into typed QML properties.
 - Optional Kira art updates are staged and verified before installation, keep
   the shell-owned manifest untouched, and repair missing or corrupt assets even
   when the published release tag has not changed.

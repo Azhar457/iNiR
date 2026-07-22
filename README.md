@@ -15,9 +15,9 @@
 </p>
 
 <p align="center">
-  <a href="docs/INSTALL.md">Install</a> &bull;
-  <a href="docs/KEYBINDS.md">Keybinds</a> &bull;
-  <a href="docs/IPC.md">IPC Reference</a> &bull;
+  <a href="https://github.com/snowarch/inir/wiki/INSTALL">Install</a> &bull;
+  <a href="https://github.com/snowarch/inir/wiki/KEYBINDS">Keybinds</a> &bull;
+  <a href="https://github.com/snowarch/inir/wiki/IPC">IPC Reference</a> &bull;
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a> &bull;
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
@@ -210,7 +210,7 @@ inir doctor                     # auto-diagnose and fix
 inir update                     # pull + migrate + restart
 ```
 
-**Supported distros:** Arch (automated installer). Other distros can install manually, see [PACKAGES.md](docs/PACKAGES.md).
+**Supported distros:** Arch has the automated installer. Other distros can install manually; see the [package reference](https://github.com/snowarch/inir/wiki/PACKAGES).
 
 | Method | Command |
 |--------|---------|
@@ -232,7 +232,7 @@ inir update                     # pull + migrate + restart
 | `Super+,` | Settings |
 | `Super+Shift+W` | Switch panel family |
 
-Full list: [docs/KEYBINDS.md](docs/KEYBINDS.md)
+Full list: [GitHub Wiki](https://github.com/snowarch/inir/wiki/KEYBINDS)
 
 ---
 

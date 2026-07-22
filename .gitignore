@@ -158,9 +158,9 @@ glob
 sys
 *.ps
 
-# ── Wiki / MkDocs ───────────────────────────────────────────
-# docs/ and mkdocs.yml are source (shipped). wiki/ is the built site
-# (published to GitHub Pages, not committed to main).
+# ── Documentation checkouts and stale builds ───────────────
+# docs/ is the GitHub Wiki source. wiki/ is an optional local checkout used
+# by scripts/wiki-sync.sh; site/ is retained only as an ignored legacy build.
 site/
 wiki/
 
