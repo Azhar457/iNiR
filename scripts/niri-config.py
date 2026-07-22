@@ -1442,6 +1442,65 @@ def _sync_cursor_env(theme=None, size=None):
             capture_output=True,
         )
 
+    # Materialize the libXcursor "default" fallback. XWayland apps (Spotify and
+    # other X11/Electron clients) that request the X "core" cursor never read
+    # XCURSOR_THEME — libXcursor resolves them through ~/.icons/default, which by
+    # default inherits Adwaita, so their pointer differs from the Wayland cursor.
+    # Pointing the default theme at ours closes that gap without env vars.
+    # See the Arch Wiki "Cursor themes > The default cursor theme".
+    if theme is not None:
+        _ensure_default_cursor_inherits(theme)
+
+
+def _ensure_default_cursor_inherits(theme):
+    """Write ~/.local/share/icons/default/index.theme -> Inherits=<theme>.
+
+    This is the passive fallback libXcursor uses when a client asks for the
+    core X cursor without honoring XCURSOR_THEME. Never point "default" at
+    itself, which would create an inheritance loop."""
+    if not theme or theme == "default":
+        return
+    default_dir = Path.home() / ".local" / "share" / "icons" / "default"
+    default_dir.mkdir(parents=True, exist_ok=True)
+    index = default_dir / "index.theme"
+    desired = f"[Icon Theme]\nName=Default\nComment=Default cursor theme\nInherits={theme}\n"
+    try:
+        if index.exists() and index.read_text() == desired:
+            return
+        index.write_text(desired)
+    except OSError:
+        pass
+
+
+def cmd_sync_cursor():
+    """Read the cursor theme/size from the KDL and materialize it everywhere.
+
+    Idempotent — safe to call on every install/update so XWayland apps inherit
+    the configured cursor even before the user ever opens Settings > Niri."""
+    input_file = resolve_niri_section_file("config.d/10-input-and-cursor.kdl")
+    theme = None
+    size = None
+    try:
+        content = Path(input_file).read_text()
+        cursor_block = _extract_block(content, "cursor", top_level=True)
+        if cursor_block:
+            m = re.search(r'xcursor-theme\s+"([^"]*)"', cursor_block)
+            if m:
+                theme = m.group(1)
+            m = re.search(r"xcursor-size\s+(\d+)", cursor_block)
+            if m:
+                size = int(m.group(1))
+    except OSError:
+        pass
+
+    if theme is None and size is None:
+        print(json.dumps({"error": "No cursor theme/size found in niri config"}))
+        return 1
+
+    _sync_cursor_env(theme=theme, size=size)
+    print(json.dumps({"synced": True, "theme": theme, "size": size}))
+    return 0
+
 
 def _set_input(config_dir, key, value):
     """Surgical edit in 10-input-and-cursor.kdl."""
@@ -2687,7 +2746,7 @@ def main():
         print(
             json.dumps(
                 {
-                    "error": "No command. Use: outputs, apply-output, persist-output, get-input, get-layout, get-animations, get-window-rules, list-cursor-themes, validate, detect-customizations, set, get-binds, set-bind, remove-bind"
+                    "error": "No command. Use: outputs, apply-output, persist-output, get-input, get-layout, get-animations, get-window-rules, list-cursor-themes, sync-cursor, validate, detect-customizations, set, get-binds, set-bind, remove-bind"
                 }
             )
         )
@@ -2705,6 +2764,7 @@ def main():
         "get-animations": lambda: cmd_get_animations(),
         "get-window-rules": lambda: cmd_get_window_rules(),
         "list-cursor-themes": lambda: cmd_list_cursor_themes(),
+        "sync-cursor": lambda: cmd_sync_cursor(),
         "validate": lambda: cmd_validate(),
         "detect-customizations": lambda: cmd_detect_customizations(),
         "set": lambda: cmd_set(args),
