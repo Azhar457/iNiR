@@ -627,9 +627,11 @@ ShellRoot {
         GlobalStates.familyTransitionActive = false
     }
 
-    // Family transition overlay - lazy loaded to avoid parsing waffle on startup
+    // Family transition overlay stays absent outside a real family switch, so
+    // the inactive family's visual tree and font/token imports are not retained.
     Loader {
         active: Config.ready
+            && (GlobalStates.familyTransitionActive || root._transitionInProgress)
         source: "FamilyTransitionOverlay.qml"
         onLoaded: {
             item.exitComplete.connect(root.applyPendingFamily)

@@ -278,6 +278,7 @@ Item { // Bar content region
         Loader {
             id: cellLoader
             anchors.fill: parent
+            active: root._moduleShown(cell.modelData)
             sourceComponent: root._allComponents[cell.modelData] ?? null
             onLoaded: if (cell.modelData === "activeWindow" && item) item.fillSlot = Qt.binding(() => root._fillSlot(cell.zone) && !root.isIslands)
         }
@@ -949,7 +950,8 @@ Item { // Bar content region
                     Layout.fillHeight: root._fillHeight(modelData)
                     // Hidden modules must leave the layout entirely, or their
                     // implicit width lingers as a ghost gap inside the pill.
-                    visible: root._moduleShown(modelData)
+                    active: root._moduleShown(modelData)
+                    visible: active
                     sourceComponent: root._allComponents[modelData] ?? null
                     onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = false
                 }
@@ -988,7 +990,8 @@ Item { // Bar content region
                     Layout.alignment: Qt.AlignVCenter
                     Layout.fillWidth: root._fillWidth(modelData, "centerLeft")
                     Layout.fillHeight: root._fillHeight(modelData)
-                    visible: root._moduleShown(modelData)
+                    active: root._moduleShown(modelData)
+                    visible: active
                     sourceComponent: root._allComponents[modelData] ?? null
                     onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = false
                 }
@@ -1041,7 +1044,8 @@ Item { // Bar content region
                         Layout.alignment: Qt.AlignVCenter
                         Layout.fillWidth: root._fillWidth(modelData, "centerRight")
                         Layout.fillHeight: root._fillHeight(modelData)
-                        visible: root._moduleShown(modelData)
+                        active: root._moduleShown(modelData)
+                        visible: active
                         sourceComponent: root._allComponents[modelData] ?? null
                         onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = false
                     }
