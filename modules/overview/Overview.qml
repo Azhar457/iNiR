@@ -73,7 +73,10 @@ Scope {
 
             Timer {
                 id: _overviewCloseTimer
-                interval: 250
+                // Cover the full exit animation (elementMoveExit scales with the
+                // enterExit speed setting) plus a small margin so the window is
+                // never torn down mid-close.
+                interval: (Appearance.animation.elementMoveExit.duration + 40)
                 onTriggered: root.visible = false
             }
 
@@ -239,12 +242,42 @@ Scope {
                 layer.enabled: Appearance.shouldDesaturate("overlays") && columnLayout.visible
                 layer.effect: ShellDesaturationEffect {}
 
-                property real animTranslateY: root._presentedOpen ? 0 : -16
-                opacity: root._presentedOpen ? 1 : 0
-                visible: opacity > 0.001
-                transformOrigin: Item.Top
-                scale: root._presentedOpen ? 1.0 : 0.95
-                transform: Translate { y: columnLayout.animTranslateY }
+                // One 0..1 driver so the surface unfolds as a single coherent morph
+                // instead of three separately-eased transforms. Enter uses the
+                // per-style spatial preset (elementMoveEnter already branches:
+                // cookieSpring bounce, zzzOvershoot punch, emphasizedDecel glide for
+                // material/inir/aurora/angel), so each worldview morphs with its own
+                // gesture; exit uses the crisp accel preset. Overshoot in the spring
+                // curves pushes progress slightly past 1, which the anisotropic scale
+                // turns into a subtle settle — the morph, not a uniform zoom.
+                readonly property var openMotion: root._presentedOpen
+                    ? Appearance.animation.elementMoveEnter
+                    : Appearance.animation.elementMoveExit
+                property real openProgress: root._presentedOpen ? 1 : 0
+                opacity: Math.min(1, openProgress * 1.35) // opacity leads the unfold
+                visible: openProgress > 0.001
+
+                transform: [
+                    Scale {
+                        origin.x: columnLayout.width / 2
+                        origin.y: 0
+                        // Anisotropic unfold: the vertical axis travels further than
+                        // the horizontal, so the panel reads as morphing open from the
+                        // search bar downward rather than scaling as a block.
+                        xScale: 0.965 + 0.035 * columnLayout.openProgress
+                        yScale: 0.84 + 0.16 * columnLayout.openProgress
+                    },
+                    Translate { y: (1 - columnLayout.openProgress) * -14 }
+                ]
+
+                Behavior on openProgress {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: columnLayout.openMotion.duration
+                        easing.type: columnLayout.openMotion.type
+                        easing.bezierCurve: columnLayout.openMotion.bezierCurve
+                    }
+                }
                 
                 // Always center the overview vertically - this is the default behavior.
                 // Never use verticalCenter anchor with dynamic Column - causes blur and erratic positioning.
@@ -286,18 +319,6 @@ Scope {
                 }
                 spacing: -8
 
-                Behavior on opacity {
-                    enabled: Appearance.animationsEnabled
-                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                }
-                Behavior on scale {
-                    enabled: Appearance.animationsEnabled
-                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                }
-                Behavior on animTranslateY {
-                    enabled: Appearance.animationsEnabled
-                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                }
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
