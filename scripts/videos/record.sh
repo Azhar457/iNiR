@@ -53,7 +53,7 @@ audio_mode_description() {
 determine_active_audio_mode() {
     if [[ ${SOUND_FLAG:-0} -ne 1 || -z "${AUDIO_CAPTURE_DEVICE:-}" ]]; then
         printf '%s\n' "none"
-    elif [[ "$AUDIO_CAPTURE_DEVICE" == inir_recorder_mix_*.monitor ]]; then
+    elif [[ "$AUDIO_CAPTURE_DEVICE" == "${MIX_SINK_PREFIX:-inir_recorder_mix_}"*.monitor ]]; then
         printf '%s\n' "both"
     elif [[ "$AUDIO_CAPTURE_DEVICE" == *.monitor ]]; then
         printf '%s\n' "system"
@@ -191,50 +191,20 @@ collect_hardware_devices() {
     return 0
 }
 
+# Preconditions for a system+microphone mix, checked without touching the live
+# audio graph. Loading a probe sink and loopbacks to answer a yes/no question
+# mutates the user's PipeWire session on every Settings open, and it cannot
+# prevent a failure that create_audio_mix() already handles: the real load
+# falls back to a single source and notifies.
 probe_audio_mix_support() {
     local system_source="$1"
     local microphone_source="$2"
-    local sink_name="inir_recorder_probe_${UID}_$$"
-    local sink_module=""
-    local loopback_one=""
-    local loopback_two=""
-    local status=1
 
     command -v pactl >/dev/null 2>&1 || return 1
     pactl info >/dev/null 2>&1 || return 1
     audio_source_exists "$system_source" || return 1
     audio_source_exists "$microphone_source" || return 1
-
-    sink_module="$(pactl load-module module-null-sink \
-        "sink_name=$sink_name" \
-        "rate=${AUDIO_SAMPLE_RATE:-48000}" \
-        "channels=2" \
-        "channel_map=front-left,front-right" \
-        "sink_properties=device.description=iNiR_Recorder_Probe" 2>/dev/null || true)"
-    if [[ "$sink_module" =~ ^[0-9]+$ ]]; then
-        # Probe loopbacks against the desktop monitor so opening Settings never activates the microphone.
-        loopback_one="$(pactl load-module module-loopback \
-            "source=$system_source" \
-            "sink=$sink_name" \
-            "latency_msec=20" \
-            "remix=yes" 2>/dev/null || true)"
-        loopback_two="$(pactl load-module module-loopback \
-            "source=$system_source" \
-            "sink=$sink_name" \
-            "latency_msec=20" \
-            "remix=yes" 2>/dev/null || true)"
-        if [[ "$loopback_one" =~ ^[0-9]+$ && "$loopback_two" =~ ^[0-9]+$ ]]; then
-            status=0
-        fi
-    fi
-
-    local module_id
-    for module_id in "$loopback_two" "$loopback_one" "$sink_module"; do
-        if [[ "$module_id" =~ ^[0-9]+$ ]]; then
-            pactl unload-module "$module_id" >/dev/null 2>&1 || true
-        fi
-    done
-    return "$status"
+    return 0
 }
 
 probe_capabilities() {
@@ -365,9 +335,15 @@ cleanup_stale_audio_mix() {
     local module_id
     while read -r module_id; do
         [[ -n "$module_id" ]] && pactl unload-module "$module_id" >/dev/null 2>&1 || true
-    done < <(pactl list modules short 2>/dev/null | awk '/inir_recorder_mix_/ { print $1 }' | sort -rn)
+    done < <(pactl list modules short 2>/dev/null | awk -v prefix="$MIX_SINK_PREFIX" 'index($0, prefix) { print $1 }' | sort -rn)
 }
 
+# A null sink fed by two loopbacks. wf-recorder takes a single --audio device,
+# so mixing has to happen in the audio graph, and this is the only shape that
+# actually carries signal here: libpipewire-module-combine-stream builds the
+# node with one module and no phantom sink, but its combined source records as
+# digital silence on PipeWire 1.6.8 (combine.mode=source segfaults outright).
+# The sink is visible to other apps while recording; that is the cost.
 create_audio_mix() {
     local system_source microphone_source
     system_source="$(resolve_system_audio_device)"
@@ -378,7 +354,7 @@ create_audio_mix() {
     fi
 
     cleanup_stale_audio_mix
-    MIX_SINK_NAME="inir_recorder_mix_${UID}_$$"
+    MIX_SINK_NAME="${MIX_SINK_PREFIX}${UID}_$$"
     MIX_SINK_MODULE="$(pactl load-module module-null-sink \
         "sink_name=$MIX_SINK_NAME" \
         "rate=$AUDIO_SAMPLE_RATE" \
@@ -766,6 +742,7 @@ AUDIO_CAPTURE_DEVICE=""
 ACTIVE_AUDIO_MODE="none"
 AUDIO_BACKEND=""
 AUDIO_SAMPLE_RATE="48000"
+MIX_SINK_PREFIX="inir_recorder_mix_"
 MIX_SINK_NAME=""
 MIX_SINK_MODULE=""
 MIX_SYSTEM_MODULE=""
@@ -882,13 +859,13 @@ fi
 mkdir -p "$SAVE_PATH"
 cd "$SAVE_PATH" || exit
 
-# Parse arguments without modifying $@ so region geometry and audio overrides can coexist.
+# Parse arguments without modifying $@ so --region geometry and the other flags
+# can coexist. The audio mode comes from screenRecord.audioMode in config.json.
 ARGS=("$@")
 MANUAL_REGION=""
 SOUND_FLAG=0
 FULLSCREEN_FLAG=0
 STOP_ONLY=0
-AUDIO_MODE_OVERRIDE=""
 for ((i=0;i<${#ARGS[@]};i++)); do
     case "${ARGS[i]}" in
         --region)
@@ -909,49 +886,14 @@ for ((i=0;i<${#ARGS[@]};i++)); do
         --stop)
             STOP_ONLY=1
             ;;
-        --audio-mode)
-            if (( i+1 < ${#ARGS[@]} )); then
-                AUDIO_MODE_OVERRIDE="${ARGS[i+1]}"
-                SOUND_FLAG=1
-                ((i+=1))
-            else
-                if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Recording cancelled" "No mode specified for --audio-mode" -a 'Recorder' & disown; fi
-                exit 1
-            fi
-            ;;
-        --audio-mode=*)
-            AUDIO_MODE_OVERRIDE="${ARGS[i]#*=}"
-            SOUND_FLAG=1
-            ;;
-        --system-audio)
-            AUDIO_MODE_OVERRIDE="system"
-            SOUND_FLAG=1
-            ;;
-        --microphone)
-            AUDIO_MODE_OVERRIDE="microphone"
-            SOUND_FLAG=1
-            ;;
-        --audio-mix)
-            AUDIO_MODE_OVERRIDE="both"
-            SOUND_FLAG=1
-            ;;
-        --no-audio)
-            AUDIO_MODE_OVERRIDE="none"
-            SOUND_FLAG=0
-            ;;
     esac
 done
 
-if [[ -n "$AUDIO_MODE_OVERRIDE" ]]; then
-    AUDIO_MODE="$(normalize_audio_mode "$AUDIO_MODE_OVERRIDE")"
-    [[ "$AUDIO_MODE" == "none" ]] && SOUND_FLAG=0
-fi
-
+# Stopping stays silent: the recording process itself notifies once the file is
+# written, and two toasts a second apart for one action is noise.
 if [[ $STOP_ONLY -eq 1 ]]; then
     if pgrep -x wf-recorder >/dev/null 2>&1; then
-        if stop_running_recorder && is_truthy "$SHOW_NOTIFICATIONS"; then
-            notify-send "Recording stopped" "The active recording is being finalized" -a 'Recorder' & disown
-        fi
+        stop_running_recorder || true
     elif is_truthy "$SHOW_NOTIFICATIONS"; then
         notify-send "Recorder" "No active recording" -a 'Recorder' & disown
     fi
@@ -959,9 +901,7 @@ if [[ $STOP_ONLY -eq 1 ]]; then
 fi
 
 if pgrep -x wf-recorder >/dev/null 2>&1; then
-    if stop_running_recorder && is_truthy "$SHOW_NOTIFICATIONS"; then
-        notify-send "Recording stopped" "The active recording is being finalized" -a 'Recorder' & disown
-    fi
+    stop_running_recorder || true
     exit 0
 fi
 
