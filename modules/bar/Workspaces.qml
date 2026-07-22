@@ -18,11 +18,19 @@ Item {
     property bool borderless: Config.options?.bar?.borderless ?? false
     readonly property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(root.QsWindow.window?.screen) : null
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
-    readonly property var wsConfig: Config.options?.bar?.workspaces ?? ({})
 
-    function _boolOr(value, fallback: bool): bool {
-        return typeof value === "boolean" ? value : fallback
-    }
+    property bool showAppIcons: true
+    property bool alwaysShowNumbers: false
+    property bool useNerdFont: false
+    property bool monochromeIcons: true
+    property var numberMap: []
+    property bool configuredPerMonitor: true
+    property string scrollBehavior: "workspace"
+    property bool configuredDynamicCount: true
+    property int configuredWorkspaceCount: 10
+    property bool wrapAround: true
+    property int scrollSteps: 3
+    property bool invertScroll: false
 
     function _intOr(value, fallback: int): int {
         const parsed = Number(value)
@@ -51,15 +59,36 @@ Item {
         return value > 0 ? String(value) : ""
     }
 
-    readonly property bool showAppIcons: wsConfig?.showAppIcons ?? true
-    readonly property bool alwaysShowNumbers: wsConfig?.alwaysShowNumbers ?? false
-    readonly property bool useNerdFont: wsConfig?.useNerdFont ?? false
-    readonly property bool monochromeIcons: wsConfig?.monochromeIcons ?? true
-    readonly property var numberMap: wsConfig?.numberMap ?? []
-    
+    function syncWorkspaceConfig(): void {
+        const config = Config.options?.bar?.workspaces
+        root.showAppIcons = typeof config?.showAppIcons === "boolean" ? config.showAppIcons : true
+        root.alwaysShowNumbers = typeof config?.alwaysShowNumbers === "boolean" ? config.alwaysShowNumbers : false
+        root.useNerdFont = typeof config?.useNerdFont === "boolean" ? config.useNerdFont : false
+        root.monochromeIcons = typeof config?.monochromeIcons === "boolean" ? config.monochromeIcons : true
+        root.numberMap = config?.numberMap ?? []
+        root.configuredPerMonitor = typeof config?.perMonitor === "boolean" ? config.perMonitor : true
+        root.scrollBehavior = typeof config?.scrollBehavior === "string" ? config.scrollBehavior : "workspace"
+        root.configuredDynamicCount = typeof config?.dynamicCount === "boolean" ? config.dynamicCount : true
+        root.configuredWorkspaceCount = root._intOr(config?.shown, 10)
+        root.wrapAround = typeof config?.wrapAround === "boolean" ? config.wrapAround : true
+        root.scrollSteps = Math.max(1, root._intOr(config?.scrollSteps, 3))
+        root.invertScroll = typeof config?.invertScroll === "boolean" ? config.invertScroll : false
+        Qt.callLater(root.updateWorkspaceOccupied)
+    }
+
+    Connections {
+        target: Config
+        function onReadyChanged(): void {
+            if (Config.ready)
+                Qt.callLater(root.syncWorkspaceConfig)
+        }
+        function onConfigChanged(): void {
+            Qt.callLater(root.syncWorkspaceConfig)
+        }
+    }
+
     // Per-monitor: each bar shows workspaces for its own output (Niri)
-    readonly property bool perMonitor: (wsConfig?.perMonitor ?? true)
-        && (CompositorService.isNiri ?? false)
+    readonly property bool perMonitor: root.configuredPerMonitor && CompositorService.isNiri === true
     readonly property string screenName: root.QsWindow.window?.screen?.name ?? ""
     readonly property var outputWorkspaces: {
         if (!CompositorService.isNiri) return []
@@ -95,8 +124,7 @@ Item {
     }
 
     // Scroll behavior: "workspace" = switch workspaces, "column" = cycle windows left/right in same workspace
-    readonly property string scrollBehavior: wsConfig?.scrollBehavior ?? "workspace"
-    readonly property bool columnMode: scrollBehavior === "column" && CompositorService.isNiri
+    readonly property bool columnMode: root.scrollBehavior === "column" && CompositorService.isNiri
 
     readonly property int currentWorkspaceNumber: {
         if (CompositorService.isNiri) {
@@ -110,15 +138,14 @@ Item {
     }
     
     // Dynamic workspace count: use actual workspaces from Niri, or fixed count
-    readonly property bool dynamicCount: (wsConfig?.dynamicCount ?? true)
-        && (CompositorService.isNiri ?? false)
+    readonly property bool dynamicCount: root.configuredDynamicCount && CompositorService.isNiri === true
     readonly property int actualWorkspaceCount: {
-        if (!dynamicCount) return wsConfig?.shown ?? 10
+        if (!dynamicCount)
+            return root.configuredWorkspaceCount
         // Niri: count workspaces on this output
         return Math.max(root.outputWorkspaces.length, 1)
     }
     readonly property int workspacesShown: actualWorkspaceCount
-    readonly property bool wrapAround: wsConfig?.wrapAround ?? true
     
     readonly property int workspaceGroup: Math.floor((currentWorkspaceNumber - 1) / root.workspacesShown)
     property list<bool> workspaceOccupied: []
@@ -206,7 +233,10 @@ Item {
     }
 
     // Occupied workspace updates
-    Component.onCompleted: doUpdateWorkspaceOccupied()
+    Component.onCompleted: {
+        root.syncWorkspaceConfig()
+        root.doUpdateWorkspaceOccupied()
+    }
     Connections {
         target: Hyprland.workspaces
         function onValuesChanged() {
@@ -248,9 +278,7 @@ Item {
         acceptedButtons: Qt.BackButton
         
         property int wheelStepCounter: 0
-        readonly property int wheelStepsRequired: Math.max(1,
-            Number.isFinite(Number(wsConfig?.scrollSteps))
-                ? Math.round(Number(wsConfig.scrollSteps)) : 3)
+        readonly property int wheelStepsRequired: root.scrollSteps
         
         onPressed: (event) => {
             if (event.button === Qt.BackButton && CompositorService.isHyprland) {
@@ -267,7 +295,7 @@ Item {
             let delta = deltaX !== 0 ? deltaX : -deltaY
             if (delta === 0) return
             
-            if (wsConfig?.invertScroll ?? false) delta = -delta
+            if (root.invertScroll) delta = -delta
             const direction = delta > 0 ? 1 : -1
 
             if (CompositorService.isNiri) {
@@ -495,9 +523,12 @@ Item {
                             pixelSize: Appearance.font.pixelSize.small - ((text.length - 1) * (text !== "10") * 2)
                             family: root.useNerdFont ? (Appearance.font.family.iconNerd ?? "") : (defaultFont ?? "")
                         }
-                        text: root._workspaceLabel(
-                            workspaceButtonBackground.niriWorkspace,
-                            button.workspaceValue) ?? ""
+                        text: {
+                            const label = root._workspaceLabel(
+                                workspaceButtonBackground.niriWorkspace,
+                                button.workspaceValue)
+                            return typeof label === "string" ? label : ""
+                        }
                         elide: Text.ElideRight
                         color: (currentWorkspaceNumber == button.workspaceValue) ?
                             Appearance.colors.colOnPrimary :
