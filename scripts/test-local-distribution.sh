@@ -48,11 +48,13 @@ if grep -q -- "--exclude='assets/images/mascot/manifest.json'" "$runtime_root/sd
     printf 'FAIL: repo-copy sync excludes the mascot runtime manifest\n' >&2
     exit 1
 fi
+# Payload directories are copied one at a time, so these are relative to
+# assets/ — an 'assets/…' prefix here never matches and the art ships.
 for local_mascot_path in \
-    "assets/images/mascot/*.png" \
-    "assets/images/mascot/*.gif" \
-    "assets/images/mascot/frames/" \
-    "assets/images/mascot/PROMPTS.md"; do
+    "images/mascot/*.png" \
+    "images/mascot/*.gif" \
+    "images/mascot/frames/" \
+    "images/mascot/PROMPTS.md"; do
     if ! grep -Fq -- "--exclude='$local_mascot_path'" "$runtime_root/sdata/lib/functions.sh"; then
         printf 'FAIL: repo-copy sync can leak local mascot artifact: %s\n' "$local_mascot_path" >&2
         exit 1
@@ -172,6 +174,23 @@ for agent_file in "${agent_files[@]}"; do
         leak_guard=1
     fi
 done
+# Maintainer and development tooling must be stripped by both install paths.
+dev_tooling_files=(release.sh wiki-sync.sh verify-docs.sh qml-check.fish
+    test-local-distribution.sh test-mascot-pack-flow.sh)
+dev_tooling_dirs=(agents tools l10n)
+for tool in "${dev_tooling_files[@]}" "${dev_tooling_dirs[@]}"; do
+    pattern="--exclude='/$tool'"
+    [[ " ${dev_tooling_dirs[*]} " == *" $tool "* ]] && pattern="--exclude='/$tool/'"
+    if ! grep -q -- "$pattern" "$runtime_root/sdata/lib/functions.sh" 2>/dev/null; then
+        printf 'LEAK GUARD: sdata/lib/functions.sh missing %s rsync exclude\n' "$tool" >&2
+        leak_guard=1
+    fi
+    if ! grep -q -- "/$tool" "$runtime_root/Makefile" 2>/dev/null; then
+        printf 'LEAK GUARD: Makefile missing strip for %s\n' "$tool" >&2
+        leak_guard=1
+    fi
+done
+
 if [[ "$leak_guard" -eq 1 ]]; then
     printf 'FAIL: agent artifact distribution guard failed\n' >&2
     exit 1
