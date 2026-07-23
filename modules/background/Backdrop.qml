@@ -239,7 +239,9 @@ Variants {
                 visible: !backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsGif
                 playing: visible && backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
 
-                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
+                    && backdropWindow.backdropBlurRadius > 0
                 layer.effect: MultiEffect {
                     blurEnabled: true
                     blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
@@ -264,7 +266,9 @@ Variants {
                 smooth: true
                 sourceSize: backdropWindow.backdropSourceSize
 
-                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
+                    && backdropWindow.backdropBlurRadius > 0
                 layer.effect: MultiEffect {
                     blurEnabled: true
                     blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
@@ -327,7 +331,9 @@ Variants {
                     }
                 }
 
-                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur && backdropWindow.backdropBlurRadius > 0
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
+                    && backdropWindow.backdropBlurRadius > 0
                 layer.effect: MultiEffect {
                     blurEnabled: true
                     blur: (backdropWindow.backdropBlurRadius * Math.max(0, Math.min(1, backdropWindow.thumbnailBlurStrength / 100))) / 100.0
@@ -356,7 +362,7 @@ Variants {
                 sourceSize.width: Math.round((backdropWindow.screen?.width ?? 1920) * 0.5)
                 sourceSize.height: Math.round((backdropWindow.screen?.height ?? 1080) * 0.5)
 
-                layer.enabled: Appearance.effectsEnabled
+                layer.enabled: visible && Appearance.effectsEnabled
                 layer.smooth: true
                 layer.textureSize: Qt.size(Math.round(width * 0.5), Math.round(height * 0.5))
                 layer.effect: MultiEffect {
@@ -385,7 +391,8 @@ Variants {
                 visible: backdropWindow.useAuroraStyle && backdropWindow.wallpaperIsGif
                 playing: visible && backdropWindow.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
 
-                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
                 layer.effect: MultiEffect {
                     source: auroraGifWallpaper
                     anchors.fill: source
@@ -411,7 +418,7 @@ Variants {
                 sourceSize.width: Math.round((backdropWindow.screen?.width ?? 1920) * 0.5)
                 sourceSize.height: Math.round((backdropWindow.screen?.height ?? 1080) * 0.5)
 
-                layer.enabled: Appearance.effectsEnabled
+                layer.enabled: visible && Appearance.effectsEnabled
                 layer.smooth: true
                 layer.textureSize: Qt.size(Math.round(width * 0.5), Math.round(height * 0.5))
                 layer.effect: MultiEffect {
@@ -478,7 +485,8 @@ Variants {
                     }
                 }
 
-                layer.enabled: Appearance.effectsEnabled && backdropWindow.enableAnimatedBlur
+                layer.enabled: visible && Appearance.effectsEnabled
+                    && backdropWindow.enableAnimatedBlur
                 layer.effect: MultiEffect {
                     source: auroraVideoWallpaper
                     anchors.fill: source

@@ -301,6 +301,26 @@ Scope {
         // Shared cache for magick identify results across all monitor instances.
         // Avoids re-running the subprocess for previously-seen wallpapers.
         property var _wallpaperSizeCache: ({})
+        property var _wallpaperSizeCacheKeys: []
+        readonly property int _wallpaperSizeCacheLimit: 64
+
+        function cacheWallpaperSize(path, width, height) {
+            const cache = Object.assign({}, root._wallpaperSizeCache)
+            const keys = root._wallpaperSizeCacheKeys.slice()
+            const existingIndex = keys.indexOf(path)
+            if (existingIndex >= 0)
+                keys.splice(existingIndex, 1)
+
+            cache[path] = { width: width, height: height }
+            keys.push(path)
+            while (keys.length > root._wallpaperSizeCacheLimit) {
+                const oldestPath = keys.shift()
+                delete cache[oldestPath]
+            }
+
+            root._wallpaperSizeCache = cache
+            root._wallpaperSizeCacheKeys = keys
+        }
 
     PanelWindow {
         id: bgRoot
@@ -953,9 +973,7 @@ Scope {
                     bgRoot._manualWallpaperScaleOverride = 0
 
                     // Cache the result so subsequent switches to this wallpaper skip magick identify
-                    const cache = Object.assign({}, root._wallpaperSizeCache)
-                    cache[requestPath] = { width: Math.round(width), height: Math.round(height) }
-                    root._wallpaperSizeCache = cache
+                    root.cacheWallpaperSize(requestPath, Math.round(width), Math.round(height))
 
                     bgRoot.finishWallpaperMetricsRequest()
                 }
@@ -1172,7 +1190,9 @@ Scope {
                     fillMode: Image.PreserveAspectCrop
                     // No sourceSize for GIFs - let Qt handle native size for performance
 
-                    layer.enabled: Appearance.effectsEnabled && (bgRoot.effectsOptions.enableAnimatedBlur ?? false) && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
+                    layer.enabled: visible && Appearance.effectsEnabled
+                        && (bgRoot.effectsOptions.enableAnimatedBlur ?? false)
+                        && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                     layer.effect: GaussianBlur {
                         radius: Math.round((bgRoot.effectsOptions.blurRadius ?? 32) * Math.max(0, Math.min(1, (bgRoot.effectsOptions.thumbnailBlurStrength ?? 50) / 100)))
                         // Cap samples — beyond ~33 the visual difference is imperceptible
@@ -1214,7 +1234,9 @@ Scope {
                         && bgRoot._familyOwnsScreen
                         && visible
 
-                    layer.enabled: Appearance.effectsEnabled && (bgRoot.effectsOptions.enableAnimatedBlur ?? false) && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
+                    layer.enabled: visible && Appearance.effectsEnabled
+                        && (bgRoot.effectsOptions.enableAnimatedBlur ?? false)
+                        && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                     layer.effect: GaussianBlur {
                         radius: Math.round((bgRoot.effectsOptions.blurRadius ?? 32) * Math.max(0, Math.min(1, (bgRoot.effectsOptions.thumbnailBlurStrength ?? 50) / 100)))
                         // See #159 — cap samples to bound fragment shader cost
