@@ -75,9 +75,18 @@ Item {
         property bool retainAfterUse: false
         property bool used: false
         property int closeGraceMs: 300
+        // Stateful surfaces stay warm after use, but not forever. An unbounded
+        // retain-after-use cache made a long session accumulate every heavy panel
+        // the user had opened once. Five minutes preserves quick reopen behavior
+        // while eventually releasing the tree and its QML contexts.
+        property int retainIdleMs: 5 * 60 * 1000
         property bool resident: open || keepLoaded
         property Timer closeGrace: Timer {
             interval: onDemandLoader.closeGraceMs
+            onTriggered: onDemandLoader.resident = onDemandLoader.open || onDemandLoader.keepLoaded
+        }
+        property Timer retainIdle: Timer {
+            interval: onDemandLoader.retainIdleMs
             onTriggered: onDemandLoader.resident = onDemandLoader.open || onDemandLoader.keepLoaded
         }
         readonly property bool enabledPanel: Config.ready
@@ -87,17 +96,24 @@ Item {
             if (open) {
                 used = true
                 closeGrace.stop()
+                retainIdle.stop()
                 resident = true
-            } else if (!keepLoaded && !(retainAfterUse && used)) {
-                closeGrace.restart()
+            } else if (!keepLoaded) {
+                if (retainAfterUse && used)
+                    retainIdle.restart()
+                else
+                    closeGrace.restart()
             }
         }
         onKeepLoadedChanged: {
             if (keepLoaded) {
                 closeGrace.stop()
+                retainIdle.stop()
                 resident = true
             } else if (!open) {
-                if (!(retainAfterUse && used))
+                if (retainAfterUse && used)
+                    retainIdle.restart()
+                else
                     closeGrace.restart()
             }
         }

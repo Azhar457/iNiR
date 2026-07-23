@@ -44,7 +44,7 @@ KNOWN_DUPLICATES = {
     "bar", "session", "clipboard",
     # Lightweight shell-owned routers are intentionally mirrored so the IPC
     # contract survives family switches while their visual roots stay unloaded.
-    "cheatsheet", "osk", "overlay", "overview",
+    "altSwitcher", "cheatsheet", "osk", "overlay", "overview",
 }
 # Targets implemented outside either family subtree and loaded by both shells.
 # Some of their docs predate the family sections and may physically appear below

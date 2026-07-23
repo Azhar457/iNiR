@@ -13,7 +13,6 @@
 //-@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
 
 import qs.modules.common
-import qs.modules.altSwitcher
 import qs.modules.closeConfirm
 import qs.modules.settings
 import qs.modules.regionSelector
@@ -391,8 +390,18 @@ ShellRoot {
     }
 
     // === Panel Loaders ===
-    // AltSwitcher IPC router (material/waffle)
-    LazyLoader { active: Config.ready; component: AltSwitcher {} }
+    // A no-visual Alt+Tab session only needs MRU ordering and IPC. Keep the
+    // 2,000-line visual tree, fullscreen windows and preview shaders absent in
+    // that mode; Waffle also uses the lightweight controller as its shared
+    // router and owns its actual UI inside ShellWafflePanels.
+    LazyLoader {
+        active: Config.ready
+        source: ((Config.options?.panelFamily ?? "ii") === "waffle"
+            || ((Config.options?.altSwitcher?.noVisualUi ?? false)
+                && (Config.options?.altSwitcher?.preset ?? "default") !== "skew"))
+            ? "modules/altSwitcher/AltSwitcherNoVisual.qml"
+            : "modules/altSwitcher/AltSwitcher.qml"
+    }
 
     // Load ONLY the active family panels to reduce startup time.
     // Using `source:` instead of `component:` to avoid parsing inactive family at compile time.
@@ -515,8 +524,9 @@ ShellRoot {
     ToastManager {}
 
     // === Panel Families ===
-    // Note: iiAltSwitcher is always loaded (not in families) as it acts as IPC router
-    // for the unified "altSwitcher" target, redirecting to wAltSwitcher when waffle is active
+    // AltSwitcher controller selection lives above the family loaders. Waffle
+    // receives the lightweight shared router; ii receives either that controller
+    // or the full visual tree according to its no-visual setting.
     property list<string> families: ["ii", "waffle"]
     property var panelFamilies: ({
         "ii": [
@@ -530,7 +540,8 @@ ShellRoot {
         "waffle": [
             "wBar", "wBackground", "wBackdrop", "wStartMenu", "wActionCenter", "wNotificationCenter", "wNotificationPopup", "wOnScreenDisplay", "wWidgets", "wTaskView", "wLock", "wPolkit", "wSessionScreen",
             // Shared modules that work with waffle
-            // Note: wAltSwitcher is always loaded when waffle is active (not in this list)
+            // WaffleAltSwitcher is family-local and loaded by ShellWafflePanels;
+            // the shared `altSwitcher` target reaches it through the lightweight router.
             "iiBootGreeting", "iiCheatsheet", "iiOnScreenKeyboard", "iiOverlay", "iiOverview",
             "iiRegionSelector", "iiScreenCorners", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard",
             "iiMascotCompanion"
