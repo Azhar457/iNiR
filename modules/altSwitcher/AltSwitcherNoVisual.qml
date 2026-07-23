@@ -7,9 +7,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Lightweight Alt+Tab controller for configurations that explicitly disable
-// visual UI. It preserves MRU cycling without constructing the full switcher
-// windows, preview delegates, shaders, icon cache or background polling.
+// Stable Alt+Tab IPC router plus lightweight no-visual controller. Visual ii
+// commands are delivered internally to AltSwitcher.qml; visual Waffle commands
+// stay family-local. No-UI modes preserve MRU cycling without constructing the
+// full switcher windows, preview delegates, shaders or icon cache.
 Scope {
     id: root
 
@@ -19,6 +20,13 @@ Scope {
 
     readonly property bool waffleFamilyActive:
         (Config.options?.panelFamily ?? "ii") === "waffle"
+    readonly property string iiPreset:
+        Config.options?.altSwitcher?.preset ?? "default"
+    readonly property bool iiNoVisual:
+        (Config.options?.altSwitcher?.noVisualUi ?? false)
+        && root.iiPreset !== "skew"
+    readonly property bool routeToVisualIi:
+        !root.waffleFamilyActive && !root.iiNoVisual
     readonly property var waffleOptions:
         Config.options?.waffles?.altSwitcher ?? ({})
     readonly property string wafflePreset: waffleOptions.preset ?? "thumbnails"
@@ -43,6 +51,10 @@ Scope {
         snapshot = []
         currentIndex = 0
         GlobalStates.altSwitcherOpen = false
+    }
+
+    function forwardToVisualIi(functionName: string): void {
+        GlobalStates.altSwitcherCommand(functionName)
     }
 
     function routeToWaffle(functionName: string): void {
@@ -141,6 +153,8 @@ Scope {
     }
 
     Component.onCompleted: GlobalStates.altSwitcherOpen = false
+    onRouteToVisualIiChanged: root.resetSession()
+    onRouteToVisualWaffleChanged: root.resetSession()
 
     IpcHandler {
         target: "altSwitcher"
@@ -148,6 +162,10 @@ Scope {
         function open(): void {
             if (root.routeToVisualWaffle) {
                 root.routeToWaffle("open")
+                return
+            }
+            if (root.routeToVisualIi) {
+                root.forwardToVisualIi("open")
                 return
             }
             root.step(1)
@@ -158,12 +176,20 @@ Scope {
                 root.routeToWaffle("close")
                 return
             }
+            if (root.routeToVisualIi) {
+                root.forwardToVisualIi("close")
+                return
+            }
             root.resetSession()
         }
 
         function toggle(): void {
             if (root.routeToVisualWaffle) {
                 root.routeToWaffle("toggle")
+                return
+            }
+            if (root.routeToVisualIi) {
+                root.forwardToVisualIi("toggle")
                 return
             }
             root.step(1)
@@ -174,12 +200,20 @@ Scope {
                 root.routeToWaffle("next")
                 return
             }
+            if (root.routeToVisualIi) {
+                root.forwardToVisualIi("next")
+                return
+            }
             root.step(1)
         }
 
         function previous(): void {
             if (root.routeToVisualWaffle) {
                 root.routeToWaffle("previous")
+                return
+            }
+            if (root.routeToVisualIi) {
+                root.forwardToVisualIi("previous")
                 return
             }
             root.step(-1)

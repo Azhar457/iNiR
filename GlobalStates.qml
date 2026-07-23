@@ -39,6 +39,7 @@ Singleton {
     property bool overviewOpen: false
     property string overviewSearchPrefix: ""
     property bool altSwitcherOpen: false
+    signal altSwitcherCommand(string command)
     property bool clipboardOpen: false
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page

@@ -390,17 +390,24 @@ ShellRoot {
     }
 
     // === Panel Loaders ===
-    // A no-visual Alt+Tab session only needs MRU ordering and IPC. Keep the
-    // 2,000-line visual tree, fullscreen windows and preview shaders absent in
-    // that mode; Waffle also uses the lightweight controller as its shared
-    // router and owns its actual UI inside ShellWafflePanels.
+    // Keep one permanent IPC router so mode/family changes never overlap two
+    // `altSwitcher` handlers during Loader teardown. The heavy ii visual tree is
+    // present only for visual ii presets; the router handles no-UI cycling and
+    // forwards visual commands to ii internally or to Waffle's family module.
+    readonly property bool iiAltSwitcherNoVisual:
+        (Config.options?.altSwitcher?.noVisualUi ?? false)
+        && (Config.options?.altSwitcher?.preset ?? "default") !== "skew"
+
     LazyLoader {
         active: Config.ready
-        source: ((Config.options?.panelFamily ?? "ii") === "waffle"
-            || ((Config.options?.altSwitcher?.noVisualUi ?? false)
-                && (Config.options?.altSwitcher?.preset ?? "default") !== "skew"))
-            ? "modules/altSwitcher/AltSwitcherNoVisual.qml"
-            : "modules/altSwitcher/AltSwitcher.qml"
+        source: "modules/altSwitcher/AltSwitcherNoVisual.qml"
+    }
+
+    LazyLoader {
+        active: Config.ready
+            && (Config.options?.panelFamily ?? "ii") !== "waffle"
+            && !root.iiAltSwitcherNoVisual
+        source: "modules/altSwitcher/AltSwitcher.qml"
     }
 
     // Load ONLY the active family panels to reduce startup time.
