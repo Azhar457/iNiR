@@ -83,6 +83,8 @@ Scope {
     property bool _presentationCold: false
     property bool _renderUpdatesNeeded: true
     property bool _contentResident: false
+    property bool _nativeHostMapped: true
+    property bool _resumeRearmPending: false
     readonly property int contentIdleUnloadMs: {
         const override = Number(Quickshell.env("INIR_SIDEBAR_IDLE_UNLOAD_MS"))
         return Number.isFinite(override) && override >= 250
@@ -174,11 +176,27 @@ Scope {
         runtimeReportTimer.restart()
     }
 
+    function scheduleResumeRearm(): void {
+        root._resumeRearmPending = true
+        root._nativeHostMapped = false
+        root._presentationRequested = false
+        presentationTimer.stop()
+        resumeRemapTimer.stop()
+        if (!GlobalStates.screenLocked)
+            resumeRemapTimer.restart()
+        root.reportRuntime()
+    }
+
     function emitRuntimeReport(): void {
         ShellEditSession.reportHost(root.edge, {
             roleId: root.roleId,
             roleOpen: root.roleOpen,
             presentationOpen: root.presentationOpen,
+            roleHoldOpen: root.roleHoldOpen,
+            otherRoleOpen: root.otherRoleOpen,
+            renderUpdatesNeeded: root._renderUpdatesNeeded,
+            nativeHostMapped: root._nativeHostMapped,
+            resumeRearmPending: root._resumeRearmPending,
             windowVisible: sidebarRoot.visible,
             loaderActive: sidebarContentLoader.active,
             loaderStatus: sidebarContentLoader.status,
@@ -255,6 +273,32 @@ Scope {
         id: runtimeReportTimer
         interval: 50
         onTriggered: root.emitRuntimeReport()
+    }
+
+    Timer {
+        id: resumeRemapTimer
+        interval: 140
+        onTriggered: {
+            if (GlobalStates.screenLocked)
+                return
+            root._nativeHostMapped = true
+            root._resumeRearmPending = false
+            root._renderUpdatesNeeded = true
+            Qt.callLater(() => {
+                if (root.presentationOpen)
+                    root.syncPresentation()
+                else
+                    renderSuspendTimer.restart()
+                root.reportRuntime()
+            })
+        }
+    }
+
+    Connections {
+        target: Idle
+        function onResumed(): void {
+            root.scheduleResumeRearm()
+        }
     }
 
     function setRoleOpen(open: bool): void {
@@ -462,6 +506,14 @@ Scope {
                     root.reportRuntime()
                 })
             }
+
+            function onScreenLockedChanged(): void {
+                if (GlobalStates.screenLocked) {
+                    root.scheduleResumeRearm()
+                } else if (root._resumeRearmPending) {
+                    resumeRemapTimer.restart()
+                }
+            }
         }
 
         Connections {
@@ -502,8 +554,9 @@ Scope {
         // A closed transparent Overlay surface still prevents direct scanout.
         // Keep it mapped for normal warm opens, but release it while fullscreen
         // owns this output. Explicit opens and their exit animation remain usable.
-        visible: !root.fullscreenCovered || root.presentationOpen
-            || sidebarContentLoader.animating
+        visible: root._nativeHostMapped && !GlobalStates.screenLocked
+            && (!root.fullscreenCovered || root.presentationOpen
+                || sidebarContentLoader.animating)
         updatesEnabled: sidebarRoot.visible && root._renderUpdatesNeeded
 
         anchors {
