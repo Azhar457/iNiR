@@ -58,7 +58,9 @@ Scope {
             component: PanelWindow { // Bar window
                 id: barRoot
                 screen: barLoader.modelData
-                visible: !GameMode.shouldHidePanels
+                readonly property bool performanceSuspended: GameMode.shouldSuspendOutput(
+                    barLoader.modelData?.name ?? "")
+                visible: !performanceSuspended
                 readonly property bool zzzDetachedRounded: Appearance.zzzEverywhere
                     && Appearance.zzz.round
                     && ((Config.options?.bar?.appearanceStyle ?? "classic") === "classic")
@@ -111,7 +113,7 @@ Scope {
                 property bool mustShow: hoverRegion.containsMouse || superShow
                     || ShellEditSession.active
                 exclusionMode: ExclusionMode.Ignore
-                exclusiveZone: GameMode.shouldHidePanels ? 0 :
+                exclusiveZone: performanceSuspended ? 0 :
                     (GlobalStates.coverflowSelectorOpen || (Config?.options.bar.autoHide.enable && (!mustShow || !Config?.options.bar.autoHide.pushWindows))) ? 0 :
                     barRoot.panelSurfaceHeight
                 WlrLayershell.namespace: "quickshell:bar"
@@ -122,7 +124,7 @@ Scope {
                 // input-blocking area at the top of the screen.
                 Item { id: emptyMask; width: 0; height: 0 }
                 mask: Region {
-                    item: GameMode.shouldHidePanels ? emptyMask : hoverMaskRegion
+                    item: performanceSuspended ? emptyMask : hoverMaskRegion
                 }
                 color: "transparent"
 

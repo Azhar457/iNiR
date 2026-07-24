@@ -173,53 +173,8 @@ Scope {
                 if (CompositorService.isHyprland) {
                     return activeWorkspaceWithFullscreen != undefined;
                 }
-                if (CompositorService.isNiri && typeof NiriService !== "undefined" && NiriService.outputs && NiriService.windows && NiriService.workspaces) {
-                    try {
-                        const outputName = modelData?.name || "";
-                        if (!outputName)
-                            return false;
-                        const outputInfo = NiriService.outputs[outputName];
-                        const logical = outputInfo ? outputInfo.logical : null;
-                        if (!logical)
-                            return false;
-                        const lw = logical.width;
-                        const lh = logical.height;
-                        if (!(lw > 0 && lh > 0))
-                            return false;
-
-                        const windows = NiriService.windows;
-                        const wss = NiriService.workspaces;
-                        for (let i = 0; i < windows.length; ++i) {
-                            const w = windows[i];
-                            // Check if window is fullscreen via is_fullscreen property first
-                            if (w.is_fullscreen === true) {
-                                const ws = wss[w.workspace_id];
-                                if (ws && ws.output === outputName && ws.is_active) {
-                                    return true;
-                                }
-                            }
-                            // Fallback: check by size comparison
-                            const ws = wss[w.workspace_id];
-                            if (!ws || ws.output !== outputName || !ws.is_active)
-                                continue;
-                            const layout = w.layout;
-                            const size = layout && layout.tile_size ? layout.tile_size : null;
-                            if (!size || size.length < 2)
-                                continue;
-                            const ww = size[0];
-                            const wh = size[1];
-                            if (!(ww > 0 && wh > 0))
-                                continue;
-                            const areaWindow = ww * wh;
-                            const areaOutput = lw * lh;
-                            // More aggressive threshold for games
-                            if (areaWindow >= areaOutput * 0.90) {
-                                return true;
-                            }
-                        }
-                    } catch (e) {}
-                    return false;
-                }
+                if (CompositorService.isNiri)
+                    return GameMode.shouldSuspendOutput(modelData?.name ?? "")
                 return false;
             }
 

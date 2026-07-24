@@ -54,6 +54,7 @@ Singleton {
     Component.onCompleted: {
         fetchOutputs()
         fetchKeyboardLayouts()
+        fetchStateSnapshot()
     }
 
     onSingleWindowFullWidthEnabledChanged: {
@@ -79,6 +80,7 @@ Singleton {
                 send('"EventStream"')
                 fetchOutputs()
                 fetchKeyboardLayouts()
+                fetchStateSnapshot()
             }
         }
 
@@ -117,6 +119,42 @@ Singleton {
                     }
                 } catch (e) {
                     console.warn("NiriService: Failed to parse outputs:", e)
+                }
+            }
+        }
+    }
+
+    Process {
+        id: fetchWorkspacesProcess
+        command: ["niri", "msg", "-j", "workspaces"]
+
+        stdout: StdioCollector {
+            id: fetchWorkspacesCollector
+            onStreamFinished: {
+                try {
+                    const data = JSON.parse(fetchWorkspacesCollector.text)
+                    if (Array.isArray(data))
+                        root.handleWorkspacesChanged({ workspaces: data })
+                } catch (e) {
+                    console.warn("NiriService: Failed to parse workspace snapshot:", e)
+                }
+            }
+        }
+    }
+
+    Process {
+        id: fetchWindowsProcess
+        command: ["niri", "msg", "-j", "windows"]
+
+        stdout: StdioCollector {
+            id: fetchWindowsCollector
+            onStreamFinished: {
+                try {
+                    const data = JSON.parse(fetchWindowsCollector.text)
+                    if (Array.isArray(data))
+                        root.scheduleWindowsUpdate(data)
+                } catch (e) {
+                    console.warn("NiriService: Failed to parse window snapshot:", e)
                 }
             }
         }
@@ -166,6 +204,15 @@ Singleton {
         if (!CompositorService.isNiri || fetchKeyboardLayoutsProcess.running)
             return
         fetchKeyboardLayoutsProcess.running = true
+    }
+
+    function fetchStateSnapshot(): void {
+        if (!CompositorService.isNiri)
+            return
+        if (!fetchWorkspacesProcess.running)
+            fetchWorkspacesProcess.running = true
+        if (!fetchWindowsProcess.running)
+            fetchWindowsProcess.running = true
     }
 
     // Schedule a single-window check for a specific workspace after niri settles focus
@@ -617,7 +664,9 @@ Singleton {
         repeat: false
         onTriggered: {
             if (_windowsDirty) {
-                windows = sortWindowsByLayout(_pendingWindows)
+                const nextWindows = sortWindowsByLayout(_pendingWindows)
+                windows = nextWindows
+                activeWindow = nextWindows.find(window => window.is_focused) ?? null
                 _windowsDirty = false
             }
         }

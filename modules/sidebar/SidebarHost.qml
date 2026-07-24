@@ -553,8 +553,10 @@ Scope {
         color: "transparent"
         // A closed transparent Overlay surface still prevents direct scanout.
         // Keep it mapped for normal warm opens, but release it while fullscreen
-        // owns this output. Explicit opens and their exit animation remain usable.
+        // owns this output or manual GameMode explicitly requests a quiet shell.
+        // Explicit fullscreen opens and their exit animation remain usable.
         visible: root._nativeHostMapped && !GlobalStates.screenLocked
+            && !GameMode.shouldHidePanels
             && (!root.fullscreenCovered || root.presentationOpen
                 || sidebarContentLoader.animating)
         updatesEnabled: sidebarRoot.visible && root._renderUpdatesNeeded

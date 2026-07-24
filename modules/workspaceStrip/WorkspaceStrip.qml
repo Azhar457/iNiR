@@ -443,10 +443,12 @@ Scope {
             }
 
             screen: modelData
+            readonly property bool performanceSuspended: GameMode.shouldSuspendOutput(
+                modelData?.name ?? "")
             implicitWidth: panelWidth
             implicitHeight: Math.max(1,
                 screenHeight - topPanelInset - bottomPanelInset)
-            visible: !GameMode.shouldHidePanels
+            visible: !performanceSuspended
             color: "transparent"
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:workspaceStrip"
@@ -478,7 +480,7 @@ Scope {
             // mask read the content's geometry a frame late, which dropped hover
             // mid-animation and oscillated open/closed under heavier styles.
             mask: Region {
-                item: GameMode.shouldHidePanels || stripWindow.suppressed
+                item: performanceSuspended || stripWindow.suppressed
                     ? emptyMask : stripContent
             }
 

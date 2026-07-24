@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs
 import qs.modules.common
 import qs.services
 
@@ -35,10 +36,17 @@ Singleton {
     readonly property bool autoActivated: !_manualActive
         && (_autoActive || _reactiveAutoActive)
 
-    // True when panels should hide (slide-out + mask null + exclusiveZone 0).
-    // Always false — auto-detect applies the same effects as manual mode
-    // (performance optimizations only, no panel/background hiding).
-    readonly property bool shouldHidePanels: false
+    // Manual GameMode is an explicit global performance request, so legacy
+    // callers may hide their surfaces globally. Automatic fullscreen handling
+    // is output-scoped through shouldSuspendOutput(): a game on one monitor
+    // must not unmap the shell on another monitor.
+    readonly property bool shouldHidePanels: manuallyActivated
+
+    function shouldSuspendOutput(outputName: string): bool {
+        if (manuallyActivated)
+            return true
+        return autoDetect && hasFullscreenOnOutput(outputName)
+    }
     
     // When autoDetect is disabled, immediately clear auto state
     onAutoDetectChanged: {
@@ -415,9 +423,38 @@ Singleton {
         }
     }
 
-    // React to active changes for Niri animations
+    function _closeTransientSurfaces(): void {
+        GlobalStates.sidebarLeftOpen = false
+        GlobalStates.sidebarRightOpen = false
+        GlobalStates.mediaControlsOpen = false
+        GlobalStates.overlayOpen = false
+        GlobalStates.overviewOpen = false
+        GlobalStates.altSwitcherOpen = false
+        GlobalStates.clipboardOpen = false
+        GlobalStates.settingsOverlayOpen = false
+        GlobalStates.wallpaperSelectorOpen = false
+        GlobalStates.wallpaperLauncherOpen = false
+        GlobalStates.cheatsheetOpen = false
+        GlobalStates.coverflowSelectorOpen = false
+        GlobalStates.controlPanelOpen = false
+        GlobalStates.dashboardOpen = false
+        GlobalStates.searchOpen = false
+        GlobalStates.waffleActionCenterOpen = false
+        GlobalStates.waffleNotificationCenterOpen = false
+        GlobalStates.waffleWidgetsOpen = false
+        GlobalStates.waffleAltSwitcherOpen = false
+        GlobalStates.waffleClipboardOpen = false
+        GlobalStates.waffleTaskViewOpen = false
+        GlobalStates.setWidgetEditMode(false)
+        GlobalStates.setShellLayoutEditMode(false)
+    }
+
+    // React to active changes for Niri animations and release transient layer
+    // surfaces that would otherwise keep the compositor active over a game.
     onActiveChanged: {
         root._log("[GameMode] Active:", active, "(manual:", _manualActive, "auto:", _autoActive, ")")
+        if (active)
+            root._closeTransientSurfaces()
         if (CompositorService.isNiri && controlNiriAnimations) {
             root.suppressNiriToast = true
             niriAnimDebounce.restart()

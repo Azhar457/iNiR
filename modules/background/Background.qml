@@ -339,7 +339,11 @@ Scope {
             }
             return false
         }
-        visible: !GameMode.shouldHidePanels && (GlobalStates.screenLocked || !hasFullscreenWindow || !(Config.options?.background?.hideWhenFullscreen ?? false))
+        readonly property bool performanceSuspended: GameMode.shouldSuspendOutput(
+            modelData?.name ?? "")
+        visible: GlobalStates.screenLocked || (!performanceSuspended
+            && (!hasFullscreenWindow
+                || !(Config.options?.background?.hideWhenFullscreen ?? false)))
 
         // Workspaces
         property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(modelData) : null
