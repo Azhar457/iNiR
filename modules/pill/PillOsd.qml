@@ -243,7 +243,7 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "volume" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         GlyphIcon {
             id: volGlyph
@@ -298,7 +298,7 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "mic" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         GlyphIcon {
             id: micGlyph
@@ -353,7 +353,7 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "track" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         ClippingRectangle {
             id: coverBox
@@ -465,7 +465,7 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "brightness" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         GlyphIcon {
             id: brightGlyph
@@ -519,7 +519,7 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "battery" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         GlyphIcon {
             id: battGlyph
@@ -576,11 +576,14 @@ Item {
                     anchors.bottom: parent.bottom
                     width: 34 * root.s
                     color: "transparent"
+                    // Cream-derived so the charge sweep stays legible on a light
+                    // palette; the literal warm white it replaced was invisible
+                    // against a bright generated scheme.
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
-                        GradientStop { position: 0.0; color: "#00ffffff" }
-                        GradientStop { position: 0.5; color: "#55ffe6d6" }
-                        GradientStop { position: 1.0; color: "#00ffffff" }
+                        GradientStop { position: 0.0; color: Qt.alpha(PillTheme.cream, 0) }
+                        GradientStop { position: 0.5; color: Qt.alpha(PillTheme.cream, 0.33) }
+                        GradientStop { position: 1.0; color: Qt.alpha(PillTheme.cream, 0) }
                     }
 
                     NumberAnimation on x {
@@ -600,7 +603,7 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "workspace" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         PillWorkspaces {
             id: wsIndicator
@@ -617,7 +620,7 @@ Item {
         anchors.fill: parent
         opacity: root.kind === "record" ? 1 : 0
         visible: opacity > 0.01
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation { duration: PillMotion.fast } }
 
         Rectangle {
             id: recGlyph
