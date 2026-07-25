@@ -561,8 +561,8 @@ Singleton {
             pageIndex: 21, pageName: root.pages[21].name,
             section: Translation.tr("Island surfaces"),
             label: Translation.tr("Island styles"),
-            description: Translation.tr("Ricelin island card for dock, sidebars and search, plus the shared skin"),
-            keywords: ["ricelin", "island", "dock", "sidebar", "search", "card", "gradient", "sheen", "radius", "opacity", "shadow", "skin", "glass", "blur", "transparency"]
+            description: Translation.tr("Ricelin island card for the pill bar, dock, sidebars and search, plus the shared skin"),
+            keywords: ["ricelin", "island", "pill", "dock", "sidebar", "search", "card", "gradient", "sheen", "radius", "opacity", "shadow", "skin", "glass", "blur", "transparency"]
         },
         {
             pageIndex: 2, pageName: root.pages[2].name,
@@ -1139,8 +1139,8 @@ Singleton {
             pageIndex: 21, pageName: root.pages[21].name,
             section: Translation.tr("Islands"),
             label: Translation.tr("Island look"),
-            description: Translation.tr("Radius, opacity, shadow and top sheen of every island surface"),
-            keywords: ["island", "radius", "opacity", "shadow", "sheen", "card", "gradient", "ricelin", "skin", "glass", "blur", "transparency"]
+            description: Translation.tr("Radius, opacity, shadow, top sheen and glass of every island surface, including the pill bar"),
+            keywords: ["island", "pill", "radius", "opacity", "shadow", "sheen", "card", "gradient", "ricelin", "skin", "glass", "blur", "transparency"]
         },
         {
             pageIndex: 23, pageName: root.pages[23].name,
