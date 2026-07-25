@@ -161,17 +161,32 @@ Singleton {
             : (minutes >= start || minutes < end)
     }
 
-    property bool popupInhibited: (GlobalStates?.sidebarRightOpen ?? false) || (GlobalStates?.waffleNotificationCenterOpen ?? false) || silent || quietHoursActive || (GameMode?.active && GameMode?.suppressNotifications)
+    // Keep the reasons separate. Manual DND is persisted user intent; quiet
+    // hours and GameMode are derived policy; an open notification surface is
+    // presentation state. Callers can explain the real cause without making a
+    // temporary game suppression look like DND was switched on.
+    readonly property bool manualDndActive: silent
+    readonly property bool gameModeSuppressionActive:
+        (GameMode?.active ?? false) && (GameMode?.suppressNotifications ?? false)
+    readonly property bool notificationSurfaceOpen:
+        (GlobalStates?.sidebarRightOpen ?? false)
+        || (GlobalStates?.waffleNotificationCenterOpen ?? false)
+    readonly property bool notificationPolicyActive:
+        manualDndActive || quietHoursActive || gameModeSuppressionActive
+    readonly property string notificationPolicyReason: manualDndActive ? "dnd"
+        : quietHoursActive ? "quietHours"
+        : gameModeSuppressionActive ? "gameMode"
+        : ""
+    readonly property bool popupInhibited:
+        notificationSurfaceOpen || notificationPolicyActive
     property var latestTimeForApp: ({})
 
-    // When GameMode activates with suppressNotifications, dismiss existing popups
-    Connections {
-        target: GameMode
-        function onActiveChanged() {
-            if (GameMode.active && GameMode.suppressNotifications) {
-                root.timeoutAll()
-            }
-        }
+    // Entering any quiet policy dismisses popups already on screen. The
+    // notifications stay in history; opening the history itself is deliberately
+    // excluded because it is presentation state, not a policy change.
+    onNotificationPolicyActiveChanged: {
+        if (notificationPolicyActive)
+            root.timeoutAll()
     }
     // Debounce timer for group updates - 100ms is sufficient for responsive UI
     Timer {

@@ -130,19 +130,15 @@ Scope {
             readonly property real reservedH: Math.max(0, restHeight + topGapPx - 12 * (1 - root.appGap) * s)
 
             screen: modelData
-            readonly property bool automaticFullscreenSuspended:
-                !GameMode.manuallyActivated
-                && GameMode.shouldSuspendOutput(modelData?.name ?? "")
-            visible: !GlobalStates.widgetEditMode && !automaticFullscreenSuspended
+            visible: !GlobalStates.widgetEditMode
             color: "transparent"
             exclusionMode: ExclusionMode.Normal
-            exclusiveZone: GlobalStates.widgetEditMode || automaticFullscreenSuspended ? 0
-                : GameMode.active ? gameBarH : reservedH
+            exclusiveZone: GlobalStates.widgetEditMode ? 0
+                : (GameMode.active ? gameBarH : reservedH)
             aboveWindows: true
 
             anchors { top: true; left: true; right: true }
-            implicitHeight: automaticFullscreenSuspended ? 0
-                : GameMode.active ? gameBarH : reservedH
+            implicitHeight: GameMode.active ? gameBarH : reservedH
 
             mask: emptyReserve
             Region { id: emptyReserve }

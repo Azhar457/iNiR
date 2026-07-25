@@ -15,6 +15,18 @@ Rectangle {
     property var screen: root.QsWindow.window?.screen
     // Brightness monitor may be undefined (e.g. Niri without matching monitor); guard it.
     property var brightnessMonitor: screen ? Brightness.getMonitorForScreen(screen) : null
+    readonly property bool hasBrightnessMonitor:
+        root.brightnessMonitor !== null && root.brightnessMonitor !== undefined
+    readonly property bool brightnessEnabled: {
+        const configured = Config.options?.sidebar?.quickSliders?.showBrightness
+        return typeof configured === "boolean" ? configured : true
+    }
+    readonly property real brightnessValue: {
+        const value = root.hasBrightnessMonitor
+            ? Number(root.brightnessMonitor.brightness)
+            : NaN
+        return Number.isFinite(value) ? value : 0
+    }
     property real sliderSpacing: 10
     property bool compactSurface: false
 
@@ -73,7 +85,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             visible: active
-            active: (Config.options?.sidebar?.quickSliders?.showBrightness ?? true) && !!root.brightnessMonitor
+            active: root.brightnessEnabled && root.hasBrightnessMonitor
             sourceComponent: Appearance.zzzEverywhere ? zzzBrightnessSlider : defaultBrightnessSlider
         }
 
@@ -280,7 +292,7 @@ Rectangle {
         id: defaultBrightnessSlider
         DefaultQuickSlider {
             materialSymbol: "brightness_6"
-            modelValue: root.brightnessMonitor?.brightness ?? 0
+            modelValue: root.brightnessValue
             onMoved: root.brightnessMonitor?.setBrightness(value)
         }
     }
@@ -307,7 +319,7 @@ Rectangle {
         id: zzzBrightnessSlider
         ZzzQuickSlider {
             materialSymbol: "brightness_6"
-            modelValue: root.brightnessMonitor?.brightness ?? 0
+            modelValue: root.brightnessValue
             onMoved: root.brightnessMonitor?.setBrightness(value)
         }
     }
