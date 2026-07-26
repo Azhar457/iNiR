@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 5d9562b880b2ed92
+# IPC.md hash: 36dfa445b43be815
 # Targets: 60
 
 declare -gA IPC_TARGET_DESC=(
@@ -143,7 +143,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [cheatsheet]="toggle close open"
   [clipboard]="open close toggle"
   [cliphistService]="update"
-  [closeConfirm]="trigger close"
+  [closeConfirm]="trigger triggerWindow close"
   [controlPanel]="toggle close open"
   [coverflowSelector]="toggle open close"
   [customWidgets]="reload list create remove"
@@ -246,6 +246,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["clipboard:toggle"]="Open/close panel"
   ["cliphistService:update"]="Refresh clipboard history"
   ["closeConfirm:trigger"]="Show close confirmation for focused window"
+  ["closeConfirm:triggerWindow"]="Close or confirm the exact window captured by \`inir close-window\`"
   ["closeConfirm:close"]="Dismiss the dialog without closing"
   ["controlPanel:toggle"]="Open/close control panel"
   ["controlPanel:close"]="Close control panel"
@@ -458,6 +459,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["background:clockDebugSetMode"]="<style> <adaptToWallpaper>"
   ["background:clockDebugSetRegion"]="<color> <brightness> <spread>"
   ["background:clockDebugSetLayout"]="<x> <y> <quickControlsOpen>"
+  ["closeConfirm:triggerWindow"]="<windowId> <appId>"
   ["customWidgets:create"]="<name>"
   ["customWidgets:remove"]="<widgetId>"
   ["dev:open"]="<destination>"

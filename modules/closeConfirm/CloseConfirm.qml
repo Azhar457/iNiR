@@ -50,14 +50,20 @@ Scope {
         }
     }
 
+    function _acceptTrigger(): bool {
+        if (root._busy)
+            return false;
+        root._busy = true;
+        debounce.restart();
+        return true;
+    }
+
     IpcHandler {
         target: "closeConfirm"
 
         function trigger(): void {
-            if (root._busy)
+            if (!root._acceptTrigger())
                 return;
-            root._busy = true;
-            debounce.restart();
 
             // Try cached activeWindow first, fallback to niri query
             const win = NiriService.activeWindow;
@@ -66,6 +72,15 @@ Scope {
             } else {
                 focusedWindowProc.running = true;
             }
+        }
+
+        function triggerWindow(windowId: int, appId: string): void {
+            if (windowId <= 0 || !root._acceptTrigger())
+                return;
+            root.processWindow({
+                id: windowId,
+                app_id: appId
+            });
         }
 
         function close(): void {

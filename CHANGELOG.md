@@ -191,6 +191,9 @@ lives on `prerelease` and reaches `main` with the next release.
   second MkDocs and GitHub Pages build pipeline.
 
 ### Fixed
+- `Super+Q` now keeps the window captured when the keybind fires through the
+  confirmation and immediate-close paths instead of consulting a later cached
+  focus snapshot that could target another window.
 - App theming ran four times per action instead of once. Three code paths
   each spawned their own pass over every target, so a single wallpaper or
   theme change sent four parallel waves through GTK, chromium, spicetify and

@@ -272,6 +272,7 @@ Close window confirmation dialog. Shows a prompt before closing the focused wind
 | Function | Description |
 |----------|-------------|
 | `trigger` | Show close confirmation for focused window |
+| `triggerWindow <windowId> <appId>` | Close or confirm the exact window captured by `inir close-window` |
 | `close` | Dismiss the dialog without closing |
 
 ```kdl
