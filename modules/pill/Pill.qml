@@ -166,7 +166,9 @@ Item {
      * A fullscreen window on this pill's active workspace hides the resting
      * faces — classic-bar parity: top-layer bars get covered by the
      * compositor, but the pill's Overlay layer never is, so it opts out
-     * itself. Transient announces (osd/toast) and open surfaces still show.
+     * itself. The OSD face is also suppressed over fullscreen (it feeds
+     * `osd.suppressed`), so volume/media flashes don't float over a game.
+     * Toasts and open surfaces still show.
      */
     readonly property bool fsCovered: {
         if (!CompositorService.isNiri)
@@ -177,6 +179,13 @@ Item {
             if (!(ws?.is_active ?? false))
                 continue;
             if (screenName.length > 0 && ws.output !== screenName)
+                continue;
+            // In niri a fullscreen window covers the monitor only while it
+            // is the focused tile. Scrolling to another window in the same
+            // workspace unfocuses the fullscreen window without changing its
+            // size, so without this focus check the pill stays hidden even
+            // though the game no longer covers the screen.
+            if (!w.is_focused)
                 continue;
             if (GameMode.isWindowFullscreen(w))
                 return true;
@@ -1303,7 +1312,7 @@ Item {
         s: pill.s
         compact: pill.compactAnnounceMode
         screenName: pill.screenName
-        suppressed: pill.surfaceOpen || pill.held
+        suppressed: pill.surfaceOpen || pill.held || pill.fsCovered
         expanded: pill.expanded
         enabled: pill.mode === "osd"
         opacity: pill.mode === "osd" ? 1 : 0
