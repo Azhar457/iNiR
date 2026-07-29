@@ -18,6 +18,44 @@ ContentPage {
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
 
+    readonly property var _customImageShapes: [
+        { value: "Circle", shape: MaterialShape.Shape.Circle },
+        { value: "Square", shape: MaterialShape.Shape.Square },
+        { value: "Slanted", shape: MaterialShape.Shape.Slanted },
+        { value: "Arch", shape: MaterialShape.Shape.Arch },
+        { value: "Fan", shape: MaterialShape.Shape.Fan },
+        { value: "Arrow", shape: MaterialShape.Shape.Arrow },
+        { value: "SemiCircle", shape: MaterialShape.Shape.SemiCircle },
+        { value: "Oval", shape: MaterialShape.Shape.Oval },
+        { value: "Pill", shape: MaterialShape.Shape.Pill },
+        { value: "Triangle", shape: MaterialShape.Shape.Triangle },
+        { value: "Diamond", shape: MaterialShape.Shape.Diamond },
+        { value: "ClamShell", shape: MaterialShape.Shape.ClamShell },
+        { value: "Pentagon", shape: MaterialShape.Shape.Pentagon },
+        { value: "Gem", shape: MaterialShape.Shape.Gem },
+        { value: "Sunny", shape: MaterialShape.Shape.Sunny },
+        { value: "VerySunny", shape: MaterialShape.Shape.VerySunny },
+        { value: "Cookie4Sided", shape: MaterialShape.Shape.Cookie4Sided },
+        { value: "Cookie6Sided", shape: MaterialShape.Shape.Cookie6Sided },
+        { value: "Cookie7Sided", shape: MaterialShape.Shape.Cookie7Sided },
+        { value: "Cookie9Sided", shape: MaterialShape.Shape.Cookie9Sided },
+        { value: "Cookie12Sided", shape: MaterialShape.Shape.Cookie12Sided },
+        { value: "Ghostish", shape: MaterialShape.Shape.Ghostish },
+        { value: "Clover4Leaf", shape: MaterialShape.Shape.Clover4Leaf },
+        { value: "Clover8Leaf", shape: MaterialShape.Shape.Clover8Leaf },
+        { value: "Burst", shape: MaterialShape.Shape.Burst },
+        { value: "SoftBurst", shape: MaterialShape.Shape.SoftBurst },
+        { value: "Boom", shape: MaterialShape.Shape.Boom },
+        { value: "SoftBoom", shape: MaterialShape.Shape.SoftBoom },
+        { value: "Flower", shape: MaterialShape.Shape.Flower },
+        { value: "Puffy", shape: MaterialShape.Shape.Puffy },
+        { value: "PuffyDiamond", shape: MaterialShape.Shape.PuffyDiamond },
+        { value: "PixelCircle", shape: MaterialShape.Shape.PixelCircle },
+        { value: "PixelTriangle", shape: MaterialShape.Shape.PixelTriangle },
+        { value: "Bun", shape: MaterialShape.Shape.Bun },
+        { value: "Heart", shape: MaterialShape.Shape.Heart }
+    ]
+
     readonly property string _japanesePath: "background.widgets.japaneseTypography"
     readonly property bool _widgetBlurAvailable: Appearance.effectsEnabled
         && (Appearance.angelEverywhere
@@ -35,6 +73,21 @@ ContentPage {
 
     function _applyJapaneseCompositionPreset(preset: string): void {
         Config.setNestedValues(JapanesePresets.composition(root._japanesePath, preset));
+    }
+
+    FileDialog {
+        id: customImageFileDialog
+        title: Translation.tr("Choose source image")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [
+            Translation.tr("Images") + " (*.jpg *.jpeg *.png *.webp *.tif *.tiff *.svg *.gif)",
+            Translation.tr("All files") + " (*)"
+        ]
+        onAccepted: {
+            const path = FileUtils.trimFileProtocol(String(selectedFile));
+            if (Images.isValidImageByName(path))
+                Config.setNestedValue("background.widgets.customImage.path", path);
+        }
     }
 
     function _applyJapanesePalettePreset(preset: string): void {
@@ -926,6 +979,8 @@ ContentPage {
                     model: [
                         { key: "clock", icon: "schedule", label: Translation.tr("Clock"), def: true },
                         { key: "weather", icon: "cloud", label: Translation.tr("Weather"), def: false },
+                        { key: "customImage", icon: "add_photo_alternate", label: Translation.tr("Custom image"), def: false },
+                        { key: "imageConverter", icon: "transform", label: Translation.tr("Image converter"), def: false },
                         { key: "mediaControls", icon: "album", label: Translation.tr("Media"), def: false },
                         { key: "visualizer", icon: "graphic_eq", label: Translation.tr("Visualizer"), def: false },
                         { key: "systemMonitor", icon: "monitor_heart", label: Translation.tr("System"), def: false },
@@ -935,7 +990,9 @@ ContentPage {
                         { key: "uptime", icon: "avg_pace", label: Translation.tr("Uptime"), def: false },
                         { key: "newsTicker", icon: "newspaper", label: Translation.tr("News"), def: false },
                         { key: "mascot", icon: "pets", label: Translation.tr("Mascot"), def: false },
-                        { key: "japaneseTypography", icon: "translate", label: Translation.tr("Japanese Typography"), def: false }
+                        { key: "japaneseTypography", icon: "translate", label: Translation.tr("Japanese Typography"), def: false },
+                        { key: "worldClock", icon: "public", label: Translation.tr("World Clock"), def: false },
+                        { key: "userCard", icon: "account_circle", label: Translation.tr("User Card"), def: false }
                     ]
                     delegate: WidgetToggleChip {
                         required property var modelData
@@ -2130,6 +2187,7 @@ ContentPage {
                     options: [
                         { displayName: Translation.tr("Shape"), icon: "category", value: "pill" },
                         { displayName: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
+                        { displayName: Translation.tr("Detail"), icon: "dashboard", value: "detail" },
                     ]
                 }
 
@@ -2184,9 +2242,19 @@ ContentPage {
                     buttonIcon: "description"
                     text: Translation.tr("Condition text")
                     autoToggle: false
+                    visible: Config.getNestedValue("background.widgets.weather.style", "pill") !== "detail"
 
                     checked: Config.getNestedValue("background.widgets.weather.showCondition", false)
                     onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showCondition", checked)
+                }
+                SettingsSwitch {
+                    buttonIcon: "monitoring"
+                    text: Translation.tr("Metric chips")
+                    autoToggle: false
+                    visible: Config.getNestedValue("background.widgets.weather.style", "pill") === "detail"
+
+                    checked: Config.getNestedValue("background.widgets.weather.showMetrics", true)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showMetrics", checked)
                 }
             }
 
@@ -2297,6 +2365,216 @@ ContentPage {
         }
     }
 
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "add_photo_alternate"
+        title: Translation.tr("Custom image")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.customImage"
+                configEntry: Config.getNestedValue("background.widgets.customImage", ({}))
+                defaultStrategy: "free"
+                defaultEnabled: false
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Image")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Image")
+                    icon: "image"
+                    trailing: false
+
+                    MaterialTextField {
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Image")
+                        text: Config.getNestedValue("background.widgets.customImage.path", "")
+                        onAccepted: {
+                            const path = text.trim();
+                            if (path.length === 0 || Images.isValidImageByName(path))
+                                Config.setNestedValue("background.widgets.customImage.path", path);
+                        }
+                        onEditingFinished: {
+                            const path = text.trim();
+                            if (path.length === 0 || Images.isValidImageByName(path))
+                                Config.setNestedValue("background.widgets.customImage.path", path);
+                        }
+                    }
+
+                    SelectionGroupButton {
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "folder_open"
+                        buttonText: Translation.tr("Browse")
+                        onClicked: customImageFileDialog.open()
+                    }
+
+                    SelectionGroupButton {
+                        visible: Config.getNestedValue("background.widgets.customImage.path", "").length > 0
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "close"
+                        buttonText: Translation.tr("Clear")
+                        onClicked: Config.setNestedValue("background.widgets.customImage.path", "")
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Shape")
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: root._customImageShapes
+
+                        Rectangle {
+                            id: shapeCell
+                            required property var modelData
+                            width: 52
+                            height: 52
+                            radius: Appearance.rounding.small
+                            readonly property bool selected: Config.getNestedValue("background.widgets.customImage.shape", "Cookie4Sided") === modelData.value
+                            color: selected
+                                ? ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.14)
+                                : ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, shapeMouse.containsMouse ? 0.07 : 0.03)
+                            border.width: selected ? 1.5 : 0
+                            border.color: Appearance.colors.colPrimary
+
+                            MaterialShape {
+                                anchors.centerIn: parent
+                                implicitSize: 28
+                                shape: shapeCell.modelData.shape
+                                color: shapeCell.selected
+                                    ? Appearance.colors.colPrimary
+                                    : Appearance.colors.colOnLayer1
+                            }
+
+                            MouseArea {
+                                id: shapeMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Config.setNestedValue("background.widgets.customImage.shape", shapeCell.modelData.value)
+                            }
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Layout")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Size")
+                    icon: "photo_size_select_large"
+                    StyledSpinBox {
+                        from: 80; to: 1200; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.customImage.size", 220)
+                        onValueModified: Config.setNestedValue("background.widgets.customImage.size", value)
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Fit")
+                    icon: "fit_screen"
+                    trailing: false
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.fitMode", "cover")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.customImage.fitMode", newValue)
+                        options: [
+                            { displayName: Translation.tr("Fill"), icon: "crop_free", value: "cover" },
+                            { displayName: Translation.tr("Fit"), icon: "fit_screen", value: "contain" }
+                        ]
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.customImage"
+                configEntry: Config.getNestedValue("background.widgets.customImage", ({}))
+                hasColorMode: false
+                hasCardControls: false
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.customImage"
+                defaults: ({
+                    enable: false, locked: false, placementStrategy: "free",
+                    path: "", shape: "Cookie4Sided", fitMode: "cover", size: 220,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, x: 120, y: 320
+                })
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "transform"
+        title: Translation.tr("Image converter")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.imageConverter"
+                configEntry: Config.getNestedValue("background.widgets.imageConverter", ({}))
+                defaultStrategy: "free"
+                defaultEnabled: false
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Conversion")
+
+                ConfigSelectionArray {
+                    currentValue: Config.getNestedValue("background.widgets.imageConverter.selectedFormat", "webp")
+                    onSelected: newValue => Config.setNestedValue("background.widgets.imageConverter.selectedFormat", newValue)
+                    options: [
+                        { displayName: "PNG", icon: "image", value: "png" },
+                        { displayName: "JPG", icon: "photo", value: "jpg" },
+                        { displayName: "WEBP", icon: "motion_photos_on", value: "webp" },
+                        { displayName: "AVIF", icon: "hd", value: "avif" },
+                        { displayName: "BMP", icon: "grid_on", value: "bmp" },
+                        { displayName: "TIFF", icon: "photo_library", value: "tiff" },
+                        { displayName: "PDF", icon: "picture_as_pdf", value: "pdf" }
+                    ]
+                }
+
+                SettingsNote {
+                    icon: "info"
+                    text: Translation.tr("Drop one or more images onto the desktop widget. Converted files are saved next to the originals.")
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.imageConverter"
+                configEntry: Config.getNestedValue("background.widgets.imageConverter", ({}))
+                hasColorMode: true
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.imageConverter"
+                defaults: ({
+                    enable: false, locked: false, placementStrategy: "free",
+                    selectedFormat: "webp", contentWidth: 292, contentHeight: 260,
+                    widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
+                    showBackground: true, useBlur: false, showBorder: true,
+                    backgroundOpacity: 0.22, borderWidth: 1, borderOpacity: 0.22,
+                    cornerRadius: -1, x: 120, y: 360
+                })
+            }
+        }
+    }
+
     // ── Media Controls ───────────────────────────────────────
     SettingsCardSection {
         visible: root.isIiActive
@@ -2330,6 +2608,9 @@ ContentPage {
                         { displayName: Translation.tr("Album Art"), icon: "image", value: "albumart" },
                         { displayName: Translation.tr("Visualizer"), icon: "equalizer", value: "visualizer" },
                         { displayName: Translation.tr("Classic"), icon: "radio", value: "classic" },
+                        { displayName: Translation.tr("Lyrics"), icon: "lyrics", value: "lyrics" },
+                        { displayName: Translation.tr("Lyrics wide"), icon: "subtitles", value: "lyricsSplit" },
+                        { displayName: Translation.tr("Cover"), icon: "art_track", value: "expandingLyrics" },
                     ]
                 }
             }
@@ -2635,6 +2916,7 @@ ContentPage {
                         { displayName: Translation.tr("Graph"), icon: "show_chart", value: "graph" },
                         { displayName: Translation.tr("Rings"), icon: "radio_button_checked", value: "rings" },
                         { displayName: Translation.tr("Text"), icon: "text_fields", value: "text" },
+                        { displayName: Translation.tr("Tiles"), icon: "grid_view", value: "tiles" },
                     ]
                 }
             }
@@ -3233,6 +3515,144 @@ ContentPage {
                     useBlur: false, showBorder: true, backgroundOpacity: 0.16,
                     borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
                     colorMode: "auto", locked: false, x: 80, y: 80
+                })
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "public"
+        title: Translation.tr("World clock")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.worldClock"
+                configEntry: Config.getNestedValue("background.widgets.worldClock", ({}))
+                defaultStrategy: "free"
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Time zones")
+
+                Repeater {
+                    model: 4
+                    delegate: WidgetSettingRow {
+                        id: tzRow
+                        required property int index
+                        label: Translation.tr("City %1").arg(tzRow.index + 1)
+                        icon: "schedule"
+                        trailing: false
+
+                        StyledComboBox {
+                            Layout.fillWidth: true
+                            model: WorldClock.comboModel
+                            textRole: "label"
+                            currentIndex: Math.max(0, WorldClock.comboModel.findIndex(o => o.tz === WorldClock.timezones[tzRow.index]))
+                            onActivated: idx => WorldClock.setTimezone(tzRow.index, WorldClock.comboModel[idx].tz)
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Dimensions")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Width")
+                    icon: "swap_horiz"
+                    StyledSpinBox {
+                        from: 240; to: 700; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.worldClock.contentWidth", 300)
+                        onValueModified: Config.setNestedValue("background.widgets.worldClock.contentWidth", value)
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Height")
+                    icon: "swap_vert"
+                    StyledSpinBox {
+                        from: 170; to: 480; stepSize: 4
+                        value: Config.getNestedValue("background.widgets.worldClock.contentHeight", 210)
+                        onValueModified: Config.setNestedValue("background.widgets.worldClock.contentHeight", value)
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.worldClock"
+                configEntry: Config.getNestedValue("background.widgets.worldClock", ({}))
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.worldClock"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 300, contentHeight: 210,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 200,
+                    timezones: ["Australia/Sydney", "Asia/Tokyo", "Europe/London", "America/New_York"]
+                })
+            }
+        }
+    }
+
+    SettingsCardSection {
+        visible: root.isIiActive
+        expanded: false
+        icon: "account_circle"
+        title: Translation.tr("User card")
+
+        SettingsGroup {
+            WidgetStateControls {
+                configPath: "background.widgets.userCard"
+                configEntry: Config.getNestedValue("background.widgets.userCard", ({}))
+                defaultStrategy: "free"
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Dimensions")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Width")
+                    icon: "swap_horiz"
+                    StyledSpinBox {
+                        from: 240; to: 600; stepSize: 10
+                        value: Config.getNestedValue("background.widgets.userCard.contentWidth", 280)
+                        onValueModified: Config.setNestedValue("background.widgets.userCard.contentWidth", value)
+                    }
+                }
+                WidgetSettingRow {
+                    label: Translation.tr("Height")
+                    icon: "swap_vert"
+                    StyledSpinBox {
+                        from: 170; to: 320; stepSize: 2
+                        value: Config.getNestedValue("background.widgets.userCard.contentHeight", 176)
+                        onValueModified: Config.setNestedValue("background.widgets.userCard.contentHeight", value)
+                    }
+                }
+            }
+
+            WidgetAppearanceControls {
+                configPath: "background.widgets.userCard"
+                configEntry: Config.getNestedValue("background.widgets.userCard", ({}))
+                hasCardControls: true
+            }
+        }
+
+        SettingsGroup {
+            WidgetResetButton {
+                configPath: "background.widgets.userCard"
+                defaults: ({
+                    placementStrategy: "free", contentWidth: 280, contentHeight: 176,
+                    dim: 0, widgetScale: 100, widgetOpacity: 100, showBackground: true,
+                    useBlur: false, showBorder: true, backgroundOpacity: 0.16,
+                    borderWidth: 1, borderOpacity: 0.20, cornerRadius: -1,
+                    colorMode: "auto", locked: false, x: 80, y: 420
                 })
             }
         }

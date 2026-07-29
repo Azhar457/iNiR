@@ -978,7 +978,7 @@ Singleton {
                     property JsonObject variableAxes: JsonObject {
                         property int wght: 300
                         property int wdth: 105
-                        property int grad: 175
+                        property int grad: 150
                     }
                 }
                 property string iconTheme: "WhiteSur-dark" // System icon theme (tray, GTK/Qt apps)
@@ -1216,7 +1216,8 @@ Singleton {
                         property int tempFontWeight: 500 // Font.Medium
                         property real conditionOpacity: 0.7
                         property string preset: "default"
-                        property string style: "pill" // "pill" (original), "card" (adaptive overlay)
+                        property string style: "pill" // "pill" (shape), "card" (adaptive overlay), "detail" (M3 tonal)
+                        property bool showMetrics: true // "detail" style only
                         property string shape: "pill" // MaterialShape shape name
                         property int widgetScale: 100
                         property int widgetOpacity: 100
@@ -1231,13 +1232,53 @@ Singleton {
                         property int dim: 0
                     }
 
+                    property JsonObject customImage: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property string path: ""
+                        property string shape: "Cookie4Sided"
+                        property string fitMode: "cover"
+                        property int size: 220
+                        property int dim: 0
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property real x: 120
+                        property real y: 320
+                    }
+
+                    property JsonObject imageConverter: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property string selectedFormat: "webp"
+                        property int contentWidth: 292
+                        property int contentHeight: 260
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.22
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.22
+                        property real cornerRadius: -1
+                        property real x: 120
+                        property real y: 360
+                    }
+
                     property JsonObject mediaControls: JsonObject {
                         property bool enable: false
                         property bool locked: false
                         property string placementStrategy: "free" // "free", "leastBusy", "mostBusy"
-                        property string playerPreset: "full" // "full", "compact", "minimal", "albumart", "visualizer", "classic"
+                        property string playerPreset: "full" // "full", "compact", "minimal", "albumart", "visualizer", "classic", "lyrics", "lyricsSplit", "expandingLyrics"
                         property string visualizerType: "wave" // "wave", "bars"
                         property string visualizerPosition: "bottom" // "bottom", "top", "fill", "none"
+                        // Only read by the "expandingLyrics" preset: whether its
+                        // lyrics panel is open (the widget grows to fit it).
+                        property bool lyricsExpanded: false
                         property real x: 240
                         property real y: 240
                         property int widgetScale: 100
@@ -1278,7 +1319,7 @@ Singleton {
                         property bool enable: false
                         property bool locked: false
                         property string placementStrategy: "free"
-                        property string displayMode: "bars"
+                        property string displayMode: "bars" // "bars", "graph", "rings", "text", "tiles"
                         property int barCount: 32
                         property int barSpacing: 2
                         property real trackAlpha: 0.08
@@ -1472,6 +1513,49 @@ Singleton {
                         property int dim: 0
                         property real x: 80
                         property real y: 80
+                    }
+
+                    property JsonObject worldClock: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int contentWidth: 300
+                        property int contentHeight: 210
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property real x: 80
+                        property real y: 200
+                        property list<string> timezones: ["Australia/Sydney", "Asia/Tokyo", "Europe/London", "America/New_York"]
+                    }
+
+                    property JsonObject userCard: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int contentWidth: 280
+                        property int contentHeight: 176
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property real x: 80
+                        property real y: 420
                     }
 
                     property JsonObject mascot: JsonObject {
@@ -2009,7 +2093,7 @@ Singleton {
             }
 
             property JsonObject dock: JsonObject {
-                property string style: "panel" // "panel" | "pill" | "macos" | "island"
+                property string style: "panel" // "panel" | "pill" | "macos" | "island" | "m3"
                 property bool cardStyle: false
                 property bool enable: false
                 property bool monochromeIcons: true
@@ -2106,6 +2190,7 @@ Singleton {
             property JsonObject light: JsonObject {
                 property JsonObject night: JsonObject {
                     property bool automatic: true
+                    property bool enabled: false // Manual night light state when automatic mode is disabled
                     property string from: "19:00" // Format: "HH:mm", 24-hour time
                     property string to: "06:30"   // Format: "HH:mm", 24-hour time
                     property int colorTemperature: 5000
