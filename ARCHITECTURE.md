@@ -1,6 +1,6 @@
 # iNiR Architecture
 
-> A complete desktop shell built on [Quickshell](https://quickshell.outfoxxed.me/) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
+> A complete desktop shell built on [Quickshell](https://quickshell.org/) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
 
 **Version**: 2.27.0 · **Stack**: QML (Quickshell), Bash, Python, Go
 
@@ -31,7 +31,7 @@ Two mutually exclusive UI families, switchable at runtime (`Super+Shift+W`):
 | Bar | Top (or vertical) | Bottom (Win11 taskbar) |
 | App launcher | Overview | StartMenu with search |
 | Right panel | SidebarRight | ActionCenter + NotificationCenter |
-| Panels | 29 (iiBar, iiDock, iiSidebarLeft, ...) | 25 (wBar, wStartMenu, wActionCenter, ... + shared ii panels) |
+| Panels | ii (iiBar, iiDock, iiSidebarLeft, ...) | w (wBar, wStartMenu, wActionCenter, ... + shared ii panels) |
 
 Each panel uses `PanelLoader` (LazyLoader wrapper):
 ```qml
@@ -49,23 +49,24 @@ Style dispatch priority: **zzz > angel > inir > aurora > material** (`Appearance
 
 ```
 shell.qml                     # Root entry — loads services, selects panel family
-ShellIiPanels.qml             # Material Design family (30 panels)
-ShellWafflePanels.qml         # Windows 11 family (27 panels)
+ShellIiPanels.qml             # Material Design family
+ShellWafflePanels.qml         # Windows 11 family
 GlobalStates.qml              # Runtime UI state (panel open/closed booleans)
 FamilyTransitionOverlay.qml   # Animated family switch
 settings.qml                  # Settings GUI (separate Quickshell config)
+waffleSettings.qml            # Waffle-specific settings GUI
 welcome.qml                   # First-run wizard
 killDialog.qml                # Process kill confirmation
 
-modules/                      # 35 UI module directories
+modules/                      # UI module directories
 ├── common/                   # Shared infrastructure
-│   ├── Appearance.qml        # ii visual tokens (1537 lines)
-│   ├── Config.qml            # Central config (JsonAdapter, 2944 lines)
-│   └── widgets/              # 167 reusable widgets + qmldir
-├── bar/                      # Top bar (ii family, 35 files)
-├── sidebarLeft/              # AI chat, YT Music, widgets (78 files incl. subdirs)
-├── sidebarRight/             # Toggles, calendar, tools (82 files incl. subdirs)
-├── settings/                 # All config UI pages (37 files)
+│   ├── Appearance.qml        # ii visual tokens
+│   ├── Config.qml            # Central config (JsonAdapter)
+│   └── widgets/              # Reusable widgets + qmldir
+├── bar/                      # Top bar (ii family)
+├── sidebarLeft/              # AI chat, YT Music, widgets
+├── sidebarRight/             # Toggles, calendar, tools
+├── settings/                 # All config UI pages
 ├── dock/                     # App dock (all 4 positions)
 ├── overview/                 # Workspace overview + app search
 ├── wallpaperLauncher/        # Shared compact wallpaper carousel
@@ -76,12 +77,12 @@ modules/                      # 35 UI module directories
 │   ├── notificationCenter/   # Notification list + calendar
 │   ├── looks/Looks.qml       # Waffle visual tokens
 │   └── [13 more subdirs]
-└── [27 more modules]
+└── [more modules]
 
-services/                     # 64 top-level runtime singletons (+ services/deferred/)
+services/                     # Runtime singletons (+ services/deferred/)
 ├── qmldir                    # Service module registration
 ├── Audio.qml                 # PipeWire volume, mute, per-app mixer
-├── NiriService.qml           # Niri compositor IPC (1574 lines)
+├── NiriService.qml           # Niri compositor IPC
 ├── CompositorService.qml     # Compositor detection (Niri vs Hyprland)
 ├── Network.qml               # NetworkManager integration
 ├── Weather.qml               # Weather polling + privacy-aware location
@@ -90,7 +91,7 @@ services/                     # 64 top-level runtime singletons (+ services/defe
 ├── DevNavigation.qml         # Session-only semantic UI navigation + dev IPC
 └── [more services]
 
-scripts/                      # Shell/fish/python helpers (25 scripts, 23 subdirs)
+scripts/                      # Shell/fish/python helpers
 ├── inir                      # CLI launcher (bash, IPC + lifecycle commands)
 ├── colors/                   # Color generation pipeline
 │   ├── applycolor.sh         # Orchestrator
@@ -101,27 +102,27 @@ scripts/                      # Shell/fish/python helpers (25 scripts, 23 subdir
 
 sdata/                        # Install/update lifecycle
 ├── lib/                      # Shared bash libraries
-├── migrations/               # Numbered scripts (001–032)
+├── migrations/               # Numbered scripts
 ├── subcmd-install/           # Install phases
 └── subcmd-uninstall/         # Uninstall phases
 
 defaults/                     # Shipped defaults
-├── config.json               # Default config (2173 lines, 64 top-level keys)
+├── config.json               # Default config
 ├── niri/                     # Niri config templates
 └── [GTK, KDE, fuzzel, etc.]
 
 translations/                 # i18n strings (15 languages)
 distro/arch/                  # Arch PKGBUILDs (dependency manifests)
 assets/                       # Icons, wallpapers, systemd unit, desktop entry
-docs/                         # User documentation (28 files)
+docs/                         # User documentation
 ```
 
 ## Config System
 
 | Aspect | Details |
 |--------|---------|
-| Schema | `modules/common/Config.qml` — JsonAdapter, 2329 lines |
-| Defaults | `defaults/config.json` — 1762 lines, 62 top-level keys |
+| Schema | `modules/common/Config.qml` — JsonAdapter |
+| Defaults | `defaults/config.json` |
 | User file | `~/.config/illogical-impulse/config.json` (legacy namespace from fork origin) |
 | Read | `Config.options.path.to.key` — schema-declared properties are typed QML properties with defaults |
 | Write | `Config.setNestedValue("path.to.key", value)` — writes + fires `configChanged()` signal |
@@ -129,20 +130,20 @@ docs/                         # User documentation (28 files)
 | Hot-reload | `watchChanges: true` — external edits auto-apply |
 | Debounce | 50ms for both reads and writes |
 
-**Sync rule**: when adding a new config key, always update together:
-1. `modules/common/Config.qml` — schema definition
-2. `defaults/config.json` — default value
-3. Consumer(s) — read/write the key
-4. Settings UI if the key is user-facing
+**Sync rule**: when adding a new config key, update together:
+1. `modules/common/Config.qml` — schema definition and shell default
+2. Consumer(s) — read/write the key
+3. Settings UI in every family that owns the behavior
+4. `defaults/config.json` only when the curated fresh-install preference differs
 
 ## Key Singletons
 
 | Singleton | Dependents | Domain |
 |-----------|-----------|--------|
-| `Config` | 321+ files | All config read/write |
-| `Appearance` | 488+ files | All ii module visuals |
-| `Translation` | 350+ files | All i18n strings |
-| `GlobalStates` | 160+ files | Panel visibility state |
+| `Config` | shell-wide | All config read/write |
+| `Appearance` | ii/shared UI | All ii module visuals |
+| `Translation` | shell-wide | All i18n strings |
+| `GlobalStates` | panel loaders | Panel visibility state |
 | `DevNavigation` | shell + navigable surfaces | Development-only semantic UI traversal |
 | `Looks` | waffle modules | Waffle visual tokens |
 | `NiriService` | compositor modules | Niri IPC, workspaces, windows |
@@ -170,9 +171,11 @@ Handlers registered via `IpcHandler { target: "name" }` in QML.
 Called externally: `inir <target> <function> [args]`
 
 The always-instantiated `dev` target provides session-only semantic navigation
-for lazy UI. `inir dev audit` scopes that inventory to changed UI areas or
-explicit destinations, inspects fresh logs, and restores the original panel
-family. `--all --all-families` requests the exhaustive two-family audit.
+for lazy UI. Its functions are:
+- `list()` — returns all registered destinations as JSON
+- `open(destination)` — navigates to a named surface/view
+- `close()` — closes all navigable surfaces
+- `current()` — returns the current destination or `"closed"`
 
 All functions must declare return types (`string`, `int`, `bool`, `real`, `color`, `void`).
 
@@ -221,10 +224,11 @@ User config for the running QML shell lives at `~/.config/illogical-impulse/conf
 
 ### Migrations
 
-Location: `sdata/migrations/` (numbered scripts: 001–031).
+Location: `sdata/migrations/` — numbered scripts (check `ls sdata/migrations/`
+for the current maximum).
 - Append-only — never rename, reorder, or delete existing migrations
 - Idempotent — may run again if state is lost
-- Next number: `032-descriptive-name.sh`
+- Next number: check `ls sdata/migrations/` and use highest + 1
 
 ## Daily Development
 
