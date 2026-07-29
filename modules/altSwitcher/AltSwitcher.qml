@@ -698,7 +698,8 @@ Scope {
                 Text {
                     anchors.centerIn: parent
                     visible: root.windowCount === 0
-                    text: "NO WINDOWS"
+                    text: Translation.tr("No windows")
+                    font.capitalization: Font.AllUppercase
                     font.family: Appearance.font.family.main
                     font.weight: Font.Bold
                     font.pixelSize: 18
@@ -974,7 +975,8 @@ Scope {
                             Text {
                                 id: focusedLabel
                                 anchors.centerIn: parent
-                                text: "FOCUSED"
+                                text: Translation.tr("Focused")
+                                font.capitalization: Font.AllUppercase
                                 font.family: Appearance.font.family.main
                                 font.pixelSize: 9
                                 font.weight: Font.Bold
@@ -1077,7 +1079,8 @@ Scope {
                             Text {
                                 id: floatLabel
                                 anchors.centerIn: parent
-                                text: "FLOAT"
+                                text: Translation.tr("Float")
+                                font.capitalization: Font.AllUppercase
                                 font.family: Appearance.font.family.main
                                 font.pixelSize: 9
                                 font.weight: Font.Bold

@@ -778,7 +778,7 @@ ContentPage {
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                             StyledText {
-                                                text: "Backdrop"
+                                                text: Translation.tr("Backdrop")
                                                 font.pixelSize: Appearance.font.pixelSize.smaller - 1
                                                 color: Appearance.colors.colOnSecondaryContainer
                                                 anchors.verticalCenter: parent.verticalCenter
