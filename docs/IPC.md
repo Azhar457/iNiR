@@ -818,6 +818,8 @@ Waffle action center (quick settings).
 | Function | Description |
 |----------|-------------|
 | `toggle` | Open/close action center |
+| `open` | Open action center |
+| `close` | Close action center |
 
 ---
 
@@ -828,6 +830,8 @@ Waffle notification center.
 | Function | Description |
 |----------|-------------|
 | `toggle` | Open/close notification center |
+| `open` | Open notification center |
+| `close` | Close notification center |
 
 ---
 

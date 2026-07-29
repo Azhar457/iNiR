@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 36dfa445b43be815
+# IPC.md hash: b70e7e2b8f195a2b
 # Targets: 60
 
 declare -gA IPC_TARGET_DESC=(
@@ -181,13 +181,13 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [taskview]="toggle close open"
   [tiling]="toggle open hide cycle showOsd promote"
   [voiceSearch]="start stop toggle refresh status"
-  [wactionCenter]="toggle"
+  [wactionCenter]="toggle close open"
   [waffleAltSwitcher]="open close toggle next previous"
   [wallpaperLauncher]="next previous applyCurrent status"
   [wallpaperSelector]="toggle open close openLauncher toggleOnMonitor random"
   [wbar]="toggle close open"
   [widgetpower]="status"
-  [wnotificationCenter]="toggle"
+  [wnotificationCenter]="toggle close open"
   [workspaceStrip]="open close toggle status"
   [wwidgets]="toggle close open"
   [ytmusic]="playPause next previous stop"
@@ -408,6 +408,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["voiceSearch:refresh"]="Re-detect local and connected speech backends"
   ["voiceSearch:status"]="Return backend, local detection, recording and error state as JSON"
   ["wactionCenter:toggle"]="Open/close action center"
+  ["wactionCenter:close"]="Close action center"
+  ["wactionCenter:open"]="Open action center"
   ["waffleAltSwitcher:open"]="Open switcher"
   ["waffleAltSwitcher:close"]="Close switcher"
   ["waffleAltSwitcher:toggle"]="Toggle switcher"
@@ -428,6 +430,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["wbar:open"]="Show taskbar"
   ["widgetpower:status"]="Returns JSON: \`enabled\`, \`widgetsActive\`, and the active \`triggers\` (gameMode, fullscreen, windowsPresent, editMode)"
   ["wnotificationCenter:toggle"]="Open/close notification center"
+  ["wnotificationCenter:close"]="Close notification center"
+  ["wnotificationCenter:open"]="Open notification center"
   ["workspaceStrip:open"]="Keep the strip expanded"
   ["workspaceStrip:close"]="Return the strip to hover/peek mode"
   ["workspaceStrip:toggle"]="Toggle forced expansion"
