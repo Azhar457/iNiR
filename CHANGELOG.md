@@ -205,6 +205,10 @@ lives on `prerelease` and reaches `main` with the next release.
 - `Super+Q` now keeps the window captured when the keybind fires through the
   confirmation and immediate-close paths instead of consulting a later cached
   focus snapshot that could target another window.
+- GTK file choosers and other long-lived portal dialogs now reload generated
+  colours when the palette changes. Font synchronization also reconciles GTK,
+  KDE and XSettings at startup, and `inir doctor` reports missing configured
+  families instead of allowing silent fallback.
 - App theming ran four times per action instead of once. Three code paths
   each spawned their own pass over every target, so a single wallpaper or
   theme change sent four parallel waves through GTK, chromium, spicetify and
