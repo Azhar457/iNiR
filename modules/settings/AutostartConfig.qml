@@ -69,7 +69,7 @@ ContentPage {
 
     SettingsCardSection {
         expanded: true
-        icon: "file_off"
+        icon: "folder_off"
         title: Translation.tr("Startup file not found")
         visible: Autostart.isNiri && Autostart.status === "missing"
 

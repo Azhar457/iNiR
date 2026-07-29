@@ -363,7 +363,7 @@ ContentPage {
 
             NoticeBox {
                 Layout.fillWidth: true
-                materialIcon: recordingCapabilitiesLoaded ? (gpuRecordingAvailable ? "memory" : "developer_mode") : "progress_activity"
+                materialIcon: recordingCapabilitiesLoaded ? (gpuRecordingAvailable ? "memory" : "developer_board") : "progress_activity"
                 text: !recordingCapabilitiesLoaded
                     ? Translation.tr("Detecting available encoders…")
                     : gpuRecordingAvailable
