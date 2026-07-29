@@ -15,6 +15,7 @@ Scope {
     id: root
 
     required property string edge
+    property var screen: null
 
     readonly property bool isLeftEdge: root.edge === "left"
     readonly property string roleId: ShellLayoutController.sidebarRoleForSlot(root.edge)
@@ -472,6 +473,7 @@ Scope {
 
     PanelWindow {
         id: sidebarRoot
+        screen: root.screen ?? Quickshell.screens[0]
 
         Component.onCompleted: {
             root._screenName = sidebarRoot.screen?.name ?? ""

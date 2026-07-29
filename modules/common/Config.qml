@@ -2498,6 +2498,7 @@ Singleton {
             property JsonObject sidebar: JsonObject {
                 property string style: "panel" // "panel" | "island" (Ricelin gradient card face)
                 property bool cardStyle: false
+                property list<string> screenList: []
                 property string layout: "default" // "default" | "compact"
                 property bool keepRightSidebarLoaded: true
                 property bool keepLeftSidebarLoaded: true
