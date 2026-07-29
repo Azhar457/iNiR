@@ -1250,6 +1250,8 @@ ContentPage {
                 title: Translation.tr("Display options")
 
                 ConfigRow {
+                    visible: Config.getNestedValue(
+                        "background.widgets.weather.style", "pill") !== "detail"
                     Layout.fillWidth: true
                     SettingsSwitch {
                         Layout.fillWidth: false
@@ -2187,6 +2189,7 @@ ContentPage {
                     options: [
                         { displayName: Translation.tr("Shape"), icon: "category", value: "pill" },
                         { displayName: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
+                        { displayName: Translation.tr("Detail"), icon: "dashboard", value: "detail" },
                     ]
                 }
 
@@ -2241,9 +2244,19 @@ ContentPage {
                     buttonIcon: "description"
                     text: Translation.tr("Condition text")
                     autoToggle: false
+                    visible: Config.getNestedValue("background.widgets.weather.style", "pill") !== "detail"
 
                     checked: Config.getNestedValue("background.widgets.weather.showCondition", false)
                     onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showCondition", checked)
+                }
+                SettingsSwitch {
+                    buttonIcon: "monitoring"
+                    text: Translation.tr("Metric chips")
+                    autoToggle: false
+                    visible: Config.getNestedValue("background.widgets.weather.style", "pill") === "detail"
+
+                    checked: Config.getNestedValue("background.widgets.weather.showMetrics", true)
+                    onToggledByUser: checked => Config.setNestedValue("background.widgets.weather.showMetrics", checked)
                 }
             }
 
@@ -2312,8 +2325,10 @@ ContentPage {
             WidgetAppearanceControls {
                 configPath: "background.widgets.weather"
                 configEntry: Config.getNestedValue("background.widgets.weather", ({}))
-                hasColorMode: Config.getNestedValue("background.widgets.weather.style", "pill") === "card"
-                hasCardControls: Config.getNestedValue("background.widgets.weather.style", "pill") === "card"
+                hasColorMode: Config.getNestedValue(
+                    "background.widgets.weather.style", "pill") !== "pill"
+                hasCardControls: Config.getNestedValue(
+                    "background.widgets.weather.style", "pill") !== "pill"
             }
 
         }
@@ -2345,6 +2360,7 @@ ContentPage {
                     "showTemp": true,
                     "showIcon": true,
                     "showCondition": false,
+                    "showMetrics": true,
                     "padding": 20,
                     "tempFontWeight": 500,
                     "conditionOpacity": 0.7,
@@ -2906,6 +2922,7 @@ ContentPage {
                         { displayName: Translation.tr("Graph"), icon: "show_chart", value: "graph" },
                         { displayName: Translation.tr("Rings"), icon: "radio_button_checked", value: "rings" },
                         { displayName: Translation.tr("Text"), icon: "text_fields", value: "text" },
+                        { displayName: Translation.tr("Tiles"), icon: "grid_view", value: "tiles" },
                     ]
                 }
             }

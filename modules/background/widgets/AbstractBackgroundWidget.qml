@@ -106,7 +106,22 @@ AbstractWidget {
     }
     readonly property real cornerRadiusOverride: root._readConfigKey("cornerRadius") ?? -1
     readonly property string colorMode: root._readConfigKey("colorMode") ?? "auto"
-    property string placementStrategy: root._readConfigKey("placementStrategy") ?? "free"
+    // A direct binding creates a resize/config revision cycle.
+    property string placementStrategy: "free"
+
+    function _syncPlacementStrategy(): void {
+        const next = root._readConfigKey("placementStrategy") ?? "free";
+        if (root.placementStrategy !== next)
+            root.placementStrategy = next;
+    }
+
+    Connections {
+        target: Config
+        function onRevisionChanged(): void {
+            root._syncPlacementStrategy();
+        }
+    }
+    on_IsResizingChanged: root._syncPlacementStrategy()
 
     // ── Snap zones ────────────────────────────────────────────
     // 9 screen regions for quick widget placement
@@ -1435,6 +1450,7 @@ AbstractWidget {
     }
     Component.onCompleted: {
         _seedDefaultsIfNeeded();
+        root._syncPlacementStrategy();
         Qt.callLater(root.applyPlacementFromConfig);
     }
     function resetToDefaults(): void {

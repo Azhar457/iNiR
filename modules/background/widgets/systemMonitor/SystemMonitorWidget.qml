@@ -29,11 +29,16 @@ AbstractBackgroundWidget {
     })
 
     implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 320) * scaleFactor)
-    implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 120) * scaleFactor)
+    implicitHeight: {
+        const stored = Math.round(Number(root._readConfigKey("contentHeight") ?? 120) * scaleFactor);
+        return root.displayMode === "tiles" ? Math.max(stored, root._tilesMinHeight) : stored;
+    }
 
     visibleWhenLocked: false
     needsColText: true
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
+    resizeMinWidth: root.displayMode === "tiles" ? 100 : 120
+    resizeMinHeight: root.displayMode === "tiles" ? 100 : 60
 
     // ── Popover: mode + resource toggles ──
     editPopoverContent: Component {
@@ -46,17 +51,18 @@ AbstractBackgroundWidget {
                 Layout.alignment: Qt.AlignHCenter
                 Repeater {
                     model: [
-                        { label: "Bars", icon: "bar_chart", value: "bars" },
-                        { label: "Graph", icon: "show_chart", value: "graph" },
-                        { label: "Rings", icon: "donut_large", value: "rings" },
-                        { label: "Text", icon: "text_fields", value: "text" }
+                        { label: Translation.tr("Bars"), icon: "bar_chart", value: "bars" },
+                        { label: Translation.tr("Graph"), icon: "show_chart", value: "graph" },
+                        { label: Translation.tr("Rings"), icon: "donut_large", value: "rings" },
+                        { label: Translation.tr("Text"), icon: "text_fields", value: "text" },
+                        { label: Translation.tr("Tiles"), icon: "grid_view", value: "tiles" }
                     ]
                     SelectionGroupButton {
                         required property var modelData
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: Translation.tr(modelData.label)
+                        buttonText: modelData.label
                         toggled: root.displayMode === modelData.value
                         onClicked: Config.setNestedValue("background.widgets.systemMonitor.displayMode", modelData.value)
                     }
@@ -69,18 +75,18 @@ AbstractBackgroundWidget {
                 Layout.alignment: Qt.AlignHCenter
                 Repeater {
                     model: [
-                        { label: "CPU", icon: "memory", key: "showCpu", active: root.showCpu },
-                        { label: "RAM", icon: "storage", key: "showMemory", active: root.showMemory },
-                        { label: "GPU", icon: "developer_board", key: "showGpu", active: root.showGpu },
-                        { label: "Temp", icon: "thermostat", key: "showTemp", active: root.showTemp },
-                        { label: "Disk", icon: "hard_drive", key: "showDisk", active: root.showDisk }
+                        { label: Translation.tr("CPU"), icon: "memory", key: "showCpu", active: root.showCpu },
+                        { label: Translation.tr("RAM"), icon: "storage", key: "showMemory", active: root.showMemory },
+                        { label: Translation.tr("GPU"), icon: "developer_board", key: "showGpu", active: root.showGpu },
+                        { label: Translation.tr("Temp"), icon: "thermostat", key: "showTemp", active: root.showTemp },
+                        { label: Translation.tr("Disk"), icon: "hard_drive", key: "showDisk", active: root.showDisk }
                     ]
                     SelectionGroupButton {
                         required property var modelData
                         Layout.fillWidth: true
                         leftmost: true; rightmost: true
                         buttonIcon: modelData.icon
-                        buttonText: Translation.tr(modelData.label)
+                        buttonText: modelData.label
                         toggled: modelData.active
                         onClicked: Config.setNestedValue("background.widgets.systemMonitor." + modelData.key, !modelData.active)
                     }
@@ -105,11 +111,11 @@ AbstractBackgroundWidget {
     // ── Static resource model (metadata only — no live values) ──
     readonly property var _resourceModel: {
         const items = [];
-        if (root.showCpu) items.push({ icon: "memory", label: "CPU", key: "cpu" });
-        if (root.showMemory) items.push({ icon: "storage", label: "RAM", key: "mem" });
-        if (root.showGpu) items.push({ icon: "developer_board", label: "GPU", key: "gpu" });
-        if (root.showTemp) items.push({ icon: "thermostat", label: "Temp", key: "temp" });
-        if (root.showDisk) items.push({ icon: "hard_drive", label: "Disk", key: "disk" });
+        if (root.showCpu) items.push({ icon: "memory", label: Translation.tr("CPU"), key: "cpu" });
+        if (root.showMemory) items.push({ icon: "storage", label: Translation.tr("RAM"), key: "mem" });
+        if (root.showGpu) items.push({ icon: "developer_board", label: Translation.tr("GPU"), key: "gpu" });
+        if (root.showTemp) items.push({ icon: "thermostat", label: Translation.tr("Temp"), key: "temp" });
+        if (root.showDisk) items.push({ icon: "hard_drive", label: Translation.tr("Disk"), key: "disk" });
         return items;
     }
 
@@ -140,6 +146,48 @@ AbstractBackgroundWidget {
         if (key === "temp") return ResourceUsage.maxTemp + "°C";
         return Math.round(root._getValue(key) * 100) + "%";
     }
+
+    function _tileShape(key: string): int {
+        switch (key) {
+            case "cpu": return MaterialShape.Shape.Gem;
+            case "mem": return MaterialShape.Shape.Cookie4Sided;
+            case "gpu": return MaterialShape.Shape.Cookie12Sided;
+            case "temp": return MaterialShape.Shape.Sunny;
+            case "disk": return MaterialShape.Shape.Clover4Leaf;
+            default: return MaterialShape.Shape.Cookie12Sided;
+        }
+    }
+
+    // Real M3 tonal container roles, one family per metric.
+    function _tileRole(key: string): var {
+        const c = Appearance.colors;
+        switch (key) {
+            case "mem": return { bg: c.colSecondaryContainer, ink: c.colOnSecondaryContainer,
+                badge: c.colSecondary, onBadge: c.colOnSecondary };
+            case "gpu": return { bg: c.colTertiaryContainer, ink: c.colOnTertiaryContainer,
+                badge: c.colTertiary, onBadge: c.colOnTertiary };
+            case "temp": return { bg: c.colErrorContainer, ink: c.colOnErrorContainer,
+                badge: c.colError, onBadge: c.colOnError };
+            case "disk": return { bg: c.colSurfaceContainerHighest, ink: c.colOnSurface,
+                badge: c.colTertiary, onBadge: c.colOnTertiary };
+            default: return { bg: c.colPrimaryContainer, ink: c.colOnPrimaryContainer,
+                badge: c.colPrimary, onBadge: c.colOnPrimary };
+        }
+    }
+
+    readonly property real _tileUnit: Math.round(96 * root.scaleFactor)
+    readonly property real _tileGap: Math.round(10 * root.scaleFactor)
+
+    // Width determines both column and row counts.
+    readonly property int _tileColumns: {
+        const count = Math.max(1, root._resourceModel.length);
+        const fit = Math.floor((root.width + root._tileGap) / (root._tileUnit + root._tileGap));
+        return Math.max(1, Math.min(count, fit));
+    }
+    readonly property int _tileRows: Math.ceil(
+        Math.max(1, root._resourceModel.length) / Math.max(1, root._tileColumns))
+    readonly property real _tilesMinHeight: root._tileRows * root._tileUnit
+        + (root._tileRows - 1) * root._tileGap + root._innerMargin * 2
 
     // ── Style tokens ──
     readonly property real cardRadius: root.widgetCardRadius
@@ -193,7 +241,8 @@ AbstractBackgroundWidget {
         screenY: root.y
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
-        visible: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
+        visible: root.displayMode !== "tiles"
+            && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
     }
 
     // ══════════════════════════════════════════════════════════
@@ -438,7 +487,7 @@ AbstractBackgroundWidget {
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
-                        text: Translation.tr(ringCol.modelData.label)
+                        text: ringCol.modelData.label
                         color: root.widgetInkMuted
                         font { pixelSize: Appearance.font.pixelSize.smaller; family: Appearance.font.family.main }
                         anchors.verticalCenter: parent.verticalCenter
@@ -482,7 +531,7 @@ AbstractBackgroundWidget {
                     }
 
                     StyledText {
-                        text: Translation.tr(textChip.modelData.label)
+                        text: textChip.modelData.label
                         color: root.widgetInkMuted
                         font {
                             pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
@@ -500,6 +549,93 @@ AbstractBackgroundWidget {
                             weight: Font.DemiBold
                         }
                         anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+        }
+    }
+
+    GridLayout {
+        id: tileGrid
+        anchors.fill: parent
+        anchors.margins: root._innerMargin
+        visible: root.displayMode === "tiles" && root._resourceModel.length > 0
+        columnSpacing: root._tileGap
+        rowSpacing: root._tileGap
+        columns: root._tileColumns
+
+        Repeater {
+            model: root._resourceModel
+
+            Rectangle {
+                id: tile
+                required property var modelData
+                readonly property var role: root._tileRole(modelData.key)
+
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                radius: root.cardRadius
+                color: tile.role.bg
+
+                Behavior on color {
+                    enabled: Appearance.animationsEnabled
+                    ColorAnimation {
+                        duration: root._animDuration
+                        easing.type: Appearance.animation.elementMove.type
+                        easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+                    }
+                }
+
+                StyledRectangularShadow {
+                    target: tile
+                    z: -2
+                    visible: !Appearance.zzzEverywhere && !Appearance.inirEverywhere
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: Math.round(tile.height * 0.13)
+                    spacing: 0
+
+                    MaterialShapeWrappedMaterialSymbol {
+                        Layout.alignment: Qt.AlignRight
+                        visible: tile.height >= 76
+                        shape: root._tileShape(tile.modelData.key)
+                        color: tile.role.badge
+                        colSymbol: tile.role.onBadge
+                        text: tile.modelData.icon
+                        fill: 1
+                        iconSize: Math.max(13, Math.round(tile.height * 0.17))
+                        padding: Math.max(5, Math.round(tile.height * 0.055))
+                    }
+
+                    Item { Layout.fillHeight: true }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: root._getDisplayText(tile.modelData.key)
+                        color: tile.role.ink
+                        elide: Text.ElideRight
+                        font {
+                            pixelSize: Math.max(14, Math.min(
+                                Math.round(Appearance.font.pixelSize.hugeass * root.scaleFactor),
+                                Math.round(tile.height * 0.30),
+                                Math.round(tile.width * 0.34)))
+                            family: Appearance.font.family.numbers
+                            weight: Font.Bold
+                        }
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        Layout.topMargin: -Math.round(tile.height * 0.03)
+                        visible: root.showLabels && tile.height >= 62
+                        text: tile.modelData.label
+                        color: ColorUtils.applyAlpha(tile.role.ink, 0.62)
+                        elide: Text.ElideRight
+                        font.pixelSize: Math.max(10, Math.min(
+                            Math.round(Appearance.font.pixelSize.small * root.scaleFactor),
+                            Math.round(tile.height * 0.14)))
                     }
                 }
             }

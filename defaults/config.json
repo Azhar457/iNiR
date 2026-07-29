@@ -504,6 +504,7 @@
                 "showTemp": true,
                 "showIcon": true,
                 "showCondition": false,
+                "showMetrics": true,
                 "padding": 20,
                 "tempFontWeight": 500,
                 "conditionOpacity": 0.7

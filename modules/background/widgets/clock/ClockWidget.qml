@@ -51,8 +51,9 @@ AbstractBackgroundWidget {
         root.statusShown ? statusText.implicitWidth : 0)
     // Digital mode resizes via timeScale, cookie via cookie.size — avoids scaleFactor churn
     resizableAxes: root.clockStyle === "cookie" ? ({ uniform: "cookie.size" }) : ({ uniform: "timeScale" })
-    resizeMinWidth: 80
-    resizeMinHeight: 40
+    resizeMinWidth: root.clockStyle === "cookie" ? 120 : 80
+    resizeMinHeight: root.clockStyle === "cookie" ? 120
+        : root.clockStyle === "androidStacked" ? 80 : 40
 
     editPopoverContent: Component {
         ColumnLayout {
@@ -486,7 +487,8 @@ AbstractBackgroundWidget {
         Item {
             id: statusText
             x: Math.round((parent.width - width) / 2)
-            implicitHeight: statusTextBg.implicitHeight
+            visible: root.statusShown
+            implicitHeight: root.statusShown ? statusTextBg.implicitHeight : 0
             implicitWidth: statusTextBg.implicitWidth
             StyledRectangularShadow {
                 target: statusTextBg

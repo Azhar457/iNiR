@@ -1216,7 +1216,8 @@ Singleton {
                         property int tempFontWeight: 500 // Font.Medium
                         property real conditionOpacity: 0.7
                         property string preset: "default"
-                        property string style: "pill" // "pill" (original), "card" (adaptive overlay)
+                        property string style: "pill" // "pill" (shape), "card" (adaptive overlay), "detail" (M3 tonal)
+                        property bool showMetrics: true // "detail" style only
                         property string shape: "pill" // MaterialShape shape name
                         property int widgetScale: 100
                         property int widgetOpacity: 100
@@ -1316,7 +1317,7 @@ Singleton {
                         property bool enable: false
                         property bool locked: false
                         property string placementStrategy: "free"
-                        property string displayMode: "bars"
+                        property string displayMode: "bars" // "bars", "graph", "rings", "text", "tiles"
                         property int barCount: 32
                         property int barSpacing: 2
                         property real trackAlpha: 0.08

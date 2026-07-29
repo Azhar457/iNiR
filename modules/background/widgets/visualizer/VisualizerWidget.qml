@@ -31,6 +31,8 @@ AbstractBackgroundWidget {
     visibleWhenLocked: false
     needsColText: true
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
+    resizeMinWidth: 120
+    resizeMinHeight: 48
 
     readonly property string vizType: Config.getNestedValue("background.widgets.visualizer.vizType", "bars")
     readonly property int waveOpacity: Config.getNestedValue("background.widgets.visualizer.waveOpacity", -1)
