@@ -4968,5 +4968,19 @@
   "to full": "to full",
   "today": "today",
   "— out of the sidebar, still searchable": "— fuera de la barra lateral, pero sigue apareciendo en la búsqueda",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ detecta automáticamente tu distribución. También podés ingresar cualquier nombre de icono; se buscará como <name>-symbolic."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ detecta automáticamente tu distribución. También podés ingresar cualquier nombre de icono; se buscará como <name>-symbolic.",
+  "All caught up": "Todo al día",
+  "No windows": "Sin ventanas",
+  "Focused": "Enfocada",
+  "Crypto": "Cripto",
+  "Search fonts...": "Buscar fuentes...",
+  "what's on": "qué hay",
+  "Activate Waffle": "Activar Waffle",
+  "Go to Settings to activate Waffle.": "Andá a Configuración para activar Waffle.",
+  "Lyrics": "Letras",
+  "Lyrics wide": "Letras amplias",
+  "Cover": "Portada",
+  "Looking for lyrics": "Buscando la letra",
+  "No synced lyrics": "No hay letra sincronizada",
+  "No synced lyrics for this track": "No hay letra sincronizada para este tema"
 }

@@ -4967,5 +4967,19 @@
   "to full": "to full",
   "today": "today",
   "— out of the sidebar, still searchable": "— out of the sidebar, still searchable",
-  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic)."
+  "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).": "‘distro’ auto-detects your distribution. Otherwise enter any icon name (looked up as <name>-symbolic).",
+  "All caught up": "All caught up",
+  "No windows": "No windows",
+  "Focused": "Focused",
+  "Crypto": "Crypto",
+  "Search fonts...": "Search fonts...",
+  "what's on": "what's on",
+  "Activate Waffle": "Activate Waffle",
+  "Go to Settings to activate Waffle.": "Go to Settings to activate Waffle.",
+  "Lyrics": "Lyrics",
+  "Lyrics wide": "Lyrics wide",
+  "Cover": "Cover",
+  "Looking for lyrics": "Looking for lyrics",
+  "No synced lyrics": "No synced lyrics",
+  "No synced lyrics for this track": "No synced lyrics for this track"
 }

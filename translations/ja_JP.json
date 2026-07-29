@@ -4967,5 +4967,19 @@
   "Manual-only poses never rotate automatically": "手動専用ポーズは自動で切り替わりません",
   "Open article": "記事を開く",
   "Pixel": "ピクセル",
-  "Street": "ストリート"
+  "Street": "ストリート",
+  "All caught up": "すべて確認済みです",
+  "No windows": "ウィンドウなし",
+  "Focused": "フォーカス中",
+  "Crypto": "暗号資産",
+  "Search fonts...": "フォントを検索...",
+  "what's on": "現在の情報",
+  "Activate Waffle": "Waffle を有効化",
+  "Go to Settings to activate Waffle.": "設定を開いて Waffle を有効にしてください。",
+  "Lyrics": "Lyrics",
+  "Lyrics wide": "Lyrics wide",
+  "Cover": "Cover",
+  "Looking for lyrics": "Looking for lyrics",
+  "No synced lyrics": "No synced lyrics",
+  "No synced lyrics for this track": "No synced lyrics for this track"
 }
