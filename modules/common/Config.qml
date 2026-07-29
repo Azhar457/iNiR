@@ -1272,9 +1272,10 @@ Singleton {
                         property bool enable: false
                         property bool locked: false
                         property string placementStrategy: "free" // "free", "leastBusy", "mostBusy"
-                        property string playerPreset: "full" // "full", "compact", "minimal", "albumart", "visualizer", "classic"
+                        property string playerPreset: "full" // "full", "compact", "minimal", "albumart", "visualizer", "classic", "lyrics", "lyricsSplit", "expandingLyrics"
                         property string visualizerType: "wave" // "wave", "bars"
                         property string visualizerPosition: "bottom" // "bottom", "top", "fill", "none"
+                        property bool lyricsExpanded: false
                         property real x: 240
                         property real y: 240
                         property int widgetScale: 100

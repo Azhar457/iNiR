@@ -142,6 +142,9 @@ lives on `prerelease` and reaches `main` with the next release.
   plays them (desktop, backdrop, lock screen, both families) freezes on the
   current frame while unplugged. On by default; Settings › Background turns
   it off if you'd rather spend the charge.
+- The desktop media widget has three synchronized lyrics layouts, including
+  compact, split and expandable views. Lyrics are fetched only while a lyrics
+  surface is visible.
 
 ### Changed
 - Focused Settings groups pages into category cards, opens with an account

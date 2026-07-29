@@ -2597,6 +2597,9 @@ ContentPage {
                         { displayName: Translation.tr("Album Art"), icon: "image", value: "albumart" },
                         { displayName: Translation.tr("Visualizer"), icon: "equalizer", value: "visualizer" },
                         { displayName: Translation.tr("Classic"), icon: "radio", value: "classic" },
+                        { displayName: Translation.tr("Lyrics"), icon: "lyrics", value: "lyrics" },
+                        { displayName: Translation.tr("Lyrics wide"), icon: "subtitles", value: "lyricsSplit" },
+                        { displayName: Translation.tr("Cover"), icon: "art_track", value: "expandingLyrics" },
                     ]
                 }
             }
@@ -2652,6 +2655,7 @@ ContentPage {
                     "playerPreset": "full",
                     "visualizerType": "wave",
                     "visualizerPosition": "bottom",
+                    "lyricsExpanded": false,
                     "widgetScale": 100,
                     "widgetOpacity": 100,
                     "colorMode": "auto",

@@ -26,6 +26,7 @@ RowLayout {
         : Appearance.rounding.full
     property real playButtonRadius: buttonRadius
     property color buttonColor: "transparent"
+    property color playButtonColor: root.buttonColor
     property color buttonHoverColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
@@ -87,7 +88,7 @@ RowLayout {
         implicitWidth: root.playButtonSize
         implicitHeight: root.playButtonSize
         buttonRadius: root.playButtonRadius
-        colBackground: root.buttonColor
+        colBackground: root.playButtonColor
         colBackgroundHover: root.buttonHoverColor
         colRipple: root.buttonRippleColor
         onClicked: root.playPauseClicked()
