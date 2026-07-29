@@ -175,10 +175,14 @@ Item {
     IpcHandler {
         target: "wactionCenter"
         function toggle(): void { GlobalStates.waffleActionCenterOpen = !GlobalStates.waffleActionCenterOpen }
+        function close(): void { GlobalStates.waffleActionCenterOpen = false }
+        function open(): void { GlobalStates.waffleActionCenterOpen = true }
     }
     IpcHandler {
         target: "wnotificationCenter"
         function toggle(): void { GlobalStates.waffleNotificationCenterOpen = !GlobalStates.waffleNotificationCenterOpen }
+        function close(): void { GlobalStates.waffleNotificationCenterOpen = false }
+        function open(): void { GlobalStates.waffleNotificationCenterOpen = true }
     }
     IpcHandler {
         target: "wwidgets"
