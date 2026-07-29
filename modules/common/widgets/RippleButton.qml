@@ -207,7 +207,14 @@ Button {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.stateChange.duration; easing.type: Appearance.animation.stateChange.type; easing.bezierCurve: Appearance.animation.stateChange.bezierCurve }
         }
-        scale: Appearance.cookieEverywhere && root.down ? 0.97 : 1
+        readonly property real _pressScale: {
+            const w = Math.max(width, 1);
+            const h = Math.max(height, 1);
+            const inset = Appearance.cookieEverywhere ? 3 : 2;
+            return Math.max(0.94, Math.min(0.995,
+                1 - inset / Math.max(w, h)));
+        }
+        scale: root.down && root.enabled ? _pressScale : 1
         Behavior on scale {
             enabled: Appearance.animationsEnabled
             NumberAnimation {

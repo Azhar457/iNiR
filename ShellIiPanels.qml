@@ -27,6 +27,7 @@ import qs.modules.wallpaperLauncher
 import qs.modules.ii.overlay
 import qs.modules.shellUpdate
 import qs.modules.workspaceStrip
+import "modules/barM3" as BarM3
 import "modules/clipboard" as ClipboardModule
 
 import QtQuick
@@ -126,11 +127,15 @@ Item {
     // bar.appearanceStyle picks the horizontal bar's look. classic/islands/scenic/
     // frame are variants of Bar.qml itself; "pill" swaps in a different bar
     // entirely, so it is resolved here rather than inside Bar.qml.
+    // "m3" swaps in a separate bar implementation rather than restyling Bar.qml.
     readonly property bool barVertical: Config.options?.bar?.vertical ?? false
     readonly property bool barPill: (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"
+    readonly property bool barM3: (Config.options?.bar?.appearanceStyle ?? "classic") === "m3"
+    readonly property bool barStock: !panelsRoot.barPill && !panelsRoot.barM3
 
-    PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && !panelsRoot.barPill; component: Bar {} }
+    PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && panelsRoot.barStock; component: Bar {} }
     PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && panelsRoot.barPill; component: PillBar {} }
+    PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && panelsRoot.barM3; component: BarM3.M3Bar {} }
     PanelLoader { identifier: "iiVerticalBar"; extraCondition: panelsRoot.barVertical; component: VerticalBar {} }
     PanelLoader { identifier: "iiBackground"; component: Background {} }
     PanelLoader { identifier: "iiBackdrop"; extraCondition: Config.options?.background?.backdrop?.enable ?? false; component: Backdrop {} }

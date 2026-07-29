@@ -11,6 +11,18 @@ ContentPage {
     settingsPageName: Translation.tr("Bar")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property bool m3ControlsReady: false
+    Component.onCompleted: Qt.callLater(() => root.m3ControlsReady = true)
+
+    function setM3Value(path, value): void {
+        if (root.m3ControlsReady)
+            Config.setNestedValue(path, value)
+    }
+
+    function setM3Values(values): void {
+        if (root.m3ControlsReady)
+            Config.setNestedValues(values)
+    }
 
     // Conflict detection helpers
     readonly property bool isCardStyle: Config.options?.bar?.cornerStyle === 3
@@ -34,6 +46,149 @@ ContentPage {
     // Corner style only shapes the classic bar surface; the other appearances draw
     // their own (islands capsules, scenic scrim, frame outline, pill).
     readonly property bool cornerStyleApplies: (Config.options?.bar?.appearanceStyle ?? "classic") === "classic"
+
+    function detectM3LayoutPreset(): string {
+        const left = JSON.stringify(Config.options?.bar?.m3?.layouts?.leftLayout ?? [])
+        const middle = JSON.stringify(Config.options?.bar?.m3?.layouts?.middleLayout ?? [])
+        const right = JSON.stringify(Config.options?.bar?.m3?.layouts?.rightLayout ?? [])
+        if (left === JSON.stringify(["media", "workspaces"])
+                && middle === JSON.stringify(["docktoPanel"])
+                && right === JSON.stringify(["utilButtons", "systemIcons", "weatherBar", "clockWidget"]))
+            return "compact"
+        if (left === JSON.stringify(["media", "workspaces"])
+                && middle === JSON.stringify(["visualizer", "docktoPanel", "visualizer"])
+                && right === JSON.stringify(["utilButtons", "systemIcons", "weatherBar", "clockWidget"]))
+            return "showcase"
+        if (left === JSON.stringify(["leftSidebarButton", "workspaces", "activeWindow"])
+                && middle === JSON.stringify(["docktoPanel"])
+                && right === JSON.stringify(["resources", "networkSpeed", "updatesCount", "clockWidget", "powerButton"]))
+            return "information"
+        return "custom"
+    }
+
+    readonly property string m3LayoutPreset: {
+        const stored = Config.options?.bar?.m3?.layoutMode ?? "auto"
+        return ["compact", "showcase", "information", "custom"].includes(stored)
+            ? stored : root.detectM3LayoutPreset()
+    }
+
+    function currentM3Layouts(): var {
+        return {
+            left: Array.from(Config.options?.bar?.m3?.layouts?.leftLayout ?? []),
+            middle: Array.from(Config.options?.bar?.m3?.layouts?.middleLayout ?? []),
+            right: Array.from(Config.options?.bar?.m3?.layouts?.rightLayout ?? [])
+        }
+    }
+
+    function updateM3CustomLayout(side, list): void {
+        if (!root.m3ControlsReady) return
+        const next = Array.from(list ?? [])
+        const activePath = "bar.m3.layouts." + side + "Layout"
+        const customPath = "bar.m3.customLayouts." + side + "Layout"
+        root.setM3Values({
+            "bar.m3.layoutMode": "custom",
+            "bar.m3.customLayoutSaved": true,
+            [activePath]: next,
+            [customPath]: next
+        })
+    }
+
+    function applyM3LayoutPreset(value): void {
+        if (!root.m3ControlsReady) return
+
+        if (value === "custom") {
+            const saved = Config.options?.bar?.m3?.customLayoutSaved ?? false
+            if (saved) {
+                root.setM3Values({
+                    "bar.m3.layoutMode": "custom",
+                    "bar.m3.layouts.leftLayout": Array.from(Config.options?.bar?.m3?.customLayouts?.leftLayout ?? []),
+                    "bar.m3.layouts.middleLayout": Array.from(Config.options?.bar?.m3?.customLayouts?.middleLayout ?? []),
+                    "bar.m3.layouts.rightLayout": Array.from(Config.options?.bar?.m3?.customLayouts?.rightLayout ?? [])
+                })
+            } else {
+                const current = root.currentM3Layouts()
+                root.setM3Values({
+                    "bar.m3.layoutMode": "custom",
+                    "bar.m3.customLayoutSaved": true,
+                    "bar.m3.customLayouts.leftLayout": current.left,
+                    "bar.m3.customLayouts.middleLayout": current.middle,
+                    "bar.m3.customLayouts.rightLayout": current.right
+                })
+            }
+            return
+        }
+
+        const updates = ({ "bar.m3.layoutMode": value })
+        if (root.m3LayoutPreset === "custom" || root.detectM3LayoutPreset() === "custom") {
+            const current = root.currentM3Layouts()
+            updates["bar.m3.customLayoutSaved"] = true
+            updates["bar.m3.customLayouts.leftLayout"] = current.left
+            updates["bar.m3.customLayouts.middleLayout"] = current.middle
+            updates["bar.m3.customLayouts.rightLayout"] = current.right
+        }
+
+        if (value === "compact") {
+            updates["bar.m3.layouts.leftLayout"] = ["media", "workspaces"]
+            updates["bar.m3.layouts.middleLayout"] = ["docktoPanel"]
+            updates["bar.m3.layouts.rightLayout"] = ["utilButtons", "systemIcons", "weatherBar", "clockWidget"]
+        } else if (value === "showcase") {
+            updates["bar.m3.layouts.leftLayout"] = ["media", "workspaces"]
+            updates["bar.m3.layouts.middleLayout"] = ["visualizer", "docktoPanel", "visualizer"]
+            updates["bar.m3.layouts.rightLayout"] = ["utilButtons", "systemIcons", "weatherBar", "clockWidget"]
+        } else if (value === "information") {
+            updates["bar.m3.layouts.leftLayout"] = ["leftSidebarButton", "workspaces", "activeWindow"]
+            updates["bar.m3.layouts.middleLayout"] = ["docktoPanel"]
+            updates["bar.m3.layouts.rightLayout"] = ["resources", "networkSpeed", "updatesCount", "clockWidget", "powerButton"]
+        }
+        root.setM3Values(updates)
+    }
+
+    readonly property var m3Widgets: [
+        { id: "leftSidebarButton", name: Translation.tr("Left Sidebar Button"), icon: "left_panel_open" },
+        { id: "workspaces", name: Translation.tr("Workspaces"), icon: "steppers" },
+        { id: "weatherBar", name: Translation.tr("Weather"), icon: "flare" },
+        { id: "media", name: Translation.tr("Media"), icon: "music_note" },
+        { id: "resources", name: Translation.tr("Resources"), icon: "monitoring" },
+        { id: "systemIcons", name: Translation.tr("System Icons"), icon: "info" },
+        { id: "networkSpeed", name: Translation.tr("Network Speed"), icon: "network_check" },
+        { id: "clockWidget", name: Translation.tr("Clock"), icon: "schedule" },
+        { id: "utilButtons", name: Translation.tr("Utility Buttons"), icon: "toggle_on" },
+        { id: "sysTray", name: Translation.tr("Tray"), icon: "inbox" },
+        { id: "batteryIndicator", name: Translation.tr("Battery"), icon: "battery_android_frame_full" },
+        { id: "activeWindow", name: Translation.tr("Active Window"), icon: "subtitles" },
+        { id: "powerButton", name: Translation.tr("Power Button"), icon: "power_settings_new" },
+        { id: "updatesCount", name: Translation.tr("Updates"), icon: "deployed_code_update" },
+        { id: "docktoPanel", name: Translation.tr("Dock to Panel"), icon: "apps" },
+        { id: "visualizer", name: Translation.tr("Visualizer"), icon: "graphic_eq" },
+        { id: "hyprlandXkbIndicator", name: Translation.tr("Keyboard Layout"), icon: "keyboard" },
+        { id: "divisor", name: Translation.tr("Divider"), icon: "horizontal_distribute" },
+        { id: "notificationUnreadCount", name: Translation.tr("Unread Notifications"), icon: "notifications" }
+    ]
+
+    function m3WidgetName(id): string {
+        return root.m3Widgets.find(widget => widget.id === id)?.name ?? id
+    }
+
+    function m3WidgetHint(id): string {
+        return Translation.tr("Add %1 to the Left, Center or Right layout below to enable these controls.")
+            .arg(root.m3WidgetName(id))
+    }
+
+    readonly property var activeM3Widgets: [
+        ...(Config.options?.bar?.m3?.layouts?.leftLayout ?? []),
+        ...(Config.options?.bar?.m3?.layouts?.middleLayout ?? []),
+        ...(Config.options?.bar?.m3?.layouts?.rightLayout ?? [])
+    ]
+
+    function m3HasWidget(id): bool {
+        return root.activeM3Widgets.includes(id)
+    }
+
+    function availableM3Widgets(): var {
+        const multipleAllowed = ["visualizer", "divisor"]
+        return root.m3Widgets.filter(widget =>
+            !root.activeM3Widgets.includes(widget.id) || multipleAllowed.includes(widget.id))
+    }
 
     // Corner style compatibility per global style
     readonly property bool hugNeedsBackground: isHugStyle && !showBackground
@@ -132,6 +287,7 @@ ContentPage {
                         { displayName: Translation.tr("Islands"), icon: "linear_scale", value: "islands" },
                         { displayName: Translation.tr("Scenic"), icon: "gradient", value: "scenic" },
                         { displayName: Translation.tr("Frame"), icon: "crop_free", value: "frame" },
+                        { displayName: Translation.tr("M3"), icon: "category", value: "m3" },
                         { displayName: Translation.tr("Pill"), icon: "blur_on", value: "pill" }
                     ]
                 }
@@ -140,6 +296,523 @@ ContentPage {
                     icon: "toolbar"
                     text: Translation.tr("Redraws the bar surface. Horizontal bar only.")
                 }
+            }
+
+            ContentSubsection {
+                visible: (Config.options?.bar?.appearanceStyle ?? "classic") === "m3"
+                title: Translation.tr("M3 options")
+
+                ContentSubsection {
+                    title: Translation.tr("Layout and grouping")
+
+                    ConfigSelectionArray {
+                        currentValue: root.m3LayoutPreset
+                        onSelected: newValue => root.applyM3LayoutPreset(newValue)
+                    options: [
+                        { displayName: Translation.tr("Compact"), icon: "view_compact", value: "compact" },
+                        { displayName: Translation.tr("Showcase"), icon: "graphic_eq", value: "showcase" },
+                        { displayName: Translation.tr("Information"), icon: "monitoring", value: "information" },
+                        { displayName: Translation.tr("Custom layout"), icon: "tune", value: "custom" }
+                    ]
+                }
+
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.bar?.m3?.borderless ?? "separated"
+                        onSelected: newValue => root.setM3Value("bar.m3.borderless", newValue)
+                        options: [
+                            { displayName: Translation.tr("Joined pills"), icon: "join", value: "pills" },
+                            { displayName: Translation.tr("Separate pills"), icon: "space_bar", value: "separated" },
+                            { displayName: Translation.tr("Transparent"), icon: "opacity", value: "transparent" }
+                        ]
+                    }
+
+                    SettingsNote {
+                        icon: "palette"
+                        text: Translation.tr("Joined keeps one island per section with semantic accents. Separate gives each widget its own tonal capsule. Transparent removes every surface and uses on-surface content colors.")
+                    }
+                }
+
+                M3LayoutSection {
+                    sectionTitle: Translation.tr("Left")
+                    layout: Config.options?.bar?.m3?.layouts?.leftLayout ?? []
+                    availableWidgets: root.availableM3Widgets()
+                    getWidgetName: root.m3WidgetName
+                    onUpdate: list => root.updateM3CustomLayout("left", list)
+                }
+
+                M3LayoutSection {
+                    sectionTitle: Translation.tr("Center")
+                    layout: Config.options?.bar?.m3?.layouts?.middleLayout ?? []
+                    availableWidgets: root.availableM3Widgets()
+                    getWidgetName: root.m3WidgetName
+                    onUpdate: list => root.updateM3CustomLayout("middle", list)
+                }
+
+                M3LayoutSection {
+                    sectionTitle: Translation.tr("Right")
+                    layout: Config.options?.bar?.m3?.layouts?.rightLayout ?? []
+                    availableWidgets: root.availableM3Widgets()
+                    getWidgetName: root.m3WidgetName
+                    onUpdate: list => root.updateM3CustomLayout("right", list)
+                }
+
+                SettingsNote {
+                    visible: root.m3LayoutPreset === "custom"
+                    icon: "info"
+                    text: Translation.tr("Custom layout active. Presets only replace the live bar; your last custom Left, Center and Right arrangement is saved and restored when you return to Custom layout.")
+                }
+
+                ContentSubsection {
+                    title: Translation.tr("Visible content and behavior")
+
+                ConfigRow {
+                    uniform: true
+                    SettingsSwitch {
+                        buttonIcon: "branding_watermark"
+                        text: Translation.tr("Show background")
+                        checked: Config.options?.bar?.m3?.showBackground ?? true
+                        onCheckedChanged: root.setM3Value("bar.m3.showBackground", checked)
+                    }
+                    SettingsSwitch {
+                        enabled: root.m3HasWidget("weatherBar") || root.m3HasWidget("clockWidget")
+                            || root.m3HasWidget("resources") || root.m3HasWidget("networkSpeed")
+                            || root.m3HasWidget("batteryIndicator")
+                        opacity: enabled ? 1 : 0.45
+                        buttonIcon: "tooltip"
+                        text: Translation.tr("Open details on click")
+                        checked: Config.options?.bar?.m3?.tooltips?.clickToShow ?? false
+                        onCheckedChanged: root.setM3Value("bar.m3.tooltips.clickToShow", checked)
+                    }
+                }
+
+                SettingsNote {
+                    visible: !(root.m3HasWidget("weatherBar") || root.m3HasWidget("clockWidget")
+                        || root.m3HasWidget("resources") || root.m3HasWidget("networkSpeed")
+                        || root.m3HasWidget("batteryIndicator"))
+                    icon: "info"
+                    text: Translation.tr("Open details on click needs a widget with a details popup in the layout: Weather, Clock, Resources, Network Speed or Battery.")
+                }
+
+                ConfigRow {
+                    uniform: true
+                    SettingsSwitch {
+                        enabled: root.m3HasWidget("systemIcons") || root.m3HasWidget("notificationUnreadCount")
+                        opacity: enabled ? 1 : 0.45
+                        buttonIcon: "notifications"
+                        text: Translation.tr("Unread count")
+                        checked: Config.options?.bar?.m3?.indicators?.notifications?.showUnreadCount ?? false
+                        onCheckedChanged: root.setM3Value("bar.m3.indicators.notifications.showUnreadCount", checked)
+                    }
+                    SettingsSwitch {
+                        enabled: root.m3HasWidget("clockWidget") || root.m3HasWidget("systemIcons")
+                            || root.m3HasWidget("media")
+                        opacity: enabled ? 1 : 0.45
+                        buttonIcon: "notes"
+                        text: Translation.tr("Verbose labels")
+                        checked: Config.options?.bar?.m3?.verbose ?? true
+                        onCheckedChanged: root.setM3Value("bar.m3.verbose", checked)
+                    }
+                }
+
+                SettingsNote {
+                    visible: !(root.m3HasWidget("systemIcons") || root.m3HasWidget("notificationUnreadCount"))
+                    icon: "info"
+                    text: Translation.tr("Unread count needs System Icons or Unread Notifications in the layout.")
+                }
+
+                SettingsNote {
+                    visible: !(root.m3HasWidget("clockWidget") || root.m3HasWidget("systemIcons")
+                        || root.m3HasWidget("media"))
+                    icon: "info"
+                    text: Translation.tr("Verbose labels needs Clock, System Icons or Media in the layout.")
+                }
+
+                }
+
+                ContentSubsection {
+                    title: Translation.tr("Surface")
+
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.bar?.m3?.cornerStyle ?? 3
+                        onSelected: newValue => root.setM3Value("bar.m3.cornerStyle", newValue)
+                        options: [
+                            { displayName: Translation.tr("Hug"), icon: "line_curve", value: 0 },
+                            { displayName: Translation.tr("Float"), icon: "page_header", value: 1 },
+                            { displayName: Translation.tr("Rectangle"), icon: "toolbar", value: 2 },
+                            { displayName: Translation.tr("Material islands"), icon: "category", value: 3 }
+                        ]
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "space_dashboard"
+                            text: Translation.tr("Outer gap (px)")
+                            value: Config.options?.bar?.m3?.gapsOut ?? 5
+                            from: 0
+                            to: 24
+                            stepSize: 1
+                            enabled: (Config.options?.bar?.m3?.cornerStyle ?? 3) === 3
+                                || (Config.options?.bar?.m3?.cornerStyle ?? 3) === 1
+                            opacity: enabled ? 1 : 0.5
+                            onValueChanged: root.setM3Value("bar.m3.gapsOut", value)
+                        }
+                    }
+
+                    SettingsNote {
+                        visible: !((Config.options?.bar?.m3?.cornerStyle ?? 3) === 3
+                            || (Config.options?.bar?.m3?.cornerStyle ?? 3) === 1)
+                        icon: "info"
+                        text: Translation.tr("Outer gap only applies to the Float and Material islands surfaces — the others sit flush against the screen edge.")
+                    }
+                }
+
+                ContentSubsection {
+                    visible: root.m3HasWidget("divisor")
+                    title: Translation.tr("Divider")
+
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.bar?.m3?.divider?.style ?? "rect"
+                        onSelected: newValue => root.setM3Value("bar.m3.divider.style", newValue)
+                        options: [
+                            { displayName: Translation.tr("Line"), icon: "remove", value: "rect" },
+                            { displayName: Translation.tr("Dot"), icon: "fiber_manual_record", value: "dot" },
+                            { displayName: Translation.tr("Space"), icon: "space_bar", value: "space" }
+                        ]
+                    }
+
+                    ConfigSpinBox {
+                        icon: "width"
+                        text: Translation.tr("Space width (px)")
+                        value: Config.options?.bar?.m3?.divider?.spacing ?? 20
+                        from: 4
+                        to: 100
+                        stepSize: 2
+                        enabled: (Config.options?.bar?.m3?.divider?.style ?? "rect") === "space"
+                        opacity: enabled ? 1 : 0.45
+                        onValueChanged: root.setM3Value("bar.m3.divider.spacing", value)
+                    }
+
+                }
+
+                ContentSubsection {
+                    visible: root.m3HasWidget("media")
+                    title: Translation.tr("Media")
+
+                    ConfigRow {
+                        uniform: true
+                        SettingsSwitch {
+                            buttonIcon: "keep"
+                            text: Translation.tr("Keep media visible")
+                            checked: Config.options?.bar?.m3?.media?.alwaysVisible ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.media.alwaysVisible", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "title"
+                            text: Translation.tr("Media title only")
+                            checked: Config.options?.bar?.m3?.media?.onlyTitle ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.media.onlyTitle", checked)
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        MaterialTextField {
+                            Layout.fillWidth: true
+                            placeholderText: Translation.tr("Preferred player — blank for any")
+                            text: Config.options?.bar?.m3?.media?.preferredPlayer ?? ""
+                            onTextChanged: root.setM3Value("bar.m3.media.preferredPlayer", text)
+                        }
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "width_normal"
+                            text: Translation.tr("Minimum width (px)")
+                            value: Config.options?.bar?.m3?.media?.minWidth ?? 100
+                            from: 60
+                            to: 360
+                            stepSize: 10
+                            onValueChanged: {
+                                if (!root.m3ControlsReady) return
+                                const maximum = Config.options?.bar?.m3?.media?.maxWidth ?? 280
+                                root.setM3Value("bar.m3.media.minWidth", Math.min(value, maximum))
+                            }
+                        }
+                        ConfigSpinBox {
+                            icon: "width_full"
+                            text: Translation.tr("Maximum width (px)")
+                            value: Config.options?.bar?.m3?.media?.maxWidth ?? 280
+                            from: 100
+                            to: 640
+                            stepSize: 10
+                            onValueChanged: {
+                                if (!root.m3ControlsReady) return
+                                const minimum = Config.options?.bar?.m3?.media?.minWidth ?? 100
+                                root.setM3Value("bar.m3.media.maxWidth", Math.max(value, minimum))
+                            }
+                        }
+                    }
+                }
+
+                ContentSubsection {
+                    visible: root.m3HasWidget("resources")
+                    title: Translation.tr("Resources")
+
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.bar?.m3?.resources?.style ?? "filled"
+                        onSelected: newValue => root.setM3Value("bar.m3.resources.style", newValue)
+                        options: [
+                            { displayName: Translation.tr("Filled rings"), icon: "donut_large", value: "filled" },
+                            { displayName: Translation.tr("Outline rings"), icon: "radio_button_unchecked", value: "outline" }
+                        ]
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        SettingsSwitch {
+                            buttonIcon: "percent"
+                            text: Translation.tr("Show values")
+                            checked: Config.options?.bar?.m3?.resources?.showValue ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.resources.showValue", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "memory"
+                            text: Translation.tr("RAM")
+                            checked: Config.options?.bar?.m3?.resources?.alwaysShowRam ?? true
+                            onCheckedChanged: root.setM3Value("bar.m3.resources.alwaysShowRam", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "developer_board"
+                            text: Translation.tr("CPU")
+                            checked: Config.options?.bar?.m3?.resources?.alwaysShowCpu ?? true
+                            onCheckedChanged: root.setM3Value("bar.m3.resources.alwaysShowCpu", checked)
+                        }
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        SettingsSwitch {
+                            buttonIcon: "thermostat"
+                            text: Translation.tr("CPU temperature")
+                            checked: Config.options?.bar?.m3?.resources?.alwaysShowCpuTemp ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.resources.alwaysShowCpuTemp", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "hard_drive"
+                            text: Translation.tr("Disk usage")
+                            checked: Config.options?.bar?.m3?.resources?.alwaysShowDisk ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.resources.alwaysShowDisk", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "swap_horiz"
+                            text: Translation.tr("Swap usage")
+                            checked: Config.options?.bar?.m3?.resources?.alwaysShowSwap ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.resources.alwaysShowSwap", checked)
+                        }
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "memory"
+                            text: Translation.tr("RAM warning (%)")
+                            value: Config.options?.bar?.m3?.resources?.memoryWarningThreshold ?? 95
+                            from: 50
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setM3Value("bar.m3.resources.memoryWarningThreshold", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "developer_board"
+                            text: Translation.tr("CPU warning (%)")
+                            value: Config.options?.bar?.m3?.resources?.cpuWarningThreshold ?? 90
+                            from: 50
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setM3Value("bar.m3.resources.cpuWarningThreshold", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "swap_horiz"
+                            text: Translation.tr("Swap warning (%)")
+                            value: Config.options?.bar?.m3?.resources?.swapWarningThreshold ?? 85
+                            from: 50
+                            to: 100
+                            stepSize: 5
+                            enabled: Config.options?.bar?.m3?.resources?.alwaysShowSwap ?? false
+                            opacity: enabled ? 1 : 0.5
+                            onValueChanged: root.setM3Value("bar.m3.resources.swapWarningThreshold", value)
+                        }
+                    }
+                }
+
+                ContentSubsection {
+                    visible: root.m3HasWidget("workspaces")
+                    title: Translation.tr("Workspaces")
+
+                    ConfigRow {
+                        uniform: true
+                        SettingsSwitch {
+                            buttonIcon: "apps"
+                            text: Translation.tr("Show app icons")
+                            checked: Config.options?.bar?.m3?.workspaces?.showAppIcons ?? true
+                            onCheckedChanged: root.setM3Value("bar.m3.workspaces.showAppIcons", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "filter_1"
+                            text: Translation.tr("Always show numbers")
+                            checked: Config.options?.bar?.m3?.workspaces?.alwaysShowNumbers ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.workspaces.alwaysShowNumbers", checked)
+                        }
+                    }
+
+                    SettingsSwitch {
+                        Layout.fillWidth: true
+                        enabled: Config.options?.bar?.m3?.workspaces?.showAppIcons ?? true
+                        opacity: enabled ? 1 : 0.45
+                        buttonIcon: "monochrome_photos"
+                        text: Translation.tr("Monochrome icons")
+                        checked: Config.options?.bar?.m3?.workspaces?.monochromeIcons ?? true
+                        onCheckedChanged: root.setM3Value("bar.m3.workspaces.monochromeIcons", checked)
+                    }
+
+                    ConfigSelectionArray {
+                        currentValue: Config.options?.bar?.m3?.workspaces?.indicatorStyle ?? "dot"
+                        onSelected: newValue => root.setM3Value("bar.m3.workspaces.indicatorStyle", newValue)
+                        options: [
+                            { displayName: Translation.tr("Dot indicator"), icon: "fiber_manual_record", value: "dot" },
+                            { displayName: Translation.tr("App icon indicator"), icon: "apps", value: "icon" }
+                        ]
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "font_download"
+                        text: Translation.tr("Use Nerd Font workspace labels")
+                        checked: Config.options?.bar?.m3?.workspaces?.useNerdFont ?? false
+                        onCheckedChanged: root.setM3Value("bar.m3.workspaces.useNerdFont", checked)
+                    }
+
+                    MaterialTextField {
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Workspace labels, comma separated")
+                        text: (Config.options?.bar?.m3?.workspaces?.numberMap ?? ["1", "2"]).join(", ")
+                        onEditingFinished: {
+                            const labels = text.split(",").map(value => value.trim()).filter(value => value.length > 0)
+                            if (labels.length > 0)
+                                root.setM3Value("bar.m3.workspaces.numberMap", labels)
+                        }
+                    }
+                }
+
+                ContentSubsection {
+                    visible: root.m3HasWidget("utilButtons")
+                    title: Translation.tr("Utility buttons")
+
+                    ConfigRow {
+                        uniform: true
+                        SettingsSwitch {
+                            buttonIcon: "screenshot_region"
+                            text: Translation.tr("Screen snip")
+                            checked: Config.options?.bar?.m3?.utilButtons?.showScreenSnip ?? true
+                            onCheckedChanged: root.setM3Value("bar.m3.utilButtons.showScreenSnip", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "colorize"
+                            text: Translation.tr("Color picker")
+                            checked: Config.options?.bar?.m3?.utilButtons?.showColorPicker ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.utilButtons.showColorPicker", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "screen_record"
+                            text: Translation.tr("Screen recording")
+                            checked: Config.options?.bar?.m3?.utilButtons?.showScreenRecord ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.utilButtons.showScreenRecord", checked)
+                        }
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        SettingsSwitch {
+                            buttonIcon: "mic"
+                            text: Translation.tr("Microphone")
+                            checked: Config.options?.bar?.m3?.utilButtons?.showMicToggle ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.utilButtons.showMicToggle", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "keyboard"
+                            text: Translation.tr("Keyboard layout")
+                            checked: Config.options?.bar?.m3?.utilButtons?.showKeyboardToggle ?? true
+                            onCheckedChanged: root.setM3Value("bar.m3.utilButtons.showKeyboardToggle", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "wallpaper"
+                            text: Translation.tr("Wallpaper")
+                            checked: Config.options?.bar?.m3?.utilButtons?.showWallpaperToggle ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.utilButtons.showWallpaperToggle", checked)
+                        }
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        SettingsSwitch {
+                            buttonIcon: "dark_mode"
+                            text: Translation.tr("Dark mode")
+                            checked: Config.options?.bar?.m3?.utilButtons?.showDarkModeToggle ?? true
+                            onCheckedChanged: root.setM3Value("bar.m3.utilButtons.showDarkModeToggle", checked)
+                        }
+                        SettingsSwitch {
+                            buttonIcon: "speed"
+                            text: Translation.tr("Performance profile")
+                            checked: Config.options?.bar?.m3?.utilButtons?.showPerformanceProfileToggle ?? false
+                            onCheckedChanged: root.setM3Value("bar.m3.utilButtons.showPerformanceProfileToggle", checked)
+                        }
+                    }
+                }
+
+                ContentSubsection {
+                    visible: root.m3HasWidget("docktoPanel")
+                    title: Translation.tr("Dock in bar")
+
+                    SettingsNote {
+                        icon: "info"
+                        text: Translation.tr("Set icon or button size to zero to follow the current bar height automatically.")
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "apps"
+                            text: Translation.tr("Icon size (px)")
+                            value: Config.options?.bar?.m3?.dockToPanel?.iconSize ?? 0
+                            from: 0
+                            to: 48
+                            stepSize: 1
+                            onValueChanged: root.setM3Value("bar.m3.dockToPanel.iconSize", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "crop_square"
+                            text: Translation.tr("Button size (px)")
+                            value: Config.options?.bar?.m3?.dockToPanel?.buttonSize ?? 0
+                            from: 0
+                            to: 56
+                            stepSize: 1
+                            onValueChanged: root.setM3Value("bar.m3.dockToPanel.buttonSize", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "space_bar"
+                            text: Translation.tr("Button spacing (px)")
+                            value: Config.options?.bar?.m3?.dockToPanel?.buttonSpacing ?? 2
+                            from: 0
+                            to: 16
+                            stepSize: 1
+                            onValueChanged: root.setM3Value("bar.m3.dockToPanel.buttonSpacing", value)
+                        }
+                    }
+                }
+
             }
 
             ContentSubsection {
@@ -581,6 +1254,67 @@ ContentPage {
                 visible: !(Config.options?.bar?.showBackground ?? true)
                 icon: "info"
                 text: Translation.tr("Opacity has no effect while ‘Show background’ is off.")
+            }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Audio spectrum")
+
+                ConfigSwitch {
+                    buttonIcon: "graphic_eq"
+                    text: Translation.tr("Show spectrum in the bar")
+                    checked: Config.options?.bar?.visualizer?.enable ?? false
+                    onCheckedChanged: Config.setNestedValue("bar.visualizer.enable", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Paints the audio spectrum into the bar surface. Only runs while something is playing.")
+                    }
+                }
+
+                ConfigSelectionArray {
+                    enabled: Config.options?.bar?.visualizer?.enable ?? false
+                    opacity: enabled ? 1 : 0.5
+                    currentValue: Config.options?.bar?.visualizer?.type ?? "bars"
+                    onSelected: newValue => Config.setNestedValue("bar.visualizer.type", newValue)
+                    options: [
+                        { displayName: Translation.tr("Bars"), icon: "equalizer", value: "bars" },
+                        { displayName: Translation.tr("Wave"), icon: "waves", value: "wave" },
+                    ]
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    enabled: Config.options?.bar?.visualizer?.enable ?? false
+                    opacity: enabled ? 1 : 0.5
+
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        icon: "height"
+                        text: Translation.tr("Spectrum height (%)")
+                        value: Math.round((Config.options?.bar?.visualizer?.height ?? 0.6) * 100)
+                        from: 10
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("bar.visualizer.height", value / 100)
+                    }
+                    ConfigSpinBox {
+                        Layout.fillWidth: true
+                        icon: "opacity"
+                        text: Translation.tr("Spectrum opacity (%)")
+                        value: Math.round((Config.options?.bar?.visualizer?.opacity ?? 0.35) * 100)
+                        from: 5
+                        to: 100
+                        stepSize: 5
+                        onValueChanged: Config.setNestedValue("bar.visualizer.opacity", value / 100)
+                    }
+                }
+
+                SettingsNote {
+                    visible: !(Config.options?.bar?.showBackground ?? true) && (Config.options?.bar?.visualizer?.enable ?? false)
+                    icon: "info"
+                    text: Translation.tr("The spectrum is painted into the bar background, so it is hidden while ‘Show background’ is off.")
+                }
             }
 
             SettingsDivider {}

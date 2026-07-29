@@ -486,6 +486,7 @@ Singleton {
 
     function handleWindowFocusChanged(data) {
         const focusedWindowId = data.id
+        root._latestFocusedWindowId = focusedWindowId
 
         if (focusedWindowId !== null && focusedWindowId !== undefined) {
             const newOrder = []
@@ -499,40 +500,9 @@ Singleton {
             mruWindowIds = newOrder
         }
 
-        let focusedWindow = null
-        const updatedWindows = []
-        let hasChanges = false
-
-        for (var i = 0; i < windows.length; i++) {
-            const w = windows[i]
-            const shouldBeFocused = (w.id === focusedWindowId)
-            
-            if (w.is_focused === shouldBeFocused) {
-                updatedWindows.push(w)
-                if (shouldBeFocused) focusedWindow = w
-                continue
-            }
-
-            const updatedWindow = {}
-            for (let prop in w) {
-                updatedWindow[prop] = w[prop]
-            }
-
-            updatedWindow.is_focused = shouldBeFocused
-            if (shouldBeFocused) {
-                focusedWindow = updatedWindow
-            }
-
-            updatedWindows.push(updatedWindow)
-            hasChanges = true
-        }
-
-        if (hasChanges) windows = updatedWindows
-
-        // Update activeWindow (signal is auto-emitted on property change)
-        if (activeWindow !== focusedWindow) {
-            activeWindow = focusedWindow
-        }
+        const currentList = root._windowsDirty ? root._pendingWindows : root.windows
+        scheduleWindowsUpdate(currentList)
+        const focusedWindow = currentList.find(window => window.id === focusedWindowId)
 
         if (focusedWindow) {
             const ws = root.workspaces[focusedWindow.workspace_id]
@@ -554,59 +524,18 @@ Singleton {
 
     function handleWorkspaceActiveWindowChanged(data) {
         const ws = root.workspaces[data.workspace_id]
-        if (ws) {
-            const updatedWs = {}
-            for (let prop in ws) {
-                updatedWs[prop] = ws[prop]
-            }
-            updatedWs.active_window_id = data.active_window_id
+        if (!ws)
+            return
 
-            const updatedWorkspaces = {}
-            for (const id in root.workspaces) {
-                updatedWorkspaces[id] = id === data.workspace_id ? updatedWs : root.workspaces[id]
-            }
-            root.workspaces = updatedWorkspaces
-        }
+        const updatedWs = {}
+        for (let prop in ws)
+            updatedWs[prop] = ws[prop]
+        updatedWs.active_window_id = data.active_window_id
 
-        // Optimization: only recreate window objects that actually change
-        const updatedWindows = []
-        let hasChanges = false
-        let newActiveWindow = null
-
-        for (var i = 0; i < windows.length; i++) {
-            const w = windows[i]
-            let shouldBeFocused
-            
-            if (data.active_window_id !== null && data.active_window_id !== undefined) {
-                shouldBeFocused = (w.id == data.active_window_id)
-            } else {
-                shouldBeFocused = w.workspace_id == data.workspace_id ? false : w.is_focused
-            }
-
-            // Only create new object if focus state actually changed
-            if (w.is_focused === shouldBeFocused) {
-                updatedWindows.push(w)
-                if (shouldBeFocused) newActiveWindow = w
-            } else {
-                const updatedWindow = {}
-                for (let prop in w) {
-                    updatedWindow[prop] = w[prop]
-                }
-                updatedWindow.is_focused = shouldBeFocused
-                updatedWindows.push(updatedWindow)
-                if (shouldBeFocused) newActiveWindow = updatedWindow
-                hasChanges = true
-            }
-        }
-
-        if (hasChanges) {
-            windows = updatedWindows
-        }
-        
-        // Update activeWindow (signal is auto-emitted on property change)
-        if (activeWindow !== newActiveWindow) {
-            activeWindow = newActiveWindow
-        }
+        const updatedWorkspaces = {}
+        for (const id in root.workspaces)
+            updatedWorkspaces[id] = id === data.workspace_id ? updatedWs : root.workspaces[id]
+        root.workspaces = updatedWorkspaces
     }
 
     function handleWindowsChanged(data) {
@@ -657,6 +586,7 @@ Singleton {
     // Batching para actualizaciones de ventanas
     property bool _windowsDirty: false
     property var _pendingWindows: []
+    property var _latestFocusedWindowId
 
     Timer {
         id: windowsUpdateTimer
@@ -673,11 +603,32 @@ Singleton {
     }
 
     function scheduleWindowsUpdate(newWindowsList) {
-        _pendingWindows = newWindowsList
+        _pendingWindows = root._normalizeWindowFocus(newWindowsList)
         _windowsDirty = true
         if (!windowsUpdateTimer.running) {
             windowsUpdateTimer.restart()
         }
+    }
+
+    function _normalizeWindowFocus(windowList) {
+        if (!Array.isArray(windowList) || root._latestFocusedWindowId === undefined)
+            return windowList
+
+        let changed = false
+        const normalizedWindows = windowList.map(window => {
+            const shouldBeFocused = root._latestFocusedWindowId !== null
+                && window.id === root._latestFocusedWindowId
+            if (window.is_focused === shouldBeFocused)
+                return window
+
+            changed = true
+            const normalizedWindow = {}
+            for (const prop in window)
+                normalizedWindow[prop] = window[prop]
+            normalizedWindow.is_focused = shouldBeFocused
+            return normalizedWindow
+        })
+        return changed ? normalizedWindows : windowList
     }
 
     function handleWindowLayoutsChanged(data) {

@@ -79,6 +79,10 @@ lives on `prerelease` and reaches `main` with the next release.
   heatmap. `dashboard` IPC target.
 - Bar styles islands, scenic and frame join Classic, with a preset gallery
   of live mini-mockups.
+- A configurable Material 3 bar adds tonal widget groups, an in-bar dock,
+  media and system resources, delayed tooltips, tray menus, and matching
+  Settings controls. Window focus indicators now follow Niri focus changes
+  without dropping out after repeated switches.
 - The pill bar, a fifth bar style: a morphing centre island that rests as a
   clock and grows into workspaces, mixer, launcher, recorder and the rest as
   you hover, docks flush in game mode, and hosts its own OSD and toasts.

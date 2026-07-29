@@ -1698,6 +1698,102 @@ Singleton {
                     property int padding: 12 // Horizontal capsule padding around edge-section content, px
                 }
 
+                // Options for the separate M3 implementation under modules/barM3/. It
+                // keeps its own layout/appearance contract instead of reusing
+                // bar.layout/bar.modules/bar.borderless, because its grouping
+                // model (three flat layouts of widget names, string grouping
+                // style, per-position pill radii) is incompatible with iNiR's
+                // five-zone registry. Nothing here changes any other bar.
+                property JsonObject m3: JsonObject {
+                    // 0: Hug | 1: Float | 2: Plain rectangle | 3: Material 3
+                    property int cornerStyle: 3
+                    // "pills" (adjacent groups join into one continuous shape)
+                    // | "separated" (every group is its own capsule)
+                    // | "transparent" (no group surface at all)
+                    property string borderless: "separated"
+                    property bool showBackground: true
+                    property bool verbose: true
+                    property int gapsOut: 5 // Outer gap the float/M3 styles detach by
+                    // Widget names resolve to modules/barM3/<Name>.qml. Available:
+                    // media, workspaces, activeWindow, leftSidebarButton, docktoPanel,
+                    // visualizer, divisor, resources, sysTray, systemIcons, utilButtons,
+                    // networkSpeed, updatesCount, batteryIndicator, weatherBar,
+                    // clockWidget, notificationUnreadCount, powerButton.
+                    // The showcase uses a mirrored visualizer around the in-bar dock.
+                    // The active layout is kept separate from the user's custom
+                    // layout. Presets may replace the active lists, but must never
+                    // destroy the last custom arrangement.
+                    property string layoutMode: "auto" // "auto" | "compact" | "showcase" | "information" | "custom"
+                    property bool customLayoutSaved: false
+                    property JsonObject layouts: JsonObject {
+                        property list<string> leftLayout: ["media", "workspaces"]
+                        property list<string> middleLayout: ["visualizer", "docktoPanel", "visualizer"]
+                        property list<string> rightLayout: ["utilButtons", "systemIcons", "weatherBar", "clockWidget"]
+                    }
+                    property JsonObject customLayouts: JsonObject {
+                        property list<string> leftLayout: []
+                        property list<string> middleLayout: []
+                        property list<string> rightLayout: []
+                    }
+                    property JsonObject divider: JsonObject {
+                        property string style: "rect" // "rect" | "dot" | "space"
+                        property int spacing: 20
+                    }
+                    property JsonObject tooltips: JsonObject {
+                        property bool clickToShow: false
+                    }
+                    property JsonObject indicators: JsonObject {
+                        property JsonObject notifications: JsonObject {
+                            property bool showUnreadCount: false
+                        }
+                    }
+                    property JsonObject media: JsonObject {
+                        property string preferredPlayer: ""
+                        property bool alwaysVisible: false
+                        property bool onlyTitle: false
+                        property int maxWidth: 280
+                        property int minWidth: 100
+                    }
+                    property JsonObject resources: JsonObject {
+                        property string style: "filled"
+                        property bool showValue: false
+                        property bool alwaysShowSwap: false
+                        property bool alwaysShowCpu: true
+                        property bool alwaysShowCpuTemp: false
+                        property bool alwaysShowDisk: false
+                        property bool alwaysShowRam: true
+                        property int memoryWarningThreshold: 95
+                        property int swapWarningThreshold: 85
+                        property int cpuWarningThreshold: 90
+                    }
+                    property JsonObject workspaces: JsonObject {
+                        property bool monochromeIcons: true
+                        property bool showAppIcons: true
+                        property string indicatorStyle: "dot" // "dot" | "icon"
+                        property bool alwaysShowNumbers: false
+                        property list<string> numberMap: ["1", "2"]
+                        property bool useNerdFont: false
+                    }
+                    property JsonObject utilButtons: JsonObject {
+                        property bool showScreenSnip: true
+                        property bool showColorPicker: false
+                        property bool showMicToggle: false
+                        property bool showKeyboardToggle: true
+                        property bool showWallpaperToggle: false
+                        property bool showDarkModeToggle: true
+                        property bool showPerformanceProfileToggle: false
+                        property bool showScreenRecord: false
+                    }
+                    // The dock rendered inside the bar.
+                    // iconSize/buttonSize at 0 scale with the bar height; set a
+                    // px value to pin them regardless of how tall the bar is.
+                    property JsonObject dockToPanel: JsonObject {
+                        property real iconSize: 0
+                        property real buttonSize: 0
+                        property real buttonSpacing: 2
+                    }
+                }
+
                 property JsonObject activeWindow: JsonObject {
                     property bool showTitle: true // Show window title under the app name in the bar's active window indicator
                 }
@@ -1714,7 +1810,7 @@ Singleton {
                 property int height: 40 // Bar content height in px (pre-scale). 0 keeps the theme default (40). Range: 24–80.
                 property real opacity: 1.0 // Background opacity (0–1). Lets you make the bar translucent without changing global style.
                 property int cornerStyle: 1 // 0: Hug | 1: Float | 2: Plain rectangle
-                property string appearanceStyle: "classic" // "classic" | "islands" (separate floating groups) | "scenic" (gradient scrim) | "frame" (outlined floating frame) | "pill" (morphing centre island, see bar.pill). Horizontal bar only.
+                property string appearanceStyle: "classic" // "classic" | "islands" (separate floating groups) | "scenic" (gradient scrim) | "frame" (outlined floating frame) | "m3" (no bar surface; each section is a colLayer0 capsule and each module wears a Material 3 tonal container) | "pill" (morphing centre island, see bar.pill). Horizontal bar only.
                 property int customRounding: -1 // -1: use global theme rounding | 0+: override bar rounding (px)
                 property bool floatStyleShadow: true // Show shadow behind bar when cornerStyle == 1 (Float)
                 property bool borderless: true // true for no grouping of items
@@ -1726,6 +1822,14 @@ Singleton {
                 property JsonObject blurBackground: JsonObject {
                     property bool enabled: false
                     property real overlayOpacity: 0.3
+                }
+                // Audio spectrum painted into the bar surface. Only runs while
+                // something is actually playing.
+                property JsonObject visualizer: JsonObject {
+                    property bool enable: false
+                    property string type: "bars" // "bars" | "wave"
+                    property real height: 0.6 // Share of the bar height the spectrum may fill (0.1–1)
+                    property real opacity: 0.35 // Spectrum opacity over the bar surface (0–1)
                 }
                 property bool verbose: true
                 property bool vertical: false

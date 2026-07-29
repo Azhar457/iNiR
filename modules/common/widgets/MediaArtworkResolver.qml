@@ -167,6 +167,13 @@ QtObject {
     }
 
     function refresh(): void {
+        if (!root._completed)
+            return;
+
+        metadataRefreshTimer.restart();
+    }
+
+    function _refreshNow(): void {
         const url = root.normalizedSourceUrl;
         if (!url.length) {
             root._reset(false);
@@ -212,7 +219,6 @@ QtObject {
         if (!root._completed)
             return;
 
-        root._reset(root.normalizedSourceUrl.length > 0);
         root.refresh();
     }
 
@@ -220,14 +226,24 @@ QtObject {
         if (!root._completed)
             return;
 
+        metadataRefreshTimer.stop();
         root._reset(false);
-        root.refresh();
+        root._refreshNow();
     }
 
     Component.onCompleted: {
         root._completed = true;
         root._localReloadsLeft = root.localReloadPasses;
-        root.refresh();
+        root._refreshNow();
+    }
+
+    property var metadataRefreshTimer: Timer {
+        interval: 500
+        repeat: false
+        onTriggered: {
+            root._reset(root.normalizedSourceUrl.length > 0);
+            root._refreshNow();
+        }
     }
 
     property var localReloadTimer: Timer {
@@ -237,7 +253,7 @@ QtObject {
             if (!root.normalizedSourceUrl.length || !root.isLocalFile)
                 return;
 
-            root.refresh();
+            root._refreshNow();
         }
     }
 
@@ -294,7 +310,7 @@ QtObject {
     property var retryTimer: Timer {
         interval: 350 * Math.max(1, root._retryCount)
         repeat: false
-        onTriggered: root.refresh()
+        onTriggered: root._refreshNow()
     }
 
     property var localExistsChecker: Process {
