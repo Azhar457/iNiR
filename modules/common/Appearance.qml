@@ -606,9 +606,9 @@ Singleton {
                 "YTAS": 716,
                 "YTLC": 490,
                 "XTRA": 488,
-                "wdth": Config.options?.appearance?.typography?.variableAxes?.wdth ?? 105,
-                "GRAD": Config.options?.appearance?.typography?.variableAxes?.grad ?? 175,
-                "wght": Config.options?.appearance?.typography?.variableAxes?.wght ?? 300,
+                "wdth": Math.max(25, Math.min(151, Config.options?.appearance?.typography?.variableAxes?.wdth ?? 105)),
+                "GRAD": Math.max(-200, Math.min(150, Config.options?.appearance?.typography?.variableAxes?.grad ?? 150)),
+                "wght": Math.max(100, Math.min(1000, Config.options?.appearance?.typography?.variableAxes?.wght ?? 300)),
             })
             property var numbers: ({
                 "wght": 400,

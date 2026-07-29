@@ -978,7 +978,7 @@ Singleton {
                     property JsonObject variableAxes: JsonObject {
                         property int wght: 300
                         property int wdth: 105
-                        property int grad: 175
+                        property int grad: 150
                     }
                 }
                 property string iconTheme: "WhiteSur-dark" // System icon theme (tray, GTK/Qt apps)
