@@ -20,11 +20,14 @@ import qs.modules.background.widgets.clock
 import qs.modules.background.widgets.mediaControls
 import qs.modules.background.widgets.weather
 import qs.modules.background.widgets.visualizer
+import qs.modules.background.widgets.imageConverter
 import qs.modules.background.widgets.systemMonitor
 import qs.modules.background.widgets.battery
 import qs.modules.background.widgets.notes
 import qs.modules.background.widgets.calendar
 import qs.modules.background.widgets.uptime
+import qs.modules.background.widgets.worldClock
+import qs.modules.background.widgets.userCard
 import qs.modules.background.widgets.newsTicker
 import qs.modules.background.widgets.mascot
 import qs.modules.background.widgets.japaneseTypography
@@ -105,10 +108,12 @@ Scope {
                 return "widget name is required"
 
             const builtinDefaults = ({
-                weather: false, clock: true, mediaControls: false,
+                weather: false, clock: true, customImage: false,
+                imageConverter: false, mediaControls: false,
                 visualizer: false, systemMonitor: false, battery: false,
                 notes: false, calendarUpcoming: false, uptime: false,
-                newsTicker: false, mascot: false, japaneseTypography: false
+                newsTicker: false, mascot: false, japaneseTypography: false,
+                worldClock: false, userCard: false
             })
             let known = builtinDefaults[name] !== undefined
             let enabled = known
@@ -180,8 +185,10 @@ Scope {
         }
 
         function setWidgetEnabled(widgetName: string, enabled: bool): string {
-            const knownWidgets = ["weather", "clock", "mediaControls", "visualizer", "systemMonitor",
-                "battery", "notes", "calendarUpcoming", "uptime", "newsTicker", "mascot", "japaneseTypography"];
+            const knownWidgets = ["weather", "clock", "customImage", "imageConverter",
+                "mediaControls", "visualizer", "systemMonitor", "battery", "notes",
+                "calendarUpcoming", "uptime", "newsTicker", "mascot", "japaneseTypography",
+                "worldClock", "userCard"];
             if (!knownWidgets.includes(widgetName))
                 return "unknown widget: " + widgetName;
             Config.setNestedValue("background.widgets." + widgetName + ".enable", enabled);
@@ -374,16 +381,22 @@ Scope {
 
         // Zone occupancy: map zone name → array of widget names
         readonly property var _builtinWidgets: [
-            { key: "weather",        defaultOn: false, icon: "cloud" },
-            { key: "clock",          defaultOn: true,  icon: "schedule" },
-            { key: "mediaControls",  defaultOn: false, icon: "album" },
-            { key: "visualizer",     defaultOn: false, icon: "graphic_eq" },
-            { key: "systemMonitor",  defaultOn: false, icon: "monitor_heart" },
-            { key: "battery",        defaultOn: false, icon: "battery_full" },
-            { key: "uptime",         defaultOn: false, icon: "avg_pace" },
-            { key: "newsTicker",     defaultOn: false, icon: "newspaper" },
-            { key: "mascot",         defaultOn: false, icon: "pets" },
-            { key: "japaneseTypography", defaultOn: false, icon: "translate" }
+            { key: "weather",            defaultOn: false, icon: "cloud" },
+            { key: "clock",              defaultOn: true,  icon: "schedule" },
+            { key: "customImage",        defaultOn: false, icon: "add_photo_alternate" },
+            { key: "imageConverter",     defaultOn: false, icon: "transform" },
+            { key: "mediaControls",      defaultOn: false, icon: "album" },
+            { key: "visualizer",         defaultOn: false, icon: "graphic_eq" },
+            { key: "systemMonitor",      defaultOn: false, icon: "monitor_heart" },
+            { key: "battery",            defaultOn: false, icon: "battery_full" },
+            { key: "notes",              defaultOn: false, icon: "sticky_note_2" },
+            { key: "calendarUpcoming",   defaultOn: false, icon: "event" },
+            { key: "uptime",             defaultOn: false, icon: "avg_pace" },
+            { key: "newsTicker",         defaultOn: false, icon: "newspaper" },
+            { key: "mascot",             defaultOn: false, icon: "pets" },
+            { key: "japaneseTypography", defaultOn: false, icon: "translate" },
+            { key: "worldClock",         defaultOn: false, icon: "public" },
+            { key: "userCard",           defaultOn: false, icon: "account_circle" }
         ]
         // Revision counter to force re-evaluation
         property int _zoneRevision: 0
@@ -1956,6 +1969,8 @@ Scope {
                                     Repeater {
                                 model: [
                                     { key: "weather", icon: "cloud", label: "Weather", defaultOn: false },
+                                    { key: "customImage", icon: "add_photo_alternate", label: "Custom Image", defaultOn: false },
+                                    { key: "imageConverter", icon: "transform", label: "Image Converter", defaultOn: false },
                                     { key: "clock", icon: "schedule", label: "Clock", defaultOn: true },
                                     { key: "mediaControls", icon: "album", label: "Media", defaultOn: false },
                                     { key: "japaneseTypography", icon: "translate", label: "Japanese Typography", defaultOn: false },
@@ -1966,7 +1981,9 @@ Scope {
                                     { key: "calendarUpcoming", icon: "event", label: "Upcoming Events", defaultOn: false },
                                     { key: "uptime", icon: "avg_pace", label: "System Uptime", defaultOn: false },
                                     { key: "mascot", icon: "pets", label: "Mascot", defaultOn: false },
-                                    { key: "newsTicker", icon: "newspaper", label: "News Ticker", defaultOn: false }
+                                    { key: "newsTicker", icon: "newspaper", label: "News Ticker", defaultOn: false },
+                                    { key: "worldClock", icon: "public", label: "World Clock", defaultOn: false },
+                                    { key: "userCard", icon: "account_circle", label: "User Card", defaultOn: false }
                                 ]
                                 RippleButton {
                                     id: quickWidgetButton
@@ -2134,6 +2151,38 @@ Scope {
                 }
 
                 FadeLoader {
+                    shown: bgRoot._widgetEnabled("customImage", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskCustomImage : null
+                    Item { id: _hitMaskCustomImage; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: CustomImageWidget {
+                        widgetIndex: 16
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("imageConverter", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskImageConverter : null
+                    Item { id: _hitMaskImageConverter; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: ImageConverterWidget {
+                        widgetIndex: 17
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
                     shown: bgRoot._widgetEnabled("clock", true)
                     z: item?.desktopStackZ ?? 0
                     containmentMask: GlobalStates.widgetEditMode ? _hitMask2 : null
@@ -2263,6 +2312,38 @@ Scope {
                     Item { id: _hitMask10; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
                     sourceComponent: UptimeWidget {
                         widgetIndex: 9
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("worldClock", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask15 : null
+                    Item { id: _hitMask15; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: WorldClockWidget {
+                        widgetIndex: 14
+                        outputName: bgRoot.screen?.name ?? ""
+                        screenWidth: bgRoot.screen.width
+                        screenHeight: bgRoot.screen.height
+                        scaledScreenWidth: bgRoot.screen.width
+                        scaledScreenHeight: bgRoot.screen.height
+                        wallpaperScale: 1
+                    }
+                }
+
+                FadeLoader {
+                    shown: bgRoot._widgetEnabled("userCard", false)
+                    z: item?.desktopStackZ ?? 0
+                    containmentMask: GlobalStates.widgetEditMode ? _hitMask16 : null
+                    Item { id: _hitMask16; x: parent?.item?.editInputX ?? -8; y: parent?.item?.editInputY ?? -8; width: parent?.item?.editInputWidth ?? ((parent?.width ?? 0) + 16); height: parent?.item?.editInputHeight ?? ((parent?.height ?? 0) + 16) }
+                    sourceComponent: UserCardWidget {
+                        widgetIndex: 15
                         outputName: bgRoot.screen?.name ?? ""
                         screenWidth: bgRoot.screen.width
                         screenHeight: bgRoot.screen.height

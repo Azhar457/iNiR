@@ -1231,6 +1231,43 @@ Singleton {
                         property int dim: 0
                     }
 
+                    property JsonObject customImage: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property string path: ""
+                        property string shape: "Cookie4Sided"
+                        property string fitMode: "cover"
+                        property int size: 220
+                        property int dim: 0
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property real x: 120
+                        property real y: 320
+                    }
+
+                    property JsonObject imageConverter: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property string selectedFormat: "webp"
+                        property int contentWidth: 292
+                        property int contentHeight: 260
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.22
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.22
+                        property real cornerRadius: -1
+                        property real x: 120
+                        property real y: 360
+                    }
+
                     property JsonObject mediaControls: JsonObject {
                         property bool enable: false
                         property bool locked: false
@@ -1472,6 +1509,49 @@ Singleton {
                         property int dim: 0
                         property real x: 80
                         property real y: 80
+                    }
+
+                    property JsonObject worldClock: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int contentWidth: 300
+                        property int contentHeight: 210
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property real x: 80
+                        property real y: 200
+                        property list<string> timezones: ["Australia/Sydney", "Asia/Tokyo", "Europe/London", "America/New_York"]
+                    }
+
+                    property JsonObject userCard: JsonObject {
+                        property bool enable: false
+                        property bool locked: false
+                        property string placementStrategy: "free"
+                        property int contentWidth: 280
+                        property int contentHeight: 176
+                        property int widgetScale: 100
+                        property int widgetOpacity: 100
+                        property bool showBackground: true
+                        property bool useBlur: false
+                        property bool showBorder: true
+                        property real backgroundOpacity: 0.16
+                        property real borderWidth: 1
+                        property real borderOpacity: 0.20
+                        property real cornerRadius: -1
+                        property string colorMode: "auto"
+                        property int dim: 0
+                        property real x: 80
+                        property real y: 420
                     }
 
                     property JsonObject mascot: JsonObject {

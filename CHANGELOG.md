@@ -13,6 +13,10 @@ things got fixed by people with better eyes than ours. Everything below
 lives on `prerelease` and reaches `main` with the next release.
 
 ### Added
+- Four desktop widgets add a shaped local image or GIF, drag-and-drop image
+  conversion, four configurable world clocks, and a profile card with weather
+  and session actions. They use the shared placement, resize, opacity and edit
+  controls.
 - A compact wallpaper launcher adds a fast, searchable carousel with static
   and animated libraries and matching ii and Waffle settings. It reuses the
   grid's wallpaper cards, switches libraries with Tab, and keeps keyboard,
