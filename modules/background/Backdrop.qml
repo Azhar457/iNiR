@@ -61,11 +61,9 @@ Variants {
         // zoom animation is already running by then. It flashes. Tried and
         // reverted 2026-07-12 — the ~50 MB of GPU is not worth an artifact in an
         // interaction users hit every day.
-        readonly property bool performanceSuspended: GameMode.shouldSuspendOutput(
-            modelData?.name ?? "")
-        visible: GlobalStates.screenLocked || (!performanceSuspended
-            && (!hasFullscreenWindow
-                || !(Config.options?.background?.hideWhenFullscreen ?? false)))
+        visible: GlobalStates.screenLocked
+            || !hasFullscreenWindow
+            || !(Config.options?.background?.hideWhenFullscreen ?? false)
 
         // Material ii backdrop config (independent)
         readonly property var iiBackdrop: Config.options?.background?.backdrop ?? {}

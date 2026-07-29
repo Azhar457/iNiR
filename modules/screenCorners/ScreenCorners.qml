@@ -173,8 +173,11 @@ Scope {
                 if (CompositorService.isHyprland) {
                     return activeWorkspaceWithFullscreen != undefined;
                 }
+                // Corners only stop being painted; they never unmap a surface
+                // or change the exclusive zone, so they can safely follow
+                // automatic fullscreen detection.
                 if (CompositorService.isNiri)
-                    return GameMode.shouldSuspendOutput(modelData?.name ?? "")
+                    return GameMode.hasFullscreenOnOutput(modelData?.name ?? "")
                 return false;
             }
 

@@ -556,7 +556,6 @@ Scope {
         // owns this output or manual GameMode explicitly requests a quiet shell.
         // Explicit fullscreen opens and their exit animation remain usable.
         visible: root._nativeHostMapped && !GlobalStates.screenLocked
-            && !GameMode.shouldHidePanels
             && (!root.fullscreenCovered || root.presentationOpen
                 || sidebarContentLoader.animating)
         updatesEnabled: sidebarRoot.visible && root._renderUpdatesNeeded

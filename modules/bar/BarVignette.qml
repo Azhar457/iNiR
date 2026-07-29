@@ -38,7 +38,6 @@ Variants {
         }
 
         visible: vignetteEnabled
-            && !GameMode.shouldSuspendOutput(modelData?.name ?? "")
 
         anchors {
             left: true
