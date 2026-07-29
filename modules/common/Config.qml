@@ -2091,7 +2091,7 @@ Singleton {
             }
 
             property JsonObject dock: JsonObject {
-                property string style: "panel" // "panel" | "pill" | "macos" | "island"
+                property string style: "panel" // "panel" | "pill" | "macos" | "island" | "m3"
                 property bool cardStyle: false
                 property bool enable: false
                 property bool monochromeIcons: true
