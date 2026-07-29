@@ -256,9 +256,7 @@ Singleton {
             icon: "dark_mode",
             category: "appearance",
             keywords: ["dark", "theme", "night", "mode"],
-            execute: () => {
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "dark", "--noswitch"])
-            }
+            execute: () => MaterialThemeLoader.setDarkMode(true)
         },
         {
             id: "light-mode",
@@ -267,9 +265,7 @@ Singleton {
             icon: "light_mode",
             category: "appearance",
             keywords: ["light", "theme", "day", "mode"],
-            execute: () => {
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "light", "--noswitch"])
-            }
+            execute: () => MaterialThemeLoader.setDarkMode(false)
         },
         {
             id: "accent-color",
