@@ -191,6 +191,22 @@ for tool in "${dev_tooling_files[@]}" "${dev_tooling_dirs[@]}"; do
     fi
 done
 
+for pkgbuild in "$runtime_root/distro/arch/inir-shell/PKGBUILD" "$runtime_root/distro/arch/inir-shell-git/PKGBUILD"; do
+    [[ -f "$pkgbuild" ]] || continue
+    for agent_file in "${agent_files[@]}"; do
+        if ! grep -q -- "-name $agent_file" "$pkgbuild" 2>/dev/null; then
+            printf 'LEAK GUARD: %s missing strip for %s\n' "$(basename "$(dirname "$pkgbuild")")/PKGBUILD" "$agent_file" >&2
+            leak_guard=1
+        fi
+    done
+    for agent_dir in "${agent_dirs[@]}"; do
+        if ! grep -q -- "-name $agent_dir" "$pkgbuild" 2>/dev/null; then
+            printf 'LEAK GUARD: %s missing strip for %s/\n' "$(basename "$(dirname "$pkgbuild")")/PKGBUILD" "$agent_dir" >&2
+            leak_guard=1
+        fi
+    done
+done
+
 if [[ "$leak_guard" -eq 1 ]]; then
     printf 'FAIL: agent artifact distribution guard failed\n' >&2
     exit 1

@@ -131,6 +131,9 @@ package() {
     cp -a "$srcroot/$dir" "$shellroot/"
   done < "$srcroot/sdata/runtime-payload-dirs.txt"
 
+  find "$shellroot" \( -name AGENTS.md -o -name CLAUDE.md -o -name CODEX.md -o -name PI.md -o -name codemap.md -o -name .mcp.json -o -name opencode.json -o -name skills-lock.json \) -delete
+  find "$shellroot" \( -name .agents -o -name .claude -o -name .codex -o -name .factory -o -name .opencode -o -name .codebase-memory -o -name .impeccable -o -name .pi-subagents \) -type d -prune -exec rm -rf {} +
+
   find "$shellroot/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} +
 
   install -Dm755 "$srcroot/scripts/inir" "$pkgdir/usr/bin/inir"
