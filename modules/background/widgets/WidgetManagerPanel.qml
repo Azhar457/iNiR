@@ -270,8 +270,6 @@ Item {
 
             WidgetCard { widgetKey: "clock"; widgetIcon: "schedule"; widgetLabel: Translation.tr("Clock"); defaultEnabled: true }
             WidgetCard { widgetKey: "weather"; widgetIcon: "cloud"; widgetLabel: Translation.tr("Weather"); defaultEnabled: false }
-            WidgetCard { widgetKey: "customImage"; widgetIcon: "add_photo_alternate"; widgetLabel: Translation.tr("Custom image"); defaultEnabled: false }
-            WidgetCard { widgetKey: "imageConverter"; widgetIcon: "transform"; widgetLabel: Translation.tr("Image converter"); defaultEnabled: false }
             WidgetCard { widgetKey: "mediaControls"; widgetIcon: "album"; widgetLabel: Translation.tr("Media Controls"); defaultEnabled: false }
             WidgetCard { widgetKey: "visualizer"; widgetIcon: "graphic_eq"; widgetLabel: Translation.tr("Visualizer"); defaultEnabled: false }
             WidgetCard { widgetKey: "systemMonitor"; widgetIcon: "monitor_heart"; widgetLabel: Translation.tr("System Monitor"); defaultEnabled: false }
@@ -282,8 +280,6 @@ Item {
             WidgetCard { widgetKey: "newsTicker"; widgetIcon: "newspaper"; widgetLabel: Translation.tr("News Ticker"); defaultEnabled: false }
             WidgetCard { widgetKey: "mascot"; widgetIcon: "pets"; widgetLabel: Translation.tr("Mascot"); defaultEnabled: false }
             WidgetCard { widgetKey: "japaneseTypography"; widgetIcon: "translate"; widgetLabel: Translation.tr("Japanese Typography"); defaultEnabled: false }
-            WidgetCard { widgetKey: "worldClock"; widgetIcon: "public"; widgetLabel: Translation.tr("World clock"); defaultEnabled: false }
-            WidgetCard { widgetKey: "userCard"; widgetIcon: "account_circle"; widgetLabel: Translation.tr("User card"); defaultEnabled: false }
 
             // ── Extra mascot instances ── (each is its own WidgetCard, positioned/posed independently)
             Item { width: 1; height: 8 }
@@ -459,9 +455,9 @@ Item {
                     && Config.getNestedValue(card._cfgPrefix + ".style", "cookie") === "digital")
                 || (card.widgetKey === "weather"
                     && Config.getNestedValue(card._cfgPrefix + ".style", "pill") === "card")
-                || ["imageConverter", "visualizer", "systemMonitor", "battery", "notes",
+                || ["visualizer", "systemMonitor", "battery", "notes",
                     "calendarUpcoming", "uptime", "newsTicker", "mascot",
-                    "japaneseTypography", "worldClock", "userCard"].indexOf(card.widgetKey) !== -1
+                    "japaneseTypography"].indexOf(card.widgetKey) !== -1
             ))
         readonly property bool _expanded: card._enabled && _expandToggle
         property bool _expandToggle: false
