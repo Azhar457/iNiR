@@ -27,6 +27,10 @@ Rectangle {
             : NaN
         return Number.isFinite(value) ? value : 0
     }
+    readonly property real volumeValue: {
+        const value = Number(Audio.sink?.audio?.volume)
+        return Number.isFinite(value) ? value : 0
+    }
     property real sliderSpacing: 10
     property bool compactSurface: false
 
@@ -301,7 +305,7 @@ Rectangle {
         id: defaultVolumeSlider
         DefaultQuickSlider {
             materialSymbol: "volume_up"
-            modelValue: Audio.sink?.audio?.volume ?? 0
+            modelValue: root.volumeValue
             onMoved: Audio.setSinkVolume(value)
         }
     }
@@ -328,7 +332,7 @@ Rectangle {
         id: zzzVolumeSlider
         ZzzQuickSlider {
             materialSymbol: "volume_up"
-            modelValue: Audio.sink?.audio?.volume ?? 0
+            modelValue: root.volumeValue
             onMoved: Audio.setSinkVolume(value)
         }
     }
