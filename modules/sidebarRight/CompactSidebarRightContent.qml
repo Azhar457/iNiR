@@ -1995,7 +1995,7 @@ Item {
                 compact: true
                 shown: emptyPlaceholder.visible
                 icon: Notifications.silent ? "notifications_off" : "notifications_active"
-                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("Clear")
+                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("All caught up")
                 shape: MaterialShape.Shape.Ghostish
             }
 
@@ -2131,7 +2131,7 @@ Item {
 
             QuickActionButton {
                 Layout.fillWidth: true
-                icon: "color_lens"
+                icon: "palette"
                 label: Translation.tr("Color Picker")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false

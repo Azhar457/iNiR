@@ -17,7 +17,7 @@ Item {
     // Boards: "local" (geo, via Weather location) / "top" / one topic per entry.
     readonly property var boards: {
         const result = [
-            { key: "local", topic: "", label: Translation.tr("Local"), icon: "location_on" },
+            { key: "local", topic: "", label: Translation.tr("Local"), icon: "place" },
             { key: "top", topic: "", label: Translation.tr("Top"), icon: "trending_up" }
         ]
         const topicLabels = {

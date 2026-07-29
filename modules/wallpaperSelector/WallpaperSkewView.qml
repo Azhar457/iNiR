@@ -2197,7 +2197,7 @@ Item {
         IconToolbarButton {
             implicitWidth: height
             onClicked: root.favouriteFilterActive = !root.favouriteFilterActive
-            text: root.favouriteFilterActive ? "favorite" : "favorite_border"
+            text: "favorite"
             opacity: root.favouriteFilterActive ? 1.0 : 0.6
             StyledToolTip { text: root.favouriteFilterActive ? Translation.tr("Show all") : Translation.tr("Show favourites only") }
         }

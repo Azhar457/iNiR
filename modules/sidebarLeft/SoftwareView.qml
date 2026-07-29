@@ -268,7 +268,7 @@ Item {
 
                 MaterialSymbol {
                     Layout.alignment: Qt.AlignHCenter
-                    text: "error_outline"
+                    text: "error"
                     iconSize: 48
                     color: root.colTextSecondary
                 }
