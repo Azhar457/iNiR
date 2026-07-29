@@ -50,6 +50,7 @@ GroupButton 1.0 GroupButton.qml
 IconThemeSelector 1.0 IconThemeSelector.qml
 IconToolbarButton 1.0 IconToolbarButton.qml
 InputChip 1.0 InputChip.qml
+FilterChip 1.0 FilterChip.qml
 KeyboardKey 1.0 KeyboardKey.qml
 LightDarkPreferenceButton 1.0 LightDarkPreferenceButton.qml
 MascotAnimation 1.0 MascotAnimation.qml
