@@ -93,6 +93,12 @@ AbstractBackgroundWidget {
         }
     }
 
+    function setImagePath(path: string): void {
+        if (!path || !Images.isValidImageByName(path))
+            return
+        Config.setNestedValue(root._configPath + ".path", path)
+    }
+
     MaterialShape {
         id: shadowShape
         anchors.fill: parent
@@ -169,12 +175,12 @@ AbstractBackgroundWidget {
             }
 
             const path = root.pathFromDropUrl(drop.urls[0]);
-            if (!Images.isValidImageByName(path)) {
+            if (!path || !Images.isValidImageByName(path)) {
                 drop.accepted = false;
                 return;
             }
 
-            Config.setNestedValue("background.widgets.customImage.path", path);
+            root.setImagePath(path);
             drop.accept(Qt.CopyAction);
         }
     }
