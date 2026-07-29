@@ -249,8 +249,8 @@ Item {
             id: volGlyph
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 17 * root.s
-            height: 17 * root.s
+            width: (root.compact ? 13 : 17) * root.s
+            height: width
             name: root.muted ? "speaker-off" : "speaker"
             color: root.muted ? PillTheme.dim : PillTheme.iconDim
             stroke: 1.7
@@ -260,24 +260,24 @@ Item {
             id: volPct
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 32 * root.s
+            width: (root.compact ? 26 : 32) * root.s
             horizontalAlignment: Text.AlignRight
             text: Math.round(root.volume * 100) + "%"
             color: root.muted ? PillTheme.dim : PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: 11 * root.s
+            font.pixelSize: (root.compact ? 9.5 : 11) * root.s
             font.weight: Font.DemiBold
             font.features: { "tnum": 1 }
         }
 
         Rectangle {
             anchors.left: volGlyph.right
-            anchors.leftMargin: 12 * root.s
+            anchors.leftMargin: (root.compact ? 6 : 12) * root.s
             anchors.right: volPct.left
-            anchors.rightMargin: 12 * root.s
+            anchors.rightMargin: (root.compact ? 6 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
-            height: 4 * root.s
-            radius: 2 * root.s
+            height: (root.compact ? 3 : 4) * root.s
+            radius: height / 2
             color: PillTheme.threadBg
 
             Rectangle {
@@ -304,8 +304,8 @@ Item {
             id: micGlyph
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 17 * root.s
-            height: 17 * root.s
+            width: (root.compact ? 13 : 17) * root.s
+            height: width
             name: root.micMuted ? "mic-off" : "mic"
             color: root.micMuted ? PillTheme.dim : PillTheme.iconDim
             stroke: 1.7
@@ -315,24 +315,24 @@ Item {
             id: micPct
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 32 * root.s
+            width: (root.compact ? 26 : 32) * root.s
             horizontalAlignment: Text.AlignRight
             text: root.micMuted ? "off" : Math.round(root.micVolume * 100) + "%"
             color: root.micMuted ? PillTheme.dim : PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: 11 * root.s
+            font.pixelSize: (root.compact ? 9.5 : 11) * root.s
             font.weight: Font.DemiBold
             font.features: ({ "tnum": 1 })
         }
 
         Rectangle {
             anchors.left: micGlyph.right
-            anchors.leftMargin: 12 * root.s
+            anchors.leftMargin: (root.compact ? 6 : 12) * root.s
             anchors.right: micPct.left
-            anchors.rightMargin: 12 * root.s
+            anchors.rightMargin: (root.compact ? 6 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
-            height: 4 * root.s
-            radius: 2 * root.s
+            height: (root.compact ? 3 : 4) * root.s
+            radius: height / 2
             color: PillTheme.threadBg
 
             Rectangle {
@@ -422,7 +422,7 @@ Item {
             id: trackCtrl
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: (root.compact ? 15 : 18) * root.s
+            width: (root.compact ? 12 : 18) * root.s
             height: width
             name: root.subjectPlaying ? "play" : "pause"
             color: root.subjectPlaying ? PillTheme.vermLit : PillTheme.iconDim
@@ -430,9 +430,9 @@ Item {
 
         Column {
             anchors.left: coverBox.right
-            anchors.leftMargin: (root.compact ? 8 : 12) * root.s
+            anchors.leftMargin: (root.compact ? 6 : 12) * root.s
             anchors.right: trackCtrl.left
-            anchors.rightMargin: (root.compact ? 8 : 12) * root.s
+            anchors.rightMargin: (root.compact ? 4 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
             spacing: 3 * root.s
 
@@ -441,7 +441,7 @@ Item {
                 text: root.subjectHas ? root.subjectTitle : "Nothing playing"
                 color: PillTheme.cream
                 font.family: PillTheme.font
-                font.pixelSize: (root.compact ? 10.5 : 14) * root.s
+                font.pixelSize: (root.compact ? 9.5 : 14) * root.s
                 font.weight: Font.DemiBold
                 maximumLineCount: 1
                 elide: Text.ElideRight
@@ -471,8 +471,8 @@ Item {
             id: brightGlyph
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 17 * root.s
-            height: 17 * root.s
+            width: (root.compact ? 13 : 17) * root.s
+            height: width
             name: "sun"
             color: PillTheme.iconDim
             stroke: 1.7
@@ -482,24 +482,24 @@ Item {
             id: brightPct
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 32 * root.s
+            width: (root.compact ? 26 : 32) * root.s
             horizontalAlignment: Text.AlignRight
             text: Math.round(root.brightness * 100) + "%"
             color: PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: 11 * root.s
+            font.pixelSize: (root.compact ? 9.5 : 11) * root.s
             font.weight: Font.DemiBold
             font.features: { "tnum": 1 }
         }
 
         Rectangle {
             anchors.left: brightGlyph.right
-            anchors.leftMargin: 12 * root.s
+            anchors.leftMargin: (root.compact ? 6 : 12) * root.s
             anchors.right: brightPct.left
-            anchors.rightMargin: 12 * root.s
+            anchors.rightMargin: (root.compact ? 6 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
-            height: 4 * root.s
-            radius: 2 * root.s
+            height: (root.compact ? 3 : 4) * root.s
+            radius: height / 2
             color: PillTheme.threadBg
 
             Rectangle {
@@ -525,8 +525,8 @@ Item {
             id: battGlyph
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 17 * root.s
-            height: 17 * root.s
+            width: (root.compact ? 13 : 17) * root.s
+            height: width
             name: "bolt"
             color: PillTheme.flameGlow
             stroke: 1.7
@@ -536,24 +536,24 @@ Item {
             id: battPct
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: 40 * root.s
+            width: (root.compact ? 30 : 40) * root.s
             horizontalAlignment: Text.AlignRight
             text: PillBattery.pct + "%"
             color: PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: 11 * root.s
+            font.pixelSize: (root.compact ? 9.5 : 11) * root.s
             font.weight: Font.DemiBold
             font.features: { "tnum": 1 }
         }
 
         Rectangle {
             anchors.left: battGlyph.right
-            anchors.leftMargin: 12 * root.s
+            anchors.leftMargin: (root.compact ? 6 : 12) * root.s
             anchors.right: battPct.left
-            anchors.rightMargin: 12 * root.s
+            anchors.rightMargin: (root.compact ? 6 : 12) * root.s
             anchors.verticalCenter: parent.verticalCenter
-            height: 4 * root.s
-            radius: 2 * root.s
+            height: (root.compact ? 3 : 4) * root.s
+            radius: height / 2
             color: PillTheme.threadBg
             clip: true
 
@@ -610,7 +610,7 @@ Item {
             anchors.centerIn: parent
             screenName: root.screenName
             s: root.s
-            gap: 8 * root.s
+            gap: (root.compact ? 5 : 8) * root.s
             enabled: false
         }
     }
@@ -626,8 +626,8 @@ Item {
             id: recGlyph
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 13 * root.s
-            height: 13 * root.s
+            width: (root.compact ? 9 : 13) * root.s
+            height: width
             radius: width / 2
             color: root.recordStarted ? PillTheme.verm : PillTheme.dim
 
@@ -641,13 +641,15 @@ Item {
 
         Text {
             anchors.left: recGlyph.right
-            anchors.leftMargin: 13 * root.s
+            anchors.leftMargin: (root.compact ? 8 : 13) * root.s
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: root.recordStarted ? "Recording started" : "Recording stopped"
+            text: root.compact
+                ? (root.recordStarted ? "REC" : "Stopped")
+                : (root.recordStarted ? "Recording started" : "Recording stopped")
             color: PillTheme.cream
             font.family: PillTheme.font
-            font.pixelSize: (root.compact ? 10.5 : 11.5) * root.s
+            font.pixelSize: (root.compact ? 9.5 : 11.5) * root.s
             font.weight: Font.DemiBold
             elide: Text.ElideRight
             maximumLineCount: 1
