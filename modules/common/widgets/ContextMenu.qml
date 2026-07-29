@@ -122,6 +122,9 @@ Loader {
 
         implicitWidth: realContent.implicitWidth + (root.ambientShadowWidth * 2) + (root.visualMargin * 2)
         implicitHeight: realContent.implicitHeight + (root.ambientShadowWidth * 2) + (root.visualMargin * 2)
+        mask: Region {
+            item: realContent
+        }
 
         property real sourceEdgeMargin: -implicitHeight
         readonly property bool isHorizontalPopup: root.popupSide !== 0
