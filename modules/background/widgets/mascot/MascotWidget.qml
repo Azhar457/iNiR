@@ -31,8 +31,16 @@ AbstractBackgroundWidget {
         x: 120, y: 320
     })
 
-    readonly property int mascotContentSize: Math.round(
-        Number(root._readConfigKey("contentWidth") ?? 200) * root._baseScale)
+    property int mascotContentSize: 200
+    function _syncMascotContentSize(): void {
+        const contentWidth = Number(root._readConfigKey("contentWidth") ?? 200)
+        const baseScale = Number(root._baseScale)
+        const next = Math.round(
+            (Number.isFinite(contentWidth) ? contentWidth : 200)
+            * (Number.isFinite(baseScale) ? baseScale : 1))
+        if (root.mascotContentSize !== next)
+            root.mascotContentSize = next
+    }
     implicitWidth: root.mascotContentSize
     implicitHeight: root.mascotContentSize
     // She's an image — no ink to adapt — but her optional card is the shared
@@ -146,6 +154,8 @@ AbstractBackgroundWidget {
         function on_AnchorItemChanged() { root._syncToAnchor() }
         function onWidthChanged() { root._syncToAnchor() }
         function onHeightChanged() { root._syncToAnchor() }
+        function on_ResizePreviewValuesChanged() { root._syncMascotContentSize() }
+        function on_IsResizingChanged() { root._syncMascotContentSize() }
     }
     Connections {
         target: root._anchorItem
@@ -160,6 +170,7 @@ AbstractBackgroundWidget {
     Connections {
         target: Config
         function onConfigChanged() {
+            root._syncMascotContentSize()
             root._resolveAnchorItem()
             root._syncToAnchor()
         }
@@ -168,6 +179,7 @@ AbstractBackgroundWidget {
     // synchronous Config write during instantiation re-enters that binding
     // mid-evaluation (logged as a binding loop on `shown`).
     Component.onCompleted: Qt.callLater(() => {
+        root._syncMascotContentSize()
         root._resolveAnchorItem()
         root._syncToAnchor()
     })
@@ -748,7 +760,7 @@ AbstractBackgroundWidget {
 
         // Custom images render regardless of the mascot switch; catalog
         // poses stay gated behind it
-        visible: (root.customPath.length > 0 || (Config.options?.mascot?.enable ?? false)) && status !== Image.Error
+        visible: (root.customPath.length > 0 || Boolean(root._readConfigKey("enable") ?? false)) && status !== Image.Error
     }
     MaterialSymbol {
         anchors.centerIn: parent
