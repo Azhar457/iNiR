@@ -841,6 +841,68 @@ Item { // Bar content region
             showTicks: false
             accentColor: Appearance.zzz.chromeStroke
         }
+
+        Item {
+            id: barVisualizer
+
+            readonly property bool wanted: (Config.options?.bar?.visualizer?.enable ?? false)
+                && !barBackground.gameModeMinimal
+                && root.visible
+                && MprisController.isPlaying
+            readonly property real fillRatio: Math.max(0.1, Math.min(1, Config.options?.bar?.visualizer?.height ?? 0.6))
+            readonly property string vizType: Config.options?.bar?.visualizer?.type ?? "bars"
+
+            anchors {
+                left: parent.left
+                right: parent.right
+                leftMargin: barBackground.radius
+                rightMargin: barBackground.radius
+            }
+            y: parent.height - height
+            height: parent.height * fillRatio
+            visible: wanted && barCavaProcess.points.length > 0
+            opacity: Math.max(0, Math.min(1, Config.options?.bar?.visualizer?.opacity ?? 0.35))
+
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+            }
+
+            CavaProcess {
+                id: barCavaProcess
+                active: barVisualizer.wanted
+            }
+
+            readonly property color spectrumColor: root.inirEverywhere ? Appearance.inir.colPrimary
+                : root.zzzEverywhere ? Appearance.zzz.accent
+                : (barBackground.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+
+            CavaVisualizer {
+                anchors.fill: parent
+                visible: barVisualizer.vizType === "bars"
+                live: barVisualizer.wanted
+                points: barCavaProcess.points
+                maxVisualizerValue: 1000
+                smoothing: 2
+                barCount: Math.max(16, Math.round(parent.width / 12))
+                barSpacing: 2
+                barRadius: 2
+                barMinHeight: 1
+                colorLow: ColorUtils.transparentize(barVisualizer.spectrumColor, 0.4)
+                colorMed: ColorUtils.transparentize(barVisualizer.spectrumColor, 0.2)
+                colorHigh: barVisualizer.spectrumColor
+            }
+
+            WaveVisualizer {
+                anchors.fill: parent
+                visible: barVisualizer.vizType === "wave"
+                live: barVisualizer.wanted
+                points: barCavaProcess.points
+                maxVisualizerValue: 1000
+                smoothing: 2
+                color: barVisualizer.spectrumColor
+            }
+        }
     }
 
     FocusedScrollMouseArea { // Left side | scroll to change brightness

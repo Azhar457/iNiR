@@ -42,7 +42,8 @@ Singleton {
     readonly property string playerDesktopEntry: {
         if (MprisController.isYtMusicActive && YtMusic.currentVideoId)
             return "mpv"
-        return MprisController.activePlayer?.desktopEntry ?? ""
+        const player = MprisController.activePlayer
+        return player?.desktopEntry || player?.identity || ""
     }
 
     function subscribe(): void {
