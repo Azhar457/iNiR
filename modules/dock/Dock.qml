@@ -80,9 +80,7 @@ Scope {
             sourceComponent: PanelWindow {
                 id: dockRoot
                 screen: panelLoader.modelData
-                readonly property bool performanceSuspended: GameMode.shouldSuspendOutput(
-                    panelLoader.modelData?.name ?? "")
-                visible: !GlobalStates.screenLocked && !performanceSuspended
+                visible: !GlobalStates.screenLocked
                     && !GlobalStates.widgetEditMode
 
                 property bool reveal: !GlobalStates.coverflowSelectorOpen
@@ -153,7 +151,7 @@ Scope {
                     right: !root.isLeft || !root.isVertical
                 }
 
-                exclusiveZone: performanceSuspended ? 0 : root.pinned ? (dockHeight + Appearance.sizes.elevationMargin) : 0
+                exclusiveZone: root.pinned ? (dockHeight + Appearance.sizes.elevationMargin) : 0
 
                 implicitWidth: root.isVertical ? (dockHeight + Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut) : dockBackground.implicitWidth
                 implicitHeight: root.isVertical ? dockBackground.implicitHeight : (dockHeight + Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut)
@@ -182,9 +180,8 @@ Scope {
                     radius: dockRoot.nativeBlurItem?.radius ?? 0
                 }
 
-                Item { id: emptyMask; width: 0; height: 0 }
                 mask: Region {
-                    item: performanceSuspended ? emptyMask : dockMouseArea
+                    item: dockMouseArea
                 }
 
                 MouseArea {
