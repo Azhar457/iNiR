@@ -110,11 +110,15 @@ Item { // Bar content region
     // balanced around the workspaces pivot; each BarGroup centres its content,
     // so the narrower side doesn't look stuck to one edge. An empty zone
     // contributes 0 and collapses entirely.
+    readonly property real centerPillMirrorSlack: 56 * Appearance.fontSizeScale
     function _pillWidth(cw) {
         const lw = leftCenterGroup.empty ? 0 : leftCenterGroup.contentWidth
         const rw = rightCenterGroupPill.empty ? 0 : rightCenterGroupPill.contentWidth
         const raw = Math.max(lw, rw)
-        return raw <= 0 ? 0 : Math.min(raw, root.centerSideMaxWidth)
+        if (raw <= 0) return 0
+        const own = Math.max(0, cw)
+        const mirrored = own > 0 ? Math.min(raw, own + root.centerPillMirrorSlack) : raw
+        return Math.min(mirrored, root.centerSideMaxWidth)
     }
     readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
     readonly property bool zzzEverywhere: root.surfaceDialect === "zzz"
@@ -274,11 +278,11 @@ Item { // Bar content region
         // Same latch-free rule as the centre zones: never read item.visible
         // from the host (effective visibility latches hidden) — mirror the
         // module's show conditions from root state.
-        visible: root._moduleShown(cell.modelData)
+        visible: root._moduleShown(cell.modelData, cell.zone)
         Loader {
             id: cellLoader
             anchors.fill: parent
-            active: root._moduleShown(cell.modelData)
+            active: root._moduleShown(cell.modelData, cell.zone)
             sourceComponent: root._allComponents[cell.modelData] ?? null
             onLoaded: if (cell.modelData === "activeWindow" && item) item.fillSlot = Qt.binding(() => root._fillSlot(cell.zone) && !root.isIslands)
         }
@@ -330,7 +334,8 @@ Item { // Bar content region
      * Modules not listed either are always shown or self-collapse via
      * implicitWidth (shellUpdate) / an inner wrapper (activeWindow).
      */
-    function _moduleShown(id) {
+    function _moduleShown(id, zone) {
+        if (id === "spacer") return root._fillWidth(id, zone) || root._spacerMinimumWidth > 0;
         if (id === "tray") return root._moduleVisible("sysTray") && root.useShortenedForm === 0;
         if (!root._moduleVisible(id)) return false;
         if (id === "media") return root.useShortenedForm < 2;
@@ -1012,7 +1017,7 @@ Item { // Bar content region
                     Layout.fillHeight: root._fillHeight(modelData)
                     // Hidden modules must leave the layout entirely, or their
                     // implicit width lingers as a ghost gap inside the pill.
-                    active: root._moduleShown(modelData)
+                    active: root._moduleShown(modelData, "center")
                     visible: active
                     sourceComponent: root._allComponents[modelData] ?? null
                     onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = false
@@ -1052,7 +1057,7 @@ Item { // Bar content region
                     Layout.alignment: Qt.AlignVCenter
                     Layout.fillWidth: root._fillWidth(modelData, "centerLeft")
                     Layout.fillHeight: root._fillHeight(modelData)
-                    active: root._moduleShown(modelData)
+                    active: root._moduleShown(modelData, "centerLeft")
                     visible: active
                     sourceComponent: root._allComponents[modelData] ?? null
                     onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = false
@@ -1106,7 +1111,7 @@ Item { // Bar content region
                         Layout.alignment: Qt.AlignVCenter
                         Layout.fillWidth: root._fillWidth(modelData, "centerRight")
                         Layout.fillHeight: root._fillHeight(modelData)
-                        active: root._moduleShown(modelData)
+                        active: root._moduleShown(modelData, "centerRight")
                         visible: active
                         sourceComponent: root._allComponents[modelData] ?? null
                         onLoaded: if (modelData === "activeWindow" && item) item.fillSlot = false
@@ -1247,9 +1252,7 @@ Item { // Bar content region
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumWidth: root._spacerMinimumWidth
-            // When the spacer is a fixed gap (no fill slack), an unset width
-            // would make it invisible — keep a sensible minimum gap.
-            implicitWidth: Math.max(root._spacerMinimumWidth, 12)
+            implicitWidth: root._spacerMinimumWidth
             Behavior on implicitWidth {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation {
