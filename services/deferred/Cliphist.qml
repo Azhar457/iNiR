@@ -222,13 +222,20 @@ Singleton {
         }
     }
 
-    // Browsers prepend this to a text/html payload; it is the only reliable sign
-    // that the content is markup rather than text that happens to contain tags.
+    // Two wrappers mark a text/html payload: Firefox's content-type meta tag and
+    // the CF_HTML fragment markers Chromium and Electron apps emit. They are the
+    // only reliable sign that the content is markup rather than text that happens
+    // to contain tags. Kept in sync with scripts/clipboard-store.py.
+    function isBrowserMarkup(str): bool {
+        return str.startsWith('<meta http-equiv="content-type" content="text/html')
+            || str.indexOf("<!--StartFragment-->") !== -1
+    }
+
     function stripBrowserMarkup(text): string {
         const str = String(text ?? "")
-        if (!str.startsWith('<meta http-equiv="content-type" content="text/html'))
+        if (!root.isBrowserMarkup(str))
             return str
-        return StringUtils.stripHtmlTags(str.replace(/^<meta[^>]*>/, "")).trim()
+        return StringUtils.stripHtmlTags(str.replace(/<!--[\s\S]*?-->/g, "")).trim()
     }
 
     Connections {
