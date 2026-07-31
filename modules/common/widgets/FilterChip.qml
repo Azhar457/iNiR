@@ -9,7 +9,6 @@ import qs.modules.common.functions
 RippleButton {
     id: root
 
-    property string text: ""
     property bool selected: false
     property string chipIcon: ""
     property bool monospace: false
