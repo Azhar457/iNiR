@@ -167,7 +167,9 @@ Item {
         return Math.max(root.outputWorkspaces.length, 1)
     }
     readonly property int workspacesShown: actualWorkspaceCount
-    
+    // Coalesced so the Repeater never outruns the Grid during a config reload.
+    property int renderedWorkspaceCount: Math.max(actualWorkspaceCount, 1)
+
     readonly property int workspaceGroup: Math.floor((currentWorkspaceNumber - 1) / root.workspacesShown)
     property list<bool> workspaceOccupied: []
     property int widgetPadding: 4
@@ -178,6 +180,15 @@ Item {
     property real workspaceIconOpacityShrinked: 1
     property real workspaceIconMarginShrinked: -4
     property int workspaceIndexInGroup: (currentWorkspaceNumber - 1) % root.workspacesShown
+
+    Timer {
+        id: workspaceLayoutTimer
+        interval: 0
+        repeat: false
+        onTriggered: root.renderedWorkspaceCount = Math.max(root.workspacesShown, 1)
+    }
+
+    onWorkspacesShownChanged: workspaceLayoutTimer.restart()
 
     // Column mode: windows in current workspace
     readonly property var currentWorkspaceWindows: {
@@ -257,6 +268,7 @@ Item {
     Component.onCompleted: {
         root.syncWorkspaceConfig()
         root.doUpdateWorkspaceOccupied()
+        root.renderedWorkspaceCount = Math.max(root.workspacesShown, 1)
     }
     Connections {
         target: Hyprland.workspaces
@@ -381,11 +393,11 @@ Item {
 
         rowSpacing: 0
         columnSpacing: 0
-        columns: root.vertical ? 1 : root.workspacesShown
-        rows: root.vertical ? root.workspacesShown : 1
+        columns: root.vertical ? 1 : root.renderedWorkspaceCount
+        rows: root.vertical ? root.renderedWorkspaceCount : 1
 
         Repeater {
-            model: root.workspacesShown
+            model: root.renderedWorkspaceCount
 
             Rectangle {
                 z: 1
@@ -481,15 +493,15 @@ Item {
         z: 3
         visible: !root.columnMode
 
-        columns: root.vertical ? 1 : root.workspacesShown
-        rows: root.vertical ? root.workspacesShown : 1
+        columns: root.vertical ? 1 : root.renderedWorkspaceCount
+        rows: root.vertical ? root.renderedWorkspaceCount : 1
         columnSpacing: 0
         rowSpacing: 0
 
         anchors.fill: parent
 
         Repeater {
-            model: root.workspacesShown
+            model: root.renderedWorkspaceCount
 
             Button {
                 id: button
