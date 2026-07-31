@@ -1608,10 +1608,23 @@ ContentPage {
                     font.pixelSize: Appearance.font.pixelSize.smaller
                 }
                 MaterialTextField {
+                    id: topLeftIconField
                     Layout.fillWidth: true
                     placeholderText: "distro"
                     text: Config.options?.bar?.topLeftIcon ?? "distro"
-                    onTextChanged: Config.setNestedValue("bar.topLeftIcon", text)
+                    // Persisting per keystroke resolves every prefix as an icon name.
+                    onTextChanged: topLeftIconCommit.restart()
+                    onEditingFinished: {
+                        topLeftIconCommit.stop();
+                        Config.setNestedValue("bar.topLeftIcon", topLeftIconField.text);
+                    }
+
+                    Timer {
+                        id: topLeftIconCommit
+                        interval: 600
+                        repeat: false
+                        onTriggered: Config.setNestedValue("bar.topLeftIcon", topLeftIconField.text)
+                    }
                 }
                 StyledText {
                     Layout.fillWidth: true
