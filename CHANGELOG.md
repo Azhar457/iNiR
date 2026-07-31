@@ -152,10 +152,20 @@ lives on `prerelease` and reaches `main` with the next release.
 - Pill notifications and OSD can stay inside the resting capsule instead of
   expanding into a larger card. The alternate mode lives in both Pill settings
   sections.
-- Fresh installs start quieter: Focused Settings, lean sidebars, no desktop
-  clock, weather polling or notification sounds until requested, and a shorter
-  Welcome flow built around structure and daily essentials. Workspace Strip is
-  now an explicit preview opt-in instead of a default module.
+- Fresh installs now start with the useful signals people expect: weather is
+  available in the bar and dashboard, notification sounds are enabled, and
+  decorative desktop widgets remain off so the wallpaper stays composed.
+  Minimum, Balanced and Full in Welcome refine that baseline without enabling
+  provider-backed integrations or overlapping desktop widgets. Workspace Strip
+  remains an explicit preview opt-in instead of a default module.
+- Alt-Tab now uses Niri's native Recent Windows surface with tuned preview
+  timing, highlight padding and corner radius. The iNiR switcher stays available
+  as an opt-in module and no longer owns the distributed Alt-Tab keys.
+- Welcome fits the screen it opens on. Every step scrolls, the card is sized
+  from the display instead of a fixed percentage, and the stepper thins out on
+  short laptop panels rather than pushing controls out of reach. Each step now
+  carries one heading, and the second step is a starting point you pick before
+  appearance and layout, so nothing you choose gets overwritten later.
 - The assistant behaves like a shell feature, not an API client: provider
   cards hide endpoints and raw model codes, shell tools run through a
   bounded registry with typed approvals, and arbitrary bash moved behind an
@@ -230,7 +240,27 @@ lives on `prerelease` and reaches `main` with the next release.
   fullscreen window on one monitor no longer pauses widgets on another;
   explicit manual Game Mode remains global.
 - Workspace indicators rebuild cleanly after config reloads instead of feeding
-  transient undefined values into typed QML properties.
+  transient undefined values into typed QML properties. The indicator row also
+  waits for the final workspace count before laying out, so a reload no longer
+  flashes a row wider than the bar reserved for it.
+- Settings kept accepting changes that were never written after a failed save.
+  A config write that the file layer rejected left the shell believing a write
+  was still in flight, which silently froze every later save and every reload
+  until the next restart. Writes now always resolve, retry twice, and say so in
+  the log when they cannot.
+- Wallpaper grids no longer rebuild against a half-loaded folder. Opening a
+  subfolder in Quick settings, Waffle Background or the wallpaper selector used
+  to briefly show the previous folder's thumbnails, or an empty grid, before
+  settling.
+- The Material 3 bar resource meters stopped updating after a few minutes.
+  The widget never registered as a permanent reader, so system polling
+  auto-stopped underneath it while it was still on screen.
+- Clipboard history survives rapid copying. Overlapping refreshes are queued
+  instead of racing each other, and a read that loses to `cliphist` mid-write
+  is retried rather than logged as a failure.
+- Typing an icon name in Bar settings no longer saves on every keystroke.
+  Each prefix was persisted and resolved as a real icon, filling the log with
+  failures for names nobody asked for.
 - Optional Kira art updates are staged and verified before installation, keep
   the shell-owned manifest untouched, and repair missing or corrupt assets even
   when the published release tag has not changed.
