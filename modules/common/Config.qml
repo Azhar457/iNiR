@@ -1077,7 +1077,7 @@ Singleton {
             }
 
             property JsonObject modules: JsonObject {
-                property bool altSwitcher: true
+                property bool altSwitcher: false
                 property bool bar: true
                 property bool background: true
                 property bool cheatsheet: true
