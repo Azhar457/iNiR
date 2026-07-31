@@ -452,9 +452,9 @@
                     "preset": "default"
                 },
                 "dim": 70,
-                "enable": false,
+                "enable": true,
                 "fontFamily": "Space Grotesk",
-                "placementStrategy": "free",
+                "placementStrategy": "leastBusy",
                 "quote": {
                     "enable": false,
                     "text": ""
@@ -888,12 +888,12 @@
             "clock": true,
             "leftSidebarButton": true,
             "media": true,
-            "resources": false,
+            "resources": true,
             "rightSidebarButton": true,
             "sysTray": true,
             "taskbar": false,
-            "utilButtons": false,
-            "weather": false,
+            "utilButtons": true,
+            "weather": true,
             "workspaces": true
         },
         "opacity": 1.0,
@@ -973,7 +973,7 @@
         "vertical": false,
         "weather": {
             "city": "",
-            "enable": false,
+            "enable": true,
             "enableGPS": false,
             "fetchInterval": 10,
             "manualLat": 0,
@@ -1513,12 +1513,20 @@
                 "columns": 4,
                 "toggles": [
                     {
-                        "size": 2,
+                        "size": 1,
                         "type": "network"
                     },
                     {
-                        "size": 2,
+                        "size": 1,
                         "type": "bluetooth"
+                    },
+                    {
+                        "size": 1,
+                        "type": "audio"
+                    },
+                    {
+                        "size": 1,
+                        "type": "mic"
                     }
                 ]
             },
@@ -1527,23 +1535,25 @@
         "left": {
             "tabOrder": [
                 "widgets",
+                "wallhaven",
+                "news",
+                "tools",
+                "software",
                 "ai",
                 "translator",
                 "anime",
                 "animeSchedule",
-                "wallhaven",
-                "news",
-                "ytmusic",
-                "tools",
-                "software"
+                "ytmusic"
             ]
         },
         "right": {
             "enabledWidgets": [
                 "calendar",
+                "events",
                 "todo",
                 "calculator",
-                "sysmon"
+                "sysmon",
+                "weather"
             ],
             "sectionOrder": [
                 "system",
@@ -1553,7 +1563,7 @@
                 "widgets"
             ],
             "headerStyle": "profile",
-            "headerBanner": "solid",
+            "headerBanner": "wallpaper",
             "headerBannerPath": "",
             "controlsSectionOrder": [
                 "sliders",
@@ -1632,12 +1642,12 @@
             }
         },
         "wallhaven": {
-            "enable": false,
+            "enable": true,
             "limit": 24,
             "apiKey": ""
         },
         "news": {
-            "enable": false,
+            "enable": true,
             "mode": "local",
             "topic": "WORLD"
         },
@@ -1652,8 +1662,8 @@
             "context": true,
             "note": false,
             "launch": false,
-            "controls": false,
-            "status": false,
+            "controls": true,
+            "status": true,
             "crypto": false,
             "worldClock": false,
             "widgetOrder": [
@@ -1730,7 +1740,7 @@
     },
     "sounds": {
         "battery": false,
-        "notifications": false,
+        "notifications": true,
         "pomodoro": false,
         "theme": "freedesktop",
         "timer": false,
@@ -1828,7 +1838,7 @@
         }
     },
     "gameMode": {
-        "autoDetect": false,
+        "autoDetect": true,
         "disableAnimations": false,
         "disableEffects": false,
         "disableNiriAnimations": false,
@@ -1863,6 +1873,7 @@
         "enable": true
     },
     "modules": {
+        "altSwitcher": false,
         "bar": true,
         "background": true,
         "cheatsheet": true,

@@ -1951,7 +1951,7 @@ Singleton {
                     property bool battery: true
                     property bool rightSidebarButton: true
                     property bool sysTray: true
-                    property bool weather: false
+                    property bool weather: true
                     property bool taskbar: false
                 }
                 property JsonObject modulesPlacement: JsonObject {
@@ -2050,7 +2050,7 @@ Singleton {
                     property bool perMonitor: true // Each bar shows workspaces for its own monitor (Niri)
                 }
                 property JsonObject weather: JsonObject {
-                    property bool enable: false
+                    property bool enable: true
                     property bool useUSCS: false // Instead of metric (SI) units
                     property int fetchInterval: 10 // minutes
                     property string city: "" // Manual city name (e.g. "Buenos Aires"). Empty = auto-detect
@@ -2796,7 +2796,7 @@ Singleton {
                     // Banner media of the profile header: "wallpaper" (the
                     // monitor's live wallpaper), "custom" (headerBannerPath),
                     // "solid" (flat token plate), or "none" (collapse it).
-                    property string headerBanner: "solid"
+                    property string headerBanner: "wallpaper"
                     property string headerBannerPath: ""
                     // Relative allocation of the two elastic zones. Values are
                     // normalized together by the live resize handle.
@@ -2818,7 +2818,7 @@ Singleton {
                 property bool timer: false
                 property bool pomodoro: false
                 property string theme: "freedesktop"
-                property bool notifications: false
+                property bool notifications: true
                 property real volume: 0.5
                 property JsonObject events: JsonObject {
                     // Per-event override: "" = theme default; a bare name
