@@ -489,7 +489,7 @@ MouseArea {
                             }
                         }
 
-                        model: Wallpapers.folderModel.count > 0 ? Wallpapers.folderModel : null
+                        model: Wallpapers.folderModelReady ? Wallpapers.folderModel : null
                         onModelChanged: currentIndex = 0
                         onCountChanged: currentIndex = count > 0 ? Math.min(currentIndex, count - 1) : 0
                         delegate: WallpaperDirectoryItem {
