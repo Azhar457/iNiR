@@ -19,6 +19,8 @@ Singleton {
     property bool sloppySearch: Config.options?.search.sloppy ?? false
     property real scoreThreshold: 0.2
     property list<string> entries: []
+    property int _readAttempts: 0
+    property bool _refreshQueued: false
     readonly property var preparedEntries: entries.map(a => ({
         name: Fuzzy.prepare(`${a.replace(/^\s*\S+\s+/, "")}`),
         entry: a
@@ -78,6 +80,10 @@ Singleton {
     }
 
     function refresh() {
+        if (readProc.running) {
+            root._refreshQueued = true
+            return
+        }
         readProc.buffer = []
         readProc.running = true
     }
@@ -266,6 +272,13 @@ Singleton {
         }
     }
 
+    Timer {
+        id: readRetryTimer
+        interval: 250
+        repeat: false
+        onTriggered: root.refresh()
+    }
+
     Process {
         id: readProc
         property list<string> buffer: []
@@ -282,8 +295,20 @@ Singleton {
             if (exitCode === 0) {
                 // Cap the number of entries we keep to avoid heavy models
                 root.entries = readProc.buffer.slice(0, root.maxEntries)
+                root._readAttempts = 0
+                if (root._refreshQueued) {
+                    root._refreshQueued = false
+                    root.refresh()
+                }
             } else {
-                console.error("[Cliphist] Failed to refresh with code", exitCode, "and status", exitStatus)
+                if (root._readAttempts < 3) {
+                    root._readAttempts++
+                    readRetryTimer.interval = 250 * root._readAttempts
+                    readRetryTimer.restart()
+                } else {
+                    root._readAttempts = 0
+                    console.error("[Cliphist] Failed to refresh with code", exitCode, "and status", exitStatus)
+                }
             }
         }
     }
