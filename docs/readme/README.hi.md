@@ -281,5 +281,5 @@ inir repair                     # doctor + रीस्टार्ट + फ़�
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">योगदानकर्ता</a> &bull;
   <a href="CHANGELOG.md">चेंजलॉग</a> &bull;
-  <a href="LICENSE">MIT लाइसेंस</a>
+  <a href="LICENSE">GPL-3.0 लाइसेंस</a>
 </p>

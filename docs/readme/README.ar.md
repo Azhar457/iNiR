@@ -295,7 +295,7 @@ inir repair                     # doctor + إعادة تشغيل + فحص سجل
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">المساهمون</a> &bull;
   <a href="CHANGELOG.md">سجل التغييرات</a> &bull;
-  <a href="LICENSE">رخصة MIT</a>
+  <a href="LICENSE">رخصة GPL-3.0</a>
 </p>
 
 </div>

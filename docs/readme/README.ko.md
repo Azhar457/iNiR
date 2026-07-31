@@ -281,5 +281,5 @@ inir repair                     # doctor + 재시작 + 필터링된 로그 확�
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">기여자</a> &bull;
   <a href="CHANGELOG.md">변경 기록</a> &bull;
-  <a href="LICENSE">MIT 라이선스</a>
+  <a href="LICENSE">GPL-3.0 라이선스</a>
 </p>

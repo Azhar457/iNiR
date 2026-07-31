@@ -281,5 +281,5 @@ Siehe [CONTRIBUTING.md](../../CONTRIBUTING.md) für Entwicklungseinrichtung, Cod
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">Mitwirkende</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
-  <a href="LICENSE">MIT-Lizenz</a>
+  <a href="LICENSE">GPL-3.0-Lizenz</a>
 </p>

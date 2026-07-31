@@ -281,5 +281,5 @@ inir repair                     # doctor + перезапуск + проверк
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">Участники</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
-  <a href="LICENSE">Лицензия MIT</a>
+  <a href="LICENSE">Лицензия GPL-3.0</a>
 </p>

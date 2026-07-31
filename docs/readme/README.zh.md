@@ -281,5 +281,5 @@ inir repair                     # doctor + 重启 + 过滤日志检查
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">贡献者</a> &bull;
   <a href="CHANGELOG.md">更新日志</a> &bull;
-  <a href="LICENSE">MIT 许可证</a>
+  <a href="LICENSE">GPL-3.0 许可证</a>
 </p>

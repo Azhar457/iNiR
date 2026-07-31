@@ -285,6 +285,28 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code patterns, and
 
 ---
 
+## License
+
+Copyright (C) 2025-2026 snowarch
+
+iNiR is free software: you can redistribute it and/or modify it under the terms
+of the [GNU General Public License version 3](LICENSE) as published by the Free
+Software Foundation.
+
+It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY,
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for details.
+
+iNiR started as a fork of [illogical-impulse](https://github.com/end-4/dots-hyprland)
+by [end-4](https://github.com/end-4), which is GPL-3.0, and stays under the same
+license. The Ricelin dialect adapts work from
+[Ricelin](https://github.com/Gakuseei/Ricelin) by
+[Gakuseei](https://github.com/Gakuseei), which is MIT.
+`modules/common/widgets/FluidRipple.qml` is Apache-2.0 (AOSP) and keeps its own
+header.
+
+---
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="iNiR mascot leaning on the iNiR logotype" width="720">
 </p>
@@ -294,5 +316,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code patterns, and
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">Contributors</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
-  <a href="LICENSE">MIT License</a>
+  <a href="LICENSE">GPL-3.0 License</a>
 </p>

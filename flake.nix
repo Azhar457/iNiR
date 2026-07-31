@@ -197,7 +197,7 @@
           meta = {
             description = "Complete desktop shell for Niri, built on Quickshell";
             homepage = "https://github.com/snowarch/inir";
-            license = lib.licenses.mit;
+            license = lib.licenses.gpl3Only;
             platforms = lib.platforms.linux;
             mainProgram = "inir";
           };

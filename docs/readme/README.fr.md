@@ -281,5 +281,5 @@ Voir [CONTRIBUTING.md](../../CONTRIBUTING.md) pour la configuration de développ
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">Contributeurs</a> &bull;
   <a href="CHANGELOG.md">Changelog</a> &bull;
-  <a href="LICENSE">Licence MIT</a>
+  <a href="LICENSE">Licence GPL-3.0</a>
 </p>

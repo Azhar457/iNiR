@@ -281,5 +281,5 @@ issue を開く前に [LIMITATIONS.md](../LIMITATIONS.md) を確認してくだ�
 <p align="center">
   <a href="https://github.com/snowarch/inir/graphs/contributors">コントリビューター</a> &bull;
   <a href="CHANGELOG.md">変更履歴</a> &bull;
-  <a href="LICENSE">MIT ライセンス</a>
+  <a href="LICENSE">GPL-3.0 ライセンス</a>
 </p>

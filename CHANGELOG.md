@@ -207,6 +207,11 @@ lives on `prerelease` and reaches `main` with the next release.
   Material containers, so GTK, Qt, terminals, editors and the rest were left
   on a palette the shell had stopped using. Switching styles re-themes them
   in place without re-extracting colours from the wallpaper.
+- iNiR is now GPL-3.0, not MIT. It started as a fork of end-4's
+  illogical-impulse, which is GPL-3.0, and that license carries into every
+  derivative. The README states the copyright and the upstream terms, and the
+  Arch and Nix packages declare GPL-3.0 as well. Nothing changes for you as a
+  user: iNiR was free software before and stays free software.
 - Public documentation now lives in the GitHub Wiki as plain Markdown. The
   repository keeps the source pages and a local sync helper instead of a
   second MkDocs and GitHub Pages build pipeline.
