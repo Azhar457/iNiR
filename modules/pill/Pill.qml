@@ -166,9 +166,9 @@ Item {
      * A fullscreen window on this pill's active workspace hides the resting
      * faces — classic-bar parity: top-layer bars get covered by the
      * compositor, but the pill's Overlay layer never is, so it opts out
-     * itself. The OSD face is also suppressed over fullscreen (it feeds
-     * `osd.suppressed`), so volume/media flashes don't float over a game.
-     * Toasts and open surfaces still show.
+     * itself. Only the resting faces: transient OSD flashes still play over a
+     * game, because a track change or a volume keypress is exactly the feedback
+     * the game cannot give you. Toasts and open surfaces still show.
      */
     readonly property bool fsCovered: {
         if (!CompositorService.isNiri)
@@ -1312,7 +1312,7 @@ Item {
         s: pill.s
         compact: pill.compactAnnounceMode
         screenName: pill.screenName
-        suppressed: pill.surfaceOpen || pill.held || pill.fsCovered
+        suppressed: pill.surfaceOpen || pill.held
         expanded: pill.expanded
         enabled: pill.mode === "osd"
         opacity: pill.mode === "osd" ? 1 : 0
