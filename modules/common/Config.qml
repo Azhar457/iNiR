@@ -2967,6 +2967,7 @@ Singleton {
             property JsonObject welcomeWizard: JsonObject {
                 property bool completed: false
                 property bool skipped: false
+                property string profile: "balanced"
             }
 
             property JsonObject workspaceStrip: JsonObject {
