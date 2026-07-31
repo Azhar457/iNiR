@@ -34,9 +34,9 @@ Singleton {
         fileReloadTimer.stop();
         root._prepareCustomInject();
         root._writeInFlight = true;
-        // Use mirror for flush — guaranteed to work, no onSaved dependency
+        root._writeRetries = 0;
         root._writeMirrorToDisk();
-        root._writeInFlight = false;
+        writeFlightGuard.restart();
     }
 
     function _applyNestedKey(nestedKey, value) {
@@ -327,6 +327,31 @@ Singleton {
     property bool _pendingCustomInject: false
     property bool _pendingMascotInject: false
     property bool _pendingReload: false
+    property int _writeRetries: 0
+
+    // Every write must exit through here; a stuck _writeInFlight freezes all persistence.
+    function _endWriteFlight(reason: string): void {
+        writeFlightGuard.stop();
+        root._writeInFlight = false;
+        root._writeRetries = 0;
+        if (reason.length > 0)
+            console.warn("[Config] write flight released:", reason);
+        if (root._pendingCustomInject || root._pendingMascotInject) {
+            root._pendingCustomInject = false;
+            root._pendingMascotInject = false;
+            customInjectTimer.restart();
+            return;
+        }
+        if (root._pendingWrite) {
+            root._pendingWrite = false;
+            fileWriteTimer.restart();
+            return;
+        }
+        if (root._pendingReload) {
+            root._pendingReload = false;
+            fileReloadTimer.restart();
+        }
+    }
     property var _customSnapshotForInject: ({})
     property var _mascotSnapshotForInject: ({})
     // In-memory mirror of the disk JSON. Updated synchronously on every
@@ -477,6 +502,7 @@ Singleton {
             root._prepareCustomInject();
             root._pendingWrite = false;
             root._writeInFlight = true;
+            root._writeRetries = 0;
             fileReloadTimer.stop();
             // Try writeAdapter first — it properly emits QObject property signals
             // which 2476 consumers depend on via Config.options?.x bindings.
@@ -492,10 +518,15 @@ Singleton {
         interval: 2000
         repeat: false
         onTriggered: {
-            if (root._writeInFlight) {
-                root._writeInFlight = false;
-                root._writeMirrorToDisk();
+            if (!root._writeInFlight)
+                return;
+            if (root._writeRetries >= 2) {
+                root._endWriteFlight("write never acknowledged");
+                return;
             }
+            root._writeRetries++;
+            root._writeMirrorToDisk();
+            writeFlightGuard.restart();
         }
     }
 
@@ -517,26 +548,15 @@ Singleton {
         path: root.filePath
         watchChanges: true
         blockWrites: root.blockWrites
-        onFileChanged: fileReloadTimer.restart()
-        onSaved: {
-            writeFlightGuard.stop();
-            root._writeInFlight = false;
-            if (root._pendingCustomInject || root._pendingMascotInject) {
-                root._pendingCustomInject = false;
-                root._pendingMascotInject = false;
-                customInjectTimer.restart();
+        onFileChanged: {
+            if (root._writeInFlight) {
+                root._pendingReload = true;
                 return;
             }
-            if (root._pendingWrite) {
-                root._pendingWrite = false;
-                fileWriteTimer.restart();
-                return;
-            }
-            if (root._pendingReload) {
-                root._pendingReload = false;
-                fileReloadTimer.restart();
-            }
+            fileReloadTimer.restart();
         }
+        onSaved: root._endWriteFlight("")
+        onSaveFailed: error => root._endWriteFlight(`save failed (${error})`)
         onLoaded: {
             // Initialize the in-memory JSON mirror from disk
             try {
