@@ -11,7 +11,6 @@ import QtQuick.Effects
 import QtMultimedia
 import Qt5Compat.GraphicalEffects as GE
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import "root:modules/common/functions/md5.js" as MD5
@@ -36,34 +35,7 @@ Variants {
         anchors.right: true
 
         color: "transparent"
-
-        // A fullscreen window covers the backdrop completely, so keeping this
-        // screen-sized surface mapped underneath it only holds its swapchain and
-        // wallpaper textures on the GPU for nothing. Background.qml already
-        // unmaps itself here; the backdrop sits below it and must follow, or the
-        // wallpaper stack stays resident for the whole game. Same config key —
-        // the backdrop IS the background as far as the user is concerned.
-        property list<HyprlandWorkspace> workspacesForMonitor: CompositorService.isHyprland
-            ? Hyprland.workspaces.values.filter(workspace => workspace.monitor && workspace.monitor.name === backdropWindow.modelData?.name)
-            : []
-        property bool hasFullscreenWindow: {
-            if (CompositorService.isHyprland) {
-                return workspacesForMonitor.some(workspace => workspace.active
-                    && workspace.toplevels.values.some(window => window.wayland?.fullscreen))
-            }
-            if (CompositorService.isNiri) {
-                return GameMode.hasFullscreenOnOutput(backdropWindow.modelData?.name ?? "")
-            }
-            return false
-        }
-        // Do NOT gate this on NiriService.inOverview to reclaim its swapchain: the
-        // surface maps a frame or two after the overview event lands, and Niri's
-        // zoom animation is already running by then. It flashes. Tried and
-        // reverted 2026-07-12 — the ~50 MB of GPU is not worth an artifact in an
-        // interaction users hit every day.
-        visible: GlobalStates.screenLocked
-            || !hasFullscreenWindow
-            || !(Config.options?.background?.hideWhenFullscreen ?? false)
+        visible: true
 
         // Material ii backdrop config (independent)
         readonly property var iiBackdrop: Config.options?.background?.backdrop ?? {}

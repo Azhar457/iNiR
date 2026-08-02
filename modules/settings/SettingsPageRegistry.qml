@@ -738,6 +738,13 @@ Singleton {
         },
         {
             pageIndex: 3, pageName: root.pages[3].name,
+            section: Translation.tr("Fullscreen behavior"),
+            label: Translation.tr("Hide main wallpaper in fullscreen"),
+            description: Translation.tr("Reduce background rendering while keeping the overview backdrop available"),
+            keywords: ["fullscreen", "wallpaper", "background", "gaming", "performance", "overview", "backdrop", "hide"]
+        },
+        {
+            pageIndex: 3, pageName: root.pages[3].name,
             section: Translation.tr("Multi-monitor"),
             label: Translation.tr("Backdrop"),
             description: Translation.tr("Panel backdrop wallpaper and effects"),
@@ -1658,6 +1665,13 @@ Singleton {
             label: Translation.tr("Waffle Background"),
             description: Translation.tr("Waffle-specific wallpaper and backdrop settings"),
             keywords: ["waffle", "background", "wallpaper", "backdrop", "effects"]
+        },
+        {
+            pageIndex: 11, pageName: root.pages[11].name,
+            section: Translation.tr("Wallpaper"),
+            label: Translation.tr("Hide main wallpaper in fullscreen"),
+            description: Translation.tr("Hide the Waffle wallpaper while keeping the Task View backdrop available"),
+            keywords: ["waffle", "fullscreen", "wallpaper", "background", "gaming", "performance", "task view", "backdrop", "hide"]
         },
 
         // =====================================================================
