@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-The five weeks since 2.27.0 were not quiet. The shell grew a cat, a
-dashboard, a fifth bar style and a live layout editor, and a long tail of
-things got fixed by people with better eyes than ours. Everything below
-lives on `prerelease` and reaches `main` with the next release.
+## [2.28.0] - 2026-08-02
+
+The seven weeks since 2.27.0 were not quiet. The shell grew a cat, a
+dashboard, several new bar styles and a live layout editor, and a long tail
+of things got fixed by people with better eyes than ours. That work ships as
+2.28.0.
 
 ### Added
 - Four desktop widgets add a shaped local image or GIF, drag-and-drop image
