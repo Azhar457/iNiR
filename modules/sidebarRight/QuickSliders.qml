@@ -15,14 +15,10 @@ Rectangle {
     property var screen: root.QsWindow.window?.screen
     // Brightness monitor may be undefined (e.g. Niri without matching monitor); guard it.
     property var brightnessMonitor: screen ? Brightness.getMonitorForScreen(screen) : null
-    readonly property bool hasBrightnessMonitor: root.brightnessMonitor ? true : false
+    readonly property bool hasBrightnessMonitor: Boolean(root.brightnessMonitor)
     readonly property bool brightnessEnabled: Config.options?.sidebar?.quickSliders?.showBrightness ?? true
-    readonly property real brightnessValue: root.hasBrightnessMonitor
-        ? (root.brightnessMonitor.brightness ?? 0)
-        : 0
-    readonly property real volumeValue: Audio.sink && Audio.sink.audio
-        ? (Audio.sink.audio.volume ?? 0)
-        : 0
+    readonly property real brightnessValue: Number(root.brightnessMonitor?.brightness ?? 0) || 0
+    readonly property real volumeValue: Number(Audio.sink?.audio?.volume ?? 0) || 0
     property real sliderSpacing: 10
     property bool compactSurface: false
 

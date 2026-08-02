@@ -443,6 +443,7 @@ Item {
                 onClicked: root.refreshCurrentTab()
                 
                 contentItem: MaterialSymbol {
+                    id: refreshIcon
                     anchors.centerIn: parent
                     text: "refresh"
                     iconSize: 18
@@ -454,6 +455,7 @@ Item {
                         to: 360
                         duration: 1000
                         loops: Animation.Infinite
+                        onRunningChanged: if (!running) refreshIcon.rotation = 0
                     }
                 }
                 
