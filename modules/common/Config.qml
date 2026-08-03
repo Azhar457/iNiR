@@ -2119,14 +2119,14 @@ Singleton {
             property JsonObject dock: JsonObject {
                 property string style: "panel" // "panel" | "pill" | "macos" | "island" | "m3"
                 property bool cardStyle: false
-                property bool enable: false
+                property bool enable: true
                 property bool monochromeIcons: true
                 property string position: "bottom" // "top", "bottom", "left", "right"
                 property real height: 60
                 property real iconSize: 35
                 property real hoverRegionHeight: 2
-                property bool pinnedOnStartup: false
-                property bool hoverToReveal: true // When false, only reveals on empty workspace
+                property bool pinnedOnStartup: true
+                property bool hoverToReveal: false // When false, only reveals on empty workspace
                 property bool showOnDesktop: true // Show dock when no window is focused (desktop visible)
                 property bool showBackground: true
                 property bool minimizeUnfocused: false // Show dot for unfocused apps
@@ -2531,8 +2531,8 @@ Singleton {
                 property bool keepLeftSidebarLoaded: true
                 property bool instantOpen: false
                 property string animationType: "slide" // "slide" | "fade" | "pop" | "reveal"
-                property bool collapseEmptyNotifications: true // Shrink right sidebar when there are no notifications (default layout)
-                property bool collapseWidgetsTab: true // Shrink left sidebar to its content on tabs with finite height (Widgets)
+                property bool collapseEmptyNotifications: false // Shrink right sidebar when there are no notifications (default layout)
+                property bool collapseWidgetsTab: false // Shrink left sidebar to its content on tabs with finite height (Widgets)
                 property JsonObject shellLayout: JsonObject {
                     property JsonObject feature: JsonObject {
                         property string slot: "left" // "left" | "right"
@@ -2570,7 +2570,7 @@ Singleton {
                 // Wallhaven-specific sidebar module options
                 property JsonObject wallhaven: JsonObject {
                     // Enable/disable the Wallhaven tab in the left sidebar
-                    property bool enable: false
+                    property bool enable: true
                     // Default page size for API search
                     property int limit: 24
                     // Optional API key for NSFW & user-specific filters
@@ -2578,7 +2578,7 @@ Singleton {
                 }
                 // News tab - Google News RSS, geo feed follows the Weather location
                 property JsonObject news: JsonObject {
-                    property bool enable: false
+                    property bool enable: true
                     property string mode: "local" // "local" | "top" | "topic"
                     property string topic: "WORLD"
                 }
@@ -2658,8 +2658,8 @@ Singleton {
                     property bool context: true
                     property bool note: false
                     property bool launch: false
-                    property bool controls: false
-                    property bool status: false
+                    property bool controls: true
+                    property bool status: true
                     property bool crypto: false
                     property bool wallpaper: false
                     property bool worldClock: false
@@ -2762,12 +2762,20 @@ Singleton {
                         property int columns: 4
                         property list<var> toggles: [
                             {
-                                "size": 2,
+                                "size": 1,
                                 "type": "network"
                             },
                             {
-                                "size": 2,
+                                "size": 1,
                                 "type": "bluetooth"
+                            },
+                            {
+                                "size": 1,
+                                "type": "audio"
+                            },
+                            {
+                                "size": 1,
+                                "type": "mic"
                             }
                         ]
                     }
@@ -2788,7 +2796,7 @@ Singleton {
 
                 // Right sidebar widget toggles
                 property JsonObject right: JsonObject {
-                    property list<string> enabledWidgets: ["calendar", "todo", "calculator", "sysmon"]
+                    property list<string> enabledWidgets: ["calendar", "events", "todo", "calculator", "sysmon", "weather"]
                     // Controls section order for compact layout (drag to reorder)
                     property list<string> controlsSectionOrder: ["sliders", "toggles", "devices", "media", "quickActions"]
                     // Section order for the default layout (modular sidebar).

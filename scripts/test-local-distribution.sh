@@ -22,6 +22,70 @@ bash -n \
     "$runtime_root/sdata/subcmd-install/"*.sh \
     "$runtime_root/sdata/migrations/"*.sh
 
+step "fresh install defaults"
+python3 - "$runtime_root" <<'PY'
+import json
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+with (root / "defaults/config.json").open(encoding="utf-8") as handle:
+    config = json.load(handle)
+schema = (root / "modules/common/Config.qml").read_text(encoding="utf-8")
+wizard = (root / "welcome.qml").read_text(encoding="utf-8")
+
+checks = {
+    "settings rail": config["settingsUi"]["overlayStyle"] == "rail",
+    "balanced profile": config["welcomeWizard"]["profile"] == "balanced",
+    "iNiR Alt+Tab opt-in": config["modules"]["altSwitcher"] is False,
+    "dock enabled": config["dock"]["enable"] is True,
+    "dock pinned": config["dock"]["pinnedOnStartup"] is True,
+    "dock not hover-only": config["dock"]["hoverToReveal"] is False,
+    "right sidebar full height": config["sidebar"]["collapseEmptyNotifications"] is False,
+    "left sidebar full height": config["sidebar"]["collapseWidgetsTab"] is False,
+    "wallhaven tab": config["sidebar"]["wallhaven"]["enable"] is True,
+    "news tab": config["sidebar"]["news"]["enable"] is True,
+    "controls widget": config["sidebar"]["widgets"]["controls"] is True,
+    "status widget": config["sidebar"]["widgets"]["status"] is True,
+}
+failed = [name for name, passed in checks.items() if not passed]
+if failed:
+    raise SystemExit("FAIL: fresh-install defaults: " + ", ".join(failed))
+
+schema_checks = {
+    "schema settings rail": 'property string overlayStyle: "rail"' in schema,
+    "schema iNiR Alt+Tab opt-in": "property bool altSwitcher: false" in schema.split(
+        "property JsonObject modules: JsonObject {", 1)[1].split(
+        "property JsonObject appearance: JsonObject {", 1)[0],
+    "schema dock enabled": "property bool enable: true" in schema.split(
+        "property JsonObject dock: JsonObject {", 1)[1].split(
+        "property JsonObject controlPanel: JsonObject {", 1)[0],
+    "schema dock pinned": "property bool pinnedOnStartup: true" in schema,
+    "schema dock not hover-only": "property bool hoverToReveal: false" in schema,
+    "schema right sidebar full height": "property bool collapseEmptyNotifications: false" in schema,
+    "schema left sidebar full height": "property bool collapseWidgetsTab: false" in schema,
+    "schema wallhaven tab": "property JsonObject wallhaven: JsonObject {\n                    // Enable/disable the Wallhaven tab in the left sidebar\n                    property bool enable: true" in schema,
+    "schema news tab": "property JsonObject news: JsonObject {\n                    property bool enable: true" in schema,
+    "wizard applies initial profile": "root.applyProfile(root.selectedProfile)" in wizard,
+    "wizard dock pinned": '"dock.pinnedOnStartup": true' in wizard,
+    "wizard dock not hover-only": '"dock.hoverToReveal": false' in wizard,
+    "wizard right sidebar full height": '"sidebar.collapseEmptyNotifications": false' in wizard,
+    "wizard left sidebar full height": '"sidebar.collapseWidgetsTab": false' in wizard,
+    "wizard preserves Waffle configuration": '"waffles.' not in wizard.split(
+        "readonly property var profileEssentials", 1)[1].split(
+        "// ─── Entry/exit animation state", 1)[0],
+}
+failed = [name for name, passed in schema_checks.items() if not passed]
+if failed:
+    raise SystemExit("FAIL: schema/wizard defaults: " + ", ".join(failed))
+
+binds = (root / "defaults/niri/config.d/70-binds.kdl").read_text(encoding="utf-8")
+if 'Alt+Tab { next-window; }' not in binds or 'Alt+Shift+Tab { previous-window; }' not in binds:
+    raise SystemExit("FAIL: native Niri Alt+Tab bindings are missing")
+if 'spawn "inir" "altSwitcher"' in binds:
+    raise SystemExit("FAIL: fresh-install Alt+Tab invokes the iNiR switcher")
+PY
+
 step "runtime payload manifests"
 while IFS= read -r runtime_file; do
     [[ -n "$runtime_file" ]] || continue

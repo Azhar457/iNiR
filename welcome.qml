@@ -36,6 +36,9 @@ Scope {
 
     readonly property string selectedProfile: Config.options?.welcomeWizard?.profile ?? "balanced"
     property bool profileCustomized: false
+    property bool initialProfileApplied: false
+    readonly property bool firstRunSetup: !(Config.options?.welcomeWizard?.completed ?? false)
+        && !(Config.options?.welcomeWizard?.skipped ?? false)
 
     readonly property string selectedProfileTitle: selectedProfile === "minimum"
         ? Translation.tr("Minimum")
@@ -51,9 +54,13 @@ Scope {
             ? Translation.tr("Best if you want to see everything iNiR can do on day one.")
             : Translation.tr("Best for most people. This is what a fresh install ships.")
 
-    // Shared by every profile; profiles differ only in how much they compose.
+    // Every starting profile prepares shared services and the Material II
+    // family. Waffle keeps its independent `waffles.*` configuration intact,
+    // so switching families never erases or silently reconfigures it.
     readonly property var profileEssentials: ({
         "dock.enable": true,
+        "dock.hoverToReveal": false,
+        "dock.pinnedOnStartup": true,
         "dashboard.enable": true,
         "bar.weather.enable": true,
         "bar.modules.weather": true,
@@ -68,13 +75,14 @@ Scope {
         "gameMode.autoDetect": true,
         "audio.protection.enable": true,
         "performance.reduceAnimations": false,
-        "sidebar.collapseEmptyNotifications": true,
-        "sidebar.collapseWidgetsTab": true,
+        "sidebar.collapseEmptyNotifications": false,
+        "sidebar.collapseWidgetsTab": false,
         "sidebar.right.headerBanner": "wallpaper",
         "sidebar.right.sectionOrder": ["system", "sliders", "toggles", "notifications", "widgets"],
         "sidebar.quickToggles.style": "android",
         "sidebar.quickToggles.android.columns": 4,
-        // The taskbar duplicates the dock; never compose both.
+        // Material II's embedded bar taskbar duplicates the Material II dock.
+        // Waffle owns a separate taskbar under `waffles.bar.*` and is unaffected.
         "bar.modules.taskbar": false
     })
 
@@ -226,6 +234,13 @@ Scope {
     function setProfileFeature(path: string, value: var): void {
         root.profileCustomized = true
         Config.setNestedValue(path, value)
+    }
+
+    onCurrentStepChanged: {
+        if (root.currentStep !== 1 || root.initialProfileApplied || !root.firstRunSetup)
+            return
+        root.initialProfileApplied = true
+        root.applyProfile(root.selectedProfile)
     }
 
     // ─── Entry/exit animation state (gate pattern) ───
@@ -1490,7 +1505,7 @@ Scope {
             columnSpacing: 20
             rowSpacing: 16
 
-            // Bar position
+            // Material II bar position. Waffle owns `waffles.bar.bottom`.
             SettingsGroup {
                 Layout.preferredWidth: 260
                 ColumnLayout {
@@ -1498,7 +1513,10 @@ Scope {
                     spacing: 8
                     RowLayout {
                         MaterialSymbol { text: "web_asset"; iconSize: 18; color: Appearance.colors.colPrimary }
-                        StyledText { text: Translation.tr("Bar"); font.pixelSize: Appearance.font.pixelSize.small }
+                        StyledText {
+                            text: "Material II · " + Translation.tr("Bar")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                        }
                     }
                     ConfigSelectionArray {
                         Layout.fillWidth: true
@@ -1512,7 +1530,7 @@ Scope {
                 }
             }
 
-            // Dock position
+            // Material II dock position. Waffle family modules are independent.
             SettingsGroup {
                 Layout.preferredWidth: 260
                 ColumnLayout {
@@ -1520,7 +1538,10 @@ Scope {
                     spacing: 8
                     RowLayout {
                         MaterialSymbol { text: "dock_to_bottom"; iconSize: 18; color: Appearance.colors.colPrimary }
-                        StyledText { text: Translation.tr("Dock"); font.pixelSize: Appearance.font.pixelSize.small }
+                        StyledText {
+                            text: "Material II · " + Translation.tr("Dock")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                        }
                     }
                     ConfigSelectionArray {
                         Layout.fillWidth: true
@@ -1535,7 +1556,8 @@ Scope {
                 }
             }
 
-            // Panel family
+            // Selects which family starts active. Both family configurations
+            // remain stored and switching later does not reset either one.
             SettingsGroup {
                 Layout.columnSpan: 2
                 Layout.fillWidth: true
@@ -1544,7 +1566,7 @@ Scope {
                     spacing: 8
                     RowLayout {
                         MaterialSymbol { text: "view_quilt"; iconSize: 18; color: Appearance.colors.colPrimary }
-                        StyledText { text: Translation.tr("Panel Style"); font.pixelSize: Appearance.font.pixelSize.small }
+                        StyledText { text: Translation.tr("Panel family"); font.pixelSize: Appearance.font.pixelSize.small }
                     }
                     ConfigSelectionArray {
                         Layout.fillWidth: true
@@ -1569,7 +1591,10 @@ Scope {
                     spacing: 8
                     RowLayout {
                         MaterialSymbol { text: "wysiwyg"; iconSize: 18; color: Appearance.colors.colPrimary }
-                        StyledText { text: Translation.tr("Bar shape"); font.pixelSize: Appearance.font.pixelSize.small }
+                        StyledText {
+                            text: "Material II · " + Translation.tr("Bar shape")
+                            font.pixelSize: Appearance.font.pixelSize.small
+                        }
                         Item { Layout.fillWidth: true }
                         StyledText {
                             text: Translation.tr("Changes how the whole bar reads")
@@ -1598,21 +1623,21 @@ Scope {
 
             ConfigSwitch {
                 buttonIcon: "dock_to_bottom"
-                text: Translation.tr("Show dock")
-                description: Translation.tr("Three familiar pinned apps, hidden until you approach the edge.")
+                text: "Material II · " + Translation.tr("Show dock")
+                description: Translation.tr("Keep dock visible at all times (Empty workspace mode only)")
                 checked: Config.options?.dock?.enable ?? true
                 onToggledByUser: checked => root.setProfileFeature("dock.enable", checked)
             }
             ConfigSwitch {
                 buttonIcon: "dashboard"
-                text: Translation.tr("Show dashboard")
+                text: "Material II · " + Translation.tr("Show dashboard")
                 description: Translation.tr("Keep a centered home panel for notifications, media, weather and daily controls.")
                 checked: Config.options?.dashboard?.enable ?? true
                 onToggledByUser: checked => root.setProfileFeature("dashboard.enable", checked)
             }
             ConfigSwitch {
                 buttonIcon: "auto_awesome_motion"
-                text: Translation.tr("Auto-hide the bar")
+                text: "Material II · " + Translation.tr("Auto-hide the bar")
                 description: Translation.tr("A quieter desktop; the bar returns from the edge or while holding Super.")
                 checked: Config.options?.bar?.autoHide?.enable ?? false
                 onToggledByUser: checked => root.setProfileFeature("bar.autoHide.enable", checked)
