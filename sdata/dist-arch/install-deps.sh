@@ -149,15 +149,23 @@ install_pkgbuild_deps() {
     return 0
   fi
   
-  log_info "Installing: ${depends[*]}"
+  local missing_deps=()
+  mapfile -t missing_deps < <(pacman -T "${depends[@]}" 2>/dev/null || true)
+
+  if [[ ${#missing_deps[@]} -eq 0 ]]; then
+    log_success "Already satisfied: ${depends[*]}"
+    return 0
+  fi
+
+  log_info "Installing missing: ${missing_deps[*]}"
   
   local installflags="--needed"
   $ask || installflags="$installflags --noconfirm"
   
   # Install via pacman first (for official repos)
-  pkg_sudo pacman -S $installflags "${depends[@]}" 2>/dev/null || {
+  pkg_sudo pacman -S $installflags "${missing_deps[@]}" 2>/dev/null || {
     # Some packages may be AUR-only, try with AUR helper
-    $AUR_HELPER -S $installflags "${depends[@]}"
+    $AUR_HELPER -S $installflags "${missing_deps[@]}"
   }
 }
 

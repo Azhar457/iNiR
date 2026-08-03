@@ -86,6 +86,17 @@ if 'spawn "inir" "altSwitcher"' in binds:
     raise SystemExit("FAIL: fresh-install Alt+Tab invokes the iNiR switcher")
 PY
 
+arch_installer="$runtime_root/sdata/dist-arch/install-deps.sh"
+if ! grep -Fq 'pacman -T "${depends[@]}"' "$arch_installer" \
+        || ! grep -Fq 'pacman -S $installflags "${missing_deps[@]}"' "$arch_installer"; then
+    printf 'FAIL: Arch PKGBUILD dependencies are not filtered through the local package database\n' >&2
+    exit 1
+fi
+if grep -Fq 'pacman -S $installflags "${depends[@]}"' "$arch_installer"; then
+    printf 'FAIL: Arch installer can still reinstall or downgrade satisfied PKGBUILD dependencies\n' >&2
+    exit 1
+fi
+
 step "runtime payload manifests"
 while IFS= read -r runtime_file; do
     [[ -n "$runtime_file" ]] || continue
