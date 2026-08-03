@@ -842,4 +842,14 @@ ColumnLayout {
             }
         }
     }
+
+    SettingsNativeDialogGuard {
+        dialog: imageDialog
+        dialogKey: "gowall-source-image"
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: colorDialog
+        dialogKey: "gowall-palette-color"
+    }
 }

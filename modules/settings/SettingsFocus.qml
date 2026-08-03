@@ -400,8 +400,11 @@ Scope {
             visible: root.settingsOpen || root._closeAnimRunning
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:settingsFocus"
-            WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: root.settingsOpen && !GlobalStates.regionSelectorOpen
+            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen
+                ? WlrLayer.Bottom : WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: root.settingsOpen
+                && !GlobalStates.regionSelectorOpen
+                && !GlobalStates.settingsNativeDialogOpen
                 ? WlrKeyboardFocus.Exclusive
                 : WlrKeyboardFocus.None
             color: "transparent"
@@ -518,7 +521,7 @@ Scope {
                 windows: [settingsPanel]
                 active: false
                 onCleared: () => {
-                    if (!active)
+                    if (!active && !GlobalStates.settingsNativeDialogOpen)
                         GlobalStates.settingsOverlayOpen = false;
                 }
             }
@@ -526,12 +529,14 @@ Scope {
             Connections {
                 target: GlobalStates
                 function onSettingsOverlayOpenChanged() { grabTimer.restart() }
+                function onSettingsNativeDialogOpenChanged() { grabTimer.restart() }
             }
 
             Timer {
                 id: grabTimer
                 interval: 100
                 onTriggered: grab.active = (GlobalStates.settingsOverlayOpen ?? false)
+                    && !GlobalStates.settingsNativeDialogOpen
             }
 
             // ── Scrim ──
@@ -559,6 +564,7 @@ Scope {
             MouseArea {
                 anchors.fill: parent
                 visible: GlobalStates.settingsOverlayOpen ?? false
+                enabled: !GlobalStates.settingsNativeDialogOpen
                 onClicked: GlobalStates.settingsOverlayOpen = false
             }
 

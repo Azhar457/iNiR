@@ -44,6 +44,21 @@ Singleton {
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
     property int settingsOverlayCurrentPage: -1 // Published by whichever overlay chrome is loaded
+    property var _settingsNativeDialogs: ({})
+    readonly property bool settingsNativeDialogOpen:
+        Object.keys(root._settingsNativeDialogs).length > 0
+
+    function setSettingsNativeDialogVisible(dialogKey: string, visible: bool): void {
+        const key = String(dialogKey ?? "").trim()
+        if (!key) return
+        const next = Object.assign({}, root._settingsNativeDialogs)
+        if (visible)
+            next[key] = true
+        else
+            delete next[key]
+        root._settingsNativeDialogs = next
+    }
+
     property bool regionSelectorOpen: false
     property var regionSelectorAction: 0
     property var regionSelectorMode: 0

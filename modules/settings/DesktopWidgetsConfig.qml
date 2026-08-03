@@ -2,6 +2,7 @@ import qs
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Dialogs
+import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
 import qs.services
@@ -17,6 +18,10 @@ ContentPage {
     settingsPageName: Translation.tr("Widgets")
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
+    property int _customMediaFolderCount: 0
+    property int _customMediaFolderImageCount: 0
+    property int _customMediaFolderGifCount: 0
+    property int _customMediaFolderVideoCount: 0
 
     readonly property var _customImageShapes: [
         { value: "Circle", shape: MaterialShape.Shape.Circle },
@@ -75,19 +80,132 @@ ContentPage {
         Config.setNestedValues(JapanesePresets.composition(root._japanesePath, preset));
     }
 
+    function _customMediaChoiceActive(choice: string): bool {
+        const base = "background.widgets.customImage"
+        const mode = Config.getNestedValue(base + ".sourceMode", "file")
+        const filter = Config.getNestedValue(base + ".mediaFilter", "all")
+        return mode === "file" ? choice === "file" : choice === filter
+    }
+
+    function _customMediaFolderUrl(path: string): string {
+        const value = String(path ?? "")
+        if (!value) return ""
+        return value.startsWith("file:") ? value : "file://" + value
+    }
+
+    function _refreshCustomMediaFolderInventory(): void {
+        let mediaCount = 0
+        let imageCount = 0
+        let gifCount = 0
+        let videoCount = 0
+        if (customMediaFolderInventory.status === FolderListModel.Ready) {
+            for (let i = 0; i < customMediaFolderInventory.count; ++i) {
+                const path = String(customMediaFolderInventory.get(i, "filePath")
+                    || FileUtils.trimFileProtocol(customMediaFolderInventory.get(i, "fileURL")) || "")
+                if (!Images.isValidMediaByName(path)) continue
+                mediaCount++
+                if (Images.isValidVideoByName(path)) videoCount++
+                else if (path.toLowerCase().endsWith(".gif")) gifCount++
+                else if (Images.isValidImageByName(path)) imageCount++
+            }
+        }
+        root._customMediaFolderCount = mediaCount
+        root._customMediaFolderImageCount = imageCount
+        root._customMediaFolderGifCount = gifCount
+        root._customMediaFolderVideoCount = videoCount
+
+        const base = "background.widgets.customImage"
+        const mode = Config.getNestedValue(base + ".sourceMode", "file")
+        const filter = Config.getNestedValue(base + ".mediaFilter", "all")
+        const selectedCount = filter === "images" ? imageCount
+            : filter === "gifs" ? gifCount
+            : filter === "videos" ? videoCount
+            : mediaCount
+        if (mode === "folder" && mediaCount > 0 && selectedCount === 0
+                && filter !== "all")
+            Qt.callLater(() => Config.setNestedValue(base + ".mediaFilter", "all"))
+    }
+
+    function _activateCustomMediaChoice(choice: string): void {
+        const base = "background.widgets.customImage"
+        const path = Config.getNestedValue(base + ".path", "")
+        const updates = {}
+        if (choice === "file") {
+            if (!Images.isValidMediaByName(path)) return
+            updates[base + ".sourceMode"] = "file"
+        } else {
+            const count = choice === "images" ? root._customMediaFolderImageCount
+                : choice === "gifs" ? root._customMediaFolderGifCount
+                : choice === "videos" ? root._customMediaFolderVideoCount
+                : root._customMediaFolderCount
+            if (count === 0) return
+            updates[base + ".sourceMode"] = "folder"
+            updates[base + ".mediaFilter"] = choice
+        }
+        Config.setNestedValues(updates)
+    }
+
+    FolderListModel {
+        id: customMediaFolderInventory
+        folder: root._customMediaFolderUrl(
+            Config.options?.background?.widgets?.customImage?.folder ?? "")
+        nameFilters: Images.validImageExtensions.concat(Images.validVideoExtensions)
+            .map(ext => "*." + ext)
+        caseSensitive: false
+        showDirs: false
+        showDotAndDotDot: false
+        showHidden: false
+        showOnlyReadable: true
+        sortField: FolderListModel.Name
+        onCountChanged: root._refreshCustomMediaFolderInventory()
+        onStatusChanged: if (status === FolderListModel.Ready)
+            root._refreshCustomMediaFolderInventory()
+        onFolderChanged: Qt.callLater(root._refreshCustomMediaFolderInventory)
+    }
+
     FileDialog {
         id: customImageFileDialog
-        title: Translation.tr("Choose source image")
+        title: Translation.tr("Choose media file")
         fileMode: FileDialog.OpenFile
         nameFilters: [
+            Translation.tr("Media") + " (*.jpg *.jpeg *.png *.webp *.tif *.tiff *.svg *.gif *.mp4 *.webm *.mkv *.avi *.mov)",
             Translation.tr("Images") + " (*.jpg *.jpeg *.png *.webp *.tif *.tiff *.svg *.gif)",
+            Translation.tr("Videos") + " (*.mp4 *.webm *.mkv *.avi *.mov)",
             Translation.tr("All files") + " (*)"
         ]
         onAccepted: {
             const path = FileUtils.trimFileProtocol(String(selectedFile));
-            if (Images.isValidImageByName(path))
-                Config.setNestedValue("background.widgets.customImage.path", path);
+            if (Images.isValidMediaByName(path)) {
+                Config.setNestedValues({
+                    "background.widgets.customImage.path": path,
+                    "background.widgets.customImage.sourceMode": "file"
+                });
+            }
         }
+    }
+
+    FolderDialog {
+        id: customImageFolderDialog
+        title: Translation.tr("Choose media folder")
+        onAccepted: {
+            const path = FileUtils.trimFileProtocol(String(selectedFolder));
+            if (path.length > 0) {
+                Config.setNestedValues({
+                    "background.widgets.customImage.folder": path,
+                    "background.widgets.customImage.sourceMode": "folder"
+                });
+            }
+        }
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: customImageFileDialog
+        dialogKey: "desktop-widgets-custom-media-file"
+    }
+
+    SettingsNativeDialogGuard {
+        dialog: customImageFolderDialog
+        dialogKey: "desktop-widgets-custom-media-folder"
     }
 
     function _applyJapanesePalettePreset(preset: string): void {
@@ -953,6 +1071,11 @@ ContentPage {
             id: colorDialog
             selectedColor: colorRow.currentColor
             onAccepted: root._setJapaneseValue(colorRow.configKey, selectedColor.toString(), "palette")
+        }
+
+        SettingsNativeDialogGuard {
+            dialog: colorDialog
+            dialogKey: "desktop-widgets-japanese-color"
         }
     }
 
@@ -2385,25 +2508,94 @@ ContentPage {
             }
 
             ContentSubsection {
-                title: Translation.tr("Image")
+                title: Translation.tr("Source")
 
                 WidgetSettingRow {
-                    label: Translation.tr("Image")
-                    icon: "image"
+                    label: Translation.tr("Show")
+                    icon: "filter_alt"
+                    trailing: false
+
+                    GridLayout {
+                        id: customMediaQuickChoices
+                        Layout.fillWidth: true
+                        readonly property var choices: [
+                            { label: Translation.tr("File"), icon: "draft", value: "file",
+                                available: Images.isValidMediaByName(Config.options?.background?.widgets?.customImage?.path ?? "") },
+                            { label: Translation.tr("All") + " " + root._customMediaFolderCount,
+                                icon: "perm_media", value: "all", available: root._customMediaFolderCount > 0 },
+                            { label: Translation.tr("Images") + " " + root._customMediaFolderImageCount,
+                                icon: "image", value: "images", available: root._customMediaFolderImageCount > 0 },
+                            { label: "GIF " + root._customMediaFolderGifCount,
+                                icon: "motion_photos_on", value: "gifs", available: root._customMediaFolderGifCount > 0 },
+                            { label: Translation.tr("Videos") + " " + root._customMediaFolderVideoCount,
+                                icon: "movie", value: "videos", available: root._customMediaFolderVideoCount > 0 }
+                        ].filter(choice => choice.available)
+                        columns: Math.max(1, choices.length)
+                        columnSpacing: 4
+                        rowSpacing: 4
+
+                        Repeater {
+                            model: customMediaQuickChoices.choices
+
+                            SelectionGroupButton {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                leftmost: true; rightmost: true
+                                toggled: root._customMediaChoiceActive(modelData.value)
+                                buttonIcon: modelData.icon
+                                buttonText: modelData.label
+                                onClicked: root._activateCustomMediaChoice(modelData.value)
+                            }
+                        }
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Source type")
+                    icon: "perm_media"
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.sourceMode", "file")
+                        onSelected: newValue => {
+                            const path = Config.getNestedValue("background.widgets.customImage.path", "")
+                            const folder = Config.getNestedValue("background.widgets.customImage.folder", "")
+                            if (newValue === "folder" && folder.length === 0) {
+                                customImageFolderDialog.open()
+                                return
+                            }
+                            if (newValue === "file" && path.length === 0) {
+                                customImageFileDialog.open()
+                                return
+                            }
+                            Config.setNestedValue("background.widgets.customImage.sourceMode", newValue)
+                        }
+                        options: [
+                            { displayName: Translation.tr("Single file"), icon: "draft", value: "file" },
+                            { displayName: Translation.tr("Folder gallery"), icon: "folder_open", value: "folder" }
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "file"
+                    label: Translation.tr("Media file")
+                    icon: "perm_media"
                     trailing: false
 
                     MaterialTextField {
                         Layout.fillWidth: true
-                        placeholderText: Translation.tr("Image")
+                        placeholderText: Translation.tr("Image, GIF, or video")
                         text: Config.getNestedValue("background.widgets.customImage.path", "")
                         onAccepted: {
                             const path = text.trim();
-                            if (path.length === 0 || Images.isValidImageByName(path))
+                            if (path.length === 0 || Images.isValidMediaByName(path))
                                 Config.setNestedValue("background.widgets.customImage.path", path);
                         }
                         onEditingFinished: {
                             const path = text.trim();
-                            if (path.length === 0 || Images.isValidImageByName(path))
+                            if (path.length === 0 || Images.isValidMediaByName(path))
                                 Config.setNestedValue("background.widgets.customImage.path", path);
                         }
                     }
@@ -2422,7 +2614,132 @@ ContentPage {
                         leftmost: true; rightmost: true
                         buttonIcon: "close"
                         buttonText: Translation.tr("Clear")
-                        onClicked: Config.setNestedValue("background.widgets.customImage.path", "")
+                        onClicked: {
+                            const folder = Config.getNestedValue("background.widgets.customImage.folder", "")
+                            const updates = ({ "background.widgets.customImage.path": "" })
+                            if (folder.length > 0)
+                                updates["background.widgets.customImage.sourceMode"] = "folder"
+                            Config.setNestedValues(updates)
+                        }
+                    }
+                }
+
+                WidgetSettingRow {
+                    visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "folder"
+                    label: Translation.tr("Media folder")
+                    icon: "folder_open"
+                    trailing: false
+
+                    MaterialTextField {
+                        Layout.fillWidth: true
+                        placeholderText: Translation.tr("Folder containing images or videos")
+                        text: Config.getNestedValue("background.widgets.customImage.folder", "")
+                        onAccepted: Config.setNestedValue("background.widgets.customImage.folder", text.trim())
+                        onEditingFinished: Config.setNestedValue("background.widgets.customImage.folder", text.trim())
+                    }
+
+                    SelectionGroupButton {
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "folder_open"
+                        buttonText: Translation.tr("Browse")
+                        onClicked: customImageFolderDialog.open()
+                    }
+
+                    SelectionGroupButton {
+                        visible: Config.getNestedValue("background.widgets.customImage.folder", "").length > 0
+                        Layout.fillWidth: false
+                        leftmost: true; rightmost: true
+                        buttonIcon: "close"
+                        buttonText: Translation.tr("Clear")
+                        onClicked: {
+                            const path = Config.getNestedValue("background.widgets.customImage.path", "")
+                            const updates = ({ "background.widgets.customImage.folder": "" })
+                            if (path.length > 0)
+                                updates["background.widgets.customImage.sourceMode"] = "file"
+                            Config.setNestedValues(updates)
+                        }
+                    }
+                }
+
+                WidgetSettingRow {
+                    visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "folder"
+                    label: Translation.tr("Media type")
+                    icon: "filter_alt"
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.mediaFilter", "all")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.customImage.mediaFilter", newValue)
+                        options: [
+                            { displayName: Translation.tr("All media") + " (" + root._customMediaFolderCount + ")", icon: "perm_media", value: "all", available: true },
+                            { displayName: Translation.tr("Images only") + " (" + root._customMediaFolderImageCount + ")", icon: "image", value: "images", available: root._customMediaFolderImageCount > 0 },
+                            { displayName: "GIF (" + root._customMediaFolderGifCount + ")", icon: "motion_photos_on", value: "gifs", available: root._customMediaFolderGifCount > 0 },
+                            { displayName: Translation.tr("Videos only") + " (" + root._customMediaFolderVideoCount + ")", icon: "movie", value: "videos", available: root._customMediaFolderVideoCount > 0 }
+                        ].filter(option => option.available)
+                    }
+                }
+
+                SettingsNote {
+                    icon: "volume_off"
+                    text: Translation.tr("Videos play silently. Images, animated GIFs, and videos can share the same folder.")
+                }
+            }
+
+            ContentSubsection {
+                visible: Config.getNestedValue("background.widgets.customImage.sourceMode", "file") === "folder"
+                title: Translation.tr("Gallery rotation")
+
+                WidgetSettingRow {
+                    label: Translation.tr("Order")
+                    icon: "swap_vert"
+                    trailing: false
+
+                    ConfigSelectionArray {
+                        Layout.fillWidth: true
+                        currentValue: Config.getNestedValue("background.widgets.customImage.order", "sequential")
+                        onSelected: newValue => Config.setNestedValue("background.widgets.customImage.order", newValue)
+                        options: [
+                            { displayName: Translation.tr("Sequential"), icon: "format_list_numbered", value: "sequential" },
+                            { displayName: Translation.tr("Random"), icon: "shuffle", value: "random" }
+                        ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Change every")
+                    icon: "timer"
+                    StyledSpinBox {
+                        from: 3; to: 3600; stepSize: 1
+                        value: Config.getNestedValue("background.widgets.customImage.intervalSeconds", 30)
+                        onValueModified: Config.setNestedValue("background.widgets.customImage.intervalSeconds", value)
+                        StyledToolTip { text: Translation.tr("Seconds between media changes") }
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Quick timing")
+                    icon: "speed"
+                    trailing: false
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Repeater {
+                            model: [3, 10, 30, 60]
+                            SelectionGroupButton {
+                                required property int modelData
+                                Layout.fillWidth: true
+                                leftmost: true; rightmost: true
+                                toggled: Config.getNestedValue(
+                                    "background.widgets.customImage.intervalSeconds", 30) === modelData
+                                buttonText: modelData + "s"
+                                onClicked: Config.setNestedValue(
+                                    "background.widgets.customImage.intervalSeconds", modelData)
+                            }
+                        }
                     }
                 }
             }
@@ -2493,9 +2810,20 @@ ContentPage {
                         currentValue: Config.getNestedValue("background.widgets.customImage.fitMode", "cover")
                         onSelected: newValue => Config.setNestedValue("background.widgets.customImage.fitMode", newValue)
                         options: [
-                            { displayName: Translation.tr("Fill"), icon: "crop_free", value: "cover" },
-                            { displayName: Translation.tr("Fit"), icon: "fit_screen", value: "contain" }
+                            { displayName: Translation.tr("Crop to fill"), icon: "crop_free", value: "cover" },
+                            { displayName: Translation.tr("Show full media"), icon: "fit_screen", value: "contain" }
                         ]
+                    }
+                }
+
+                WidgetSettingRow {
+                    label: Translation.tr("Transition")
+                    icon: "animation"
+                    StyledSpinBox {
+                        from: 0; to: 2000; stepSize: 50
+                        value: Config.getNestedValue("background.widgets.customImage.transitionDuration", 450)
+                        onValueModified: Config.setNestedValue("background.widgets.customImage.transitionDuration", value)
+                        StyledToolTip { text: Translation.tr("Crossfade duration in milliseconds; 0 disables it") }
                     }
                 }
             }
@@ -2513,7 +2841,9 @@ ContentPage {
                 configPath: "background.widgets.customImage"
                 defaults: ({
                     enable: false, locked: false, placementStrategy: "free",
-                    path: "", shape: "Cookie4Sided", fitMode: "cover", size: 220,
+                    sourceMode: "file", path: "", folder: "", mediaFilter: "all",
+                    intervalSeconds: 30, order: "sequential", transitionDuration: 450,
+                    shape: "Cookie4Sided", fitMode: "cover", size: 220,
                     dim: 0, widgetScale: 100, widgetOpacity: 100, x: 120, y: 320
                 })
             }

@@ -2434,5 +2434,10 @@ ColumnLayout {
                 }
             }
         }
+
+        SettingsNativeDialogGuard {
+            dialog: colorPicker
+            dialogKey: "custom-theme-palette-color"
+        }
     }
 }

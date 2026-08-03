@@ -796,9 +796,9 @@ Singleton {
         {
             pageIndex: 14, pageName: root.pages[14].name,
             section: Translation.tr("Custom image"),
-            label: Translation.tr("Custom image"),
-            description: Translation.tr("Custom image"),
-            keywords: ["custom", "image", "photo", "gif", "shape", "widget", "desktop", "drop"]
+            label: Translation.tr("Custom media gallery"),
+            description: Translation.tr("Show one image, GIF, or video, or rotate a mixed-media folder"),
+            keywords: ["custom", "image", "photo", "static", "gif", "animated", "video", "movie", "gallery", "folder", "slideshow", "interval", "speed", "random", "sequential", "fit", "shape", "widget", "desktop", "drop"]
         },
         {
             pageIndex: 14, pageName: root.pages[14].name,
@@ -1809,7 +1809,7 @@ Singleton {
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Clock style"), description: Translation.tr("Cookie, digital or Android stacked clock"), keywords: ["clock", "style", "cookie", "digital", "android", "stacked", "analog", "hands"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Japanese Typography"), label: Translation.tr("Japanese typography widget"), description: Translation.tr("Vertical editorial lettering with layout, font, palette, seal, and footer controls"), keywords: ["japanese", "typography", "vertical", "text", "kanji", "kana", "poster", "magazine", "editorial", "seal", "widget", "font", "mincho", "gothic", "color", "palette", "sumi", "outline"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Weather"), label: Translation.tr("Desktop weather widget"), description: Translation.tr("Weather display on the desktop background"), keywords: ["weather", "widget", "background", "temperature"] },
-        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Custom image"), label: Translation.tr("Custom image"), description: Translation.tr("Custom image"), keywords: ["custom", "image", "photo", "gif", "shape", "widget", "desktop", "drop"] },
+        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Custom image"), label: Translation.tr("Custom media gallery"), description: Translation.tr("Show one image, GIF, or video, or rotate a mixed-media folder"), keywords: ["custom", "image", "photo", "static", "gif", "animated", "video", "movie", "gallery", "folder", "slideshow", "interval", "speed", "random", "sequential", "fit", "shape", "widget", "desktop", "drop"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Image converter"), label: Translation.tr("Image converter"), description: Translation.tr("Convert dropped images to PNG, JPG, WEBP, AVIF, BMP, TIFF or PDF"), keywords: ["image", "convert", "converter", "png", "jpg", "webp", "avif", "bmp", "tiff", "pdf", "drop", "desktop", "widget"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("World clock"), label: Translation.tr("World clock"), description: Translation.tr("Local time and four configurable time zones"), keywords: ["world", "clock", "timezone", "city", "desktop", "widget"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("User card"), label: Translation.tr("User card"), description: Translation.tr("Identity, uptime, weather and session actions"), keywords: ["user", "profile", "uptime", "weather", "lock", "settings", "power", "desktop", "widget"] },

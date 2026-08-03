@@ -1256,7 +1256,13 @@ Singleton {
                         property bool enable: false
                         property bool locked: false
                         property string placementStrategy: "free"
+                        property string sourceMode: "file" // "file" | "folder"
                         property string path: ""
+                        property string folder: ""
+                        property string mediaFilter: "all" // "all" | "images" | "gifs" | "videos"
+                        property int intervalSeconds: 30
+                        property string order: "sequential" // "sequential" | "random"
+                        property int transitionDuration: 450
                         property string shape: "Cookie4Sided"
                         property string fitMode: "cover"
                         property int size: 220
