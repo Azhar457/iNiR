@@ -10,6 +10,7 @@ Item {
 
     property real s: 1
     property string screenName: ""
+    property bool outputAllowed: true
     property bool suppressed: false
     property bool expanded: false
     property bool compact: false
@@ -106,24 +107,12 @@ Item {
         }
     }
 
-    /**
-     * Every pill carries its own Osd but the volume/track/battery signals are
-     * global, so without this gate one keypress flashes every monitor at once.
-     * Workspace flashes skip it: those are already keyed to this screen's own
-     * active workspace.
-     */
-    readonly property bool onFocusedMonitor: CompositorService.isNiri
-        ? (NiriService.currentOutput.length === 0 || NiriService.currentOutput === root.screenName)
-        : (!Hyprland.focusedMonitor || Hyprland.focusedMonitor.name === root.screenName)
-
     function flash(which) {
         // OSD face switched off: the standalone OnScreenDisplay panel owns the
         // flashes instead (ShellIiPanels hands it back when this key is false).
         if (!(Config.options?.bar?.pill?.osd ?? true))
             return false;
-        if (!armed || suppressed)
-            return false;
-        if (which !== "workspace" && !onFocusedMonitor)
+        if (!outputAllowed || !armed || suppressed)
             return false;
         if (which === "track" && flashing && (kind === "volume" || kind === "brightness" || kind === "mic"))
             return false;
@@ -143,6 +132,12 @@ Item {
         } else if (dirty) {
             tryShow();
         }
+    }
+
+    onOutputAllowedChanged: if (!outputAllowed) {
+        dirty = false;
+        hideTimer.stop();
+        flashing = false;
     }
 
     /** A track announce that lost to live hardware feedback replays once the bar clears. */
@@ -202,6 +197,8 @@ Item {
     Connections {
         target: PillPlayers
         function onAnnounce(player) {
+            if (!root.outputAllowed)
+                return;
             root.pendingSubject = player;
             root.dirty = true;
             root.tryShow();

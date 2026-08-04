@@ -14,17 +14,20 @@ Scope {
     id: root
     property string protectionMessage: ""
     property bool initialized: false
+    property var excludedScreenNames: []
     readonly property var targetScreens: {
         const list = Config.options?.osd?.screenList ?? []
         const screens = Quickshell.screens
-        if (!list || list.length === 0)
-            return screens
-        const matched = screens.filter(screen => {
-            const screenName = screen?.name ?? ""
-            return screenName.length > 0 && list.includes(screenName)
-        })
-        // Fallback safety: stale monitor names should never hide the OSD everywhere.
-        return matched.length > 0 ? matched : screens
+        let selected = screens
+        if (list && list.length > 0) {
+            const matched = screens.filter(screen => {
+                const screenName = screen?.name ?? ""
+                return screenName.length > 0 && list.includes(screenName)
+            })
+            // Fallback safety: stale monitor names should never hide the OSD everywhere.
+            selected = matched.length > 0 ? matched : screens
+        }
+        return selected.filter(screen => !root.excludedScreenNames.includes(screen?.name ?? ""))
     }
 
     property string currentIndicator: "volume"

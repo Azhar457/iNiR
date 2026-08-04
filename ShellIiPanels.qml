@@ -132,6 +132,34 @@ Item {
     readonly property bool barPill: (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"
     readonly property bool barM3: (Config.options?.bar?.appearanceStyle ?? "classic") === "m3"
     readonly property bool barStock: !panelsRoot.barPill && !panelsRoot.barM3
+    readonly property bool pillHostActive: panelsRoot.barPill
+        && !panelsRoot.barVertical
+        && (Config.options?.enabledPanels ?? []).includes("iiBar")
+    readonly property bool pillToastTakeover: panelsRoot.pillHostActive
+        && (Config.options?.bar?.pill?.toasts ?? true)
+    readonly property bool pillOsdTakeover: panelsRoot.pillHostActive
+        && (Config.options?.bar?.pill?.osd ?? true)
+
+    function screensFor(list: var): var {
+        const screens = Quickshell.screens
+        if (!list || list.length === 0)
+            return screens
+        const matched = screens.filter(screen => {
+            const screenName = screen?.name ?? ""
+            return screenName.length > 0 && list.includes(screenName)
+        })
+        return matched.length > 0 ? matched : screens
+    }
+
+    readonly property var pillHostScreens: panelsRoot.pillHostActive
+        ? panelsRoot.screensFor(Config.options?.bar?.screenList ?? []) : []
+    readonly property var pillHostScreenNames: panelsRoot.pillHostScreens.map(screen => screen?.name ?? "")
+    readonly property var notificationScreens: panelsRoot.screensFor(Config.options?.notifications?.screenList ?? [])
+    readonly property var osdScreens: panelsRoot.screensFor(Config.options?.osd?.screenList ?? [])
+    readonly property bool notificationStandaloneNeeded: !panelsRoot.pillToastTakeover
+        || panelsRoot.notificationScreens.some(screen => !panelsRoot.pillHostScreenNames.includes(screen?.name ?? ""))
+    readonly property bool osdStandaloneNeeded: !panelsRoot.pillOsdTakeover
+        || panelsRoot.osdScreens.some(screen => !panelsRoot.pillHostScreenNames.includes(screen?.name ?? ""))
 
     PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && panelsRoot.barStock; component: Bar {} }
     PanelLoader { identifier: "iiBar"; extraCondition: !panelsRoot.barVertical && panelsRoot.barPill; component: PillBar {} }
@@ -140,12 +168,22 @@ Item {
     PanelLoader { identifier: "iiBackground"; component: Background {} }
     PanelLoader { identifier: "iiBackdrop"; extraCondition: Config.options?.background?.backdrop?.enable ?? false; component: Backdrop {} }
     PanelLoader { identifier: "iiDock"; extraCondition: Config.options?.dock?.enable ?? true; component: Dock {} }
-    // The pill bar hosts its own toast and OSD faces, so the standalone popup and
-    // OSD panels would double every notification and every volume flash. Turning
-    // the pill's faces off (bar.pill.toasts / bar.pill.osd) hands each duty back
-    // to the standalone panel instead of silencing it.
-    PanelLoader { identifier: "iiNotificationPopup"; extraCondition: !panelsRoot.barPill || !(Config.options?.bar?.pill?.toasts ?? true); component: NotificationPopup {} }
-    PanelLoader { identifier: "iiOnScreenDisplay"; extraCondition: !panelsRoot.barPill || !(Config.options?.bar?.pill?.osd ?? true); component: OnScreenDisplay {} }
+    // Pill owns transient feedback only where a horizontal Pill host exists.
+    // Standalone panels fill any selected outputs the bar does not cover.
+    PanelLoader {
+        identifier: "iiNotificationPopup"
+        extraCondition: panelsRoot.notificationStandaloneNeeded
+        component: NotificationPopup {
+            excludedScreenNames: panelsRoot.pillToastTakeover ? panelsRoot.pillHostScreenNames : []
+        }
+    }
+    PanelLoader {
+        identifier: "iiOnScreenDisplay"
+        extraCondition: panelsRoot.osdStandaloneNeeded
+        component: OnScreenDisplay {
+            excludedScreenNames: panelsRoot.pillOsdTakeover ? panelsRoot.pillHostScreenNames : []
+        }
+    }
 
     // === Deferred panels (user-triggered or non-critical at boot) ===
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }
@@ -184,42 +222,48 @@ Item {
     DeferredPanelLoader { identifier: "iiScreenCorners"; component: ScreenCorners {} }
     OnDemandPanelLoader { identifier: "iiSessionScreen"; open: GlobalStates.sessionOpen; component: SessionScreen {} }
 
-    // One input-only backdrop owns outside clicks for either sidebar. It maps
-    // only while needed: the surface is fully transparent and sits below the
-    // sidebar hosts, so keeping a fullscreen swapchain while both are closed
-    // has no visual or interaction value.
-    PanelWindow {
-        id: dualSidebarBackdrop
-        visible: GlobalStates.sidebarLeftOpen
-            || GlobalStates.sidebarRightOpen
-        updatesEnabled: GlobalStates.sidebarLeftOpen
-            || GlobalStates.sidebarRightOpen
-        color: "transparent"
-        exclusiveZone: 0
-        WlrLayershell.namespace: "quickshell:dualSidebarBackdrop"
-        WlrLayershell.layer: WlrLayer.Top
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // One input-only backdrop per selected output owns outside clicks for
+    // either sidebar. Each maps only while needed: the transparent surface
+    // sits below the sidebar hosts, so keeping fullscreen swapchains while both
+    // are closed has no visual or interaction value.
+    Variants {
+        model: panelsRoot.screensFor(Config.options?.sidebar?.screenList ?? [])
 
-        anchors {
-            top: true
-            bottom: true
-            left: true
-            right: true
-        }
+        PanelWindow {
+            id: dualSidebarBackdrop
+            required property var modelData
+            screen: modelData
+            visible: GlobalStates.sidebarLeftOpen
+                || GlobalStates.sidebarRightOpen
+            updatesEnabled: GlobalStates.sidebarLeftOpen
+                || GlobalStates.sidebarRightOpen
+            color: "transparent"
+            exclusiveZone: 0
+            WlrLayershell.namespace: "quickshell:dualSidebarBackdrop"
+            WlrLayershell.layer: WlrLayer.Top
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-        Item { id: emptyDualSidebarMask; width: 0; height: 0 }
-        mask: Region {
-            item: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
-                ? dualSidebarBackdropArea : emptyDualSidebarMask
-        }
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
 
-        MouseArea {
-            id: dualSidebarBackdropArea
-            anchors.fill: parent
-            enabled: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
-            onClicked: {
-                GlobalStates.sidebarLeftOpen = false
-                GlobalStates.sidebarRightOpen = false
+            Item { id: emptyDualSidebarMask; width: 0; height: 0 }
+            mask: Region {
+                item: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
+                    ? dualSidebarBackdropArea : emptyDualSidebarMask
+            }
+
+            MouseArea {
+                id: dualSidebarBackdropArea
+                anchors.fill: parent
+                enabled: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
+                onClicked: {
+                    GlobalStates.sidebarLeftOpen = false
+                    GlobalStates.sidebarRightOpen = false
+                }
             }
         }
     }

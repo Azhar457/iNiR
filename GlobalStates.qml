@@ -214,8 +214,8 @@ Singleton {
 
     signal requestRipple(real x, real y, string screenName)
 
-    // Primary screen: user-configured preferred monitor for single-window panels (OSD, notifications, wallpaper selector, etc.)
-    // Empty string = use compositor-focused screen, falling back to Quickshell.screens[0]
+    // User-configured fallback for singular panels such as wallpaper pickers.
+    // Empty string uses the first available Quickshell screen.
     readonly property var primaryScreen: {
         const name = Config.options?.display?.primaryMonitor ?? ""
         if (name.length > 0) {

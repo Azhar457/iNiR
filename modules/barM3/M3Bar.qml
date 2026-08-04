@@ -25,7 +25,11 @@ Scope {
             const list = Config.options.bar.screenList;
             if (!list || list.length === 0)
                 return screens;
-            return screens.filter(screen => list.includes(screen.name));
+            const matched = screens.filter(screen => {
+                const screenName = screen?.name ?? "";
+                return screenName.length > 0 && list.includes(screenName);
+            });
+            return matched.length > 0 ? matched : screens;
         }
         LazyLoader {
             id: barLoader

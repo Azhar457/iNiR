@@ -108,8 +108,20 @@ Item {
 
     // Toasts off hands notifications back to the standalone popup panel
     // (ShellIiPanels re-enables it), so nothing goes silent.
-    readonly property bool toastActive: (Config.options?.bar?.pill?.toasts ?? true) && PillNotifs.popups.length > 0
-    readonly property bool osdActive: osd.flashing
+    function outputEnabled(list: var): bool {
+        if (!list || list.length === 0)
+            return true
+        if (screenName.length > 0 && list.includes(screenName))
+            return true
+        const currentNames = Quickshell.screens.map(screen => screen?.name ?? "")
+        return !list.some(name => currentNames.includes(name))
+    }
+
+    readonly property bool toastOutputEnabled: pill.outputEnabled(Config.options?.notifications?.screenList ?? [])
+    readonly property bool osdOutputEnabled: pill.outputEnabled(Config.options?.osd?.screenList ?? [])
+    readonly property bool toastActive: (Config.options?.bar?.pill?.toasts ?? true)
+        && pill.toastOutputEnabled && PillNotifs.popups.length > 0
+    readonly property bool osdActive: pill.osdOutputEnabled && osd.flashing
     readonly property bool compactAnnounces: Config.options?.bar?.pill?.compactAnnounces ?? false
 
     /**
@@ -1312,6 +1324,7 @@ Item {
         s: pill.s
         compact: pill.compactAnnounceMode
         screenName: pill.screenName
+        outputAllowed: pill.osdOutputEnabled
         suppressed: pill.surfaceOpen || pill.held
         expanded: pill.expanded
         enabled: pill.mode === "osd"
