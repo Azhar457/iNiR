@@ -973,8 +973,8 @@ Singleton {
                     }
                 }
                 property JsonObject cava: JsonObject {
-                    property string colorSource: "theme" // theme | vibrant | cover
-                    property int gradientCount: 8 // 2-8, external cava ~/.config/cava/config
+                    property string colorSource: "theme" // Internal visualizers + standalone cava: theme | vibrant | cover
+                    property int gradientCount: 8 // 1-8; one color becomes a solid standalone cava foreground
                     property string foreground: "" // empty = gradient; hex = solid foreground
                     property string background: "" // empty = palette surface; hex = override
                     property int sensitivity: 100 // 1-500
@@ -1742,7 +1742,7 @@ Singleton {
                     property bool showGlyphs: true // 時 kanji instead of a clock icon at rest
                     property bool clockSeconds: false
                     property bool time12h: false
-                    property bool musicViz: true // Swap the rest glyph for a live cava spectrum
+                    property bool musicViz: true // Draw live spectrum wings outside the pill
                     property bool toasts: true // Notification toasts take over the resting pill
                     property bool osd: true // Volume/brightness/mic/workspace changes flash on the pill
                     property bool compactAnnounces: false // Keep toast/OSD faces at the resting pill size
@@ -1938,6 +1938,22 @@ Singleton {
                     property string type: "bars" // "bars" | "wave"
                     property real height: 0.6 // Share of the bar height the spectrum may fill (0.1–1)
                     property real opacity: 0.35 // Spectrum opacity over the bar surface (0–1)
+                    property string barsOrigin: "bottom" // "bottom" | "top" | "center" | "mirror"
+                    property int density: 12 // Horizontal pixels allocated to each rendered bar
+                    property int gap: 2 // Gap between rendered bars, px
+                    property int smoothing: 2 // Frequency smoothing radius
+                    property string waveMode: "fill" // "fill" | "line" | "ribbon"
+                    property real lineWidth: 2 // Wave edge width, px
+                    property int edgeInset: 0 // Horizontal inset from each surface edge, px
+                    property int edgeSoftness: 28 // Curvature-aware peak headroom, 0-100
+                    property string frequencyProfile: "flat" // "flat" | "bass" | "warm" | "vocal" | "treble" | "smile"
+                    property int accentStrength: 70 // Frequency profile strength, 0-100
+                    property string pillWingMode: "bounded" // "bounded" | "screen" | "bleed"
+                    property int pillWingLength: 180 // Spectrum length on each side of the pill, px
+                    property int pillWingGap: 12 // Air between the pill and each spectrum wing, px
+                    property int pillScreenPadding: 24 // Air between screen edges and screen-spanning wings, px
+                    property int pillUnderlap: 28 // Spectrum overlap behind the pill in bleed mode, px
+                    property int pillEdgeFade: 92 // Fade toward screen edges, 0-100
                 }
                 property bool verbose: true
                 property bool vertical: false

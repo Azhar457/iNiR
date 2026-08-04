@@ -16,23 +16,35 @@ Item {
     id: root
 
     property bool active: false
+    property int sampleCount: 0
     readonly property var points: CavaService.points
+    readonly property real normalizationCeiling: CavaService.normalizationCeiling
+    readonly property bool audioSignalActive: CavaService.audioSignalActive
 
     readonly property bool _wanted: active && !Appearance.gameModeMinimal
     property bool _held: false
+    property int _subscriptionId: -1
 
     function _reconcile(): void {
         if (_wanted === _held)
             return
-        if (_wanted) CavaService.subscribe()
-        else CavaService.unsubscribe()
+        if (_wanted) {
+            root._subscriptionId = CavaService.subscribe(root.sampleCount)
+        } else {
+            CavaService.unsubscribe(root._subscriptionId)
+            root._subscriptionId = -1
+        }
         _held = _wanted
     }
 
     on_WantedChanged: root._reconcile()
+    onSampleCountChanged: {
+        if (root._held)
+            CavaService.updateSubscription(root._subscriptionId, root.sampleCount)
+    }
     Component.onCompleted: root._reconcile()
 
     Component.onDestruction: {
-        if (_held) CavaService.unsubscribe()
+        if (_held) CavaService.unsubscribe(root._subscriptionId)
     }
 }
