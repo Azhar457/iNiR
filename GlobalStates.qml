@@ -225,6 +225,21 @@ Singleton {
         return Quickshell.screens[0]
     }
 
+    // Focus-following screen for singular interactive surfaces. Keep this
+    // separate from primaryScreen: the latter is a user fallback, while this
+    // follows the compositor and only falls back when focus cannot be resolved.
+    readonly property var focusedScreen: {
+        let name = ""
+        if (CompositorService.isNiri)
+            name = NiriService.currentOutput ?? ""
+        else if (CompositorService.isHyprland)
+            name = Hyprland.focusedMonitor?.name ?? ""
+        return Quickshell.screens.find(screen => (screen?.name ?? "") === name)
+            ?? root.primaryScreen
+            ?? Quickshell.screens[0]
+            ?? null
+    }
+
     // Close other waffle popups when one opens (unless allowMultiplePanels is enabled)
     property bool _allowMultiple: Config.options?.waffles?.behavior?.allowMultiplePanels ?? false
     onSearchOpenChanged: {

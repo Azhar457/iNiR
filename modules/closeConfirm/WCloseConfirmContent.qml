@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -16,8 +18,12 @@ Item {
     signal confirm()
     signal cancel()
 
-    readonly property string appId: targetWindow?.app_id ?? ""
-    readonly property string appTitle: targetWindow?.title ?? ""
+    readonly property string appId: String(targetWindow?.app_id ?? "")
+    readonly property string appTitle: String(targetWindow?.title ?? "")
+    readonly property string appDisplayName: appTitle || appId || Translation.tr("Unknown")
+    readonly property color dangerForeground: ColorUtils.ensureReadable(
+        Looks.colors.fg, Looks.colors.danger, 4.5)
+    readonly property color dangerSurface: ColorUtils.applyAlpha(Looks.colors.danger, 0.14)
 
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Escape) {
@@ -29,14 +35,17 @@ Item {
         }
     }
 
-    // Scrim
     Rectangle {
         anchors.fill: parent
         color: ColorUtils.transparentize(Looks.colors.bg0Opaque, 0.4)
         opacity: 0
         Component.onCompleted: opacity = 1
         Behavior on opacity {
-            animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+            animation: NumberAnimation {
+                duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Looks.transition.easing.bezierCurve.standard
+            }
         }
 
         MouseArea {
@@ -45,149 +54,211 @@ Item {
         }
     }
 
-    // Mascot peering over the dialog edge; drawn first so the card overlaps her
     MascotImage {
         anchors.bottom: dialog.top
         anchors.bottomMargin: -12
         anchors.right: dialog.right
-        anchors.rightMargin: 24
-        width: 92
-        height: 92
+        anchors.rightMargin: Looks.dp(18)
+        width: Looks.dp(92)
+        height: Looks.dp(92)
         pose: "warning-concerned"
         surface: "dialogs"
     }
 
-    // Dialog - Windows 11 ContentDialog style
     WPane {
         id: dialog
         anchors.centerIn: parent
-        radius: Looks.radius.large
-        
-        // Fixed width to prevent expansion from long titles/URLs
-        implicitWidth: 360
+        radius: Looks.cookieEverywhere ? Looks.radius.xLarge : Looks.radius.large
+        implicitWidth: Looks.dp(392)
+        borderColor: Looks.glassActive ? Looks.colors.tooltipBorder : Looks.colors.bg2Border
 
         scale: 0.96
         opacity: 0
-        Component.onCompleted: { scale = 1; opacity = 1 }
+        Component.onCompleted: {
+            scale = 1
+            opacity = 1
+        }
         Behavior on scale {
-            animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.panel : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate }
+            animation: NumberAnimation {
+                duration: Looks.transition.enabled ? Looks.transition.duration.panel : 0
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Looks.transition.easing.bezierCurve.decelerate
+            }
         }
         Behavior on opacity {
-            animation: NumberAnimation { duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0; easing.type: Easing.BezierSpline; easing.bezierCurve: Looks.transition.easing.bezierCurve.standard }
+            animation: NumberAnimation {
+                duration: Looks.transition.enabled ? Looks.transition.duration.normal : 0
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Looks.transition.easing.bezierCurve.standard
+            }
         }
 
         contentItem: ColumnLayout {
             spacing: 0
 
-            // Content area
-            RowLayout {
+            Item {
                 Layout.fillWidth: true
-                Layout.margins: 24
-                Layout.bottomMargin: 20
-                spacing: 16
+                implicitHeight: contentColumn.implicitHeight + Looks.dp(40)
 
-                // App icon
-                Kirigami.Icon {
-                    Layout.preferredWidth: 48
-                    Layout.preferredHeight: 48
-                    Layout.alignment: Qt.AlignTop
-                    source: root.appId
-                    fallback: "application-x-executable"
-                    roundToIconSize: false
-                }
-
-                // Text content
                 ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.maximumWidth: 360 - 48 - 16 - 48 // dialog width - icon - spacing - margins
-                    spacing: 8
+                    id: contentColumn
+                    anchors.fill: parent
+                    anchors.margins: Looks.dp(20)
+                    spacing: Looks.dp(12)
 
-                    // Title
-                    WText {
+                    RowLayout {
                         Layout.fillWidth: true
-                        text: Translation.tr("Close this window?")
-                        font {
-                            pixelSize: Looks.font.pixelSize.larger
-                            weight: Looks.font.weight.strong
+                        spacing: Looks.dp(12)
+
+                        Rectangle {
+                            Layout.preferredWidth: Looks.dp(54)
+                            Layout.preferredHeight: Looks.dp(54)
+                            Layout.alignment: Qt.AlignTop
+                            radius: Looks.cookieEverywhere ? height / 2 : Looks.radius.large
+                            color: Looks.colors.bg1
+                            border.width: 1
+                            border.color: Looks.colors.bg2Border
+
+                            Kirigami.Icon {
+                                anchors.fill: parent
+                                anchors.margins: Looks.dp(9)
+                                source: root.appId
+                                fallback: "application-x-executable"
+                                roundToIconSize: false
+                            }
+
+                            Rectangle {
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                anchors.rightMargin: -Looks.dp(3)
+                                anchors.bottomMargin: -Looks.dp(3)
+                                width: Looks.dp(20)
+                                height: Looks.dp(20)
+                                radius: height / 2
+                                color: Looks.colors.danger
+                                border.width: 2
+                                border.color: Looks.colors.bg1
+
+                                FluentIcon {
+                                    anchors.centerIn: parent
+                                    icon: "dismiss"
+                                    implicitSize: Looks.dp(11)
+                                    color: root.dangerForeground
+                                }
+                            }
                         }
-                        wrapMode: Text.Wrap
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: Looks.dp(3)
+
+                            WText {
+                                Layout.fillWidth: true
+                                text: Translation.tr("Close this window?")
+                                font.pixelSize: Looks.font.pixelSize.xlarger
+                                font.weight: Looks.font.weight.strongest
+                                color: Looks.colors.fg
+                                wrapMode: Text.WordWrap
+                            }
+
+                            WText {
+                                Layout.fillWidth: true
+                                text: root.appDisplayName
+                                font.pixelSize: Looks.font.pixelSize.normal
+                                font.weight: Looks.font.weight.strong
+                                color: Looks.colors.fg
+                                elide: Text.ElideMiddle
+                                maximumLineCount: 1
+                            }
+
+                            WText {
+                                Layout.fillWidth: true
+                                visible: root.appId.length > 0 && root.appId !== root.appDisplayName
+                                text: root.appId
+                                font.pixelSize: Looks.font.pixelSize.small
+                                color: Looks.colors.subfg
+                                elide: Text.ElideMiddle
+                                maximumLineCount: 1
+                            }
+                        }
                     }
 
-                    // App title - truncated for long URLs
-                    WText {
+                    Rectangle {
                         Layout.fillWidth: true
-                        text: root.appTitle || root.appId || Translation.tr("Unknown")
-                        font.pixelSize: Looks.font.pixelSize.normal
-                        color: Looks.colors.fg
-                        elide: Text.ElideMiddle
-                        wrapMode: Text.NoWrap
-                        maximumLineCount: 1
-                    }
+                        implicitHeight: warningText.implicitHeight + Looks.dp(20)
+                        radius: Looks.cookieEverywhere ? Looks.radius.xLarge : Looks.radius.medium
+                        color: root.dangerSurface
+                        border.width: 1
+                        border.color: ColorUtils.applyAlpha(Looks.colors.danger, 0.42)
 
-                    // App ID (if different from title)
-                    WText {
-                        Layout.fillWidth: true
-                        text: root.appId
-                        font.pixelSize: Looks.font.pixelSize.small
-                        color: Looks.colors.subfg
-                        visible: root.appId !== "" && root.appId !== root.appTitle
-                        elide: Text.ElideMiddle
+                        RowLayout {
+                            id: warningRow
+                            anchors.fill: parent
+                            anchors.margins: Looks.dp(10)
+                            spacing: Looks.dp(10)
+
+                            FluentIcon {
+                                icon: "info-filled"
+                                implicitSize: Looks.dp(16)
+                                color: Looks.colors.danger
+                                Layout.alignment: Qt.AlignTop
+                            }
+
+                            WText {
+                                id: warningText
+                                Layout.fillWidth: true
+                                text: Translation.tr("Confirm before closing windows")
+                                font.pixelSize: Looks.font.pixelSize.small
+                                color: Looks.colors.fg
+                                wrapMode: Text.WordWrap
+                            }
+                        }
                     }
                 }
             }
 
-            // Separator
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 1
                 color: Looks.colors.bg0Border
             }
 
-            // Button area - centered, Cancel left, Close right
             Item {
                 Layout.fillWidth: true
-                Layout.preferredHeight: buttonsRow.height + 32
-                
+                implicitHeight: actionRow.implicitHeight + Looks.dp(28)
+
                 RowLayout {
-                    id: buttonsRow
-                    anchors.centerIn: parent
-                    spacing: 8
+                    id: actionRow
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.rightMargin: Looks.dp(16)
+                    spacing: Looks.dp(8)
 
-                    // Cancel button (safe action)
                     WBorderedButton {
-                        implicitWidth: 90
-                        implicitHeight: 30
-                        horizontalPadding: 16
-                        verticalPadding: 4
+                        implicitWidth: Looks.dp(104)
+                        implicitHeight: Looks.dp(34)
+                        horizontalPadding: Looks.dp(14)
+                        verticalPadding: Looks.dp(5)
                         text: Translation.tr("Cancel")
-                        
-                        font {
-                            pixelSize: Looks.font.pixelSize.normal
-                            weight: Looks.font.weight.regular
-                        }
-
+                        icon.name: "dismiss"
+                        forceShowIcon: true
+                        cookieMorphing: Looks.cookieEverywhere
                         onClicked: root.cancel()
                     }
 
-                    // Close button (primary action)
-                    WBorderedButton {
-                        implicitWidth: 90
-                        implicitHeight: 30
-                        horizontalPadding: 16
-                        verticalPadding: 4
+                    WButton {
+                        implicitWidth: Looks.dp(104)
+                        implicitHeight: Looks.dp(34)
+                        horizontalPadding: Looks.dp(14)
+                        verticalPadding: Looks.dp(5)
                         text: Translation.tr("Close")
-                        
-                        colBackground: Looks.colors.accent
-                        colBackgroundHover: Looks.colors.accentHover
-                        colBackgroundActive: Looks.colors.accentActive
-                        colBorder: Looks.colors.accent
-                        colForeground: Looks.colors.accentFg
-                        
-                        font {
-                            pixelSize: Looks.font.pixelSize.normal
-                            weight: Looks.font.weight.regular
-                        }
-
+                        icon.name: "delete"
+                        forceShowIcon: true
+                        cookieMorphing: Looks.cookieEverywhere
+                        colBackground: Looks.colors.danger
+                        colBackgroundHover: Looks.colors.dangerActive
+                        colBackgroundActive: Looks.colors.dangerActive
+                        colForeground: root.dangerForeground
                         onClicked: root.confirm()
                     }
                 }

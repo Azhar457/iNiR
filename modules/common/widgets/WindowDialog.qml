@@ -10,7 +10,10 @@ Rectangle {
 
     property bool show: false
     default property alias contentData: contentColumn.data
-    property real backgroundHeight: dialogBackground.implicitHeight
+    // Negative means content-sized. Fixed-height consumers keep assigning an
+    // explicit value; compact dialogs follow their measured content instead of
+    // freezing whatever height happened to exist during Component completion.
+    property real backgroundHeight: -1
     property real backgroundWidth: 350
     property real backgroundAnimationMovementDistance: 60
     property string zzzLabel: "DIALOG"
@@ -34,10 +37,9 @@ Rectangle {
     }
     visible: dialogBackground.implicitHeight > 0
 
-    onShowChanged: {
-        dialogBackgroundHeightAnimation.easing.bezierCurve = (show ? Appearance.animationCurves.emphasizedDecel : Appearance.animationCurves.emphasizedAccel)
-        dialogBackground.implicitHeight = show ? backgroundHeight : 0
-    }
+    onShowChanged: dialogBackgroundHeightAnimation.easing.bezierCurve = show
+        ? Appearance.animationCurves.emphasizedDecel
+        : Appearance.animationCurves.emphasizedAccel
 
     radius: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
 
@@ -77,16 +79,19 @@ Rectangle {
             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }
         
-        property real targetY: root.height / 2 - root.backgroundHeight / 2
+        readonly property real measuredContentHeight: contentColumn.implicitHeight
+            + dialogBackground.contentPad * 2
+        readonly property real resolvedHeight: root.backgroundHeight >= 0
+            ? root.backgroundHeight : measuredContentHeight
+        property real targetY: root.height / 2 - resolvedHeight / 2
         y: root.show ? targetY : (targetY - root.backgroundAnimationMovementDistance)
         implicitWidth: root.backgroundWidth
-        // Same effective padding as contentColumn's margins — in zzz square
-        // panelRadius is 0, so deriving height from radius alone clipped the
-        // dialog's bottom (buttons half-visible)
+        // Corner radius is visual, not spacing. Zero-radius Angel and ZZZ
+        // presets still need a readable inset around dialog content.
         readonly property real contentPad: Appearance.zzzEverywhere
             ? Math.max(radius, Appearance.zzz.markerLength + Appearance.zzz.borderThick * 5)
-            : radius
-        implicitHeight: contentColumn.implicitHeight + dialogBackground.contentPad * 2
+            : Math.max(radius, Appearance.sizes.spacingLarge)
+        implicitHeight: root.show ? resolvedHeight : 0
         Behavior on implicitHeight {
             NumberAnimation {
                 id: dialogBackgroundHeightAnimation
