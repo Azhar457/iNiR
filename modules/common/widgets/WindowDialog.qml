@@ -22,6 +22,7 @@ Rectangle {
     property color zzzAccentColor: Appearance.zzz.secondary
     property bool zzzShowBurst: true
     property bool zzzShowTicks: false
+    property bool zzzDecorationsEnabled: true
     
     signal dismiss()
     Keys.onPressed: (event) => {
@@ -64,6 +65,9 @@ Rectangle {
         fallbackColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.colors.colSurfaceContainerHigh
         inirColor: Appearance.inir.colLayer2
         auroraTransparency: Appearance.aurora.popupTransparentize * 0.85
+        // ZZZ owns its wallpaper wash through ZzzPanelBackdrop. Letting both
+        // layers blur the same wallpaper softens compact dialog text and chrome.
+        wallpaperBackdropEnabled: !Appearance.zzzEverywhere
         border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick
             : (Appearance.angelEverywhere || Appearance.inirEverywhere || Appearance.auroraEverywhere) ? 1 : 0
         Behavior on border.width {
@@ -90,6 +94,7 @@ Rectangle {
         // presets still need a readable inset around dialog content.
         readonly property real contentPad: Appearance.zzzEverywhere
             ? Math.max(radius, Appearance.zzz.markerLength + Appearance.zzz.borderThick * 5)
+            : Appearance.cookieEverywhere ? Appearance.sizes.spacingLarge
             : Math.max(radius, Appearance.sizes.spacingLarge)
         implicitHeight: root.show ? resolvedHeight : 0
         Behavior on implicitHeight {
@@ -114,19 +119,22 @@ Rectangle {
             hoverEnabled: true
         }
 
-        ZzzPanelBackdrop {
+        Loader {
             anchors.fill: parent
-            label: root.zzzLabel
-            index: root.zzzIndex
-            ghostText: root.zzzGhostText
-            accentColor: root.zzzAccentColor
-            showBurst: false
-            showTicks: false
-            showGrid: false
-            horizontalBias: 0.08
-            verticalBias: 0.06
-            ghostWidthFactor: 0.84
-            ghostStrength: 0.7
+            active: root.zzzDecorationsEnabled && Appearance.zzzEverywhere
+            sourceComponent: ZzzPanelBackdrop {
+                label: root.zzzLabel
+                index: root.zzzIndex
+                ghostText: root.zzzGhostText
+                accentColor: root.zzzAccentColor
+                showBurst: false
+                showTicks: false
+                showGrid: false
+                horizontalBias: 0.08
+                verticalBias: 0.06
+                ghostWidthFactor: 0.84
+                ghostStrength: 0.7
+            }
         }
 
         ColumnLayout {

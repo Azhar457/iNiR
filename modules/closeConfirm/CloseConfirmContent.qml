@@ -21,15 +21,12 @@ Item {
     readonly property string appId: String(targetWindow?.app_id ?? "")
     readonly property string appTitle: String(targetWindow?.title ?? "")
     readonly property string appDisplayName: appTitle || appId || Translation.tr("Unknown")
+    readonly property bool showAppId: appId.length > 0
+        && appId.toLowerCase() !== appDisplayName.toLowerCase()
     readonly property color dangerColor: Appearance.zzzEverywhere
         ? Appearance.zzz.tertiary : Appearance.colors.colError
     readonly property color dangerForeground: Appearance.zzzEverywhere
         ? Appearance.zzz.onTertiary : Appearance.colors.colOnError
-    readonly property color dangerContainer: Appearance.zzzEverywhere
-        ? ColorUtils.mix(Appearance.zzz.paperAlt, Appearance.zzz.tertiary, 0.78)
-        : Appearance.colors.colErrorContainer
-    readonly property color dangerContainerForeground: Appearance.zzzEverywhere
-        ? Appearance.zzz.onColor : Appearance.colors.colOnErrorContainer
     readonly property color detailSurface: Appearance.cookieEverywhere
         ? Appearance.cookie.secondaryFace
         : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
@@ -88,6 +85,7 @@ Item {
             spacing: Appearance.sizes.spacingSmall
 
             MaterialSymbol {
+                visible: actionButton.iconName.length > 0
                 text: actionButton.iconName
                 iconSize: Appearance.font.pixelSize.larger
                 fill: actionButton.destructive ? 1 : 0
@@ -143,12 +141,14 @@ Item {
     WindowDialog {
         id: dialog
         anchors.centerIn: parent
-        backgroundWidth: 382
+        backgroundWidth: 360
         zzzLabel: "CLOSE"
         zzzIndex: "APP"
         zzzGhostText: "CLOSE"
         zzzAccentColor: Appearance.zzz.tertiary
-        zzzShowTicks: true
+        zzzShowBurst: false
+        zzzShowTicks: false
+        zzzDecorationsEnabled: false
         show: false
         Component.onCompleted: show = true
 
@@ -157,18 +157,13 @@ Item {
             spacing: Appearance.sizes.spacingMedium
 
             Rectangle {
-                Layout.preferredWidth: 54
-                Layout.preferredHeight: 54
+                Layout.preferredWidth: 48
+                Layout.preferredHeight: 48
                 Layout.alignment: Qt.AlignTop
                 radius: root.detailRadius
                 color: root.detailSurface
                 border.width: 1
                 border.color: root.detailBorder
-
-                ZzzSurfaceAccent {
-                    showSticker: true
-                    cornerRadius: parent.radius
-                }
 
                 Kirigami.Icon {
                     anchors.fill: parent
@@ -176,26 +171,6 @@ Item {
                     source: root.appId
                     fallback: "application-x-executable"
                     roundToIconSize: false
-                }
-
-                Rectangle {
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    anchors.rightMargin: -4
-                    anchors.bottomMargin: -4
-                    width: 20
-                    height: 20
-                    radius: Appearance.rounding.full
-                    color: root.dangerColor
-                    border.width: 2
-                    border.color: root.detailSurface
-
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "close"
-                        iconSize: Appearance.font.pixelSize.small
-                        color: root.dangerForeground
-                    }
                 }
             }
 
@@ -220,7 +195,7 @@ Item {
 
                 StyledText {
                     Layout.fillWidth: true
-                    visible: root.appId.length > 0 && root.appId !== root.appDisplayName
+                    visible: root.showAppId
                     text: root.appId
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colSubtext
@@ -230,47 +205,15 @@ Item {
             }
         }
 
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: warningText.implicitHeight + Appearance.sizes.spacingMedium * 2
-            radius: root.detailRadius
-            color: root.dangerContainer
-            border.width: Appearance.zzzEverywhere ? 1 : 0
-            border.color: root.dangerColor
-
-            RowLayout {
-                id: warningRow
-                anchors.fill: parent
-                anchors.margins: Appearance.sizes.spacingMedium
-                spacing: Appearance.sizes.spacingMedium
-
-                MaterialSymbol {
-                    text: "warning"
-                    iconSize: Appearance.font.pixelSize.larger
-                    fill: 1
-                    color: root.dangerContainerForeground
-                    Layout.alignment: Qt.AlignTop
-                }
-
-                StyledText {
-                    id: warningText
-                    Layout.fillWidth: true
-                    text: Translation.tr("Confirm before closing windows")
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    color: root.dangerContainerForeground
-                    wrapMode: Text.WordWrap
-                }
-            }
-        }
-
         WindowDialogButtonRow {
             spacing: Appearance.sizes.spacingSmall
+            Layout.topMargin: -4
 
             Item { Layout.fillWidth: true }
 
             ActionButton {
                 label: Translation.tr("Cancel")
-                iconName: "arrow_back"
+                iconName: ""
                 onClicked: root.cancel()
             }
 
