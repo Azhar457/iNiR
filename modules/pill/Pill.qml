@@ -737,16 +737,9 @@ Item {
                 width: kanjiFill.implicitWidth
                 height: kanjiFill.implicitHeight
 
-                /**
-                 * Audio actually leaving the speakers flips the clock glyph over to
-                 * the live waveform. A paused player still counts as `hasMedia`, so
-                 * gate on playback, not on the player existing.
-                 */
-                readonly property bool barsOn: (Config.options?.bar?.pill?.musicViz ?? true) && PillPlayers.playing
-
                 Text {
                     anchors.fill: parent
-                    opacity: (PillTheme.showGlyphs && !restKanji.barsOn) ? 1 : 0
+                    opacity: PillTheme.showGlyphs ? 1 : 0
                     text: kanjiFill.text
                     color: "transparent"
                     font: kanjiFill.font
@@ -758,7 +751,7 @@ Item {
 
                 Text {
                     id: kanjiFill
-                    opacity: (PillTheme.showGlyphs && !restKanji.barsOn) ? 1 : 0
+                    opacity: PillTheme.showGlyphs ? 1 : 0
                     text: PillTheme.glyph("clock")
                     color: PillTheme.cream
                     font.family: PillTheme.fontJp
@@ -769,7 +762,7 @@ Item {
 
                 GlyphIcon {
                     anchors.centerIn: parent
-                    opacity: (!PillTheme.showGlyphs && !restKanji.barsOn) ? 1 : 0
+                    opacity: PillTheme.showGlyphs ? 0 : 1
                     width: pill.iconPx
                     height: pill.iconPx
                     name: "clock"
@@ -778,17 +771,6 @@ Item {
                     Behavior on opacity { NumberAnimation { duration: PillMotion.standard; easing.type: PillMotion.easeStandard } }
                 }
 
-                MusicBars {
-                    id: musicBars
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: kanjiFill.baseline
-                    s: pill.s
-                    running: restKanji.barsOn && rest.visible
-                    opacity: restKanji.barsOn ? 1 : 0
-                    scale: restKanji.barsOn ? 1 : 0.7
-                    Behavior on opacity { NumberAnimation { duration: PillMotion.standard; easing.type: PillMotion.easeStandard } }
-                    Behavior on scale { NumberAnimation { duration: PillMotion.standard; easing.type: PillMotion.easeStandard } }
-                }
             }
 
             Text {

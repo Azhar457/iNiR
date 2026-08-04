@@ -198,6 +198,41 @@ Item { // Bar content region
         && (((Config.options?.bar?.cornerStyle ?? 0) === 1) || ((Config.options?.bar?.cornerStyle ?? 0) === 3))
     readonly property string leftAction: Config.options?.bar?.leftScrollAction ?? "brightness"
     readonly property string rightAction: Config.options?.bar?.rightScrollAction ?? "volume"
+    readonly property bool barSpectrumAudioPlaying: MprisController.isPlaying || YtMusic.isPlaying
+    readonly property bool barSpectrumConfigured: (Config.options?.bar?.visualizer?.enable ?? false)
+        && (root.isIslands || (Config.options?.bar?.showBackground ?? true))
+        && !Appearance.gameModeMinimal
+        && root.visible
+    readonly property bool barSpectrumProcessWanted: root.barSpectrumConfigured
+        && root.barSpectrumAudioPlaying
+    readonly property bool barSpectrumVisible: root.barSpectrumConfigured
+        && barCavaProcess.audioSignalActive
+    readonly property real barSpectrumFillRatio: Math.max(0.1,
+        Math.min(1, Config.options?.bar?.visualizer?.height ?? 0.6))
+    readonly property real barSpectrumOpacity: Math.max(0,
+        Math.min(1, Config.options?.bar?.visualizer?.opacity ?? 0.35))
+    readonly property string barSpectrumType: Config.options?.bar?.visualizer?.type ?? "bars"
+    readonly property string barSpectrumBarsOrigin: Config.options?.bar?.visualizer?.barsOrigin ?? "bottom"
+    readonly property real barSpectrumDensity: Math.max(4, Config.options?.bar?.visualizer?.density ?? 12)
+    readonly property real barSpectrumGap: Math.max(0, Config.options?.bar?.visualizer?.gap ?? 2)
+    readonly property int barSpectrumSmoothing: Math.max(0, Config.options?.bar?.visualizer?.smoothing ?? 2)
+    readonly property string barSpectrumWaveMode: Config.options?.bar?.visualizer?.waveMode ?? "fill"
+    readonly property real barSpectrumLineWidth: Math.max(1, Config.options?.bar?.visualizer?.lineWidth ?? 2)
+    readonly property real barSpectrumEdgeInset: Math.max(0, Config.options?.bar?.visualizer?.edgeInset ?? 0)
+    readonly property real barSpectrumEdgeSoftness: Math.max(0,
+        Math.min(1, (Config.options?.bar?.visualizer?.edgeSoftness ?? 28) / 100))
+    readonly property string barSpectrumFrequencyProfile: Config.options?.bar?.visualizer?.frequencyProfile ?? "flat"
+    readonly property real barSpectrumAccentStrength: Math.max(0,
+        Math.min(1, (Config.options?.bar?.visualizer?.accentStrength ?? 70) / 100))
+    readonly property color barSpectrumColor: root.inirEverywhere ? Appearance.inir.colPrimary
+        : root.zzzEverywhere ? Appearance.zzz.accent
+        : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+
+    CavaProcess {
+        id: barCavaProcess
+        active: root.barSpectrumProcessWanted
+        sampleCount: Math.max(50, Math.round(Math.max(1, root.width) / root.barSpectrumDensity))
+    }
 
     function performScrollAction(action: string, isUp: bool): void {
         if (action === "brightness") {
@@ -250,6 +285,7 @@ Item { // Bar content region
     // is applied at the SOURCE instead (the activeWindow wrapper animates its
     // implicitWidth), so row and capsule move through the same frames.
     component EdgeIsland: IslandPanel {
+        id: edgeIsland
         glassEnabled: true
         nativeBlurActive: root.nativeBlurActive
         screen: root.screen
@@ -263,6 +299,43 @@ Item { // Bar content region
         }
         glassScreenWidth: root.screen?.width ?? 1920
         glassScreenHeight: root.screen?.height ?? 1080
+
+        readonly property real spectrumX: {
+            const geometryDependency = edgeIsland.x + edgeIsland.y
+                + edgeIsland.width + edgeIsland.height
+                + (edgeIsland.parent?.x ?? 0) + (edgeIsland.parent?.width ?? 0)
+            return edgeIsland.mapToItem(root, 0, 0).x
+        }
+
+        CavaSpectrum {
+            anchors.fill: parent
+            active: root.barSpectrumVisible && root.isIslands && edgeIsland.visible
+            points: barCavaProcess.points
+            normalizationCeiling: barCavaProcess.normalizationCeiling
+            visualizerType: root.barSpectrumType
+            spectrumOpacity: root.barSpectrumOpacity
+            fillRatio: root.barSpectrumFillRatio
+            spectrumColor: root.barSpectrumColor
+            sampleStartRatio: root.width > 0
+                ? Math.max(0, Math.min(1, edgeIsland.spectrumX / root.width)) : 0
+            sampleEndRatio: root.width > 0
+                ? Math.max(sampleStartRatio,
+                    Math.min(1, (edgeIsland.spectrumX + edgeIsland.width) / root.width)) : 1
+            barsOrigin: root.barSpectrumBarsOrigin
+            pixelsPerBar: root.barSpectrumDensity
+            barSpacing: root.barSpectrumGap
+            smoothing: root.barSpectrumSmoothing
+            waveMode: root.barSpectrumWaveMode
+            lineWidth: root.barSpectrumLineWidth
+            edgeInset: root.barSpectrumEdgeInset
+            edgeSoftness: root.barSpectrumEdgeSoftness
+            frequencyProfile: root.barSpectrumFrequencyProfile
+            accentStrength: root.barSpectrumAccentStrength
+            topLeftRadius: edgeIsland.radius
+            topRightRadius: edgeIsland.radius
+            bottomLeftRadius: edgeIsland.radius
+            bottomRightRadius: edgeIsland.radius
+        }
     }
     // Edge-zone layout cell: hosts the module Loader. Layout hints live HERE
     // (the real layout child) — hints inside the loaded item are ignored.
@@ -847,66 +920,29 @@ Item { // Bar content region
             accentColor: Appearance.zzz.chromeStroke
         }
 
-        Item {
-            id: barVisualizer
-
-            readonly property bool wanted: (Config.options?.bar?.visualizer?.enable ?? false)
-                && !barBackground.gameModeMinimal
-                && root.visible
-                && MprisController.isPlaying
-            readonly property real fillRatio: Math.max(0.1, Math.min(1, Config.options?.bar?.visualizer?.height ?? 0.6))
-            readonly property string vizType: Config.options?.bar?.visualizer?.type ?? "bars"
-
-            anchors {
-                left: parent.left
-                right: parent.right
-                leftMargin: barBackground.radius
-                rightMargin: barBackground.radius
-            }
-            y: parent.height - height
-            height: parent.height * fillRatio
-            visible: wanted && barCavaProcess.points.length > 0
-            opacity: Math.max(0, Math.min(1, Config.options?.bar?.visualizer?.opacity ?? 0.35))
-
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
-
-            CavaProcess {
-                id: barCavaProcess
-                active: barVisualizer.wanted
-            }
-
-            readonly property color spectrumColor: root.inirEverywhere ? Appearance.inir.colPrimary
-                : root.zzzEverywhere ? Appearance.zzz.accent
-                : (barBackground.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
-
-            CavaVisualizer {
-                anchors.fill: parent
-                visible: barVisualizer.vizType === "bars"
-                live: barVisualizer.wanted
-                points: barCavaProcess.points
-                maxVisualizerValue: 1000
-                smoothing: 2
-                barCount: Math.max(16, Math.round(parent.width / 12))
-                barSpacing: 2
-                barRadius: 2
-                barMinHeight: 1
-                colorLow: ColorUtils.transparentize(barVisualizer.spectrumColor, 0.4)
-                colorMed: ColorUtils.transparentize(barVisualizer.spectrumColor, 0.2)
-                colorHigh: barVisualizer.spectrumColor
-            }
-
-            WaveVisualizer {
-                anchors.fill: parent
-                visible: barVisualizer.vizType === "wave"
-                live: barVisualizer.wanted
-                points: barCavaProcess.points
-                maxVisualizerValue: 1000
-                smoothing: 2
-                color: barVisualizer.spectrumColor
-            }
+        CavaSpectrum {
+            anchors.fill: parent
+            active: root.barSpectrumVisible && !root.isIslands
+            points: barCavaProcess.points
+            normalizationCeiling: barCavaProcess.normalizationCeiling
+            visualizerType: root.barSpectrumType
+            spectrumOpacity: root.barSpectrumOpacity
+            fillRatio: root.barSpectrumFillRatio
+            spectrumColor: root.barSpectrumColor
+            barsOrigin: root.barSpectrumBarsOrigin
+            pixelsPerBar: root.barSpectrumDensity
+            barSpacing: root.barSpectrumGap
+            smoothing: root.barSpectrumSmoothing
+            waveMode: root.barSpectrumWaveMode
+            lineWidth: root.barSpectrumLineWidth
+            edgeInset: root.barSpectrumEdgeInset
+            edgeSoftness: root.barSpectrumEdgeSoftness
+            frequencyProfile: root.barSpectrumFrequencyProfile
+            accentStrength: root.barSpectrumAccentStrength
+            topLeftRadius: barBackground.topLeftRadius
+            topRightRadius: barBackground.topRightRadius
+            bottomLeftRadius: barBackground.bottomLeftRadius
+            bottomRightRadius: barBackground.bottomRightRadius
         }
     }
 
@@ -1000,6 +1036,23 @@ Item { // Bar content region
             id: middleCenterGroup
             nativeBlurActive: root.nativeBlurActive
             screen: root.screen
+            spectrumEnabled: root.barSpectrumVisible
+            spectrumPoints: barCavaProcess.points
+            spectrumCeiling: barCavaProcess.normalizationCeiling
+            spectrumType: root.barSpectrumType
+            spectrumOpacity: root.barSpectrumOpacity
+            spectrumFillRatio: root.barSpectrumFillRatio
+            spectrumBarsOrigin: root.barSpectrumBarsOrigin
+            spectrumDensity: root.barSpectrumDensity
+            spectrumGap: root.barSpectrumGap
+            spectrumSmoothing: root.barSpectrumSmoothing
+            spectrumWaveMode: root.barSpectrumWaveMode
+            spectrumLineWidth: root.barSpectrumLineWidth
+            spectrumEdgeInset: root.barSpectrumEdgeInset
+            spectrumEdgeSoftness: root.barSpectrumEdgeSoftness
+            spectrumFrequencyProfile: root.barSpectrumFrequencyProfile
+            spectrumAccentStrength: root.barSpectrumAccentStrength
+            spectrumDomain: root
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
             padding: 4
@@ -1038,6 +1091,23 @@ Item { // Bar content region
             id: leftCenterGroup
             nativeBlurActive: root.nativeBlurActive
             screen: root.screen
+            spectrumEnabled: root.barSpectrumVisible
+            spectrumPoints: barCavaProcess.points
+            spectrumCeiling: barCavaProcess.normalizationCeiling
+            spectrumType: root.barSpectrumType
+            spectrumOpacity: root.barSpectrumOpacity
+            spectrumFillRatio: root.barSpectrumFillRatio
+            spectrumBarsOrigin: root.barSpectrumBarsOrigin
+            spectrumDensity: root.barSpectrumDensity
+            spectrumGap: root.barSpectrumGap
+            spectrumSmoothing: root.barSpectrumSmoothing
+            spectrumWaveMode: root.barSpectrumWaveMode
+            spectrumLineWidth: root.barSpectrumLineWidth
+            spectrumEdgeInset: root.barSpectrumEdgeInset
+            spectrumEdgeSoftness: root.barSpectrumEdgeSoftness
+            spectrumFrequencyProfile: root.barSpectrumFrequencyProfile
+            spectrumAccentStrength: root.barSpectrumAccentStrength
+            spectrumDomain: root
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: (Config.options?.bar.borderless ?? false) ? leftSeparator.left : middleCenterGroup.left
             anchors.rightMargin: root.isIslands ? 8 : 4
@@ -1096,6 +1166,23 @@ Item { // Bar content region
                 id: rightCenterGroupPill
                 nativeBlurActive: root.nativeBlurActive
                 screen: root.screen
+                spectrumEnabled: root.barSpectrumVisible
+                spectrumPoints: barCavaProcess.points
+                spectrumCeiling: barCavaProcess.normalizationCeiling
+                spectrumType: root.barSpectrumType
+                spectrumOpacity: root.barSpectrumOpacity
+                spectrumFillRatio: root.barSpectrumFillRatio
+                spectrumBarsOrigin: root.barSpectrumBarsOrigin
+                spectrumDensity: root.barSpectrumDensity
+                spectrumGap: root.barSpectrumGap
+                spectrumSmoothing: root.barSpectrumSmoothing
+                spectrumWaveMode: root.barSpectrumWaveMode
+                spectrumLineWidth: root.barSpectrumLineWidth
+                spectrumEdgeInset: root.barSpectrumEdgeInset
+                spectrumEdgeSoftness: root.barSpectrumEdgeSoftness
+                spectrumFrequencyProfile: root.barSpectrumFrequencyProfile
+                spectrumAccentStrength: root.barSpectrumAccentStrength
+                spectrumDomain: root
                 anchors.verticalCenter: parent.verticalCenter
                 visible: !empty
                 // Islands: each capsule hugs its own content (no symmetric mirroring,

@@ -524,6 +524,13 @@ Singleton {
         },
         {
             pageIndex: 2, pageName: root.pages[2].name,
+            section: Translation.tr("Audio spectrum"),
+            label: Translation.tr("Bar audio spectrum"),
+            description: Translation.tr("Bars, waves, frequency accents, dynamic curve fit and screen-spanning Pill wings"),
+            keywords: ["spectrum", "audio", "cava", "bars", "wave", "origin", "bottom", "top", "center", "mirror", "ribbon", "density", "gap", "smoothing", "edge", "curve", "headroom", "profile", "accent", "bass", "warm", "vocal", "treble", "smile", "pill", "wings", "full screen", "bleed", "underlap", "ytmusic", "youtube music"]
+        },
+        {
+            pageIndex: 2, pageName: root.pages[2].name,
             section: Translation.tr("M3 Bar"),
             label: Translation.tr("M3 layout and surfaces"),
             description: Translation.tr("M3 presets, joined or separate pills, transparent mode, gaps and widget layout"),
@@ -1524,6 +1531,13 @@ Singleton {
             label: Translation.tr("Palette type"),
             description: Translation.tr("Material You palette algorithm variant"),
             keywords: ["palette", "type", "scheme", "content", "expressive", "fidelity", "tonal", "spot", "monochrome"]
+        },
+        {
+            pageIndex: 8, pageName: root.pages[8].name,
+            section: Translation.tr("Cava options"),
+            label: Translation.tr("Cava color source and response"),
+            description: Translation.tr("Theme, vibrant or album-art palettes for internal visualizers and standalone cava"),
+            keywords: ["cava", "visualizer", "spectrum", "audio", "palette", "vibrant", "saturated", "album", "cover", "sensitivity", "bars", "framerate", "stereo", "wave", "opacity", "reset"]
         },
         {
             pageIndex: 4, pageName: root.pages[4].name,

@@ -12,7 +12,11 @@ ContentPage {
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
     property bool m3ControlsReady: false
-    Component.onCompleted: Qt.callLater(() => root.m3ControlsReady = true)
+    property bool spectrumControlsReady: false
+    Component.onCompleted: Qt.callLater(() => {
+        root.m3ControlsReady = true
+        root.spectrumControlsReady = true
+    })
 
     function setM3Value(path, value): void {
         if (root.m3ControlsReady)
@@ -34,6 +38,50 @@ ContentPage {
     readonly property bool isAutoHide: Config.options?.bar?.autoHide?.enable ?? false
     readonly property bool isBorderless: Config.options?.bar?.borderless ?? false
     readonly property bool showBackground: Config.options?.bar?.showBackground ?? true
+    readonly property string barAppearance: Config.options?.bar?.appearanceStyle ?? "classic"
+    readonly property bool spectrumEnabled: root.barAppearance === "pill"
+        ? (Config.options?.bar?.pill?.musicViz ?? true)
+        : (Config.options?.bar?.visualizer?.enable ?? false)
+
+    function setSpectrumEnabled(enabled): void {
+        if (!root.spectrumControlsReady)
+            return
+        Config.setNestedValue(root.barAppearance === "pill"
+            ? "bar.pill.musicViz" : "bar.visualizer.enable", enabled)
+    }
+
+    function setSpectrumValue(path, value): void {
+        if (root.spectrumControlsReady)
+            Config.setNestedValue(path, value)
+    }
+
+    function resetSpectrumDefaults(): void {
+        if (!root.spectrumControlsReady)
+            return
+        Config.setNestedValues({
+            "bar.visualizer.enable": false,
+            "bar.visualizer.type": "bars",
+            "bar.visualizer.height": 0.6,
+            "bar.visualizer.opacity": 0.35,
+            "bar.visualizer.barsOrigin": "bottom",
+            "bar.visualizer.density": 12,
+            "bar.visualizer.gap": 2,
+            "bar.visualizer.smoothing": 2,
+            "bar.visualizer.waveMode": "fill",
+            "bar.visualizer.lineWidth": 2,
+            "bar.visualizer.edgeInset": 0,
+            "bar.visualizer.edgeSoftness": 28,
+            "bar.visualizer.frequencyProfile": "flat",
+            "bar.visualizer.accentStrength": 70,
+            "bar.visualizer.pillWingMode": "bounded",
+            "bar.visualizer.pillWingLength": 180,
+            "bar.visualizer.pillWingGap": 12,
+            "bar.visualizer.pillScreenPadding": 24,
+            "bar.visualizer.pillUnderlap": 28,
+            "bar.visualizer.pillEdgeFade": 92,
+            "bar.pill.musicViz": true,
+        })
+    }
 
     // Global style detection
     readonly property string currentGlobalStyle: Config.options?.appearance?.globalStyle ?? "material"
@@ -968,15 +1016,7 @@ ContentPage {
                             text: Translation.tr("Label the pill faces with kanji instead of plain icons.")
                         }
                     }
-                    SettingsSwitch {
-                        buttonIcon: "graphic_eq"
-                        text: Translation.tr("Music visualizer")
-                        checked: Config.options?.bar?.pill?.musicViz ?? true
-                        onCheckedChanged: Config.setNestedValue("bar.pill.musicViz", checked)
-                        StyledToolTip {
-                            text: Translation.tr("Swap the resting glyph for a live spectrum while audio plays.")
-                        }
-                    }
+                    Item { Layout.fillWidth: true }
                 }
 
                 ConfigRow {
@@ -1264,56 +1304,309 @@ ContentPage {
                 ConfigSwitch {
                     buttonIcon: "graphic_eq"
                     text: Translation.tr("Show spectrum in the bar")
-                    checked: Config.options?.bar?.visualizer?.enable ?? false
-                    onCheckedChanged: Config.setNestedValue("bar.visualizer.enable", checked)
+                    checked: root.spectrumEnabled
+                    onCheckedChanged: root.setSpectrumEnabled(checked)
                     StyledToolTip {
-                        text: Translation.tr("Paints the audio spectrum into the bar surface. Only runs while something is playing.")
+                        text: root.barAppearance === "pill"
+                            ? Translation.tr("Draws balanced spectrum wings outside the pill while audio plays.")
+                            : Translation.tr("Paints the audio spectrum into the bar surface. Only runs while something is playing.")
                     }
                 }
 
                 ConfigSelectionArray {
-                    enabled: Config.options?.bar?.visualizer?.enable ?? false
+                    enabled: root.spectrumEnabled
                     opacity: enabled ? 1 : 0.5
                     currentValue: Config.options?.bar?.visualizer?.type ?? "bars"
-                    onSelected: newValue => Config.setNestedValue("bar.visualizer.type", newValue)
+                    onSelected: newValue => root.setSpectrumValue("bar.visualizer.type", newValue)
                     options: [
                         { displayName: Translation.tr("Bars"), icon: "equalizer", value: "bars" },
                         { displayName: Translation.tr("Wave"), icon: "waves", value: "wave" },
                     ]
                 }
 
+                ConfigSelectionArray {
+                    visible: (Config.options?.bar?.visualizer?.type ?? "bars") === "bars"
+                    enabled: root.spectrumEnabled
+                    opacity: enabled ? 1 : 0.5
+                    currentValue: Config.options?.bar?.visualizer?.barsOrigin ?? "bottom"
+                    onSelected: newValue => root.setSpectrumValue("bar.visualizer.barsOrigin", newValue)
+                    options: [
+                        { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" },
+                        { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
+                        { displayName: Translation.tr("Center rise"), icon: "center_focus_strong", value: "center" },
+                        { displayName: Translation.tr("Mirrored"), icon: "unfold_more", value: "mirror" },
+                    ]
+                }
+
+                ConfigSelectionArray {
+                    visible: (Config.options?.bar?.visualizer?.type ?? "bars") === "wave"
+                    enabled: root.spectrumEnabled
+                    opacity: enabled ? 1 : 0.5
+                    currentValue: Config.options?.bar?.visualizer?.waveMode ?? "fill"
+                    onSelected: newValue => root.setSpectrumValue("bar.visualizer.waveMode", newValue)
+                    options: [
+                        { displayName: Translation.tr("Fill"), icon: "waves", value: "fill" },
+                        { displayName: Translation.tr("Line"), icon: "line_weight", value: "line" },
+                        { displayName: Translation.tr("Ribbon"), icon: "unfold_more", value: "ribbon" },
+                    ]
+                }
+
+                ConfigSelectionArray {
+                    enabled: root.spectrumEnabled
+                    opacity: enabled ? 1 : 0.5
+                    currentValue: Config.options?.bar?.visualizer?.frequencyProfile ?? "flat"
+                    onSelected: newValue => root.setSpectrumValue("bar.visualizer.frequencyProfile", newValue)
+                    options: [
+                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" },
+                        { displayName: Translation.tr("Bass"), icon: "graphic_eq", value: "bass" },
+                        { displayName: Translation.tr("Warm"), icon: "local_fire_department", value: "warm" },
+                        { displayName: Translation.tr("Vocal"), icon: "record_voice_over", value: "vocal" },
+                        { displayName: Translation.tr("Treble"), icon: "trending_up", value: "treble" },
+                        { displayName: Translation.tr("Smile"), icon: "waves", value: "smile" },
+                    ]
+                    StyledToolTip {
+                        text: Translation.tr("Shapes the frequency balance after Cava. Sensitivity, sample count and framerate come from Advanced → Cava; the internal bar stays mono so it always fills the whole surface.")
+                    }
+                }
+
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
-                    enabled: Config.options?.bar?.visualizer?.enable ?? false
+                    enabled: root.spectrumEnabled
                     opacity: enabled ? 1 : 0.5
+
+                    ConfigRow {
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "view_column"
+                            text: Translation.tr("Band density (px)")
+                            value: Config.options?.bar?.visualizer?.density ?? 12
+                            from: 4
+                            to: 32
+                            stepSize: 1
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.density", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "space_bar"
+                            text: Translation.tr("Band gap (px)")
+                            value: Config.options?.bar?.visualizer?.gap ?? 2
+                            from: 0
+                            to: 12
+                            stepSize: 1
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.gap", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "blur_on"
+                            text: Translation.tr("Smoothing")
+                            value: Config.options?.bar?.visualizer?.smoothing ?? 2
+                            from: 0
+                            to: 8
+                            stepSize: 1
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.smoothing", value)
+                        }
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "height"
+                            text: Translation.tr("Spectrum height (%)")
+                            value: Math.round((Config.options?.bar?.visualizer?.height ?? 0.6) * 100)
+                            from: 10
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.height", value / 100)
+                        }
+                        ConfigSpinBox {
+                            icon: "opacity"
+                            text: Translation.tr("Spectrum opacity (%)")
+                            value: Math.round((Config.options?.bar?.visualizer?.opacity ?? 0.35) * 100)
+                            from: 5
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.opacity", value / 100)
+                        }
+                    }
+
+                    ConfigRow {
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "line_weight"
+                            text: Translation.tr("Wave edge (px)")
+                            value: Config.options?.bar?.visualizer?.lineWidth ?? 2
+                            from: 1
+                            to: 8
+                            stepSize: 1
+                            enabled: (Config.options?.bar?.visualizer?.type ?? "bars") === "wave"
+                            opacity: enabled ? 1 : 0.45
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.lineWidth", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "width_full"
+                            text: Translation.tr("Edge inset (px)")
+                            value: Config.options?.bar?.visualizer?.edgeInset ?? 0
+                            from: 0
+                            to: 32
+                            stepSize: 1
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.edgeInset", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "rounded_corner"
+                            text: Translation.tr("Curve headroom (%)")
+                            value: Config.options?.bar?.visualizer?.edgeSoftness ?? 28
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.edgeSoftness", value)
+                            StyledToolTip {
+                                text: Translation.tr("Compresses peaks only near rounded corners. Square surfaces remain edge-to-edge.")
+                            }
+                        }
+                    }
 
                     ConfigSpinBox {
                         Layout.fillWidth: true
-                        icon: "height"
-                        text: Translation.tr("Spectrum height (%)")
-                        value: Math.round((Config.options?.bar?.visualizer?.height ?? 0.6) * 100)
-                        from: 10
+                        icon: "tune"
+                        text: Translation.tr("Frequency accent strength (%)")
+                        value: Config.options?.bar?.visualizer?.accentStrength ?? 70
+                        from: 0
                         to: 100
                         stepSize: 5
-                        onValueChanged: Config.setNestedValue("bar.visualizer.height", value / 100)
+                        enabled: (Config.options?.bar?.visualizer?.frequencyProfile ?? "flat") !== "flat"
+                        opacity: enabled ? 1 : 0.45
+                        onValueChanged: root.setSpectrumValue("bar.visualizer.accentStrength", value)
                     }
+
+                    ConfigSelectionArray {
+                        visible: root.barAppearance === "pill"
+                        currentValue: Config.options?.bar?.visualizer?.pillWingMode ?? "bounded"
+                        onSelected: newValue => root.setSpectrumValue("bar.visualizer.pillWingMode", newValue)
+                        options: [
+                            { displayName: Translation.tr("Bounded"), icon: "width_normal", value: "bounded" },
+                            { displayName: Translation.tr("Full screen"), icon: "width_full", value: "screen" },
+                            { displayName: Translation.tr("Behind pill"), icon: "layers", value: "bleed" },
+                        ]
+                    }
+
+                    ConfigRow {
+                        visible: root.barAppearance === "pill"
+                            && (Config.options?.bar?.visualizer?.pillWingMode ?? "bounded") === "bounded"
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "swap_horiz"
+                            text: Translation.tr("Wing length (px)")
+                            value: Config.options?.bar?.visualizer?.pillWingLength ?? 180
+                            from: 60
+                            to: 480
+                            stepSize: 10
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.pillWingLength", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "space_bar"
+                            text: Translation.tr("Wing gap (px)")
+                            value: Config.options?.bar?.visualizer?.pillWingGap ?? 12
+                            from: 0
+                            to: 64
+                            stepSize: 2
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.pillWingGap", value)
+                        }
+                    }
+
+                    ConfigRow {
+                        visible: root.barAppearance === "pill"
+                            && (Config.options?.bar?.visualizer?.pillWingMode ?? "bounded") === "screen"
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "width_full"
+                            text: Translation.tr("Screen padding (px)")
+                            value: Config.options?.bar?.visualizer?.pillScreenPadding ?? 24
+                            from: 0
+                            to: 240
+                            stepSize: 4
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.pillScreenPadding", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "space_bar"
+                            text: Translation.tr("Pill gap (px)")
+                            value: Config.options?.bar?.visualizer?.pillWingGap ?? 12
+                            from: 0
+                            to: 64
+                            stepSize: 2
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.pillWingGap", value)
+                        }
+                    }
+
+                    ConfigRow {
+                        visible: root.barAppearance === "pill"
+                            && (Config.options?.bar?.visualizer?.pillWingMode ?? "bounded") === "bleed"
+                        uniform: true
+                        ConfigSpinBox {
+                            icon: "width_full"
+                            text: Translation.tr("Screen padding (px)")
+                            value: Config.options?.bar?.visualizer?.pillScreenPadding ?? 24
+                            from: 0
+                            to: 240
+                            stepSize: 4
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.pillScreenPadding", value)
+                        }
+                        ConfigSpinBox {
+                            icon: "layers"
+                            text: Translation.tr("Underlap (px)")
+                            value: Config.options?.bar?.visualizer?.pillUnderlap ?? 28
+                            from: 0
+                            to: 160
+                            stepSize: 4
+                            onValueChanged: root.setSpectrumValue("bar.visualizer.pillUnderlap", value)
+                        }
+                    }
+
                     ConfigSpinBox {
+                        visible: root.barAppearance === "pill"
                         Layout.fillWidth: true
-                        icon: "opacity"
-                        text: Translation.tr("Spectrum opacity (%)")
-                        value: Math.round((Config.options?.bar?.visualizer?.opacity ?? 0.35) * 100)
-                        from: 5
+                        icon: "gradient"
+                        text: Translation.tr("Screen-edge fade (%)")
+                        value: Config.options?.bar?.visualizer?.pillEdgeFade ?? 92
+                        from: 0
                         to: 100
                         stepSize: 5
-                        onValueChanged: Config.setNestedValue("bar.visualizer.opacity", value / 100)
+                        onValueChanged: root.setSpectrumValue("bar.visualizer.pillEdgeFade", value)
+                    }
+                }
+
+                RippleButton {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 34
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: Appearance.colors.colLayer2
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    onClicked: root.resetSpectrumDefaults()
+
+                    contentItem: RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 5
+
+                        MaterialSymbol {
+                            text: "restart_alt"
+                            iconSize: 15
+                            color: Appearance.colors.colOnLayer1
+                        }
+                        StyledText {
+                            text: Translation.tr("Reset spectrum defaults")
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colOnLayer1
+                        }
                     }
                 }
 
                 SettingsNote {
-                    visible: !(Config.options?.bar?.showBackground ?? true) && (Config.options?.bar?.visualizer?.enable ?? false)
+                    visible: root.barAppearance !== "pill" && root.barAppearance !== "islands"
+                        && ((root.barAppearance === "m3"
+                                && !(Config.options?.bar?.m3?.showBackground ?? true))
+                            || (root.barAppearance !== "m3"
+                                && !(Config.options?.bar?.showBackground ?? true)))
+                        && root.spectrumEnabled
                     icon: "info"
-                    text: Translation.tr("The spectrum is painted into the bar background, so it is hidden while ‘Show background’ is off.")
+                    text: Translation.tr("The spectrum needs a visible bar surface, so it is hidden while the background is off.")
                 }
             }
 

@@ -51,10 +51,88 @@ Item {
     readonly property bool wantsBackgroundVisualizer: (Config.options?.bar?.visualizer?.enable ?? false)
         && (Config.options?.bar?.m3?.showBackground ?? true)
         && root.visible
+    readonly property bool audioPlaying: MprisController.isPlaying || YtMusic.isPlaying
+    readonly property real spectrumFillRatio: Math.max(0.1,
+        Math.min(1, Config.options?.bar?.visualizer?.height ?? 0.6))
+    readonly property real spectrumOpacity: Math.max(0,
+        Math.min(1, Config.options?.bar?.visualizer?.opacity ?? 0.35))
+    readonly property string spectrumType: Config.options?.bar?.visualizer?.type ?? "bars"
+    readonly property string spectrumBarsOrigin: Config.options?.bar?.visualizer?.barsOrigin ?? "bottom"
+    readonly property real spectrumDensity: Math.max(4, Config.options?.bar?.visualizer?.density ?? 12)
+    readonly property real spectrumGap: Math.max(0, Config.options?.bar?.visualizer?.gap ?? 2)
+    readonly property int spectrumSmoothing: Math.max(0, Config.options?.bar?.visualizer?.smoothing ?? 2)
+    readonly property string spectrumWaveMode: Config.options?.bar?.visualizer?.waveMode ?? "fill"
+    readonly property real spectrumLineWidth: Math.max(1, Config.options?.bar?.visualizer?.lineWidth ?? 2)
+    readonly property real spectrumEdgeInset: Math.max(0, Config.options?.bar?.visualizer?.edgeInset ?? 0)
+    readonly property real spectrumEdgeSoftness: Math.max(0,
+        Math.min(1, (Config.options?.bar?.visualizer?.edgeSoftness ?? 28) / 100))
+    readonly property string spectrumFrequencyProfile: Config.options?.bar?.visualizer?.frequencyProfile ?? "flat"
+    readonly property real spectrumAccentStrength: Math.max(0,
+        Math.min(1, (Config.options?.bar?.visualizer?.accentStrength ?? 70) / 100))
+    readonly property bool materialSectionSpectrum: root.isMaterial
+        && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"
+
+    function spectrumStartRatio(item): real {
+        if (!item || !(root.width > 0))
+            return 0
+        return Math.max(0, Math.min(1, item.mapToItem(root, 0, 0).x / root.width))
+    }
+
+    function spectrumEndRatio(item): real {
+        if (!item || !(root.width > 0))
+            return 1
+        const start = root.spectrumStartRatio(item)
+        return Math.max(start,
+            Math.min(1, (item.mapToItem(root, 0, 0).x + item.width) / root.width))
+    }
+
     CavaProcess {
         id: barCava
         active: (root.wantsVisualizer || root.wantsBackgroundVisualizer)
-            && MprisController.isPlaying
+            && root.audioPlaying
+        sampleCount: root.wantsBackgroundVisualizer
+            ? Math.max(50, Math.round(Math.max(1, root.width) / root.spectrumDensity))
+            : 20
+    }
+    readonly property bool spectrumSignalActive: barCava.audioSignalActive
+
+    component SurfaceSpectrum: CavaSpectrum {
+        points: barCava.points
+        normalizationCeiling: barCava.normalizationCeiling
+        visualizerType: root.spectrumType
+        spectrumOpacity: root.spectrumOpacity
+        fillRatio: root.spectrumFillRatio
+        spectrumColor: Appearance.colors.colPrimary
+        barsOrigin: root.spectrumBarsOrigin
+        pixelsPerBar: root.spectrumDensity
+        barSpacing: root.spectrumGap
+        smoothing: root.spectrumSmoothing
+        waveMode: root.spectrumWaveMode
+        lineWidth: root.spectrumLineWidth
+        edgeInset: root.spectrumEdgeInset
+        edgeSoftness: root.spectrumEdgeSoftness
+        frequencyProfile: root.spectrumFrequencyProfile
+        accentStrength: root.spectrumAccentStrength
+    }
+
+    component SpectrumGroup: BarGroup {
+        spectrumEnabled: root.wantsBackgroundVisualizer && root.spectrumSignalActive
+        spectrumPoints: barCava.points
+        spectrumCeiling: barCava.normalizationCeiling
+        spectrumType: root.spectrumType
+        spectrumOpacity: root.spectrumOpacity
+        spectrumFillRatio: root.spectrumFillRatio
+        spectrumBarsOrigin: root.spectrumBarsOrigin
+        spectrumDensity: root.spectrumDensity
+        spectrumGap: root.spectrumGap
+        spectrumSmoothing: root.spectrumSmoothing
+        spectrumWaveMode: root.spectrumWaveMode
+        spectrumLineWidth: root.spectrumLineWidth
+        spectrumEdgeInset: root.spectrumEdgeInset
+        spectrumEdgeSoftness: root.spectrumEdgeSoftness
+        spectrumFrequencyProfile: root.spectrumFrequencyProfile
+        spectrumAccentStrength: root.spectrumAccentStrength
+        spectrumDomain: root
     }
 
     // Every widget is loaded through a URL, so its optional inputs are wired
@@ -66,6 +144,10 @@ Item {
             item.spectrumMirrored = root.getMirroredForIndex(layout, idx)
         if (item.hasOwnProperty("sharedPoints"))
             item.sharedPoints = Qt.binding(() => barCava.points)
+        if (item.hasOwnProperty("sharedCeiling"))
+            item.sharedCeiling = Qt.binding(() => barCava.normalizationCeiling)
+        if (item.hasOwnProperty("sharedSignalActive"))
+            item.sharedSignalActive = Qt.binding(() => barCava.audioSignalActive)
     }
 
     function shouldPaintMaterialPill(name) {
@@ -149,49 +231,15 @@ Item {
         border.width: (!centerOnly && Config.options.bar.m3.cornerStyle === 1) ? 1 : 0
         border.color: Appearance.colors.colLayer0Border
 
-        Item {
+        SurfaceSpectrum {
             id: backgroundVisualizer
-            readonly property real fillRatio: Math.max(0.1,
-                Math.min(1, Config.options?.bar?.visualizer?.height ?? 0.6))
-            readonly property string vizType: Config.options?.bar?.visualizer?.type ?? "bars"
-
-            anchors {
-                left: parent.left
-                right: parent.right
-            }
-            y: parent.height - height
-            height: parent.height * fillRatio
-            visible: root.wantsBackgroundVisualizer
-                && MprisController.isPlaying
-                && barCava.points.length > 0
-            opacity: Math.max(0,
-                Math.min(1, Config.options?.bar?.visualizer?.opacity ?? 0.35))
-
-            CavaVisualizer {
-                anchors.fill: parent
-                visible: backgroundVisualizer.vizType === "bars"
-                live: backgroundVisualizer.visible
-                points: barCava.points
-                maxVisualizerValue: 1000
-                smoothing: 2
-                barCount: Math.max(16, Math.round(parent.width / 12))
-                barSpacing: 2
-                barRadius: 2
-                barMinHeight: 1
-                colorLow: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.4)
-                colorMed: ColorUtils.transparentize(Appearance.colors.colPrimary, 0.2)
-                colorHigh: Appearance.colors.colPrimary
-            }
-
-            WaveVisualizer {
-                anchors.fill: parent
-                visible: backgroundVisualizer.vizType === "wave"
-                live: backgroundVisualizer.visible
-                points: barCava.points
-                maxVisualizerValue: 1000
-                smoothing: 2
-                color: Appearance.colors.colPrimary
-            }
+            anchors.fill: parent
+            active: root.wantsBackgroundVisualizer && !root.isMaterial
+                && !root.centerOnly && root.spectrumSignalActive
+            topLeftRadius: barBackground.radius
+            topRightRadius: barBackground.radius
+            bottomLeftRadius: barBackground.radius
+            bottomRightRadius: barBackground.radius
         }
     }
 
@@ -216,6 +264,16 @@ Item {
         bottomRightRadius: Config.options.bar.m3.cornerStyle === 0 && !Config.options.bar.bottom ? Appearance.rounding.screenRounding : radius
         topLeftRadius:     Config.options.bar.m3.cornerStyle === 0 && Config.options.bar.bottom  ? Appearance.rounding.screenRounding : radius
         topRightRadius:    Config.options.bar.m3.cornerStyle === 0 && Config.options.bar.bottom  ? Appearance.rounding.screenRounding : radius
+
+        SurfaceSpectrum {
+            anchors.fill: parent
+            active: root.wantsBackgroundVisualizer && root.centerOnly
+                && root.spectrumSignalActive
+            topLeftRadius: centerPill.topLeftRadius
+            topRightRadius: centerPill.topRightRadius
+            bottomLeftRadius: centerPill.bottomLeftRadius
+            bottomRightRadius: centerPill.bottomRightRadius
+        }
     }
 
     Item {
@@ -295,6 +353,29 @@ Item {
                     && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"
                     ? Appearance.colors.colLayer0 : "transparent"
 
+                SurfaceSpectrum {
+                    anchors.fill: parent
+                    z: 2
+                    active: root.wantsBackgroundVisualizer && root.materialSectionSpectrum
+                        && leftMaterialPill.visible && root.spectrumSignalActive
+                    sampleStartRatio: {
+                        const geometryDependency = leftMaterialPill.x + leftMaterialPill.width
+                            + (leftMaterialPill.parent?.x ?? 0)
+                            + (leftMaterialPill.parent?.width ?? 0)
+                        return root.spectrumStartRatio(leftMaterialPill)
+                    }
+                    sampleEndRatio: {
+                        const geometryDependency = leftMaterialPill.x + leftMaterialPill.width
+                            + (leftMaterialPill.parent?.x ?? 0)
+                            + (leftMaterialPill.parent?.width ?? 0)
+                        return root.spectrumEndRatio(leftMaterialPill)
+                    }
+                    topLeftRadius: leftMaterialPill.radius
+                    topRightRadius: leftMaterialPill.radius
+                    bottomLeftRadius: leftMaterialPill.radius
+                    bottomRightRadius: leftMaterialPill.radius
+                }
+
                 RowLayout {
                     id: leftMaterialRow
                     anchors.centerIn: parent
@@ -307,7 +388,7 @@ Item {
 
                     Component {
                         id: leftMaterialGroupDelegate
-                        BarGroup {
+                        SpectrumGroup {
                             Layout.fillHeight: true
                             currentIndex: index
                             totalCount: root.effectiveLeftLayout.length
@@ -340,7 +421,7 @@ Item {
 
                 Component {
                     id: leftBarGroupDelegate
-                    BarGroup {
+                    SpectrumGroup {
                         Layout.fillHeight: true
                         currentIndex: index
                         totalCount: root.effectiveLeftLayout.length
@@ -390,6 +471,29 @@ Item {
                     && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"
                     ? Appearance.colors.colLayer0 : "transparent"
 
+                SurfaceSpectrum {
+                    anchors.fill: parent
+                    z: 2
+                    active: root.wantsBackgroundVisualizer && root.materialSectionSpectrum
+                        && centerMaterialPill.visible && root.spectrumSignalActive
+                    sampleStartRatio: {
+                        const geometryDependency = centerMaterialPill.x + centerMaterialPill.width
+                            + (centerMaterialPill.parent?.x ?? 0)
+                            + (centerMaterialPill.parent?.width ?? 0)
+                        return root.spectrumStartRatio(centerMaterialPill)
+                    }
+                    sampleEndRatio: {
+                        const geometryDependency = centerMaterialPill.x + centerMaterialPill.width
+                            + (centerMaterialPill.parent?.x ?? 0)
+                            + (centerMaterialPill.parent?.width ?? 0)
+                        return root.spectrumEndRatio(centerMaterialPill)
+                    }
+                    topLeftRadius: centerMaterialPill.radius
+                    topRightRadius: centerMaterialPill.radius
+                    bottomLeftRadius: centerMaterialPill.radius
+                    bottomRightRadius: centerMaterialPill.radius
+                }
+
                 RowLayout {
                     id: centerMaterialRow
                     anchors.centerIn: parent
@@ -402,7 +506,7 @@ Item {
 
                     Component {
                         id: middleMaterialGroupDelegate
-                        BarGroup {
+                        SpectrumGroup {
                             Layout.fillHeight: true
                             currentIndex: index
                             totalCount: root.effectiveMiddleLayout.length
@@ -435,7 +539,7 @@ Item {
 
                 Component {
                     id: middleBarGroupDelegate
-                    BarGroup {
+                    SpectrumGroup {
                         Layout.fillHeight: true
                         currentIndex: index
                         totalCount: root.effectiveMiddleLayout.length
@@ -485,6 +589,29 @@ Item {
                     && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"
                     ? Appearance.colors.colLayer0 : "transparent"
 
+                SurfaceSpectrum {
+                    anchors.fill: parent
+                    z: 2
+                    active: root.wantsBackgroundVisualizer && root.materialSectionSpectrum
+                        && rightMaterialPill.visible && root.spectrumSignalActive
+                    sampleStartRatio: {
+                        const geometryDependency = rightMaterialPill.x + rightMaterialPill.width
+                            + (rightMaterialPill.parent?.x ?? 0)
+                            + (rightMaterialPill.parent?.width ?? 0)
+                        return root.spectrumStartRatio(rightMaterialPill)
+                    }
+                    sampleEndRatio: {
+                        const geometryDependency = rightMaterialPill.x + rightMaterialPill.width
+                            + (rightMaterialPill.parent?.x ?? 0)
+                            + (rightMaterialPill.parent?.width ?? 0)
+                        return root.spectrumEndRatio(rightMaterialPill)
+                    }
+                    topLeftRadius: rightMaterialPill.radius
+                    topRightRadius: rightMaterialPill.radius
+                    bottomLeftRadius: rightMaterialPill.radius
+                    bottomRightRadius: rightMaterialPill.radius
+                }
+
                 RowLayout {
                     id: rightMaterialRow
                     anchors.centerIn: parent
@@ -497,7 +624,7 @@ Item {
 
                     Component {
                         id: rightMaterialGroupDelegate
-                        BarGroup {
+                        SpectrumGroup {
                             Layout.fillHeight: true
                             currentIndex: index
                             totalCount: root.effectiveRightLayout.length
@@ -530,7 +657,7 @@ Item {
 
                 Component {
                     id: rightBarGroupDelegate
-                    BarGroup {
+                    SpectrumGroup {
                         Layout.fillHeight: true
                         currentIndex: index
                         totalCount: root.effectiveRightLayout.length

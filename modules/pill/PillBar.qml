@@ -8,6 +8,7 @@ import Quickshell.Wayland
 import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 
 /**
  * Pill top shell. Each monitor carries two layer-shell windows:
@@ -256,13 +257,39 @@ Scope {
              * and `hovered` flickers off on every mouse step inside the pill.
              */
             FocusScope {
+                id: spectrumScope
                 anchors.fill: parent
                 focus: overlay.surfaceOpen
+
+                readonly property bool spectrumPlaying: MprisController.isPlaying || YtMusic.isPlaying
+                readonly property bool spectrumConfigured: (Config.options?.bar?.pill?.musicViz ?? true)
+                    && !Appearance.gameModeMinimal
+                readonly property bool spectrumProcessWanted: spectrumConfigured && spectrumPlaying
+                readonly property bool spectrumVisible: spectrumConfigured
+                    && pillCava.audioSignalActive
+                    && !pill.fsHide
+                    && !overlay.surfaceOpen
 
                 HoverHandler {
                     onHoveredChanged: pill.hovered = hovered
                 }
                 Keys.onEscapePressed: root.close()
+
+                CavaProcess {
+                    id: pillCava
+                    active: spectrumScope.spectrumProcessWanted
+                    sampleCount: pillWings.requestedSampleCount
+                }
+
+                PillSpectrumWings {
+                    id: pillWings
+                    anchors.fill: parent
+                    pillItem: pill
+                    active: spectrumScope.spectrumVisible
+                    points: pillCava.points
+                    normalizationCeiling: pillCava.normalizationCeiling
+                    s: overlay.s
+                }
 
                 Pill {
                     id: pill
