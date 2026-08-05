@@ -196,12 +196,27 @@ AbstractBackgroundWidget {
     // Shared desktop-widget identity (AbstractBackgroundWidget) so every metric reads
     // as the same wallpaper-generated family across all widgets.
     // Display variants: clamped against the plate/region actually behind them.
-    readonly property color cpuColor: root.widgetAccentVisible
-    readonly property color memColor: root.widgetAccent2Visible
-    readonly property color gpuColor: root.widgetAccent3Visible
+    readonly property color cpuColor: root.widgetRoleColor(root.widgetAccent, 4.0, 0.45)
+    readonly property color memColor: root.widgetRoleColor(root.widgetAccent2, 4.0, 0.45)
+    readonly property color gpuColor: root.widgetRoleColor(root.widgetAccent3, 4.0, 0.45)
     readonly property color tempColor: root.widgetRoleColor(root.widgetSignal, 3.0, 0.50)
     readonly property color diskColor: root.widgetRoleColor(
         ColorUtils.mix(root.widgetAccent2, root.widgetAccent3, 0.55), 3.0, 0.42)
+
+    readonly property real _mixedRegionStrength: root.widgetHasSurface ? 0
+        : Math.max(0, Math.min(1, (root.regionBrightnessSpread - 0.08) / 0.20))
+    readonly property color _labelInk: root.widgetHasSurface
+        ? root.widgetInkMuted
+        : ColorUtils.applyAlpha(root.widgetInk, 0.88)
+    readonly property int _labelStyle: root.widgetHasSurface ? Text.Normal : Text.Outline
+    readonly property color _labelKeyline: root._opposingKeyline(root.widgetInk, 0.26)
+
+    function _opposingKeyline(ink: color, baseAlpha: real): color {
+        const lightInk = ColorUtils.relativeLuminance(ink) >= 0.42;
+        const opposite = lightInk ? Qt.rgba(0, 0, 0, 1) : Qt.rgba(1, 1, 1, 1);
+        return ColorUtils.applyAlpha(opposite,
+            Math.min(0.72, baseAlpha + root._mixedRegionStrength * 0.34));
+    }
 
     // Animation duration for smooth value transitions
     readonly property int _animDuration: Appearance.animation.elementMove.duration
@@ -304,7 +319,9 @@ AbstractBackgroundWidget {
                 StyledText {
                     visible: root.showLabels
                     text: root._getDisplayText(barRow.modelData.key)
-                    color: ColorUtils.applyAlpha(root.widgetInk, root.fillOpacity)
+                    color: root._labelInk
+                    style: root._labelStyle
+                    styleColor: root._labelKeyline
                     font {
                         pixelSize: Appearance.font.pixelSize.smaller
                         family: Appearance.font.family.numbers
@@ -346,6 +363,8 @@ AbstractBackgroundWidget {
                     StyledText {
                         text: root._getDisplayText(modelData.key)
                         color: root._getColor(modelData.key)
+                        style: root._labelStyle
+                        styleColor: root._opposingKeyline(color, 0.24)
                         font { pixelSize: Appearance.font.pixelSize.smaller; family: Appearance.font.family.numbers }
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -363,7 +382,9 @@ AbstractBackgroundWidget {
             StyledText {
                 required property var modelData
                 text: modelData.label
-                color: ColorUtils.applyAlpha(root.widgetInk, 0.3)
+                color: ColorUtils.applyAlpha(root._labelInk, 0.72)
+                style: root._labelStyle
+                styleColor: root._labelKeyline
                 font { pixelSize: Appearance.font.pixelSize.smaller - 2; family: Appearance.font.family.numbers }
                 anchors.right: parent.right
                 anchors.rightMargin: 2
@@ -483,12 +504,12 @@ AbstractBackgroundWidget {
                     MaterialSymbol {
                         text: ringCol.modelData.icon
                         iconSize: Appearance.font.pixelSize.smaller
-                        color: root.widgetInkMuted
+                        color: root._labelInk
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
                         text: ringCol.modelData.label
-                        color: root.widgetInkMuted
+                        color: root._labelInk
                         font { pixelSize: Appearance.font.pixelSize.smaller; family: Appearance.font.family.main }
                         anchors.verticalCenter: parent.verticalCenter
                     }
@@ -532,7 +553,9 @@ AbstractBackgroundWidget {
 
                     StyledText {
                         text: textChip.modelData.label
-                        color: root.widgetInkMuted
+                        color: root._labelInk
+                        style: root._labelStyle
+                        styleColor: root._labelKeyline
                         font {
                             pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
                             family: Appearance.font.family.main
@@ -543,6 +566,8 @@ AbstractBackgroundWidget {
                     StyledText {
                         text: root._getDisplayText(textChip.modelData.key)
                         color: textChip._liveColor
+                        style: root._labelStyle
+                        styleColor: root._opposingKeyline(textChip._liveColor, 0.34)
                         font {
                             pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
                             family: Appearance.font.family.numbers

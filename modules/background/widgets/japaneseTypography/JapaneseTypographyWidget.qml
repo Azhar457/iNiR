@@ -363,8 +363,13 @@ AbstractBackgroundWidget {
     readonly property color ruleInk: root._roleColor(
         Config.getNestedValue("background.widgets.japaneseTypography.ruleColor", "#C18A53"),
         root.adaptiveRuleInk, root.ruleOpacity)
+    readonly property color editorialHalo: ColorUtils.applyAlpha(
+        ColorUtils.relativeLuminance(root.leadInk) >= 0.42
+            ? Qt.rgba(0, 0, 0, 1)
+            : Qt.rgba(1, 0.97, 0.92, 1),
+        0.92)
     readonly property color outlineInk: ColorUtils.applyAlpha(
-        root._safeColor(Config.getNestedValue("background.widgets.japaneseTypography.outlineColor", "#000000"), root.colHalo),
+        root._safeColor(Config.getNestedValue("background.widgets.japaneseTypography.outlineColor", "#000000"), root.editorialHalo),
         root.outlineOpacity)
     readonly property int glyphTextStyle: root.outlineOpacity > 0 ? Text.Outline : Text.Normal
 
@@ -414,8 +419,9 @@ AbstractBackgroundWidget {
         layer.enabled: root.shadowStrength > 0 && !root.widgetHasSurface
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: root.colHalo
+            shadowColor: root.editorialHalo
             shadowOpacity: root.shadowStrength
+                * (ColorUtils.relativeLuminance(root.leadInk) >= 0.42 ? 1.0 : 0.58)
             shadowBlur: 0.62
             shadowHorizontalOffset: 1
             shadowVerticalOffset: 2
