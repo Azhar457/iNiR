@@ -17,12 +17,16 @@ Item {
 
     property bool active: false
     property int sampleCount: 0
-    readonly property var points: CavaService.points
-    readonly property real normalizationCeiling: CavaService.normalizationCeiling
-    readonly property bool audioSignalActive: CavaService.audioSignalActive
+    readonly property var _emptyPoints: []
+    readonly property var points: root._held ? CavaService.points : root._emptyPoints
+    readonly property real normalizationCeiling: root._held
+        ? CavaService.normalizationCeiling : 100
+    readonly property bool audioSignalActive: root._held
+        ? CavaService.audioSignalActive : false
 
     readonly property bool _wanted: active && !Appearance.gameModeMinimal
     property bool _held: false
+    readonly property bool held: root._held
     property int _subscriptionId: -1
 
     function _reconcile(): void {

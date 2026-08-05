@@ -509,7 +509,9 @@ Singleton {
     // Guard flag: true while a user-initiated play is pending (between _playInternal and new mpv start).
     // Suppresses spurious playNext() from old mpv's onExited or stale IPC EOF queries.
     property bool _userInitiatedPlay: false
-    property bool isPlaying: _mpvPlayer?.isPlaying ?? !_ipcPaused
+    property bool isPlaying: _mpvPlayer?.isPlaying
+        ?? (_playProc.running && root.currentVideoId !== ""
+            && !root._ipcPaused && !root._ipcEofReached)
 
     onEnabledChanged: {
         if (enabled) {
@@ -588,6 +590,10 @@ Singleton {
         // onExited or stale IPC EOF from triggering playNext() before the new mpv starts.
         root._userInitiatedPlay = true
         root._ipcEofReached = false
+        // mpv starts without --pause; clear the previous track's paused state so
+        // the isPlaying fallback reports true instead of a stale false for up to
+        // the first IPC poll after the player starts.
+        root._ipcPaused = false
         
         _fadeOutOtherPlayers()
         

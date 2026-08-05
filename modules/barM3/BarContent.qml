@@ -69,8 +69,8 @@ Item {
     readonly property string spectrumFrequencyProfile: Config.options?.bar?.visualizer?.frequencyProfile ?? "flat"
     readonly property real spectrumAccentStrength: Math.max(0,
         Math.min(1, (Config.options?.bar?.visualizer?.accentStrength ?? 70) / 100))
-    readonly property bool materialSectionSpectrum: root.isMaterial
-        && (Config.options?.bar?.m3?.borderless ?? "separated") === "pills"
+    readonly property bool materialSpectrum: root.isMaterial
+        && (Config.options?.bar?.m3?.borderless ?? "separated") !== "transparent"
 
     function spectrumStartRatio(item): real {
         if (!item || !(root.width > 0))
@@ -97,8 +97,9 @@ Item {
     readonly property bool spectrumSignalActive: barCava.audioSignalActive
 
     component SurfaceSpectrum: CavaSpectrum {
-        points: barCava.points
-        normalizationCeiling: barCava.normalizationCeiling
+        threadedRendering: true
+        points: active ? barCava.points : []
+        normalizationCeiling: active ? barCava.normalizationCeiling : 100
         visualizerType: root.spectrumType
         spectrumOpacity: root.spectrumOpacity
         fillRatio: root.spectrumFillRatio
@@ -113,26 +114,6 @@ Item {
         edgeSoftness: root.spectrumEdgeSoftness
         frequencyProfile: root.spectrumFrequencyProfile
         accentStrength: root.spectrumAccentStrength
-    }
-
-    component SpectrumGroup: BarGroup {
-        spectrumEnabled: root.wantsBackgroundVisualizer && root.spectrumSignalActive
-        spectrumPoints: barCava.points
-        spectrumCeiling: barCava.normalizationCeiling
-        spectrumType: root.spectrumType
-        spectrumOpacity: root.spectrumOpacity
-        spectrumFillRatio: root.spectrumFillRatio
-        spectrumBarsOrigin: root.spectrumBarsOrigin
-        spectrumDensity: root.spectrumDensity
-        spectrumGap: root.spectrumGap
-        spectrumSmoothing: root.spectrumSmoothing
-        spectrumWaveMode: root.spectrumWaveMode
-        spectrumLineWidth: root.spectrumLineWidth
-        spectrumEdgeInset: root.spectrumEdgeInset
-        spectrumEdgeSoftness: root.spectrumEdgeSoftness
-        spectrumFrequencyProfile: root.spectrumFrequencyProfile
-        spectrumAccentStrength: root.spectrumAccentStrength
-        spectrumDomain: root
     }
 
     // Every widget is loaded through a URL, so its optional inputs are wired
@@ -170,6 +151,41 @@ Item {
 
     function getMaterialPillColor(name) {
         return M3Palette.pillContainer(name)
+    }
+
+    function appendClipSegment(segments, item, surface): void {
+        const clipItem = item?.spectrumClipItem ?? item
+        if (!clipItem || !surface || !clipItem.visible || !(clipItem.width > 0)
+                || !(clipItem.height > 0))
+            return
+        const position = clipItem.mapToItem(surface, 0, 0)
+        segments.push({
+            x: position.x,
+            y: position.y,
+            width: clipItem.width,
+            height: clipItem.height,
+            radii: item?.spectrumClipRadii ?? [
+                clipItem.topLeftRadius ?? clipItem.radius ?? 0,
+                clipItem.topRightRadius ?? clipItem.radius ?? 0,
+                clipItem.bottomRightRadius ?? clipItem.radius ?? 0,
+                clipItem.bottomLeftRadius ?? clipItem.radius ?? 0
+            ]
+        })
+    }
+
+    function appendRepeaterSegments(segments, repeater, surface): void {
+        for (let i = 0; i < repeater.count; ++i) {
+            const item = repeater.itemAt(i)
+            if (item?.paintMaterialPill ?? false)
+                root.appendClipSegment(segments, item, surface)
+        }
+    }
+
+    function materialSectionSegments(repeater, surface): var {
+        const segments = []
+        if ((Config.options?.bar?.m3?.borderless ?? "separated") === "separated")
+            root.appendRepeaterSegments(segments, repeater, surface)
+        return segments
     }
 
     // Edge scroll: the M3 bar honours the same keys as the classic bar, so
@@ -354,22 +370,15 @@ Item {
                     ? Appearance.colors.colLayer0 : "transparent"
 
                 SurfaceSpectrum {
+                    id: leftMaterialSpectrum
                     anchors.fill: parent
                     z: 2
-                    active: root.wantsBackgroundVisualizer && root.materialSectionSpectrum
+                    active: root.wantsBackgroundVisualizer && root.materialSpectrum
                         && leftMaterialPill.visible && root.spectrumSignalActive
-                    sampleStartRatio: {
-                        const geometryDependency = leftMaterialPill.x + leftMaterialPill.width
-                            + (leftMaterialPill.parent?.x ?? 0)
-                            + (leftMaterialPill.parent?.width ?? 0)
-                        return root.spectrumStartRatio(leftMaterialPill)
-                    }
-                    sampleEndRatio: {
-                        const geometryDependency = leftMaterialPill.x + leftMaterialPill.width
-                            + (leftMaterialPill.parent?.x ?? 0)
-                            + (leftMaterialPill.parent?.width ?? 0)
-                        return root.spectrumEndRatio(leftMaterialPill)
-                    }
+                    sampleStartRatio: root.spectrumStartRatio(leftMaterialPill)
+                    sampleEndRatio: root.spectrumEndRatio(leftMaterialPill)
+                    clipSegments: root.materialSectionSegments(
+                        leftMaterialRepeater, leftMaterialSpectrum)
                     topLeftRadius: leftMaterialPill.radius
                     topRightRadius: leftMaterialPill.radius
                     bottomLeftRadius: leftMaterialPill.radius
@@ -382,13 +391,14 @@ Item {
                     spacing: 3
 
                     Repeater {
+                        id: leftMaterialRepeater
                         model: root.effectiveLeftLayout
                         delegate: leftMaterialGroupDelegate
                     }
 
                     Component {
                         id: leftMaterialGroupDelegate
-                        SpectrumGroup {
+                        BarGroup {
                             Layout.fillHeight: true
                             currentIndex: index
                             totalCount: root.effectiveLeftLayout.length
@@ -419,9 +429,9 @@ Item {
                     delegate: leftBarGroupDelegate
                 }
 
-                Component {
-                    id: leftBarGroupDelegate
-                    SpectrumGroup {
+                    Component {
+                        id: leftBarGroupDelegate
+                        BarGroup {
                         Layout.fillHeight: true
                         currentIndex: index
                         totalCount: root.effectiveLeftLayout.length
@@ -472,22 +482,15 @@ Item {
                     ? Appearance.colors.colLayer0 : "transparent"
 
                 SurfaceSpectrum {
+                    id: centerMaterialSpectrum
                     anchors.fill: parent
                     z: 2
-                    active: root.wantsBackgroundVisualizer && root.materialSectionSpectrum
+                    active: root.wantsBackgroundVisualizer && root.materialSpectrum
                         && centerMaterialPill.visible && root.spectrumSignalActive
-                    sampleStartRatio: {
-                        const geometryDependency = centerMaterialPill.x + centerMaterialPill.width
-                            + (centerMaterialPill.parent?.x ?? 0)
-                            + (centerMaterialPill.parent?.width ?? 0)
-                        return root.spectrumStartRatio(centerMaterialPill)
-                    }
-                    sampleEndRatio: {
-                        const geometryDependency = centerMaterialPill.x + centerMaterialPill.width
-                            + (centerMaterialPill.parent?.x ?? 0)
-                            + (centerMaterialPill.parent?.width ?? 0)
-                        return root.spectrumEndRatio(centerMaterialPill)
-                    }
+                    sampleStartRatio: root.spectrumStartRatio(centerMaterialPill)
+                    sampleEndRatio: root.spectrumEndRatio(centerMaterialPill)
+                    clipSegments: root.materialSectionSegments(
+                        centerMaterialRepeater, centerMaterialSpectrum)
                     topLeftRadius: centerMaterialPill.radius
                     topRightRadius: centerMaterialPill.radius
                     bottomLeftRadius: centerMaterialPill.radius
@@ -500,13 +503,14 @@ Item {
                     spacing: 3
 
                     Repeater {
+                        id: centerMaterialRepeater
                         model: root.effectiveMiddleLayout
                         delegate: middleMaterialGroupDelegate
                     }
 
                     Component {
                         id: middleMaterialGroupDelegate
-                        SpectrumGroup {
+                        BarGroup {
                             Layout.fillHeight: true
                             currentIndex: index
                             totalCount: root.effectiveMiddleLayout.length
@@ -537,9 +541,9 @@ Item {
                     delegate: middleBarGroupDelegate
                 }
 
-                Component {
-                    id: middleBarGroupDelegate
-                    SpectrumGroup {
+                    Component {
+                        id: middleBarGroupDelegate
+                        BarGroup {
                         Layout.fillHeight: true
                         currentIndex: index
                         totalCount: root.effectiveMiddleLayout.length
@@ -590,22 +594,15 @@ Item {
                     ? Appearance.colors.colLayer0 : "transparent"
 
                 SurfaceSpectrum {
+                    id: rightMaterialSpectrum
                     anchors.fill: parent
                     z: 2
-                    active: root.wantsBackgroundVisualizer && root.materialSectionSpectrum
+                    active: root.wantsBackgroundVisualizer && root.materialSpectrum
                         && rightMaterialPill.visible && root.spectrumSignalActive
-                    sampleStartRatio: {
-                        const geometryDependency = rightMaterialPill.x + rightMaterialPill.width
-                            + (rightMaterialPill.parent?.x ?? 0)
-                            + (rightMaterialPill.parent?.width ?? 0)
-                        return root.spectrumStartRatio(rightMaterialPill)
-                    }
-                    sampleEndRatio: {
-                        const geometryDependency = rightMaterialPill.x + rightMaterialPill.width
-                            + (rightMaterialPill.parent?.x ?? 0)
-                            + (rightMaterialPill.parent?.width ?? 0)
-                        return root.spectrumEndRatio(rightMaterialPill)
-                    }
+                    sampleStartRatio: root.spectrumStartRatio(rightMaterialPill)
+                    sampleEndRatio: root.spectrumEndRatio(rightMaterialPill)
+                    clipSegments: root.materialSectionSegments(
+                        rightMaterialRepeater, rightMaterialSpectrum)
                     topLeftRadius: rightMaterialPill.radius
                     topRightRadius: rightMaterialPill.radius
                     bottomLeftRadius: rightMaterialPill.radius
@@ -618,13 +615,14 @@ Item {
                     spacing: 3
 
                     Repeater {
+                        id: rightMaterialRepeater
                         model: root.effectiveRightLayout
                         delegate: rightMaterialGroupDelegate
                     }
 
                     Component {
                         id: rightMaterialGroupDelegate
-                        SpectrumGroup {
+                        BarGroup {
                             Layout.fillHeight: true
                             currentIndex: index
                             totalCount: root.effectiveRightLayout.length
@@ -655,9 +653,9 @@ Item {
                     delegate: rightBarGroupDelegate
                 }
 
-                Component {
-                    id: rightBarGroupDelegate
-                    SpectrumGroup {
+                    Component {
+                        id: rightBarGroupDelegate
+                        BarGroup {
                         Layout.fillHeight: true
                         currentIndex: index
                         totalCount: root.effectiveRightLayout.length

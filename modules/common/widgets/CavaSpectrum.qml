@@ -9,6 +9,7 @@ Canvas {
 
     property var points: []
     property bool active: false
+    property bool threadedRendering: false
     property string visualizerType: "bars"
     property real normalizationCeiling: 1000
     property real fillRatio: 0.6
@@ -40,6 +41,12 @@ Canvas {
     property real endOpacity: 1
     property real startTaper: -1
     property real endTaper: -1
+    property var clipSegments: []
+    readonly property var _resolvedPalette: root._makePalette()
+    readonly property var _resolvedCornerRadii: root._makeCornerRadii()
+    readonly property var _resolvedEdgeTapers: root._makeEdgeTapers()
+
+    renderStrategy: root.threadedRendering ? Canvas.Threaded : Canvas.Immediate
 
     visible: (root.points?.length ?? 0) > 0 && (root.active || root.opacity > 0.001)
     opacity: root.active ? Math.max(0, Math.min(1, root.spectrumOpacity)) : 0
@@ -64,7 +71,7 @@ Canvas {
         return root._rgbaColor(root.spectrumColor, alpha)
     }
 
-    function _palette(): var {
+    function _makePalette(): var {
         const source = root.spectrumColors ?? []
         const palette = []
         for (let i = 0; i < source.length; ++i) {
@@ -78,7 +85,7 @@ Canvas {
     }
 
     function _colorAt(position): color {
-        const palette = root._palette()
+        const palette = root._resolvedPalette
         if (palette.length === 1)
             return palette[0]
 
@@ -218,7 +225,7 @@ Canvas {
         return out
     }
 
-    function _cornerRadii(): var {
+    function _makeCornerRadii(): var {
         const maximum = Math.max(0, Math.min(root.width / 2, root.height / 2))
         const tl = Math.max(0, Math.min(maximum,
             root.topLeftRadius >= 0 ? root.topLeftRadius : root.leftRadius))
@@ -236,8 +243,8 @@ Canvas {
         return x * x * (3 - 2 * x)
     }
 
-    function _edgeTapers(): var {
-        const radii = root._cornerRadii()
+    function _makeEdgeTapers(): var {
+        const radii = root._resolvedCornerRadii
         const scale = 0.75 + Math.max(0, Math.min(1, root.edgeSoftness)) * 1.25
         const autoStart = Math.max(radii[0], radii[3]) * scale
         const autoEnd = Math.max(radii[1], radii[2]) * scale
@@ -248,7 +255,7 @@ Canvas {
     }
 
     function _edgeMorphFactor(x, x0, x1): real {
-        const tapers = root._edgeTapers()
+        const tapers = root._resolvedEdgeTapers
         let factor = 1
         if (tapers[0] > 0)
             factor *= root._smoothstep((x - x0) / tapers[0])
@@ -274,7 +281,7 @@ Canvas {
     }
 
     function _surfaceBounds(x): var {
-        const radii = root._cornerRadii()
+        const radii = root._resolvedCornerRadii
         const top = Math.max(
             root._cornerInset(x, radii[0], true),
             root._cornerInset(x, radii[1], false))
@@ -302,35 +309,51 @@ Canvas {
         ]
     }
 
-    function _clipSurface(ctx): void {
-        const radii = root._cornerRadii()
-        const tl = radii[0]
-        const tr = radii[1]
-        const br = radii[2]
-        const bl = radii[3]
-        ctx.beginPath()
-        ctx.moveTo(tl, 0)
-        ctx.lineTo(root.width - tr, 0)
+    function _appendRoundedClip(ctx, x, y, width, height, radii): void {
+        const maximum = Math.max(0, Math.min(width / 2, height / 2))
+        const tl = Math.max(0, Math.min(maximum, radii[0] ?? 0))
+        const tr = Math.max(0, Math.min(maximum, radii[1] ?? 0))
+        const br = Math.max(0, Math.min(maximum, radii[2] ?? 0))
+        const bl = Math.max(0, Math.min(maximum, radii[3] ?? 0))
+        ctx.moveTo(x + tl, y)
+        ctx.lineTo(x + width - tr, y)
         if (tr > 0)
-            ctx.quadraticCurveTo(root.width, 0, root.width, tr)
+            ctx.quadraticCurveTo(x + width, y, x + width, y + tr)
         else
-            ctx.lineTo(root.width, 0)
-        ctx.lineTo(root.width, root.height - br)
+            ctx.lineTo(x + width, y)
+        ctx.lineTo(x + width, y + height - br)
         if (br > 0)
-            ctx.quadraticCurveTo(root.width, root.height, root.width - br, root.height)
+            ctx.quadraticCurveTo(x + width, y + height, x + width - br, y + height)
         else
-            ctx.lineTo(root.width, root.height)
-        ctx.lineTo(bl, root.height)
+            ctx.lineTo(x + width, y + height)
+        ctx.lineTo(x + bl, y + height)
         if (bl > 0)
-            ctx.quadraticCurveTo(0, root.height, 0, root.height - bl)
+            ctx.quadraticCurveTo(x, y + height, x, y + height - bl)
         else
-            ctx.lineTo(0, root.height)
-        ctx.lineTo(0, tl)
+            ctx.lineTo(x, y + height)
+        ctx.lineTo(x, y + tl)
         if (tl > 0)
-            ctx.quadraticCurveTo(0, 0, tl, 0)
+            ctx.quadraticCurveTo(x, y, x + tl, y)
         else
-            ctx.lineTo(0, 0)
+            ctx.lineTo(x, y)
         ctx.closePath()
+    }
+
+    function _clipSurface(ctx): void {
+        const segments = root.clipSegments ?? []
+        ctx.beginPath()
+        if (segments.length > 0) {
+            for (let i = 0; i < segments.length; ++i) {
+                const segment = segments[i]
+                if (!(segment?.width > 0) || !(segment?.height > 0))
+                    continue
+                root._appendRoundedClip(ctx, segment.x, segment.y,
+                    segment.width, segment.height, segment.radii ?? [0, 0, 0, 0])
+            }
+        } else {
+            root._appendRoundedClip(ctx, 0, 0, root.width, root.height,
+                root._resolvedCornerRadii)
+        }
         ctx.clip()
     }
 
@@ -576,4 +599,5 @@ Canvas {
     onEndOpacityChanged: root._queuePaint()
     onStartTaperChanged: root._queuePaint()
     onEndTaperChanged: root._queuePaint()
+    onClipSegmentsChanged: root._queuePaint()
 }
