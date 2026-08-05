@@ -5,6 +5,7 @@ import Quickshell.Services.SystemTray
 import Quickshell.Widgets
 import Qt5Compat.GraphicalEffects
 import qs.services
+import qs.modules.barM3
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
@@ -94,7 +95,7 @@ MouseArea {
             ColorOverlay {
                 anchors.fill: desaturatedIcon
                 source: desaturatedIcon
-                color: ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.9)
+                color: M3Palette.pillInk("sysTray")
             }
         }
     }

@@ -143,7 +143,7 @@ BarWidgetSwitcher {
             StyledText {
                 visible: root.showDate
                 font.pixelSize: Appearance.font.pixelSize.small
-                color: Appearance.colors.colOnPrimaryContainer
+                color: M3Palette.pillInk("clockWidget")
                 // iNiR's DateTime exposes `date` (long form) and `shortDate`;
                 // upstream's `longDate` does not exist here.
                 text: DateTime.date
@@ -175,14 +175,14 @@ BarWidgetSwitcher {
                 implicitWidth: ampmText.implicitWidth + 8
                 implicitHeight: 24
                 radius: Appearance.rounding.full
-                color: Appearance.colors.colTertiaryContainer
+                color: M3Palette.tertiaryContainer
                 Layout.alignment: Qt.AlignVCenter
                 Layout.leftMargin: -10
                 StyledText {
                     id: ampmText
                     anchors.centerIn: parent
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colPrimary
+                    color: M3Palette.tertiaryContainerForeground
                     text: pill.ampm
                 }
             }

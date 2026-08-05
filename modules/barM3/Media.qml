@@ -227,7 +227,7 @@ Item {
                             anchors.centerIn: parent
                             text: "account_circle"
                             iconSize: Appearance.font.pixelSize.normal
-                            color: M3Palette.onPrimaryContainer
+                            color: M3Palette.primaryContainerForeground
                             visible: avatarImage.status === Image.Error || avatarImage.status === Image.Null
                         }
                     }
@@ -338,7 +338,7 @@ Item {
                             text: root.isPlaying ? "pause" : "play_arrow"
                             iconSize: Appearance.font.pixelSize.large
                             fill: 1
-                            color: root.isPlaying ? M3Palette.onPrimary : M3Palette.onPrimaryContainer
+                            color: root.isPlaying ? M3Palette.primaryForeground : M3Palette.primaryContainerForeground
                         }
                     }
 

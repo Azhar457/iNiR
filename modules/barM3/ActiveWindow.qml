@@ -18,6 +18,6 @@ Item {
         id: stock
         anchors.fill: parent
         titleColor: root.isMaterial ? M3Palette.pillInk("activeWindow") : Appearance.colors.colOnLayer0
-        appNameColor: root.isMaterial ? M3Palette.onSurfaceVariant : Appearance.colors.colSubtext
+        appNameColor: root.isMaterial ? M3Palette.surfaceVariantForeground : Appearance.colors.colSubtext
     }
 }
