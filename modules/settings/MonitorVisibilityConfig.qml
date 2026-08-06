@@ -610,6 +610,32 @@ ContentPage {
 
     SettingsCardSection {
         expanded: true
+        icon: "web_asset"
+        title: Translation.tr("Material shell surfaces")
+
+        SettingsGroup {
+            NoticeBox {
+                Layout.fillWidth: true
+                materialIcon: "apps"
+                text: Translation.tr("These controls only affect the Material family: the ii bar, dock, and floating media controls.")
+            }
+
+            PresetActions {
+                paths: root.surfacePaths(root.iiSurfaces)
+            }
+
+            Repeater {
+                model: root.iiSurfaces
+                SurfaceVisibilityBlock {
+                    required property var modelData
+                    surface: modelData
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: false
         icon: "widgets"
         title: Translation.tr("Desktop widgets")
 
@@ -630,32 +656,6 @@ ContentPage {
                 DesktopWidgetOutputBlock {
                     required property var modelData
                     outputName: String(modelData ?? "")
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        expanded: false
-        icon: "web_asset"
-        title: Translation.tr("Material shell surfaces")
-
-        SettingsGroup {
-            NoticeBox {
-                Layout.fillWidth: true
-                materialIcon: "apps"
-                text: Translation.tr("These controls only affect the Material family: the ii bar, dock, and floating media controls.")
-            }
-
-            PresetActions {
-                paths: root.surfacePaths(root.iiSurfaces)
-            }
-
-            Repeater {
-                model: root.iiSurfaces
-                SurfaceVisibilityBlock {
-                    required property var modelData
-                    surface: modelData
                 }
             }
         }

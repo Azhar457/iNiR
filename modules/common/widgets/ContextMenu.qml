@@ -23,6 +23,8 @@ Loader {
     property int closeOnHoverLostDelay: 500  // ms before closing when hover lost (waffle uses 500)
     property bool anchorHovered: false
     property bool closeOnOutsideClick: false
+    property var anchorRect: null
+    property var popupAdjustment: null
     signal focusCleared()
 
     property real visualMargin: 8
@@ -102,10 +104,14 @@ Loader {
         }
 
         anchor {
-            adjustment: (root.popupSide !== 0)
+            adjustment: root.popupAdjustment ?? ((root.popupSide !== 0)
                 ? (PopupAdjustment.ResizeX | PopupAdjustment.SlideY)
-                : (PopupAdjustment.ResizeY | PopupAdjustment.SlideX)
+                : (PopupAdjustment.ResizeY | PopupAdjustment.SlideX))
             item: root.anchorItem
+            rect.x: Number(root.anchorRect?.x ?? 0)
+            rect.y: Number(root.anchorRect?.y ?? 0)
+            rect.width: Number(root.anchorRect?.width ?? (root.anchorItem?.width ?? 0))
+            rect.height: Number(root.anchorRect?.height ?? (root.anchorItem?.height ?? 0))
             gravity: root.popupSide !== 0 
                 ? root.popupSide 
                 : (root.popupAbove ? Edges.Top : Edges.Bottom)

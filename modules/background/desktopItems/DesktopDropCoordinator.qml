@@ -56,18 +56,12 @@ Item {
         const itemHeight = DesktopItems.itemHeight
         const relativeX = root._dropX - Number(root.workArea.left ?? 0) - itemWidth / 2
         const relativeY = root._dropY - Number(root.workArea.top ?? 0) - itemHeight / 2
-        const rawX = relativeX + col * (itemWidth + root.gridSize)
-        const rawY = relativeY + row * (itemHeight + root.gridSize)
-        const x = root.gridSnap && root.gridSize > 0
-            ? Math.round(rawX / root.gridSize) * root.gridSize : Math.round(rawX)
-        const y = root.gridSnap && root.gridSize > 0
-            ? Math.round(rawY / root.gridSize) * root.gridSize : Math.round(rawY)
-        return {
-            x: Math.max(0, Math.min(
-                Number(root.workArea.width ?? root.canvasWidth) - itemWidth, x)),
-            y: Math.max(0, Math.min(
-                Number(root.workArea.height ?? root.canvasHeight) - itemHeight, y))
-        }
+        const rawX = relativeX + col * DesktopItems.gridPitchX(root.gridSize)
+        const rawY = relativeY + row * DesktopItems.gridPitchY(root.gridSize)
+        return DesktopItems.arrangePosition(root.outputName, rawX, rawY,
+            Number(root.workArea.width ?? root.canvasWidth),
+            Number(root.workArea.height ?? root.canvasHeight),
+            root.gridSize, root.gridSnap)
     }
 
     function _enqueue(urls, x, y): void {

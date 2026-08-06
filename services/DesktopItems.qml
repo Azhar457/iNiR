@@ -234,6 +234,65 @@ Singleton {
         return root.listItems().filter(item => item.output === output)
     }
 
+    function gridPitchX(gridSize: int): int {
+        const unit = Math.max(1, Math.round(Number(gridSize) || 1))
+        return Math.ceil(root.itemWidth / unit) * unit
+    }
+
+    function gridPitchY(gridSize: int): int {
+        const unit = Math.max(1, Math.round(Number(gridSize) || 1))
+        return Math.ceil(root.itemHeight / unit) * unit
+    }
+
+    function arrangePosition(output: string, desiredX: real, desiredY: real,
+            workWidth: real, workHeight: real, gridSize: int,
+            snapEnabled: bool, excludeItemId = ""): var {
+        const maxX = Math.max(0, Math.round(Number(workWidth) || 0) - root.itemWidth)
+        const maxY = Math.max(0, Math.round(Number(workHeight) || 0) - root.itemHeight)
+        const clampedX = Math.max(0, Math.min(maxX, Math.round(Number(desiredX) || 0)))
+        const clampedY = Math.max(0, Math.min(maxY, Math.round(Number(desiredY) || 0)))
+        if (!snapEnabled)
+            return { x: clampedX, y: clampedY }
+
+        const pitchX = root.gridPitchX(gridSize)
+        const pitchY = root.gridPitchY(gridSize)
+        const anchorX = Math.max(0, Math.min(maxX,
+            Math.round(clampedX / pitchX) * pitchX))
+        const anchorY = Math.max(0, Math.min(maxY,
+            Math.round(clampedY / pitchY) * pitchY))
+        const occupied = root.listForOutput(String(output ?? ""))
+            .filter(item => String(item.id ?? "") !== String(excludeItemId ?? ""))
+
+        function isFree(x, y): bool {
+            for (const item of occupied) {
+                const itemX = Number(item.x ?? 0)
+                const itemY = Number(item.y ?? 0)
+                if (x < itemX + root.itemWidth
+                        && x + root.itemWidth > itemX
+                        && y < itemY + root.itemHeight
+                        && y + root.itemHeight > itemY)
+                    return false
+            }
+            return true
+        }
+
+        const candidates = []
+        for (let y = 0; y <= maxY; y += pitchY) {
+            for (let x = 0; x <= maxX; x += pitchX) {
+                const dx = x - anchorX
+                const dy = y - anchorY
+                candidates.push({ x: x, y: y, distance: dx * dx + dy * dy })
+            }
+        }
+        candidates.sort((a, b) => a.distance - b.distance
+            || a.y - b.y || a.x - b.x)
+        for (const candidate of candidates) {
+            if (isFree(candidate.x, candidate.y))
+                return { x: candidate.x, y: candidate.y }
+        }
+        return { x: anchorX, y: anchorY }
+    }
+
     function update(itemId: string, patch: var): bool {
         if (!root._writable())
             return false

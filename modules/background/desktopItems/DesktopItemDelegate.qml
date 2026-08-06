@@ -39,7 +39,6 @@ Item {
         return root._targetExists
     }
     property bool _targetExists: true
-    property bool launching: false
     property string editMode: ""
     property string editText: ""
     property bool _componentReady: false
@@ -89,24 +88,17 @@ Item {
         targetProbe.exec(["test", "-e", root._pathForProbe()])
     }
 
-    function _snap(value: real): real {
-        if (!root.gridSnap || root.gridSize <= 1)
-            return Math.round(value)
-        return Math.round(value / root.gridSize) * root.gridSize
-    }
-
     function _clampPosition(px: real, py: real): var {
         const left = Number(root.workArea.left ?? 0)
         const top = Number(root.workArea.top ?? 0)
-        const right = Number(root.workArea.right ?? root.canvasWidth)
-        const bottom = Number(root.workArea.bottom ?? root.canvasHeight)
-        const maxX = Math.max(left, right - root.width)
-        const maxY = Math.max(top, bottom - root.height)
-        const snappedX = left + root._snap(px - left)
-        const snappedY = top + root._snap(py - top)
+        const arranged = DesktopItems.arrangePosition(root.outputName,
+            px - left, py - top,
+            Number(root.workArea.width ?? root.canvasWidth),
+            Number(root.workArea.height ?? root.canvasHeight),
+            root.gridSize, root.gridSnap, root.itemId)
         return {
-            x: Math.max(left, Math.min(maxX, snappedX)),
-            y: Math.max(top, Math.min(maxY, snappedY))
+            x: left + arranged.x,
+            y: top + arranged.y
         }
     }
 
@@ -129,10 +121,15 @@ Item {
             name, screen.width ?? 0, screen.height ?? 0)
         const targetWidth = Math.max(0, Number(targetWork.width ?? 0) - root.width)
         const targetHeight = Math.max(0, Number(targetWork.height ?? 0) - root.height)
+        const arranged = DesktopItems.arrangePosition(name,
+            Math.round(Math.max(0, Math.min(1, relativeX)) * targetWidth),
+            Math.round(Math.max(0, Math.min(1, relativeY)) * targetHeight),
+            Number(targetWork.width ?? 0), Number(targetWork.height ?? 0),
+            root.gridSize, root.gridSnap, root.itemId)
         if (!DesktopItems.update(root.itemId, {
                 output: name,
-                x: Math.round(Math.max(0, Math.min(1, relativeX)) * targetWidth),
-                y: Math.round(Math.max(0, Math.min(1, relativeY)) * targetHeight)
+                x: arranged.x,
+                y: arranged.y
             }))
             return
         GlobalStates.selectDesktopItem(name + "::desktopItem." + root.itemId)
@@ -142,14 +139,13 @@ Item {
         if (!root._componentReady || root._positionOverride
                 || String(root.itemData?.output ?? "") !== root.outputName)
             return
-        const maxX = Math.max(0,
-            Number(root.workArea.width ?? root.canvasWidth) - root.width)
-        const maxY = Math.max(0,
-            Number(root.workArea.height ?? root.canvasHeight) - root.height)
-        const x = Math.round(Math.max(0,
-            Math.min(maxX, Number(root.itemData?.x ?? 0))))
-        const y = Math.round(Math.max(0,
-            Math.min(maxY, Number(root.itemData?.y ?? 0))))
+        const arranged = DesktopItems.arrangePosition(root.outputName,
+            Number(root.itemData?.x ?? 0), Number(root.itemData?.y ?? 0),
+            Number(root.workArea.width ?? root.canvasWidth),
+            Number(root.workArea.height ?? root.canvasHeight),
+            root.gridSize, root.gridSnap, root.itemId)
+        const x = arranged.x
+        const y = arranged.y
         if (x === Math.round(Number(root.itemData?.x ?? 0))
                 && y === Math.round(Number(root.itemData?.y ?? 0)))
             return
@@ -166,12 +162,10 @@ Item {
             root._openTargetParent()
             return
         }
-        root.launching = true
-        launchTimer.restart()
         if (root.isApplication) {
             const entry = AppSearch.lookupDesktopEntry(root.target)
-            if (!entry || !AppSearch.launchEntry(entry))
-                root.launching = false
+            if (entry)
+                AppSearch.launchEntry(entry)
         } else {
             Quickshell.execDetached(["xdg-open", root.target])
         }
@@ -215,7 +209,7 @@ Item {
         root.editMode = ""
     }
 
-    function _showMenu(): void {
+    function _showMenu(anchorX: real, anchorY: real): void {
         const model = [
             { text: Translation.tr("Open"), iconName: "open_in_new", monochromeIcon: true,
                 enabled: root.targetAvailable, action: () => root.activate() },
@@ -256,6 +250,7 @@ Item {
         )
         root._menuModel = model
         itemMenu.anchorItem = root
+        itemMenu.anchorRect = { x: anchorX, y: anchorY, width: 1, height: 1 }
         itemMenu.active = true
     }
 
@@ -273,12 +268,6 @@ Item {
         }
     }
 
-    Timer {
-        id: launchTimer
-        interval: 1200
-        onTriggered: root.launching = false
-    }
-
     Component.onCompleted: {
         root._componentReady = true
         root._refreshTarget()
@@ -286,6 +275,14 @@ Item {
     }
     onTargetChanged: if (root._componentReady) root._refreshTarget()
     onWorkAreaChanged: if (root._componentReady) positionReconcile.restart()
+    onGridSizeChanged: {
+        if (root._componentReady && !root.locked)
+            positionReconcile.restart()
+    }
+    onGridSnapChanged: {
+        if (root._componentReady && !root.locked && root.gridSnap)
+            positionReconcile.restart()
+    }
 
     Timer {
         id: positionReconcile
@@ -308,7 +305,7 @@ Item {
         border.color: root.selected || root._dragging
             ? Appearance.colors.colPrimary
             : ColorUtils.applyAlpha(Appearance.colors.colOutline, 0.46)
-        opacity: root.launching ? 0.72 : 1
+        opacity: 1
 
         Behavior on color {
             enabled: Appearance.animationsEnabled
@@ -415,7 +412,7 @@ Item {
         elide: Text.ElideRight
         maximumLineCount: 2
         wrapMode: Text.Wrap
-        text: root.launching ? Translation.tr("Launching…") : root.label
+        text: root.label
         visible: root.editMode.length === 0
         color: Appearance.colors.colOnSurface
         font.pixelSize: Appearance.font.pixelSize.small
@@ -471,7 +468,7 @@ Item {
         onReleased: event => {
             mouse.drag.target = root
             if (event.button === Qt.RightButton) {
-                root._showMenu()
+                root._showMenu(event.x, event.y)
                 return
             }
             if (!root._positionOverride)
@@ -500,6 +497,7 @@ Item {
         id: itemMenu
         model: root._menuModel
         popupAbove: false
+        popupAdjustment: PopupAdjustment.All
         closeOnFocusLost: false
         closeOnHoverLost: false
         closeOnOutsideClick: true

@@ -15,7 +15,14 @@ normal Overview interaction and creates no desktop item.
 The context menu can move an item to another connected monitor. Its relative
 position is preserved and clamped to that monitor's panel-safe work area.
 Dragging an item that was recovered from a disconnected output adopts the
-output where it is released.
+output where it is released. The menu opens at the pointer position that
+invoked it rather than at a fixed edge of the icon.
+
+Desktop references share the desktop-widget edit grid. When grid snapping is
+enabled, drops, drag releases and monitor moves choose the nearest free cell
+using `background.widgets.editGrid.size`; occupied cells are skipped so icons
+stay aligned and do not stack on top of each other. Locked references are not
+rearranged when the grid changes.
 
 ## Dropping images
 
