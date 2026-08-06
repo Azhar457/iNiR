@@ -140,7 +140,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 onClicked: {
                     GlobalStates.sidebarRightRequestedWidget = "notepad"
-                    GlobalStates.sidebarRightOpen = true
+                    GlobalStates.openSidebarRight(root.QsWindow.window?.screen?.name ?? "")
                 }
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter

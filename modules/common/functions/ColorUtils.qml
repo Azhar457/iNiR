@@ -307,30 +307,35 @@ Singleton {
         var ratio = contrastRatio(fg, bg);
         
         if (ratio >= minRatio) return fg;
-        
-        // Determine if we should lighten or darken based on background
-        var bgLum = relativeLuminance(bg);
-        var shouldLighten = bgLum < 0.5;
-        
-        // Iteratively adjust lightness until we meet contrast requirement
-        var step = shouldLighten ? 0.05 : -0.05;
-        var newLightness = fg.hslLightness;
-        var maxIterations = 20;
-        
-        for (var i = 0; i < maxIterations; i++) {
-            newLightness = clamp01(newLightness + step);
-            var adjusted = Qt.hsla(fg.hslHue, fg.hslSaturation, newLightness, fg.a);
-            if (contrastRatio(adjusted, bg) >= minRatio) {
-                return adjusted;
-            }
-            // If we hit the limit, return the extreme
-            if (newLightness <= 0.05 || newLightness >= 0.95) {
-                return shouldLighten ? Qt.rgba(1, 1, 1, fg.a) : Qt.rgba(0, 0, 0, fg.a);
-            }
+
+        // Choose the direction that can actually provide the strongest
+        // contrast. A luminance threshold is insufficient here: mid-tone
+        // wallpaper palettes can make white fail while black passes (or the
+        // inverse), which previously returned an unreadable extreme.
+        var white = Qt.rgba(1, 1, 1, fg.a);
+        var black = Qt.rgba(0, 0, 0, fg.a);
+        var whiteRatio = contrastRatio(white, bg);
+        var blackRatio = contrastRatio(black, bg);
+        var targetLightness = whiteRatio >= blackRatio ? 1.0 : 0.0;
+        var target = targetLightness > 0.5 ? white : black;
+
+        if (Math.max(whiteRatio, blackRatio) < minRatio)
+            return target;
+
+        // Binary-search the smallest lightness adjustment that reaches the
+        // requested ratio while preserving the original hue and saturation.
+        var failingLightness = fg.hslLightness;
+        var passingLightness = targetLightness;
+        for (var i = 0; i < 18; i++) {
+            var candidateLightness = (failingLightness + passingLightness) / 2;
+            var candidate = Qt.hsla(fg.hslHue, fg.hslSaturation,
+                candidateLightness, fg.a);
+            if (contrastRatio(candidate, bg) >= minRatio)
+                passingLightness = candidateLightness;
+            else
+                failingLightness = candidateLightness;
         }
-        
-        // Fallback: return pure white or black
-        return shouldLighten ? Qt.rgba(1, 1, 1, fg.a) : Qt.rgba(0, 0, 0, fg.a);
+        return Qt.hsla(fg.hslHue, fg.hslSaturation, passingLightness, fg.a);
     }
 
     /**

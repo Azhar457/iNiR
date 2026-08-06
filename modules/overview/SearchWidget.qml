@@ -18,6 +18,7 @@ Item { // Wrapper
     property string searchingText: ""
     property bool showResults: searchingText != ""
     property bool panelVisible: true
+    property bool applicationDragActive: false
     property real availableHeight: root.QsWindow?.window?.height ?? (root.QsWindow?.window?.screen?.height ?? 1080)
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
     // Island: the search surface wears the Ricelin gradient card; the glass
@@ -221,6 +222,7 @@ Item { // Wrapper
 
             appResultObjects.push({
                 key: `app_${entry.name}`,
+                desktopEntryId: String(entry.id ?? "").trim().replace(/\.desktop$/i, ""),
                 name: entry.name,
                 clickActionName: Translation.tr("Launch"),
                 type: Translation.tr("App"),
@@ -644,6 +646,7 @@ Item { // Wrapper
                     anchors.left: parent?.left
                     anchors.right: parent?.right
                     entry: modelData
+                    onApplicationDragChanged: active => root.applicationDragActive = active
                     upTarget: searchBar.searchInput
                     query: StringUtils.cleanOnePrefix(root.debouncedSearchText, [
                         root.prefixAction,

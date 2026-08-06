@@ -112,8 +112,9 @@ Item {
             ? root.pillItem.y + (root.pillItem.height - root.wingHeight) / 2 : 0
         height: root.wingHeight
         active: root.visible && width > 4
-        points: root.points
-        normalizationCeiling: root.normalizationCeiling
+        threadedRendering: true
+        points: active ? root.points : []
+        normalizationCeiling: active ? root.normalizationCeiling : 100
         visualizerType: root.visualizerType
         barsOrigin: root.barsOrigin
         pixelsPerBar: root.density

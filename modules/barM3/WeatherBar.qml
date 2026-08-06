@@ -79,7 +79,7 @@ MouseArea {
                 width: 25
                 height: 25
                 radius: Appearance.rounding.full
-                color: Appearance.colors.colPrimary
+                color: M3Palette.primary
 
                 MaterialSymbol {
                     anchors.centerIn: parent
@@ -128,7 +128,7 @@ MouseArea {
                 width: 25
                 height: 25
                 radius: Appearance.rounding.full
-                color: Appearance.colors.colPrimary
+                color: M3Palette.primary
                 Layout.alignment: Qt.AlignHCenter
 
                 MaterialSymbol {

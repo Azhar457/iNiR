@@ -199,8 +199,13 @@ Item { // Bar content region
     readonly property string leftAction: Config.options?.bar?.leftScrollAction ?? "brightness"
     readonly property string rightAction: Config.options?.bar?.rightScrollAction ?? "volume"
     readonly property bool barSpectrumAudioPlaying: MprisController.isPlaying || YtMusic.isPlaying
+    readonly property bool barSpectrumOutputEnabled:
+        (Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary") === "all"
+        || Quickshell.screens.length <= 1
+        || String(root.screen?.name ?? "") === String(GlobalStates.primaryScreen?.name ?? "")
     readonly property bool barSpectrumConfigured: (Config.options?.bar?.visualizer?.enable ?? false)
         && (root.isIslands || (Config.options?.bar?.showBackground ?? true))
+        && root.barSpectrumOutputEnabled
         && !Appearance.gameModeMinimal
         && root.visible
     readonly property bool barSpectrumProcessWanted: root.barSpectrumConfigured
@@ -310,8 +315,9 @@ Item { // Bar content region
         CavaSpectrum {
             anchors.fill: parent
             active: root.barSpectrumVisible && root.isIslands && edgeIsland.visible
-            points: barCavaProcess.points
-            normalizationCeiling: barCavaProcess.normalizationCeiling
+            threadedRendering: true
+            points: active ? barCavaProcess.points : []
+            normalizationCeiling: active ? barCavaProcess.normalizationCeiling : 100
             visualizerType: root.barSpectrumType
             spectrumOpacity: root.barSpectrumOpacity
             fillRatio: root.barSpectrumFillRatio
@@ -411,6 +417,8 @@ Item { // Bar content region
         if (id === "spacer") return root._fillWidth(id, zone) || root._spacerMinimumWidth > 0;
         if (id === "tray") return root._moduleVisible("sysTray") && root.useShortenedForm === 0;
         if (!root._moduleVisible(id)) return false;
+        if (id === "activeWindow")
+            return root.taskbarEnabled || root.useShortenedForm === 0;
         if (id === "media") return root.useShortenedForm < 2;
         if (id === "utilButtons") return (Config.options?.bar?.verbose ?? true) && root.useShortenedForm === 0;
         if (id === "battery") return root.useShortenedForm < 2 && Battery.available;
@@ -503,7 +511,7 @@ Item { // Bar content region
                 acceptedButtons: Qt.RightButton
                 onPressed: event => {
                     if (event.button === Qt.RightButton)
-                        GlobalStates.overviewOpen = !GlobalStates.overviewOpen;
+                        GlobalStates.toggleOverview(root.screen?.name ?? "");
                 }
             }
         }
@@ -564,7 +572,9 @@ Item { // Bar content region
             // width, so a content-sized wrapper reflowed the whole island on every
             // focus change. The texts elide inside a constant box instead.
             implicitWidth: fillSlot ? 0
-                : (root.isIslands ? 220 : Math.min(_awItem.contentImplicitWidth, 220))
+                : (root.isIslands
+                    ? ((root.screen?.width ?? 1920) <= 1440 ? 150 : 220)
+                    : Math.min(_awItem.contentImplicitWidth, 220))
             // Be exactly as tall as the surface we sit on. The cell adopts this as
             // its implicitHeight, so at full bar height the module overflowed the
             // shorter island capsule by the inset on both edges.
@@ -923,8 +933,9 @@ Item { // Bar content region
         CavaSpectrum {
             anchors.fill: parent
             active: root.barSpectrumVisible && !root.isIslands
-            points: barCavaProcess.points
-            normalizationCeiling: barCavaProcess.normalizationCeiling
+            threadedRendering: true
+            points: active ? barCavaProcess.points : []
+            normalizationCeiling: active ? barCavaProcess.normalizationCeiling : 100
             visualizerType: root.barSpectrumType
             spectrumOpacity: root.barSpectrumOpacity
             fillRatio: root.barSpectrumFillRatio
@@ -1036,9 +1047,9 @@ Item { // Bar content region
             id: middleCenterGroup
             nativeBlurActive: root.nativeBlurActive
             screen: root.screen
-            spectrumEnabled: root.barSpectrumVisible
-            spectrumPoints: barCavaProcess.points
-            spectrumCeiling: barCavaProcess.normalizationCeiling
+            spectrumEnabled: root.barSpectrumVisible && root.isIslands && visible
+            spectrumPoints: spectrumEnabled ? barCavaProcess.points : []
+            spectrumCeiling: spectrumEnabled ? barCavaProcess.normalizationCeiling : 100
             spectrumType: root.barSpectrumType
             spectrumOpacity: root.barSpectrumOpacity
             spectrumFillRatio: root.barSpectrumFillRatio
@@ -1091,9 +1102,9 @@ Item { // Bar content region
             id: leftCenterGroup
             nativeBlurActive: root.nativeBlurActive
             screen: root.screen
-            spectrumEnabled: root.barSpectrumVisible
-            spectrumPoints: barCavaProcess.points
-            spectrumCeiling: barCavaProcess.normalizationCeiling
+            spectrumEnabled: root.barSpectrumVisible && root.isIslands && visible
+            spectrumPoints: spectrumEnabled ? barCavaProcess.points : []
+            spectrumCeiling: spectrumEnabled ? barCavaProcess.normalizationCeiling : 100
             spectrumType: root.barSpectrumType
             spectrumOpacity: root.barSpectrumOpacity
             spectrumFillRatio: root.barSpectrumFillRatio
@@ -1166,9 +1177,9 @@ Item { // Bar content region
                 id: rightCenterGroupPill
                 nativeBlurActive: root.nativeBlurActive
                 screen: root.screen
-                spectrumEnabled: root.barSpectrumVisible
-                spectrumPoints: barCavaProcess.points
-                spectrumCeiling: barCavaProcess.normalizationCeiling
+                spectrumEnabled: root.barSpectrumVisible && root.isIslands && visible
+                spectrumPoints: spectrumEnabled ? barCavaProcess.points : []
+                spectrumCeiling: spectrumEnabled ? barCavaProcess.normalizationCeiling : 100
                 spectrumType: root.barSpectrumType
                 spectrumOpacity: root.barSpectrumOpacity
                 spectrumFillRatio: root.barSpectrumFillRatio

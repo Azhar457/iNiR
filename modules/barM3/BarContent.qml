@@ -15,16 +15,50 @@ Item {
     id: root
     implicitHeight: Appearance.sizes.barHeight
     width: parent.width
+    property var screen: root.QsWindow.window?.screen
     readonly property real barPadding: 0
     readonly property bool isMaterial: Config.options.bar.m3.cornerStyle === 3
     readonly property real centerPillX: centerPill.x
     readonly property real centerPillWidth: centerPill.width
 
     readonly property bool trayHasItems: SystemTray.items.values.length > 0
+    readonly property bool spectrumOutputEnabled:
+        (Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary") === "all"
+        || Quickshell.screens.length <= 1
+        || String(root.screen?.name ?? "") === String(GlobalStates.primaryScreen?.name ?? "")
+    readonly property int configuredWidgetCount:
+        (Config.options?.bar?.m3?.layouts?.leftLayout?.length ?? 0)
+        + (Config.options?.bar?.m3?.layouts?.middleLayout?.length ?? 0)
+        + (Config.options?.bar?.m3?.layouts?.rightLayout?.length ?? 0)
+    readonly property real compactWidthThreshold: Math.max(
+        Appearance.sizes.barShortenScreenWidthThreshold,
+        (960 + root.configuredWidgetCount * 40) * Appearance.fontSizeScale)
+    readonly property real minimalWidthThreshold: Math.max(
+        Appearance.sizes.barHellaShortenScreenWidthThreshold,
+        (720 + root.configuredWidgetCount * 28) * Appearance.fontSizeScale)
+    readonly property int useShortenedForm:
+        (root.screen?.width ?? 1920) <= root.minimalWidthThreshold ? 2
+        : (root.screen?.width ?? 1920) <= root.compactWidthThreshold ? 1 : 0
+    readonly property var compactHiddenWidgets: [
+        "visualizer", "activeWindow", "resources", "networkSpeed",
+        "weatherBar", "updatesCount"
+    ]
+    readonly property var minimalHiddenWidgets: [
+        ...root.compactHiddenWidgets, "media", "sysTray", "utilButtons",
+        "batteryIndicator", "divisor"
+    ]
 
     function filterLayout(layout) {
-        if (trayHasItems) return layout
-        return layout.filter(name => name !== "sysTray")
+        let filtered = Array.from(layout ?? [])
+        if (!root.trayHasItems)
+            filtered = filtered.filter(name => name !== "sysTray")
+        if (!root.spectrumSignalActive)
+            filtered = filtered.filter(name => name !== "visualizer")
+        if (root.useShortenedForm === 2)
+            return filtered.filter(name => !root.minimalHiddenWidgets.includes(name))
+        if (root.useShortenedForm === 1)
+            return filtered.filter(name => !root.compactHiddenWidgets.includes(name))
+        return filtered
     }
 
     readonly property var effectiveLeftLayout:   filterLayout(Config.options.bar.m3.layouts.leftLayout)
@@ -45,11 +79,14 @@ Item {
     // One cava process for the whole bar. The showcase layout puts a visualizer
     // on each side of the centre, and a per-widget process would have spawned
     // one subprocess per instance for the exact same spectrum.
-    readonly property bool wantsVisualizer: root.effectiveLeftLayout.includes("visualizer")
-        || root.effectiveMiddleLayout.includes("visualizer")
-        || root.effectiveRightLayout.includes("visualizer")
+    readonly property bool wantsVisualizer: root.spectrumOutputEnabled
+        && root.useShortenedForm === 0
+        && ((Config.options?.bar?.m3?.layouts?.leftLayout ?? []).includes("visualizer")
+            || (Config.options?.bar?.m3?.layouts?.middleLayout ?? []).includes("visualizer")
+            || (Config.options?.bar?.m3?.layouts?.rightLayout ?? []).includes("visualizer"))
     readonly property bool wantsBackgroundVisualizer: (Config.options?.bar?.visualizer?.enable ?? false)
         && (Config.options?.bar?.m3?.showBackground ?? true)
+        && root.spectrumOutputEnabled
         && root.visible
     readonly property bool audioPlaying: MprisController.isPlaying || YtMusic.isPlaying
     readonly property real spectrumFillRatio: Math.max(0.1,
@@ -232,10 +269,6 @@ Item {
         if (action === "workspace") return Translation.tr("Scroll to switch workspaces");
         return "";
     }
-
-    property var screen: root.QsWindow.window?.screen
-    property real useShortenedForm: (Appearance.sizes.barHellaShortenScreenWidthThreshold >= screen?.width) ? 2 : (Appearance.sizes.barShortenScreenWidthThreshold >= screen?.width) ? 1 : 0
-
 
     Rectangle {
         id: barBackground

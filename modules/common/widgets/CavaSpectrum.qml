@@ -173,14 +173,19 @@ Canvas {
         if (radius === 0 || source.length < 3)
             return source
         const out = new Array(source.length)
+        let start = 0
+        let end = Math.min(source.length - 1, radius)
+        let sum = 0
+        for (let i = start; i <= end; i++)
+            sum += source[i]
         for (let i = 0; i < source.length; i++) {
-            let sum = 0
-            let count = 0
-            for (let j = Math.max(0, i - radius); j <= Math.min(source.length - 1, i + radius); j++) {
-                sum += source[j]
-                count++
-            }
-            out[i] = count > 0 ? sum / count : 0
+            const nextStart = Math.max(0, i - radius)
+            const nextEnd = Math.min(source.length - 1, i + radius)
+            while (start < nextStart)
+                sum -= source[start++]
+            while (end < nextEnd)
+                sum += source[++end]
+            out[i] = sum / Math.max(1, end - start + 1)
         }
         return out
     }
@@ -387,6 +392,8 @@ Canvas {
         const levels = root._barLevels(source, count)
         const slot = span / count
         const width = Math.max(1, slot - Math.max(0, root.barSpacing))
+        const gradient = root._horizontalGradient(ctx, x0, x1, 1)
+        ctx.fillStyle = gradient
 
         for (let i = 0; i < count; i++) {
             const x = x0 + i * slot + (slot - width) / 2
@@ -401,10 +408,7 @@ Canvas {
             const rawValue = levels[i] || 0
             const value = rawValue * edgeFactor
             const center = (top + bottom) / 2
-            ctx.fillStyle = root._rgbaColor(
-                root._colorAt((centerX - x0) / span),
-                root._alphaAt(centerX) * Math.sqrt(edgeFactor)
-                    * (0.5 + rawValue * 0.5))
+            ctx.globalAlpha = 0.5 + rawValue * 0.5
 
             if (root.barsOrigin === "top") {
                 const available = Math.max(0, peaks[1] - top)
@@ -443,6 +447,7 @@ Canvas {
                 ctx.fill()
             }
         }
+        ctx.globalAlpha = 1
     }
 
     function _traceSmooth(ctx, coordinates): void {
@@ -463,7 +468,8 @@ Canvas {
 
     function _paintWave(ctx, source, x0, x1): void {
         const span = Math.max(1, x1 - x0)
-        const count = Math.max(2, Math.min(320, Math.round(span / 4)))
+        const count = Math.max(2, Math.min(source.length,
+            Math.round(span / Math.max(4, root.pixelsPerBar))))
         const levels = root._waveLevels(source, count)
         const primary = []
         const secondary = []
@@ -530,11 +536,13 @@ Canvas {
 
         ctx.beginPath()
         root._traceSmooth(ctx, primary)
-        ctx.strokeStyle = root._horizontalGradient(ctx, x0, x1, 0.9)
+        ctx.globalAlpha = 0.9
+        ctx.strokeStyle = gradient
         ctx.lineWidth = Math.max(1, root.lineWidth * 0.65)
         ctx.lineCap = "round"
         ctx.lineJoin = "round"
         ctx.stroke()
+        ctx.globalAlpha = 1
     }
 
     onPaint: {

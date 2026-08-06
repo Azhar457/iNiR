@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs
 import qs.services
 import qs.modules.barM3
@@ -29,9 +30,10 @@ RippleButton {
     colBackgroundToggledHover: isMaterial ? M3Palette.secondaryContainerHover : Appearance.colors.colSecondaryContainerHover
     colRippleToggled: isMaterial ? M3Palette.secondaryContainerActive : Appearance.colors.colSecondaryContainerActive
     toggled: GlobalStates.sidebarLeftOpen
+        && GlobalStates.sidebarLeftPresentationOutput === (root.QsWindow.window?.screen?.name ?? "")
 
     onPressed: {
-        GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
+        GlobalStates.toggleSidebarLeft(root.QsWindow.window?.screen?.name ?? "");
     }
 
     Connections {

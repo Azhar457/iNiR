@@ -21,10 +21,20 @@ Scope {
     readonly property string roleId: ShellLayoutController.sidebarRoleForSlot(root.edge)
     readonly property bool featureRole: root.roleId === "featureSidebar"
     readonly property bool systemRole: root.roleId === "systemSidebar"
-    readonly property bool roleOpen: root.featureRole
+    readonly property bool semanticRoleOpen: root.featureRole
         ? GlobalStates.sidebarLeftOpen : GlobalStates.sidebarRightOpen
-    readonly property bool otherRoleOpen: root.featureRole
+    readonly property string roleTargetOutput: root.featureRole
+        ? GlobalStates.sidebarLeftPresentationOutput
+        : GlobalStates.sidebarRightPresentationOutput
+    readonly property bool roleOpen: root.semanticRoleOpen
+        && root.roleTargetOutput === root._screenName
+    readonly property bool otherSemanticRoleOpen: root.featureRole
         ? GlobalStates.sidebarRightOpen : GlobalStates.sidebarLeftOpen
+    readonly property string otherRoleTargetOutput: root.featureRole
+        ? GlobalStates.sidebarRightPresentationOutput
+        : GlobalStates.sidebarLeftPresentationOutput
+    readonly property bool otherRoleOpen: root.otherSemanticRoleOpen
+        && root.otherRoleTargetOutput === root._screenName
     // Temporary editor mapping is deliberately independent from
     // `_sidebarShown`. That flag belongs only to semantic open/close animation
     // state; sharing it makes the next real opening skip its configured pose.
@@ -91,6 +101,11 @@ Scope {
         return Number.isFinite(override) && override >= 250
             ? Math.round(override) : 300000
     }
+
+    onRoleOpenChanged: Qt.callLater(() => {
+        root.syncPresentation()
+        root.reportRuntime()
+    })
 
     onPresentationOpenChanged: {
         if (root.presentationOpen) {
@@ -303,10 +318,17 @@ Scope {
     }
 
     function setRoleOpen(open: bool): void {
-        if (root.featureRole)
-            GlobalStates.sidebarLeftOpen = open
-        else if (root.systemRole)
-            GlobalStates.sidebarRightOpen = open
+        if (root.featureRole) {
+            if (open)
+                GlobalStates.openSidebarLeft(root._screenName)
+            else
+                GlobalStates.closeSidebarLeft()
+        } else if (root.systemRole) {
+            if (open)
+                GlobalStates.openSidebarRight(root._screenName)
+            else
+                GlobalStates.closeSidebarRight()
+        }
     }
 
     function clearFeatureExpansion(): void {

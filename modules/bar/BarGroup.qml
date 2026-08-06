@@ -117,8 +117,9 @@ Item {
         CavaSpectrum {
             anchors.fill: parent
             active: root.spectrumEnabled && islandSurface.visible
-            points: root.spectrumPoints
-            normalizationCeiling: root.spectrumCeiling
+            threadedRendering: true
+            points: active ? root.spectrumPoints : []
+            normalizationCeiling: active ? root.spectrumCeiling : 100
             visualizerType: root.spectrumType
             spectrumOpacity: root.spectrumOpacity
             fillRatio: root.spectrumFillRatio

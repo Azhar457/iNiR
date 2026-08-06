@@ -55,6 +55,8 @@ AbstractBackgroundWidget {
     property var pdfPaths: []
     property int queueTotal: 0
     property int queueDone: 0
+    property var outputPaths: []
+    signal conversionFinished(var paths)
 
     implicitWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 292) * root.scaleFactor)
     implicitHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 260) * root.scaleFactor)
@@ -83,6 +85,7 @@ AbstractBackgroundWidget {
         root.pdfPaths = []
         root.queueTotal = 0
         root.queueDone = 0
+        root.outputPaths = []
     }
 
     function fail(message): void {
@@ -94,12 +97,15 @@ AbstractBackgroundWidget {
 
     function processNext(): void {
         if (root.fileQueue.length === 0) {
+            const outputs = root.outputPaths.slice()
             root.conversionState = "done"
             root.statusMessage = root.queueTotal === 1
                 ? Translation.tr("Image converted")
                 : Translation.tr("%1 images converted").arg(root.queueTotal)
             root.queueTotal = 0
             root.queueDone = 0
+            root.outputPaths = []
+            root.conversionFinished(outputs)
             resetTimer.restart()
             return
         }
@@ -158,6 +164,7 @@ AbstractBackgroundWidget {
                     converter.inputPath.replace(/.*\//, "")))
                 return
             }
+            root.outputPaths = root.outputPaths.concat([converter.outputPath])
             root.queueDone++
             root.statusMessage = root.queueDone < root.queueTotal
                 ? Translation.tr("Converting %1 of %2").arg(root.queueDone).arg(root.queueTotal)
@@ -175,11 +182,13 @@ AbstractBackgroundWidget {
                 return
             }
             const count = root.pdfPaths.length
+            const output = pdfMaker.outputPath
             root.conversionState = "done"
             root.statusMessage = count === 1
                 ? Translation.tr("PDF created")
                 : Translation.tr("PDF created from %1 images").arg(count)
             root.resetQueue()
+            root.conversionFinished([output])
             resetTimer.restart()
         }
     }

@@ -15,6 +15,7 @@ Item {
     // Canvas bounds for clamping
     property real canvasWidth: 800
     property real canvasHeight: 600
+    required property string outputName
 
     // Output geometry for the glass backdrop. This panel floats straight on the
     // wallpaper, so under aurora and angel its translucent fill needs the blurred
@@ -447,8 +448,18 @@ Item {
         readonly property string _cfgPrefix: isMascotInstance
             ? ("background.widgets.mascotInstances." + widgetKey)
             : (isCustom ? ("background.widgets.custom." + widgetKey) : ("background.widgets." + widgetKey))
-        readonly property bool _enabled: Boolean(Config.getNestedValue(card._cfgPrefix + ".enable", card.defaultEnabled))
-        readonly property bool _locked: Boolean(Config.getNestedValue(card._cfgPrefix + ".locked", false))
+        readonly property string _layoutKey: isMascotInstance
+            ? ("mascotInstances." + widgetKey)
+            : (isCustom ? ("custom." + widgetKey) : widgetKey)
+        readonly property bool _enabled: DesktopWidgetLayout.enabled(
+            root.outputName, card._layoutKey,
+            Config.getNestedValue(card._cfgPrefix + ".enable", card.defaultEnabled))
+        readonly property bool _locked: Boolean(DesktopWidgetLayout.value(
+            root.outputName, card._layoutKey, "locked",
+            Config.getNestedValue(card._cfgPrefix + ".locked", false)))
+        readonly property real _scale: Number(DesktopWidgetLayout.value(
+            root.outputName, card._layoutKey, "widgetScale",
+            Config.getNestedValue(card._cfgPrefix + ".widgetScale", 100)))
         // Surface controls are shown only while the active renderer consumes
         // WidgetSurface. Cookie Clock, Weather Shape and Media Controls own
         // different backgrounds, so exposing these controls there is misleading.
@@ -552,7 +563,7 @@ Item {
                             StyledText {
                                 visible: !card._locked && card._enabled
                                 width: Math.max(0, parent.width - (card._locked ? 14 : 0))
-                                text: Math.round(Config.getNestedValue(card._cfgPrefix + ".widgetScale", 100)) + "%" + " · " + Math.round(Config.getNestedValue(card._cfgPrefix + ".widgetOpacity", 100)) + "% op"
+                                text: Math.round(card._scale) + "%" + " · " + Math.round(Config.getNestedValue(card._cfgPrefix + ".widgetOpacity", 100)) + "% op"
                                 color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.58)
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 font.family: Appearance.font.family.numbers
@@ -605,7 +616,8 @@ Item {
                         checked: card._enabled
                         onCheckedChanged: {
                             if (checked !== card._enabled)
-                                Config.setNestedValue(card._cfgPrefix + ".enable", checked)
+                                DesktopWidgetLayout.setEnabled(
+                                    root.outputName, card._layoutKey, checked)
                         }
                     }
                 }
@@ -648,7 +660,9 @@ Item {
                             activeColor: Appearance.colors.colError
                             onCheckedChanged: {
                                 if (checked !== card._locked)
-                                    Config.setNestedValue(card._cfgPrefix + ".locked", checked)
+                                    DesktopWidgetLayout.setValue(
+                                        root.outputName, card._layoutKey,
+                                        "locked", checked)
                             }
                         }
                     }
@@ -670,9 +684,11 @@ Item {
                             from: 50; to: 200; stepSize: 10
                             configuration: StyledSlider.Configuration.XS
                             stopIndicatorValues: []
-                            value: Config.getNestedValue(card._cfgPrefix + ".widgetScale", 100)
+                            value: card._scale
                             tooltipContent: Math.round(value) + "%"
-                            onMoved: Config.setNestedValue(card._cfgPrefix + ".widgetScale", Math.round(value))
+                            onMoved: DesktopWidgetLayout.setValue(
+                                root.outputName, card._layoutKey,
+                                "widgetScale", Math.round(value))
                         }
                     }
 

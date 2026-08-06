@@ -60,6 +60,7 @@ ContentPage {
             return
         Config.setNestedValues({
             "bar.visualizer.enable": false,
+            "bar.visualizer.multiMonitorMode": "primary",
             "bar.visualizer.type": "bars",
             "bar.visualizer.height": 0.6,
             "bar.visualizer.opacity": 0.35,
@@ -1311,6 +1312,18 @@ ContentPage {
                             ? Translation.tr("Draws balanced spectrum wings outside the pill while audio plays.")
                             : Translation.tr("Paints the audio spectrum into the bar surface. Only runs while something is playing.")
                     }
+                }
+
+                ConfigSelectionArray {
+                    enabled: root.spectrumEnabled
+                    opacity: enabled ? 1 : 0.5
+                    currentValue: Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary"
+                    onSelected: newValue => root.setSpectrumValue(
+                        "bar.visualizer.multiMonitorMode", newValue)
+                    options: [
+                        { displayName: Translation.tr("Primary only"), icon: "filter_1", value: "primary" },
+                        { displayName: Translation.tr("All monitors"), icon: "select_all", value: "all" },
+                    ]
                 }
 
                 ConfigSelectionArray {

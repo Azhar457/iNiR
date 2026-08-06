@@ -449,7 +449,7 @@ Singleton {
             execute: () => {
                 const enabledWidgets = Config.options?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
                 const notepadIndex = Math.max(0, enabledWidgets.indexOf("notepad"))
-                GlobalStates.sidebarRightOpen = true
+                GlobalStates.openSidebarRight("")
                 if (Persistent?.states?.sidebar?.bottomGroup) {
                     Persistent.states.sidebar.bottomGroup.collapsed = false
                     Persistent.states.sidebar.bottomGroup.tab = notepadIndex

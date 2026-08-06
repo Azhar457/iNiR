@@ -1227,7 +1227,7 @@ Item {
                         enabled: hover.live
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
+                            GlobalStates.toggleSidebarLeft(pill.screenName);
                             pill.pinned = false;
                         }
                         onContainsMouseChanged: if (containsMouse) pill.soulTarget = "sidebarLeft"
@@ -1256,7 +1256,7 @@ Item {
                         enabled: hover.live
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                            GlobalStates.toggleSidebarRight(pill.screenName);
                             pill.pinned = false;
                         }
                         onContainsMouseChanged: if (containsMouse) pill.soulTarget = "sidebarRight"

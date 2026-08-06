@@ -31,6 +31,7 @@ import qs.modules.background.widgets.userCard
 import qs.modules.background.widgets.newsTicker
 import qs.modules.background.widgets.mascot
 import qs.modules.background.widgets.japaneseTypography
+import qs.modules.background.desktopItems
 import "root:modules/common/functions/parallax.js" as ParallaxMath
 
 Scope {
@@ -87,10 +88,12 @@ Scope {
                 selected: GlobalStates.selectedDesktopWidget,
                 quickControls: GlobalStates.desktopWidgetQuickControls,
                 layerOrder: Config.getNestedValue("background.widgets.layerOrder", []) ?? [],
+                outputOverrides: Config.options?.background?.widgets?.outputOverrides ?? [],
                 outputs: Quickshell.screens.map(screen => ({
                     name: screen?.name ?? "",
                     width: screen?.width ?? 0,
                     height: screen?.height ?? 0,
+                    widgetsAllowed: DesktopWidgetLayout.outputAllowed(screen?.name ?? ""),
                     insets: ShellLayoutController.desktopInsets(screen?.name ?? ""),
                     workArea: ShellLayoutController.desktopWorkArea(
                         screen?.name ?? "", screen?.width ?? 0,
@@ -100,6 +103,10 @@ Scope {
                         screen?.height ?? 0)
                 }))
             })
+        }
+
+        function desktopItemsState(): string {
+            return DesktopItems.diagnostics()
         }
 
         function focusWidget(widgetName: string, openControls: bool): string {
@@ -116,7 +123,7 @@ Scope {
                 worldClock: false, userCard: false
             })
             let known = builtinDefaults[name] !== undefined
-            let enabled = known
+            let baseEnabled = known
                 ? Boolean(Config.getNestedValue(
                     "background.widgets." + name + ".enable",
                     builtinDefaults[name]))
@@ -127,31 +134,25 @@ Scope {
                 const instance = Config.getNestedValue(
                     "background.widgets.mascotInstances." + instanceId, null)
                 known = instance !== null && typeof instance === "object"
-                enabled = known && Boolean(instance.enable)
+                baseEnabled = known && Boolean(instance.enable)
             } else if (name.startsWith("custom.")) {
                 const customId = name.slice("custom.".length)
                 known = CustomWidgets.ready
                     && CustomWidgets.widgets.some(widget => widget.id === customId)
-                enabled = known && Boolean(Config.getNestedValue(
+                baseEnabled = known && Boolean(Config.getNestedValue(
                     "background.widgets.custom." + customId + ".enable", false))
             }
 
             if (!known)
                 return "unknown widget: " + name
-            if (!enabled)
-                return "widget disabled: " + name
             if (name === "battery" && !Battery.available)
                 return "widget unavailable: " + name
 
-            const focusedOutput = NiriService.currentOutput ?? ""
-            const screen = Quickshell.screens.find(item => (item?.name ?? "") === focusedOutput)
-                ?? Quickshell.screens[0]
+            const screen = GlobalStates.focusedScreen ?? Quickshell.screens[0]
             if (!screen)
                 return "no output available"
-            const screenList = Config.getNestedValue(
-                "background.widgets.screenList", []) ?? []
-            if (screenList.length > 0 && !screenList.includes(screen.name ?? ""))
-                return "widgets hidden on output: " + (screen.name ?? "")
+            if (!DesktopWidgetLayout.enabled(screen.name ?? "", name, baseEnabled))
+                return "widget disabled on output: " + (screen.name ?? "")
 
             const key = (screen.name ?? "") + "::" + name
             GlobalStates.setWidgetEditMode(true)
@@ -167,9 +168,7 @@ Scope {
             const name = String(widgetName ?? "").trim()
             if (name.length === 0)
                 return "widget name is required"
-            const focusedOutput = NiriService.currentOutput ?? ""
-            const screen = Quickshell.screens.find(item =>
-                (item?.name ?? "") === focusedOutput) ?? Quickshell.screens[0]
+            const screen = GlobalStates.focusedScreen ?? Quickshell.screens[0]
             if (!screen)
                 return "no output available"
             const key = (screen.name ?? "") + "::" + name
@@ -363,11 +362,125 @@ Scope {
         readonly property var workSafetyEnableOptions: workSafetyOptions.enable ?? {}
         readonly property var workSafetyTriggerOptions: workSafetyOptions.triggerCondition ?? {}
         readonly property var lockBlurOptions: Config.options?.lock?.blur ?? {}
+        readonly property var desktopFreeWorkArea: ShellLayoutController.desktopWorkArea(
+            screen?.name ?? "", screen?.width ?? 0, screen?.height ?? 0)
+        readonly property var desktopItemsWorkArea: ShellLayoutController.desktopZoneWorkArea(
+            screen?.name ?? "", screen?.width ?? 0, screen?.height ?? 0)
         function _widgetConfigValue(widgetKey: string, key: string, fallback: var): var {
-            return Config.getNestedValue("background.widgets." + widgetKey + "." + key, fallback);
+            return DesktopWidgetLayout.value(bgRoot.screenName, widgetKey, key, fallback);
         }
         function _widgetEnabled(widgetKey: string, fallback: bool): bool {
-            return Boolean(bgRoot._widgetConfigValue(widgetKey, "enable", fallback));
+            return DesktopWidgetLayout.enabled(bgRoot.screenName, widgetKey, fallback);
+        }
+
+        property int _imageRouteRevision: 0
+        property var _pendingImageConversion: null
+        property var _conversionPlacement: null
+        property int _imageConversionRouteAttempts: 0
+        readonly property int _imageConversionRouteMaxAttempts: 40
+
+        function _loadedWidget(widgetName: string): var {
+            if (!widgetCanvas || typeof widgetCanvas._loadedDesktopWidgets !== "function")
+                return null
+            return widgetCanvas._loadedDesktopWidgets().find(item =>
+                String(item?.configEntryName ?? "") === widgetName) ?? null
+        }
+
+        function _routeDecorativeImage(paths, x, y): void {
+            const path = String(paths?.[0] ?? "").trim()
+            if (path.length === 0)
+                return
+            const work = bgRoot.desktopFreeWorkArea
+            const size = Math.max(80, Number(Config.getNestedValue(
+                "background.widgets.customImage.size", 220)))
+            const maxX = Math.max(Number(work.left ?? 0), Number(work.right ?? bgRoot.screen.width) - size)
+            const maxY = Math.max(Number(work.top ?? 0), Number(work.bottom ?? bgRoot.screen.height) - size)
+            Config.setNestedValues({
+                "background.widgets.customImage.sourceMode": "file",
+                "background.widgets.customImage.path": path
+            })
+            DesktopWidgetLayout.setValues(bgRoot.screenName, "customImage", {
+                enable: true,
+                placementStrategy: "free",
+                x: Math.max(Number(work.left ?? 0), Math.min(maxX, x - size / 2)),
+                y: Math.max(Number(work.top ?? 0), Math.min(maxY, y - size / 2))
+            })
+            imageChoice.showNotice(paths.length > 1
+                ? Translation.tr("Decorative image uses the first dropped image.")
+                : Translation.tr("Decorative image added."), x, y)
+        }
+
+        function _routeImageConversion(paths, x, y): void {
+            const valid = Array.from(paths ?? []).filter(path => Images.isValidImageByName(String(path)))
+            if (valid.length === 0)
+                return
+            bgRoot._conversionPlacement = { x: x, y: y }
+            bgRoot._pendingImageConversion = valid
+            bgRoot._imageConversionRouteAttempts = 0
+            DesktopWidgetLayout.setEnabled(bgRoot.screenName, "imageConverter", true)
+            imageConversionRouteTimer.restart()
+        }
+
+        function _handleImageChoice(action): void {
+            const paths = imageChoice.imagePaths.slice()
+            const resultPaths = imageChoice.resultPaths.slice()
+            const x = imageChoice.requestedX
+            const y = imageChoice.requestedY
+            imageChoice.open = false
+            if (action === "access")
+                desktopDropCoordinator.createAccesses(paths, x, y)
+            else if (action === "decorative")
+                bgRoot._routeDecorativeImage(paths, x, y)
+            else if (action === "convert")
+                bgRoot._routeImageConversion(paths, x, y)
+            else if (action === "place-results")
+                desktopDropCoordinator.createAccesses(resultPaths, x, y)
+        }
+
+        Timer {
+            id: imageConversionRouteTimer
+            interval: 50
+            repeat: true
+            onTriggered: {
+                bgRoot._imageConversionRouteAttempts++
+                const converter = bgRoot._loadedWidget("imageConverter")
+                if (!converter || typeof converter.enqueueFiles !== "function") {
+                    if (bgRoot._imageConversionRouteAttempts < bgRoot._imageConversionRouteMaxAttempts)
+                        return
+                    const placement = bgRoot._conversionPlacement
+                    bgRoot._pendingImageConversion = null
+                    bgRoot._conversionPlacement = null
+                    bgRoot._imageConversionRouteAttempts = 0
+                    imageConversionRouteTimer.stop()
+                    if (placement)
+                        imageChoice.showNotice(Translation.tr("Could not open the image converter."), placement.x, placement.y)
+                    return
+                }
+                const paths = bgRoot._pendingImageConversion
+                bgRoot._pendingImageConversion = null
+                bgRoot._imageConversionRouteAttempts = 0
+                imageConversionRouteTimer.stop()
+                converter.enqueueFiles(paths)
+            }
+        }
+
+        Connections {
+            target: Config
+            function onRevisionChanged() { bgRoot._imageRouteRevision++ }
+        }
+
+        Connections {
+            target: {
+                void bgRoot._imageRouteRevision
+                return bgRoot._loadedWidget("imageConverter")
+            }
+            function onConversionFinished(paths) {
+                if (!bgRoot._conversionPlacement || !paths || paths.length === 0)
+                    return
+                const placement = bgRoot._conversionPlacement
+                bgRoot._conversionPlacement = null
+                imageChoice.showResults(paths, placement.x, placement.y)
+            }
         }
 
         // True if any widget on this background needs keyboard input (sticky notes
@@ -375,6 +488,9 @@ Scope {
         // surface to focusable=true so TextEdits actually receive key events.
         // Without this the Bottom layer is keyboard-inert and clicks reach the
         // TextEdit but typing does nothing.
+        // Desktop items remain pointer-driven until their focus contract is
+        // owned by the background surface; do not make a stale global selection
+        // turn the Bottom layer keyboard-focusable during reload.
         readonly property bool _needsKeyboardFocus: bgRoot._widgetEnabled("notes", false)
 
         // Zone occupancy: map zone name → array of widget names
@@ -1422,6 +1538,7 @@ Scope {
                 onClicked: function(mouse) {
                     if (mouse.button === Qt.LeftButton) {
                         desktopFocusSink.forceActiveFocus()
+                        GlobalStates.clearDesktopItemSelection()
                         if (desktopContextMenu.active) desktopContextMenu.close()
                         return
                     }
@@ -1469,12 +1586,8 @@ Scope {
             WidgetCanvas {
                 id: widgetCanvas
                 z: 20
-                visible: {
-                    if (GlobalStates.shellLayoutEditMode) return false;
-                    const list = Config.options?.background?.widgets?.screenList ?? [];
-                    if (!list || list.length === 0) return true;
-                    return list.includes(modelData?.name ?? "");
-                }
+                visible: !GlobalStates.shellLayoutEditMode
+                    && DesktopWidgetLayout.outputAllowed(modelData?.name ?? "")
                 enabled: visible && !GlobalStates.screenLocked  // Disable all widget input during lock
                 opacity: {
                     const dynOp = Math.max(0, Math.min(100, Number(Config.options?.background?.widgets?.dynamicOpacity) || 0));
@@ -1516,6 +1629,54 @@ Scope {
                 readonly property bool _parallaxActive: useParallax
                     && !GlobalStates.screenLocked && !bgRoot.wallpaperSafetyTriggered && !bgRoot.backdropActive
 
+                // Managed desktop items are a separate, lightweight canvas model.
+                // The coordinator is deliberately beneath widget receivers so
+                // CustomImage/ImageConverter keep ownership of their drops.
+                DesktopDropCoordinator {
+                    id: desktopDropCoordinator
+                    z: -100
+                    outputName: bgRoot.screen?.name ?? ""
+                    canvasWidth: widgetCanvas.width
+                    canvasHeight: widgetCanvas.height
+                    workArea: bgRoot.desktopItemsWorkArea
+                    gridSize: Number(Config.getNestedValue("background.widgets.editGrid.size", 16))
+                    gridSnap: Boolean(Config.getNestedValue("background.widgets.editGrid.snap", true))
+                    interactive: !GlobalStates.screenLocked && !GlobalStates.shellLayoutEditMode
+                    onImageChoiceRequested: (paths, x, y) => imageChoice.openAt(paths, x, y)
+                }
+
+                Repeater {
+                    id: desktopItemsRepeater
+                    model: widgetCanvas._desktopItemsForOutput(bgRoot.screen?.name ?? "")
+                    delegate: DesktopItemDelegate {
+                        required property var modelData
+                        itemId: String(modelData.id ?? "")
+                        itemData: modelData
+                        outputName: bgRoot.screen?.name ?? ""
+                        canvasWidth: widgetCanvas.width
+                        canvasHeight: widgetCanvas.height
+                        workArea: bgRoot.desktopItemsWorkArea
+                        gridSize: Number(Config.getNestedValue("background.widgets.editGrid.size", 16))
+                        gridSnap: Boolean(Config.getNestedValue("background.widgets.editGrid.snap", true))
+                        dragEnabled: !GlobalStates.screenLocked && !GlobalStates.shellLayoutEditMode
+                    }
+                }
+
+                DesktopImageChoice {
+                    id: imageChoice
+                    anchors.fill: parent
+                    onChosen: action => bgRoot._handleImageChoice(action)
+                }
+
+                function _desktopItemsForOutput(outputName: string): var {
+                    const output = String(outputName ?? "")
+                    const screens = Quickshell.screens.map(screen => String(screen?.name ?? ""))
+                    const focused = String(GlobalStates.focusedScreen?.name ?? screens[0] ?? "")
+                    return DesktopItems.listItems().filter(item =>
+                        String(item.output ?? "") === output
+                        || (!screens.includes(String(item.output ?? "")) && output === focused))
+                }
+
                 // The canvas owns layer discovery. Individual widgets should not
                 // walk the visual tree themselves: loaders, repeater delegates and
                 // custom widgets all live here, and this is the only place with a
@@ -1530,6 +1691,184 @@ Scope {
                         widgets.push(item)
                     }
                     return widgets
+                }
+
+                function _rectOverlaps(a, b, gap): bool {
+                    return a.x < b.x + b.width + gap
+                        && a.x + a.width + gap > b.x
+                        && a.y < b.y + b.height + gap
+                        && a.y + a.height + gap > b.y
+                }
+
+                function _positionIsFree(x, y, width, height, placed, gap): bool {
+                    const candidate = { x: x, y: y, width: width, height: height }
+                    for (const rect of placed) {
+                        if (widgetCanvas._rectOverlaps(candidate, rect, gap))
+                            return false
+                    }
+                    return true
+                }
+
+                function _nearestFreePosition(item, desiredX, desiredY, placed, work): var {
+                    const left = Number(work.left ?? 0)
+                    const top = Number(work.top ?? 0)
+                    const right = Number(work.right ?? widgetCanvas.width)
+                    const bottom = Number(work.bottom ?? widgetCanvas.height)
+                    const maxX = Math.max(left, right - item.width)
+                    const maxY = Math.max(top, bottom - item.height)
+                    const startX = Math.max(left, Math.min(maxX, desiredX))
+                    const startY = Math.max(top, Math.min(maxY, desiredY))
+                    const gap = 14
+                    if (widgetCanvas._positionIsFree(
+                            startX, startY, item.width, item.height, placed, gap))
+                        return { x: Math.round(startX), y: Math.round(startY) }
+
+                    const step = 24
+                    let best = null
+                    let bestDistance = Infinity
+                    function consider(x, y): void {
+                        const px = Math.max(left, Math.min(maxX, x))
+                        const py = Math.max(top, Math.min(maxY, y))
+                        if (!widgetCanvas._positionIsFree(
+                                px, py, item.width, item.height, placed, gap))
+                            return
+                        const dx = px - startX
+                        const dy = py - startY
+                        const distance = dx * dx + dy * dy
+                        if (distance < bestDistance) {
+                            bestDistance = distance
+                            best = { x: Math.round(px), y: Math.round(py) }
+                        }
+                    }
+                    for (let y = top; y <= maxY; y += step) {
+                        for (let x = left; x <= maxX; x += step)
+                            consider(x, y)
+                    }
+                    consider(maxX, top)
+                    consider(left, maxY)
+                    consider(maxX, maxY)
+                    return best ?? { x: Math.round(startX), y: Math.round(startY) }
+                }
+
+                function initializeOutputWidgetLayout(): void {
+                    if (!Config.ready || !widgetCanvas.visible)
+                        return
+                    const outputName = String(bgRoot.screen?.name ?? "")
+                    const outputWidth = Math.round(widgetCanvas.width)
+                    const outputHeight = Math.round(widgetCanvas.height)
+                    if (!outputName || outputWidth <= 0 || outputHeight <= 0)
+                        return
+
+                    const widgets = widgetCanvas._loadedDesktopWidgets()
+                        .filter(item => item.width > 0 && item.height > 0)
+                    if (widgets.length === 0) {
+                        if (widgetCanvas._outputLayoutAttempts < 8) {
+                            widgetCanvas._outputLayoutAttempts++
+                            outputLayoutTimer.restart()
+                        }
+                        return
+                    }
+
+                    const geometryChanged = !DesktopWidgetLayout.outputLayoutMatches(
+                        outputName, outputWidth, outputHeight)
+                    let missingGeometry = false
+                    for (const item of widgets) {
+                        const strategy = String(item.placementStrategy ?? "free")
+                        if (strategy === "free"
+                                && (!DesktopWidgetLayout.hasValue(outputName,
+                                        item.configEntryName, "x")
+                                    || !DesktopWidgetLayout.hasValue(outputName,
+                                        item.configEntryName, "y"))) {
+                            missingGeometry = true
+                            break
+                        }
+                    }
+                    if (!geometryChanged && !missingGeometry)
+                        return
+
+                    const work = bgRoot.desktopItemsWorkArea
+                    const ordered = widgets.slice().sort((a, b) => {
+                        const aLocal = DesktopWidgetLayout.hasValue(
+                            outputName, a.configEntryName, "x") ? 1 : 0
+                        const bLocal = DesktopWidgetLayout.hasValue(
+                            outputName, b.configEntryName, "x") ? 1 : 0
+                        if (!geometryChanged && aLocal !== bLocal)
+                            return bLocal - aLocal
+                        if (Boolean(a.locked) !== Boolean(b.locked))
+                            return a.locked ? -1 : 1
+                        return b.width * b.height - a.width * a.height
+                    })
+                    const placed = []
+                    const updates = ({})
+                    const left = Number(work.left ?? 0)
+                    const top = Number(work.top ?? 0)
+                    const right = Number(work.right ?? outputWidth)
+                    const bottom = Number(work.bottom ?? outputHeight)
+
+                    for (const item of ordered) {
+                        const strategy = String(item.placementStrategy ?? "free")
+                        const maxX = Math.max(left, right - item.width)
+                        const maxY = Math.max(top, bottom - item.height)
+                        const desiredX = Math.max(left, Math.min(maxX, Number(item.x) || 0))
+                        const desiredY = Math.max(top, Math.min(maxY, Number(item.y) || 0))
+                        const localX = DesktopWidgetLayout.hasValue(
+                            outputName, item.configEntryName, "x")
+                        const localY = DesktopWidgetLayout.hasValue(
+                            outputName, item.configEntryName, "y")
+                        const needsLocal = strategy === "free"
+                            && (geometryChanged || !localX || !localY)
+                        let position = { x: Math.round(desiredX), y: Math.round(desiredY) }
+                        const collides = !widgetCanvas._positionIsFree(
+                            position.x, position.y, item.width, item.height, placed, 14)
+                        if (collides && !item.locked)
+                            position = widgetCanvas._nearestFreePosition(
+                                item, desiredX, desiredY, placed, work)
+
+                        const moved = Math.round(position.x) !== Math.round(item.x)
+                            || Math.round(position.y) !== Math.round(item.y)
+                        if (needsLocal || moved || (collides && !item.locked)) {
+                            updates[item.configEntryName] = {
+                                x: position.x,
+                                y: position.y,
+                                placementStrategy: "free"
+                            }
+                        }
+                        placed.push({
+                            x: position.x,
+                            y: position.y,
+                            width: item.width,
+                            height: item.height
+                        })
+                    }
+
+                    widgetCanvas._outputLayoutAttempts = 0
+                    DesktopWidgetLayout.initializeOutputLayout(
+                        outputName, outputWidth, outputHeight, updates)
+                }
+
+                property int _outputLayoutAttempts: 0
+
+                Timer {
+                    id: outputLayoutTimer
+                    interval: 1400
+                    repeat: false
+                    onTriggered: widgetCanvas.initializeOutputWidgetLayout()
+                }
+
+                Component.onCompleted: outputLayoutTimer.restart()
+
+                Connections {
+                    target: Config
+                    function onRevisionChanged(): void {
+                        if (!outputLayoutTimer.running)
+                            outputLayoutTimer.restart()
+                    }
+                }
+
+                Connections {
+                    target: bgRoot.screen
+                    function onWidthChanged(): void { outputLayoutTimer.restart() }
+                    function onHeightChanged(): void { outputLayoutTimer.restart() }
                 }
 
                 function overlappingDesktopWidgets(instanceKey: string): var {
@@ -1995,7 +2334,9 @@ Scope {
                                     colBackgroundToggled: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                                     colBackgroundToggledHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
                                     colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                                    downAction: () => Config.setNestedValue("background.widgets." + quickWidgetButton.modelData.key + ".enable", !quickWidgetButton.widgetEnabled)
+                                    downAction: () => DesktopWidgetLayout.setEnabled(
+                                        bgRoot.screenName, quickWidgetButton.modelData.key,
+                                        !quickWidgetButton.widgetEnabled)
                                     contentItem: MaterialSymbol {
                                         anchors.centerIn: parent
                                         text: quickWidgetButton.modelData.icon
@@ -2012,7 +2353,9 @@ Scope {
                                 RippleButton {
                                     id: customWidgetButton
                                     required property var modelData
-                                    readonly property bool widgetEnabled: Config.getNestedValue("background.widgets.custom." + modelData.id + ".enable", false)
+                                    readonly property bool widgetEnabled: DesktopWidgetLayout.enabled(
+                                        bgRoot.screenName, "custom." + modelData.id,
+                                        Config.getNestedValue("background.widgets.custom." + modelData.id + ".enable", false))
                                     width: 36; height: 36
                                     buttonRadius: Appearance.rounding.full
                                     toggled: widgetEnabled
@@ -2021,7 +2364,9 @@ Scope {
                                     colBackgroundToggled: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                                     colBackgroundToggledHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
                                     colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                                    downAction: () => Config.setNestedValue("background.widgets.custom." + customWidgetButton.modelData.id + ".enable", !customWidgetButton.widgetEnabled)
+                                    downAction: () => DesktopWidgetLayout.setEnabled(
+                                        bgRoot.screenName, "custom." + customWidgetButton.modelData.id,
+                                        !customWidgetButton.widgetEnabled)
                                     contentItem: MaterialSymbol {
                                         anchors.centerIn: parent
                                         text: customWidgetButton.modelData.icon || "widgets"
@@ -2124,6 +2469,7 @@ Scope {
                             Math.round(editGridOverlay.safeBottom
                                 - editControlsBar.height - height - 36))
                         sourceComponent: WidgetManagerPanel {
+                            outputName: bgRoot.screen?.name ?? ""
                             canvasWidth: widgetManagerPanel.parent?.width ?? 800
                             canvasHeight: widgetManagerPanel.parent?.height ?? 600
                             screenWidth: bgRoot.screen.width
@@ -2419,7 +2765,9 @@ Scope {
                         active: false
 
                         function _configEnabled(): bool {
-                            return Boolean(Config.getNestedValue("background.widgets.mascotInstances." + modelData + ".enable", false));
+                            return DesktopWidgetLayout.enabled(bgRoot.screenName,
+                                "mascotInstances." + modelData,
+                                Config.getNestedValue("background.widgets.mascotInstances." + modelData + ".enable", false));
                         }
                         function _load(): void {
                             active = true;
@@ -2483,7 +2831,9 @@ Scope {
                         active: false
 
                         function _configEnabled(): bool {
-                            return Boolean(Config.getNestedValue("background.widgets.custom." + modelData.id + ".enable", false));
+                            return DesktopWidgetLayout.enabled(bgRoot.screenName,
+                                "custom." + modelData.id,
+                                Config.getNestedValue("background.widgets.custom." + modelData.id + ".enable", false));
                         }
 
                         // setSource passes required properties at construction time

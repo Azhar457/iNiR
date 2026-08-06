@@ -91,7 +91,7 @@ BarWidgetSwitcher {
                 width: 25
                 height: 25
                 radius: Appearance.rounding.full
-                color: Appearance.colors.colPrimary
+                color: M3Palette.primary
                 Layout.alignment: Qt.AlignHCenter
 
                 MaterialSymbol {
@@ -99,7 +99,7 @@ BarWidgetSwitcher {
                     fill: 0
                     text: "calendar_clock"
                     iconSize: Appearance.font.pixelSize.normal
-                    color: Appearance.colors.colOnPrimary
+                    color: M3Palette.primaryForeground
                 }
             }
         }
@@ -155,13 +155,13 @@ BarWidgetSwitcher {
                 implicitWidth: timeText.implicitWidth + 16
                 implicitHeight: 24
                 radius: Appearance.rounding.full
-                color: Appearance.colors.colPrimary
+                color: M3Palette.primary
 
                 StyledText {
                     id: timeText
                     anchors.centerIn: parent
                     font.pixelSize: Appearance.font.pixelSize.smallie
-                    color: Appearance.colors.colOnPrimary
+                    color: M3Palette.primaryForeground
                     font.weight: Font.Bold
                     text: pill.ampm !== "" ? pill.hours.padStart(2, "0") + ":" + pill.minutes.padStart(2, "0") : DateTime.time
                     font.features: { "tnum": 1 }

@@ -22,6 +22,7 @@ Loader {
     property bool closeOnHoverLostAfterEntered: false
     property int closeOnHoverLostDelay: 500  // ms before closing when hover lost (waffle uses 500)
     property bool anchorHovered: false
+    property bool closeOnOutsideClick: false
     signal focusCleared()
 
     property real visualMargin: 8
@@ -54,8 +55,33 @@ Loader {
     sourceComponent: PopupWindow {
         id: popupWindow
         visible: true
+        grabFocus: CompositorService.isNiri
         property bool closing: false
         property bool popupWasHovered: false
+
+        // Keep the Niri click surface below the popup content, matching the
+        // SysTrayMenu stacking order so outside clicks close without blocking buttons.
+        PanelWindow {
+            id: clickOutsideBackdrop
+            visible: CompositorService.isNiri && popupWindow.visible
+                && (root.closeOnFocusLost || root.closeOnOutsideClick)
+            color: "transparent"
+            exclusiveZone: 0
+            WlrLayershell.layer: WlrLayer.Top
+            WlrLayershell.namespace: "quickshell:contextMenuBackdrop"
+
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.close()
+            }
+        }
 
         Component.onCompleted: {
             realContent.shown = true;
@@ -261,6 +287,7 @@ Loader {
                                 required property var modelData
                                 enabled: modelData.enabled !== false
                                 opacity: enabled ? 1 : 0.45
+                                buttonHovered: enabled && menuHover.hovered
 
                                 implicitWidth: Math.max(140, menuRow.implicitWidth + 20)
                                 implicitHeight: 32
@@ -281,8 +308,16 @@ Loader {
 
                                 onClicked: {
                                     if (!enabled) return;
-                                    if (modelData.action) modelData.action();
+                                    // Some actions remove the delegate that owns this menu.
+                                    // Close first so the follow-up does not dereference a
+                                    // context-menu loader destroyed by its own action.
+                                    const action = modelData.action;
                                     root.close();
+                                    if (action) action();
+                                }
+
+                                HoverHandler {
+                                    id: menuHover
                                 }
 
                                 contentItem: RowLayout {
@@ -340,27 +375,5 @@ Loader {
         }
         readonly property bool popupContainsMouse: popupHoverHandler.hovered
 
-        PanelWindow {
-            id: clickOutsideBackdrop
-            visible: popupWindow.visible && CompositorService.isNiri && root.closeOnFocusLost
-            color: "transparent"
-            exclusiveZone: 0
-            WlrLayershell.layer: WlrLayer.Top
-            WlrLayershell.namespace: "quickshell:contextMenuBackdrop"
-
-            anchors {
-                top: true
-                bottom: true
-                left: true
-                right: true
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    root.close();
-                }
-            }
-        }
     }
 }

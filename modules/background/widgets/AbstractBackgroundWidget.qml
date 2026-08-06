@@ -22,6 +22,25 @@ AbstractWidget {
     required property real wallpaperScale
     property string outputName: ""
     readonly property string _configPath: "background.widgets." + root.configEntryName
+
+    function _setOutputValues(values): void {
+        if (!values || typeof values !== "object")
+            return
+        if (root.outputName.length > 0) {
+            DesktopWidgetLayout.setValues(root.outputName, root.configEntryName, values)
+            return
+        }
+        const updates = ({})
+        for (const key of Object.keys(values))
+            updates[root._configPath + "." + key] = values[key]
+        Config.setNestedValues(updates)
+    }
+
+    function _setOutputValue(key: string, value): void {
+        const values = ({})
+        values[key] = value
+        root._setOutputValues(values)
+    }
     property bool visibleWhenLocked: false
     property int widgetIndex: 0 // stable base stacking order
     readonly property string editInstanceKey: root.outputName + "::" + root.configEntryName
@@ -187,12 +206,11 @@ AbstractWidget {
 
     function _toggleZonePlacement(): void {
         if (root._isZonePlacement) {
-            const prefix = root._configPath;
-            let updates = {};
-            updates[prefix + ".placementStrategy"] = "free";
-            updates[prefix + ".x"] = root._snapToPixel(root.x);
-            updates[prefix + ".y"] = root._snapToPixel(root.y);
-            Config.setNestedValues(updates);
+            root._setOutputValues({
+                placementStrategy: "free",
+                x: root._snapToPixel(root.x),
+                y: root._snapToPixel(root.y)
+            })
             return;
         }
         root.snapToZone(root._nearestZone(root.x, root.y));
@@ -202,16 +220,15 @@ AbstractWidget {
         const pos = root._getZonePosition(zone);
         const finalX = root._snapToPixel(pos.x);
         const finalY = root._snapToPixel(pos.y);
-        const prefix = root._configPath;
-        let updates = {};
+        const updates = ({})
         if (root.placementStrategy !== zone)
-            updates[prefix + ".placementStrategy"] = zone;
+            updates.placementStrategy = zone
         if (Number(root._readConfigKey("x")) !== finalX)
-            updates[prefix + ".x"] = finalX;
+            updates.x = finalX
         if (Number(root._readConfigKey("y")) !== finalY)
-            updates[prefix + ".y"] = finalY;
+            updates.y = finalY
         if (Object.keys(updates).length > 0)
-            Config.setNestedValues(updates);
+            root._setOutputValues(updates)
     }
 
     // Detect which zone a position is closest to (for drag-to-snap)
@@ -391,10 +408,7 @@ AbstractWidget {
             const ny = root._clampY(root.y + root._chaosDY)
             root._chaosDX = 0
             root._chaosDY = 0
-            const updates = {}
-            updates[root._configPath + ".x"] = Math.round(nx)
-            updates[root._configPath + ".y"] = Math.round(ny)
-            Config.setNestedValues(updates)
+            root._setOutputValues({ x: Math.round(nx), y: Math.round(ny) })
             root.syncFreePositionFromConfig()
             _chaosStraighten.restart()
         } else {
@@ -826,7 +840,7 @@ AbstractWidget {
                 colBackgroundToggled: ColorUtils.applyAlpha(Appearance.colors.colError, 0.14)
                 colBackgroundToggledHover: ColorUtils.applyAlpha(Appearance.colors.colError, 0.22)
                 colRipple: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                downAction: () => Config.setNestedValue(root._configPath + ".locked", !root.locked)
+                downAction: () => root._setOutputValue("locked", !root.locked)
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: root.locked ? "lock" : "lock_open"
@@ -1277,16 +1291,16 @@ AbstractWidget {
             }
 
             onReleased: {
-                const updates = {}
+                const updates = ({})
                 const preview = root._resizePreviewValues
                 for (const key in preview)
-                    updates[root._configPath + "." + key] = preview[key]
+                    updates[key] = preview[key]
                 if (rh.resizeLeft)
-                    updates[root._configPath + ".x"] = Math.round(root.x)
+                    updates.x = Math.round(root.x)
                 if (rh.resizeTop)
-                    updates[root._configPath + ".y"] = Math.round(root.y)
+                    updates.y = Math.round(root.y)
                 if (Object.keys(updates).length > 0)
-                    Config.setNestedValues(updates)
+                    root._setOutputValues(updates)
                 root._resizePreviewValues = ({})
                 root._isResizing = false
                 if (root._isZonePlacement) {
@@ -1380,13 +1394,10 @@ AbstractWidget {
         const finalY = root._clampY(newY)
         root.x = finalX;
         root.y = finalY;
-        const prefix = root._configPath;
-        let updates = {};
-        updates[prefix + ".x"] = finalX;
-        updates[prefix + ".y"] = finalY;
+        const updates = { x: finalX, y: finalY }
         if (root.placementStrategy !== "free")
-            updates[prefix + ".placementStrategy"] = "free";
-        Config.setNestedValues(updates);
+            updates.placementStrategy = "free"
+        root._setOutputValues(updates)
         if (root.needsColText) _placementDebounce.restart();
     }
 
@@ -1430,7 +1441,8 @@ AbstractWidget {
         if (root._isResizing
                 && Object.prototype.hasOwnProperty.call(root._resizePreviewValues, key))
             return root._resizePreviewValues[key]
-        return Config.getNestedValue(root._configPath + "." + key, undefined)
+        return DesktopWidgetLayout.value(root.outputName, root.configEntryName,
+            key, Config.getNestedValue(root._configPath + "." + key, undefined))
     }
 
     // Override in subclasses with widget-specific default values
@@ -1442,7 +1454,7 @@ AbstractWidget {
         const prefix = root._configPath;
         let updates = {};
         for (const key in root.defaultConfig) {
-            if (root._readConfigKey(key) === undefined)
+            if (Config.getNestedValue(prefix + "." + key, undefined) === undefined)
                 updates[prefix + "." + key] = root.defaultConfig[key];
         }
         if (Object.keys(updates).length > 0)
@@ -1466,6 +1478,13 @@ AbstractWidget {
             updates[prefix + "." + key] = defaults[key];
         }
         Config.setNestedValues(updates);
+        const layoutKeys = ["locked", "placementStrategy", "x", "y", "widgetScale"]
+        for (const axis of Object.keys(root.resizableAxes ?? {})) {
+            const key = String(root.resizableAxes[axis] ?? "")
+            if (key.length > 0 && !layoutKeys.includes(key))
+                layoutKeys.push(key)
+        }
+        DesktopWidgetLayout.clearValues(root.outputName, root.configEntryName, layoutKeys)
         syncFreePositionFromConfig();
         refreshPlacementIfNeeded();
     }

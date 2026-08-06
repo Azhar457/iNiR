@@ -27,30 +27,44 @@ QtObject {
         : auroraStyle ? Appearance.aurora.colElevatedSurface
         : Appearance.colors.colSurfaceContainerHigh
     readonly property color surfaceContainerHighest: surfaceContainerHigh
-    readonly property color surfaceForeground: angelStyle ? Appearance.angel.colText
+    readonly property color _surfaceForegroundCandidate: angelStyle ? Appearance.angel.colText
         : inirStyle ? Appearance.inir.colText
         : Appearance.colors.colOnSurface
-    readonly property color surfaceVariantForeground: angelStyle ? Appearance.angel.colTextSecondary
+    readonly property color surfaceForeground: ColorUtils.ensureReadable(
+        _surfaceForegroundCandidate, surface, 4.5)
+    readonly property color _surfaceVariantForegroundCandidate: angelStyle ? Appearance.angel.colTextSecondary
         : inirStyle ? Appearance.inir.colTextSecondary
         : Appearance.colors.colOnSurfaceVariant
+    readonly property color surfaceVariantForeground: ColorUtils.ensureReadable(
+        _surfaceVariantForegroundCandidate, surfaceContainer, 3.0)
     readonly property color outlineVariant: angelStyle ? Appearance.angel.colCardBorder
         : inirStyle ? Appearance.inir.colBorder
         : auroraStyle ? Appearance.aurora.colTooltipBorder
         : Appearance.colors.colOutlineVariant
     readonly property color primary: Appearance.colors.colPrimary
-    readonly property color primaryForeground: Appearance.colors.colOnPrimary
+    readonly property color primaryForeground: ColorUtils.ensureReadable(
+        Appearance.colors.colOnPrimary, primary, 4.5)
     readonly property color primaryContainer: neutralDialect ? surfaceContainerLow : Appearance.colors.colPrimaryContainer
-    readonly property color primaryContainerForeground: neutralDialect ? surfaceForeground : Appearance.colors.colOnPrimaryContainer
+    readonly property color primaryContainerForeground: ColorUtils.ensureReadable(
+        neutralDialect ? surfaceForeground : Appearance.colors.colOnPrimaryContainer,
+        primaryContainer, 4.5)
     readonly property color secondaryContainer: neutralDialect ? surfaceContainer : Appearance.colors.colSecondaryContainer
-    readonly property color secondaryContainerForeground: neutralDialect ? surfaceForeground : Appearance.colors.colOnSecondaryContainer
+    readonly property color secondaryContainerForeground: ColorUtils.ensureReadable(
+        neutralDialect ? surfaceForeground : Appearance.colors.colOnSecondaryContainer,
+        secondaryContainer, 4.5)
     readonly property color tertiary: Appearance.colors.colTertiary
     readonly property color tertiaryContainer: neutralDialect ? surfaceContainerHigh : Appearance.colors.colTertiaryContainer
-    readonly property color tertiaryForeground: Appearance.colors.colOnTertiary
-    readonly property color tertiaryContainerForeground: neutralDialect ? surfaceForeground : Appearance.colors.colOnTertiaryContainer
+    readonly property color tertiaryForeground: ColorUtils.ensureReadable(
+        Appearance.colors.colOnTertiary, tertiary, 4.5)
+    readonly property color tertiaryContainerForeground: ColorUtils.ensureReadable(
+        neutralDialect ? surfaceForeground : Appearance.colors.colOnTertiaryContainer,
+        tertiaryContainer, 4.5)
     readonly property color tooltip: surfaceContainerHighest
-    readonly property color tooltipForeground: surfaceForeground
+    readonly property color tooltipForeground: ColorUtils.ensureReadable(
+        surfaceForeground, tooltip, 4.5)
     readonly property color error: Appearance.colors.colError
-    readonly property color errorForeground: Appearance.colors.colOnError
+    readonly property color errorForeground: ColorUtils.ensureReadable(
+        Appearance.colors.colOnError, error, 4.5)
 
     readonly property color primaryContainerHover: ColorUtils.mix(primaryContainer, primaryContainerForeground, 0.90)
     readonly property color primaryContainerActive: ColorUtils.mix(primaryContainer, primaryContainerForeground, 0.80)

@@ -262,7 +262,13 @@ Scope {
                 focus: overlay.surfaceOpen
 
                 readonly property bool spectrumPlaying: MprisController.isPlaying || YtMusic.isPlaying
+                readonly property bool spectrumOutputEnabled:
+                    (Config.options?.bar?.visualizer?.multiMonitorMode ?? "primary") === "all"
+                    || Quickshell.screens.length <= 1
+                    || String(overlay.modelData?.name ?? "")
+                        === String(GlobalStates.primaryScreen?.name ?? "")
                 readonly property bool spectrumConfigured: (Config.options?.bar?.pill?.musicViz ?? true)
+                    && spectrumOutputEnabled
                     && !Appearance.gameModeMinimal
                 readonly property bool spectrumProcessWanted: spectrumConfigured && spectrumPlaying
                 readonly property bool spectrumVisible: spectrumConfigured
@@ -286,8 +292,8 @@ Scope {
                     anchors.fill: parent
                     pillItem: pill
                     active: spectrumScope.spectrumVisible
-                    points: pillCava.points
-                    normalizationCeiling: pillCava.normalizationCeiling
+                    points: active ? pillCava.points : []
+                    normalizationCeiling: active ? pillCava.normalizationCeiling : 100
                     s: overlay.s
                 }
 

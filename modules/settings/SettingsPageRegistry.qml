@@ -869,6 +869,13 @@ Singleton {
         },
         {
             pageIndex: 15, pageName: root.pages[15].name,
+            section: Translation.tr("Overview placement"),
+            label: Translation.tr("Active screen only"),
+            description: Translation.tr("Open the overview on the monitor where it was invoked"),
+            keywords: ["overview", "monitor", "screen", "focused", "active", "output"]
+        },
+        {
+            pageIndex: 15, pageName: root.pages[15].name,
             section: Translation.tr("Material shell surfaces"),
             label: Translation.tr("Bar, dock, sidebars, and media controls"),
             description: Translation.tr("Choose which monitors show Material shell surfaces"),
@@ -876,10 +883,17 @@ Singleton {
         },
         {
             pageIndex: 15, pageName: root.pages[15].name,
-            section: Translation.tr("Shared popups and widgets"),
-            label: Translation.tr("Shared popups and widgets"),
-            description: Translation.tr("Choose which monitors show notifications, OSD, and desktop widgets"),
-            keywords: ["monitor", "visibility", "notifications", "osd", "widgets", "secondary", "workspace"]
+            section: Translation.tr("Popups"),
+            label: Translation.tr("Notification popups and OSD indicators"),
+            description: Translation.tr("Choose which monitors show notifications and OSD feedback"),
+            keywords: ["monitor", "visibility", "notifications", "osd", "popups", "secondary", "workspace"]
+        },
+        {
+            pageIndex: 15, pageName: root.pages[15].name,
+            section: Translation.tr("Desktop widgets"),
+            label: Translation.tr("Desktop widgets"),
+            description: Translation.tr("Choose widget visibility and layout per monitor"),
+            keywords: ["monitor", "visibility", "desktop", "widgets", "layout", "secondary", "workspace"]
         },
 
         // =====================================================================
@@ -1364,11 +1378,11 @@ Singleton {
             keywords: ["discord", "overlay", "rich", "presence", "widget"]
         },
         {
-            pageIndex: 6, pageName: root.pages[6].name,
-            section: Translation.tr("Overlay widgets"),
-            label: Translation.tr("Overlay widgets"),
-            description: Translation.tr("Floating desktop overlay widgets"),
-            keywords: ["overlay", "widgets", "floating", "desktop", "notes", "mixer", "fps"]
+            pageIndex: 5, pageName: root.pages[5].name,
+            section: Translation.tr("Floating tools (Super+G)"),
+            label: Translation.tr("Floating tools (Super+G)"),
+            description: Translation.tr("Floating image and widgets panel (Super+G)"),
+            keywords: ["super+g", "super g", "overlay", "floating", "tools", "widgets", "desktop", "notes", "image", "crosshair", "mixer", "resources", "fps", "recorder"]
         },
         {
             pageIndex: 6, pageName: root.pages[6].name,
@@ -1837,8 +1851,10 @@ Singleton {
         // Monitors (page 15)
         // =====================================================================
         { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Shell visibility"), label: Translation.tr("Primary monitor"), description: Translation.tr("Choose the default output for shell popups"), keywords: ["monitor", "display", "primary", "screen", "output"] },
+        { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Overview placement"), label: Translation.tr("Active screen only"), description: Translation.tr("Open the overview on the monitor where it was invoked"), keywords: ["overview", "monitor", "screen", "focused", "active", "output"] },
         { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Material shell surfaces"), label: Translation.tr("Bar, dock, sidebars, and media controls"), description: Translation.tr("Choose which monitors show Material shell surfaces"), keywords: ["monitor", "visibility", "bar", "dock", "sidebar", "media", "workspace", "secondary"] },
-        { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Shared popups and widgets"), label: Translation.tr("Shared popups and widgets"), description: Translation.tr("Choose which monitors show notifications, OSD, and desktop widgets"), keywords: ["monitor", "visibility", "notifications", "osd", "widgets", "secondary", "workspace"] },
+        { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Popups"), label: Translation.tr("Notification popups and OSD indicators"), description: Translation.tr("Choose which monitors show notifications and OSD feedback"), keywords: ["monitor", "visibility", "notifications", "osd", "popups", "secondary", "workspace"] },
+        { pageIndex: 15, pageName: root.pages[15].name, section: Translation.tr("Desktop widgets"), label: Translation.tr("Desktop widgets"), description: Translation.tr("Choose widget visibility and layout per monitor"), keywords: ["monitor", "visibility", "desktop", "widgets", "layout", "secondary", "workspace"] },
 
         // =====================================================================
         // Dashboard (page 16)

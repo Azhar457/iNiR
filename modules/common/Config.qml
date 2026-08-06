@@ -1162,6 +1162,7 @@ Singleton {
                         property bool showPausedEffect: true
                     }
                     property list<string> screenList: []
+                    property list<var> outputOverrides: []
                     // Persistent bottom-to-top widget instance keys. Entries are
                     // output-qualified ("OUTPUT::configEntryName") so each screen
                     // keeps its own overlap order after edit mode closes/restarts.
@@ -1935,6 +1936,7 @@ Singleton {
                 // something is actually playing.
                 property JsonObject visualizer: JsonObject {
                     property bool enable: false
+                    property string multiMonitorMode: "primary" // "primary" | "all"
                     property string type: "bars" // "bars" | "wave"
                     property real height: 0.6 // Share of the bar height the spectrum may fill (0.1–1)
                     property real opacity: 0.35 // Spectrum opacity over the bar surface (0–1)
@@ -2403,7 +2405,7 @@ Singleton {
                 property bool keepOverviewOpenOnWindowClick: true
                 property bool closeAfterWindowMove: true
                 property bool showPreviews: false // Show window thumbnails in overview
-                property bool activeScreenOnly: false // Show only on active screen (multi-monitor)
+                property bool activeScreenOnly: true // Show only on active screen (multi-monitor)
                 property bool allAppsGrid: false // Show an all-apps grid instead of the workspace overview
                 property string allAppsGridMode: "minimal" // "minimal" (alphabetical) or "folder" (by category)
                 property JsonObject dashboard: JsonObject {

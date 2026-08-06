@@ -1337,7 +1337,7 @@
         "scrimDim": 100
     },
     "overview": {
-        "activeScreenOnly": false,
+        "activeScreenOnly": true,
         "allAppsGrid": false,
         "allAppsGridMode": "minimal",
         "backgroundBlurEnable": true,

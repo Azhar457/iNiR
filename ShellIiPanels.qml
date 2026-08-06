@@ -232,11 +232,13 @@ Item {
         PanelWindow {
             id: dualSidebarBackdrop
             required property var modelData
+            readonly property bool leftPresented: GlobalStates.sidebarLeftOpen
+                && GlobalStates.sidebarLeftPresentationOutput === (modelData?.name ?? "")
+            readonly property bool rightPresented: GlobalStates.sidebarRightOpen
+                && GlobalStates.sidebarRightPresentationOutput === (modelData?.name ?? "")
             screen: modelData
-            visible: GlobalStates.sidebarLeftOpen
-                || GlobalStates.sidebarRightOpen
-            updatesEnabled: GlobalStates.sidebarLeftOpen
-                || GlobalStates.sidebarRightOpen
+            visible: leftPresented || rightPresented
+            updatesEnabled: leftPresented || rightPresented
             color: "transparent"
             exclusiveZone: 0
             WlrLayershell.namespace: "quickshell:dualSidebarBackdrop"
@@ -252,17 +254,19 @@ Item {
 
             Item { id: emptyDualSidebarMask; width: 0; height: 0 }
             mask: Region {
-                item: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
+                item: dualSidebarBackdrop.leftPresented || dualSidebarBackdrop.rightPresented
                     ? dualSidebarBackdropArea : emptyDualSidebarMask
             }
 
             MouseArea {
                 id: dualSidebarBackdropArea
                 anchors.fill: parent
-                enabled: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
+                enabled: dualSidebarBackdrop.leftPresented || dualSidebarBackdrop.rightPresented
                 onClicked: {
-                    GlobalStates.sidebarLeftOpen = false
-                    GlobalStates.sidebarRightOpen = false
+                    if (dualSidebarBackdrop.leftPresented)
+                        GlobalStates.closeSidebarLeft()
+                    if (dualSidebarBackdrop.rightPresented)
+                        GlobalStates.closeSidebarRight()
                 }
             }
         }
@@ -310,12 +314,12 @@ Item {
 
     IpcHandler {
         target: "sidebarLeft"
-        function toggle(): void { GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen }
-        function close(): void { GlobalStates.sidebarLeftOpen = false }
-        function open(): void { GlobalStates.sidebarLeftOpen = true }
+        function toggle(): void { GlobalStates.toggleSidebarLeft("") }
+        function close(): void { GlobalStates.closeSidebarLeft() }
+        function open(): void { GlobalStates.openSidebarLeft("") }
         function expand(): void {
             GlobalStates.aiChatDetached = false
-            GlobalStates.sidebarLeftOpen = true
+            GlobalStates.openSidebarLeft("")
             GlobalStates.sidebarLeftExpanded = true
         }
         function compact(): void { GlobalStates.sidebarLeftExpanded = false }
@@ -334,15 +338,15 @@ Item {
         function attach(): void {
             GlobalStates.aiChatDetached = false
             GlobalStates.sidebarLeftExpanded = false
-            GlobalStates.sidebarLeftOpen = true
+            GlobalStates.openSidebarLeft("")
         }
     }
 
     IpcHandler {
         target: "sidebarRight"
-        function toggle(): void { GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen }
-        function close(): void { GlobalStates.sidebarRightOpen = false }
-        function open(): void { GlobalStates.sidebarRightOpen = true }
+        function toggle(): void { GlobalStates.toggleSidebarRight("") }
+        function close(): void { GlobalStates.closeSidebarRight() }
+        function open(): void { GlobalStates.openSidebarRight("") }
     }
 
     IpcHandler {
@@ -422,17 +426,17 @@ Item {
             GlobalShortcut {
                 name: "sidebarLeftToggle"
                 description: "Toggles left sidebar on press"
-                onPressed: GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen
+                onPressed: GlobalStates.toggleSidebarLeft("")
             }
             GlobalShortcut {
                 name: "sidebarLeftOpen"
                 description: "Opens left sidebar on press"
-                onPressed: GlobalStates.sidebarLeftOpen = true
+                onPressed: GlobalStates.openSidebarLeft("")
             }
             GlobalShortcut {
                 name: "sidebarLeftClose"
                 description: "Closes left sidebar on press"
-                onPressed: GlobalStates.sidebarLeftOpen = false
+                onPressed: GlobalStates.closeSidebarLeft()
             }
         }
     }
@@ -443,17 +447,17 @@ Item {
             GlobalShortcut {
                 name: "sidebarRightToggle"
                 description: "Toggles right sidebar on press"
-                onPressed: GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen
+                onPressed: GlobalStates.toggleSidebarRight("")
             }
             GlobalShortcut {
                 name: "sidebarRightOpen"
                 description: "Opens right sidebar on press"
-                onPressed: GlobalStates.sidebarRightOpen = true
+                onPressed: GlobalStates.openSidebarRight("")
             }
             GlobalShortcut {
                 name: "sidebarRightClose"
                 description: "Closes right sidebar on press"
-                onPressed: GlobalStates.sidebarRightOpen = false
+                onPressed: GlobalStates.closeSidebarRight()
             }
         }
     }
