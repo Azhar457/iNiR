@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Next release: 2.29.0.
+## [2.29.0] - 2026-08-06
+
+Four days after 2.28.0, the multi-monitor work became a coherent desktop
+instead of a collection of surfaces that happened to share a process. This
+release makes monitor ownership explicit, adds managed desktop references and
+finishes the startup, media and visual fixes that were already in flight.
 
 ### Added
 - Managed desktop items for applications, files, folders and URLs. Applications
@@ -19,6 +24,8 @@ Next release: 2.29.0.
 ### Changed
 - Sidebars, Overview and wallpaper pickers now open on the invoking or focused
   output. Overview defaults to active-screen-only behavior.
+- Monitor Settings puts panel-family surfaces before the less common desktop
+  widget overrides, which now start collapsed in both Settings families.
 - The mixed-media gallery supports images, GIFs and videos, editable intervals
   up to one hour, and stable quick controls for long file names.
 - Bar spectrum rendering uses one shared Cava process, defaults to the primary
@@ -40,6 +47,11 @@ Next release: 2.29.0.
   button surface.
 - Wallpaper selection, desktop-item drops and context menus keep the correct
   output and owner through focus, drag and teardown changes.
+- Desktop-item menus open at the pointer, launch without replacing the label
+  with a temporary status, and use the nearest free desktop-widget grid cell
+  for drops, moves and monitor transfers.
+- Floating media controls now create one surface on every selected output;
+  choosing all outputs no longer presents the player on only one monitor.
 - Floating Image handles local files, remote URLs, empty sources and corrupt
   cache entries without publishing invalid image paths.
 - Repo-link service installs use a rendered unit instead of a broken portable
