@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Next release: 2.29.0.
+
+### Added
+- Managed desktop items for applications, files, folders and URLs. Applications
+  can be dragged from Overview; image drops can create a file reference, place
+  the Custom Image widget or use the converter queue.
+- Per-output desktop-widget visibility, placement, size and lock overrides in
+  both Settings families, including disconnected-output reset controls.
+
+### Changed
+- Sidebars, Overview and wallpaper pickers now open on the invoking or focused
+  output. Overview defaults to active-screen-only behavior.
+- The mixed-media gallery supports images, GIFs and videos, editable intervals
+  up to one hour, and stable quick controls for long file names.
+- Bar spectrum rendering uses one shared Cava process, defaults to the primary
+  output and adapts Classic, Islands, Scenic, Frame, M3 and Pill layouts.
+- The media OSD is compact and resolution-aware, shows explicit transport
+  feedback, and keeps the old cover until the next image is decoded.
+- Super+G is named **Floating tools** in Settings and search. Floating Image has
+  a native chooser and yields the overlay layer while the chooser is open.
+
+### Fixed
+- Sidebars no longer open on every monitor, and desktop widgets no longer share
+  accidental geometry or power state across outputs.
+- Native tray applications wait for the StatusNotifier watcher at login, and
+  the legacy XEmbed proxy starts without the old delay.
+- AMD backlight devices are detected explicitly and brightness writes are
+  throttled during slider animations.
+- Material 3, Classic and vertical bar controls keep readable foregrounds on
+  difficult wallpaper palettes; media-button hover colors use their real
+  button surface.
+- Wallpaper selection, desktop-item drops and context menus keep the correct
+  output and owner through focus, drag and teardown changes.
+- Floating Image handles local files, remote URLs, empty sources and corrupt
+  cache entries without publishing invalid image paths.
+- Repo-link service installs use a rendered unit instead of a broken portable
+  symlink, and invalid GTK settings files are backed up and rebuilt safely.
+
+### Issues / PRs
+- Fixed [#185](https://github.com/snowarch/iNiR/issues/185), [#187](https://github.com/snowarch/iNiR/issues/187), [#188](https://github.com/snowarch/iNiR/issues/188), [#209](https://github.com/snowarch/iNiR/issues/209), [#210](https://github.com/snowarch/iNiR/issues/210), [#213](https://github.com/snowarch/iNiR/issues/213), and [#214](https://github.com/snowarch/iNiR/issues/214).
+- Closed already-shipped reports [#172](https://github.com/snowarch/iNiR/issues/172), [#190](https://github.com/snowarch/iNiR/issues/190), [#195](https://github.com/snowarch/iNiR/issues/195), and [#202](https://github.com/snowarch/iNiR/issues/202).
+
+### Contributors
+Reports from [@developercrocodiles](https://github.com/developercrocodiles), [@tflori](https://github.com/tflori), [@Vanbayt](https://github.com/Vanbayt), [@InterstellarOne](https://github.com/InterstellarOne), and [@polska4au](https://github.com/polska4au) shaped the keyboard, tray, brightness, spectrum, gallery and multi-monitor fixes.
+
 ## [2.28.0] - 2026-08-02
 
 The seven weeks since 2.27.0 were not quiet. The shell grew a cat, a
@@ -368,10 +413,8 @@ of things got fixed by people with better eyes than ours. That work ships as
   replaced with imperative recomputation.
 - Dark/light choice persists through palette regeneration (#178, partial),
   overview search text no longer clips with scaled fonts (#179), screen
-  recording honors the configured acceleration mode (#181), `flake.nix`
-  ships a working NixOS/Home Manager payload (#186), XEmbed SNI proxy starts
-  immediately so autostart tray icons survive (#187), and brightness detects
-  the active backlight device for AMD GPUs (#188).
+  recording honors the configured acceleration mode (#181), and `flake.nix`
+  ships a working NixOS/Home Manager payload (#186).
 - Lock screen no longer crashes on screen sleep or disconnect, and `lock`
   IPC honors `lock.useHyprlock` (#176).
 - Wi-Fi state parses correctly on non-English locales (`LANG=C`).
@@ -385,13 +428,13 @@ of things got fixed by people with better eyes than ours. That work ships as
   last unwashed corners.
 
 ### Issues / PRs
-- Fixed [#174](https://github.com/snowarch/iNiR/issues/174), [#178](https://github.com/snowarch/iNiR/issues/178), [#179](https://github.com/snowarch/iNiR/issues/179), [#181](https://github.com/snowarch/iNiR/issues/181), [#187](https://github.com/snowarch/iNiR/issues/187), [#188](https://github.com/snowarch/iNiR/issues/188), [#190](https://github.com/snowarch/iNiR/issues/190), [#202](https://github.com/snowarch/iNiR/issues/202).
+- Fixed [#174](https://github.com/snowarch/iNiR/issues/174), [#178](https://github.com/snowarch/iNiR/issues/178), [#179](https://github.com/snowarch/iNiR/issues/179), [#181](https://github.com/snowarch/iNiR/issues/181), [#190](https://github.com/snowarch/iNiR/issues/190), [#202](https://github.com/snowarch/iNiR/issues/202).
 - Included contributions from [#176](https://github.com/snowarch/iNiR/pull/176), [#186](https://github.com/snowarch/iNiR/pull/186), [#199](https://github.com/snowarch/iNiR/pull/199), [#200](https://github.com/snowarch/iNiR/pull/200), [#201](https://github.com/snowarch/iNiR/pull/201), [#203](https://github.com/snowarch/iNiR/pull/203).
 
 ### Contributors
 Thanks to [@owarizz](https://github.com/owarizz) for a long run of correctness and resilience fixes: thumbnail hashing, the qalc spawn loop, multi-monitor workspace switching, the mic binding, the wifi retry prompt, the brightness monitor leak, the Super-tap daemon, the memfd counter, and the removal of the dead mpvpaper restore-script machinery ([#199](https://github.com/snowarch/iNiR/pull/199), [#200](https://github.com/snowarch/iNiR/pull/200), [#201](https://github.com/snowarch/iNiR/pull/201), [#203](https://github.com/snowarch/iNiR/pull/203)); [@xdvi](https://github.com/xdvi) for the lock screen crash guard and `lock.useHyprlock` handling ([#176](https://github.com/snowarch/iNiR/pull/176)); and [@Pigbuy](https://github.com/Pigbuy) for repairing the NixOS and Home Manager payload in `flake.nix` ([#186](https://github.com/snowarch/iNiR/pull/186)).
 
-Thanks also to [@Gergish001](https://github.com/Gergish001) for the flexible spacer request ([#174](https://github.com/snowarch/iNiR/issues/174)), [@dvytvs](https://github.com/dvytvs) for the VRR flickering report that turned the switch into a three-way choice ([#202](https://github.com/snowarch/iNiR/issues/202)), and [@tvvano16-dotcom](https://github.com/tvvano16-dotcom) ([#178](https://github.com/snowarch/iNiR/issues/178)), [@KiriVaelorn](https://github.com/KiriVaelorn) ([#179](https://github.com/snowarch/iNiR/issues/179)), [@vkleshnin](https://github.com/vkleshnin) ([#181](https://github.com/snowarch/iNiR/issues/181)), [@tflori](https://github.com/tflori) ([#187](https://github.com/snowarch/iNiR/issues/187)), [@Vanbayt](https://github.com/Vanbayt) ([#188](https://github.com/snowarch/iNiR/issues/188)) and [@Haretsu-Kimagure](https://github.com/Haretsu-Kimagure) ([#190](https://github.com/snowarch/iNiR/issues/190)) for the reports behind the dark-mode, overview search, recording acceleration, tray autostart, AMD brightness and PipeWire crash fixes.
+Thanks also to [@Gergish001](https://github.com/Gergish001) for the flexible spacer request ([#174](https://github.com/snowarch/iNiR/issues/174)), [@dvytvs](https://github.com/dvytvs) for the VRR flickering report that turned the switch into a three-way choice ([#202](https://github.com/snowarch/iNiR/issues/202)), and [@tvvano16-dotcom](https://github.com/tvvano16-dotcom) ([#178](https://github.com/snowarch/iNiR/issues/178)), [@KiriVaelorn](https://github.com/KiriVaelorn) ([#179](https://github.com/snowarch/iNiR/issues/179)), [@vkleshnin](https://github.com/vkleshnin) ([#181](https://github.com/snowarch/iNiR/issues/181)) and [@Haretsu-Kimagure](https://github.com/Haretsu-Kimagure) ([#190](https://github.com/snowarch/iNiR/issues/190)) for the reports behind the dark-mode, overview search, recording acceleration and PipeWire crash fixes.
 
 ## [2.27.0] - 2026-06-11
 

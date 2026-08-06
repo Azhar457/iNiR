@@ -184,9 +184,20 @@ committed changes; there is no hidden Save step or whole-session rollback.
 
 Bar, dock and taskbar placement follow each surface's existing `screenList`
 semantics. A position change applies to every enabled output for that surface.
-Desktop-widget placement remains owned by its separate editor. The Shell Layout
-HUD and Settings page show the broader mutation scope. Per-output geometry
-profiles are not part of this version.
+Desktop-widget placement remains owned by its separate editor. Each output
+inherits the global widget configuration and stores only its local visibility,
+position, size and lock overrides in `background.widgets.outputOverrides`.
+Dragging, resizing or toggling a widget on one desktop therefore does not move
+or hide its peer on another output. Settings -> Monitors shows connected and
+saved-disconnected outputs, with per-widget reset and whole-output reset.
+
+When a new output appears or its logical resolution changes, iNiR initializes
+missing free-placement coordinates against that output's panel-safe work area
+and separates unlocked collisions. Widget content and visual options remain
+global unless the corresponding control is explicitly output-local. The Shell
+Layout HUD and Settings page still show the broader mutation scope for panel
+surfaces; per-output geometry profiles are not used for bar, dock, taskbar or
+sidebar placement.
 
 Valid sidebar slots are `left` and `right`. Both roles must occupy different
 slots, so moving one onto the other performs an atomic swap. Valid size modes
