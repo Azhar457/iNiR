@@ -39,6 +39,9 @@ ShellRoot {
     property var _powerProfilePersistence: PowerProfilePersistence
     property var _devNavigationService: DevNavigation
     property var _shellEditSessionService: ShellEditSession
+    // Acquire org.kde.StatusNotifierWatcher before graphical-session.target
+    // releases XDG autostart applications. The systemd unit uses Type=dbus.
+    property var _trayService: TrayService
     property var _globalActionsService
 
     // Deferred singletons — initialized after first frame to reduce boot contention
@@ -476,7 +479,7 @@ ShellRoot {
         function toggle(): void {
             if (_isWaffle()) { GlobalStates.searchOpen = !GlobalStates.searchOpen; return }
             GlobalStates.overviewSearchPrefix = ""
-            GlobalStates.overviewOpen = !GlobalStates.overviewOpen
+            GlobalStates.toggleOverview("")
         }
         function close(): void {
             if (_isWaffle()) { GlobalStates.searchOpen = false; return }
@@ -485,7 +488,7 @@ ShellRoot {
         function open(): void {
             if (_isWaffle()) { GlobalStates.searchOpen = true; return }
             GlobalStates.overviewSearchPrefix = ""
-            GlobalStates.overviewOpen = true
+            GlobalStates.openOverview("")
         }
         function toggleReleaseInterrupt(): void { GlobalStates.superReleaseMightTrigger = false }
         function clipboardToggle(): void {
@@ -499,7 +502,7 @@ ShellRoot {
                 GlobalStates.overviewOpen = false
             } else {
                 GlobalStates.overviewSearchPrefix = prefix
-                GlobalStates.overviewOpen = true
+                GlobalStates.openOverview("")
             }
         }
         function actionOpen(): void {
@@ -510,7 +513,7 @@ ShellRoot {
                 return
             }
             GlobalStates.overviewSearchPrefix = prefix
-            GlobalStates.overviewOpen = true
+            GlobalStates.openOverview("")
         }
     }
 

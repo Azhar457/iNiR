@@ -2796,25 +2796,20 @@ install_user_service() {
         -e "s|^ExecStopPost=-.*|ExecStopPost=-${escaped_launcher} cleanup-orphans|" \
         "$asset_path" > "$tmp_file"
     if [[ -L "$systemd_user_dir/inir.service" ]]; then
-        local service_dropin_dir="$systemd_user_dir/inir.service.d"
-        local service_override="$service_dropin_dir/override.conf"
-        local override_tmp="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.override.$$"
-        mkdir -p "$service_dropin_dir"
-        cat > "$override_tmp" <<EOF
-# Managed locally: keep the repo unit template portable while running the
-# developer launcher path from this machine.
-[Service]
-ExecStart=
-ExecStart=${launcher_path} run --session
-ExecStopPost=
-ExecStopPost=-${launcher_path} cleanup-orphans
-EOF
-        cp -f "$override_tmp" "$service_override"
-        rm -f "$override_tmp"
-    else
-        cp -f "$tmp_file" "$systemd_user_dir/inir.service"
+        # Never leave a developer install pointing at the portable template:
+        # it uses /usr/bin/inir and fails with 203/EXEC before a local drop-in
+        # has been generated.  Install the fully rendered unit as a real file.
+        rm -f "$systemd_user_dir/inir.service"
     fi
+    cp -f "$tmp_file" "$systemd_user_dir/inir.service"
     rm -f "$tmp_file"
+
+    local service_dropin_dir="$systemd_user_dir/inir.service.d"
+    local service_override="$service_dropin_dir/override.conf"
+    if [[ -f "$service_override" ]] && grep -q '^# Managed locally:' "$service_override"; then
+        rm -f "$service_override"
+        rmdir "$service_dropin_dir" 2>/dev/null || true
+    fi
 
     # Migrate: remove old WantedBy=graphical-session.target symlink left by
     # previous versions that used [Install] + systemctl enable.  This is the

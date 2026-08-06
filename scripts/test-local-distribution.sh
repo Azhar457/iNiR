@@ -22,6 +22,21 @@ bash -n \
     "$runtime_root/sdata/subcmd-install/"*.sh \
     "$runtime_root/sdata/migrations/"*.sh
 
+step "session tray ordering"
+service_unit="$runtime_root/assets/systemd/inir.service"
+if ! grep -qx 'Type=dbus' "$service_unit" \
+        || ! grep -qx 'BusName=org.kde.StatusNotifierWatcher' "$service_unit" \
+        || ! grep -qx 'Before=graphical-session.target' "$service_unit" \
+        || grep -qx 'After=graphical-session.target' "$service_unit" \
+        || grep -qx 'Requisite=graphical-session.target' "$service_unit"; then
+    printf 'FAIL: inir.service does not gate XDG autostart on the tray watcher\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'property var _trayService: TrayService' "$runtime_root/shell.qml"; then
+    printf 'FAIL: shell startup does not instantiate the StatusNotifier watcher\n' >&2
+    exit 1
+fi
+
 step "fresh install defaults"
 python3 - "$runtime_root" <<'PY'
 import json
@@ -107,6 +122,13 @@ while IFS= read -r runtime_dir; do
     [[ -n "$runtime_dir" ]] || continue
     [[ -d "$runtime_root/$runtime_dir" ]]
 done < "$runtime_root/sdata/runtime-payload-dirs.txt"
+
+snapshot_lib="$runtime_root/sdata/lib/snapshots.sh"
+if ! grep -Fq 'quickshell/user/desktop-items.json' "$snapshot_lib" \
+        || ! grep -Fq 'desktop-items.json' "$snapshot_lib"; then
+    printf 'FAIL: managed desktop items are absent from update snapshots\n' >&2
+    exit 1
+fi
 
 step "mascot runtime manifest"
 mascot_manifest="$runtime_root/assets/images/mascot/manifest.json"
