@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- X11-only apps (Warp, Steam, Wine) launched from the shell crashed at
+  launch because the shell's frozen env lacked `DISPLAY` (boot race with
+  xwayland-satellite). `ShellExec` now detects the live user-owned XWayland
+  socket at launch time, and `inir` seeds `DISPLAY` into the shell env with
+  the same filesystem fallback used for `WAYLAND_DISPLAY`/`NIRI_SOCKET`.
+
 ## [2.29.0] - 2026-08-06
 
 Four days after 2.28.0, the multi-monitor work became a coherent desktop

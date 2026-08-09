@@ -52,6 +52,20 @@ Singleton {
         // for success, because in scope mode it only returns once the app is
         // gone and a fallback there would relaunch it.
         const script = `
+            # X11-only apps (Warp, Steam, Wine) need DISPLAY to reach the X
+            # server, but inir.service starts before niri exports DISPLAY to
+            # the user manager, so the shell's frozen env misses it and those
+            # apps crash at launch (Warp panics, exit 101). Detect the live
+            # XWayland socket: xwayland-satellite sockets are user-owned, while
+            # the greeter's root-owned Xorg socket (sddm on :0) is not ours.
+            if [ -z "$DISPLAY" ]; then
+                for _x in /tmp/.X11-unix/X*; do
+                    [ -S "$_x" ] || continue
+                    [ "$(stat -c %U "$_x" 2>/dev/null)" = "$(id -un)" ] || continue
+                    export DISPLAY=":$(basename "$_x" | sed 's/^X//')"
+                    break
+                done
+            fi
             systemd_run="$1"
             desc="$2"
             shift 2

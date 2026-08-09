@@ -1778,6 +1778,22 @@ apply_qt_runtime_env() {
     if [[ -z "${ELECTRON_OZONE_PLATFORM_HINT:-}" ]]; then
         export ELECTRON_OZONE_PLATFORM_HINT=auto
     fi
+
+    # DISPLAY fallback — X11-only apps (Warp, Steam, Wine) crash without it
+    # (Warp panics, exit 101).  The systemd import above may already have set
+    # it; this is the filesystem fallback for the same boot race as
+    # WAYLAND_DISPLAY/NIRI_SOCKET, where niri has not exported DISPLAY to the
+    # user manager yet.  Only user-owned sockets count: the greeter's
+    # root-owned Xorg socket (sddm on :0) is not the session display.
+    if [[ -z "${DISPLAY:-}" ]]; then
+        local _x _xnum
+        for _x in /tmp/.X11-unix/X*; do
+            [[ -S "$_x" ]] || continue
+            [[ "$(stat -c %U "$_x" 2>/dev/null)" == "$(id -un)" ]] || continue
+            export DISPLAY=":${_x##*/X}"
+            break
+        done
+    fi
 }
 
 apply_qt_logging_rules() {
@@ -2047,11 +2063,13 @@ ensure_systemd_graphical_env() {
         if [[ -n "${DISPLAY:-}" ]]; then
             vars_to_import+=("DISPLAY=$DISPLAY")
         else
-            # Probe for XWayland socket — compositor may have started it but not
-            # yet exported DISPLAY to systemd.
+            # Probe for the live XWayland socket — the compositor may have
+            # started it but not yet exported DISPLAY to systemd.  Only
+            # user-owned sockets count; the greeter's root-owned Xorg socket
+            # (sddm on :0) is not the session display.
             local _xsock
             for _xsock in /tmp/.X11-unix/X*; do
-                if [[ -S "$_xsock" ]]; then
+                if [[ -S "$_xsock" ]] && [[ "$(stat -c %U "$_xsock" 2>/dev/null)" == "$(id -un)" ]]; then
                     local _xnum
                     _xnum="$(basename "$_xsock" | sed 's/^X//')"
                     vars_to_import+=("DISPLAY=:${_xnum}")
