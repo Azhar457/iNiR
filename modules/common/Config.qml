@@ -1318,11 +1318,22 @@ Singleton {
                         property string placementStrategy: "free"
                         property string vizType: "bars"
                         property string preset: "default" // legacy, kept for compat
+                        property string paletteMode: "cava" // "cava", "accent", "primary"
+                        property string barsOrigin: "bottom" // "bottom", "top", "center", "mirror"
+                        property string waveMode: "fill" // "fill", "line", "ribbon"
+                        property string frequencyProfile: "flat" // "flat", "bass", "warm", "vocal", "treble", "smile"
+                        property int smoothing: 2
+                        property int fillRatio: 90
+                        property int barOpacity: 100
                         property int waveOpacity: -1 // -1 = use global (appearance.cava.waveOpacity)
                         property int barCount: 48
                         property int barSpacing: 2
                         property int barRadius: 2
                         property int barMinHeight: 1
+                        property int lineWidth: 2
+                        property int edgeInset: 0
+                        property int edgeSoftness: 28
+                        property int accentStrength: 70
                         property int contentWidth: 304
                         property int contentHeight: 104
                         property int dim: 0

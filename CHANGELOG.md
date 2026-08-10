@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- The Cava Stereo setting controls both shell visualizers and terminal Cava
+  again. The desktop visualizer now starts from its per-output enabled state,
+  and the shared internal process no longer ignores the saved channel mode.
+  Its edit controls and Desktop Widgets settings now expose bars and wave
+  shapes, Cava or widget palettes, frequency response, smoothing, geometry,
+  and opacity. The default Cava palette follows Advanced color and gradient
+  settings instead of being replaced by muted widget tokens. Zero-height bars
+  no longer reuse the Canvas clip path and flash a full-widget gradient block.
 - X11-only apps (Warp, Steam, Wine) launched from the shell crashed at
   launch because the shell's frozen env lacked `DISPLAY` (boot race with
   xwayland-satellite). `ShellExec` now detects the live user-owned XWayland

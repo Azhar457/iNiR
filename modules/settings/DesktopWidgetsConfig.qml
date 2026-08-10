@@ -3078,10 +3078,64 @@ ContentPage {
                         { displayName: Translation.tr("Wide"), icon: "width_wide", value: "wide" },
                     ]
                 }
+
+                ConfigSelectionArray {
+                    currentValue: Config.getNestedValue(
+                        "background.widgets.visualizer.vizType", "bars")
+                    onSelected: newValue => Config.setNestedValue(
+                        "background.widgets.visualizer.vizType", newValue)
+                    options: [
+                        { displayName: Translation.tr("Bars"), icon: "equalizer", value: "bars" },
+                        { displayName: Translation.tr("Wave"), icon: "waves", value: "wave" },
+                    ]
+                }
+
+                ConfigSelectionArray {
+                    currentValue: Config.getNestedValue(
+                        "background.widgets.visualizer.paletteMode", "cava")
+                    onSelected: newValue => Config.setNestedValue(
+                        "background.widgets.visualizer.paletteMode", newValue)
+                    options: [
+                        { displayName: Translation.tr("Cava"), icon: "palette", value: "cava" },
+                        { displayName: Translation.tr("Accent"), icon: "colors", value: "accent" },
+                        { displayName: Translation.tr("Primary"), icon: "format_color_fill", value: "primary" },
+                    ]
+                }
+
+                ConfigSelectionArray {
+                    visible: Config.getNestedValue(
+                        "background.widgets.visualizer.vizType", "bars") === "bars"
+                    currentValue: Config.getNestedValue(
+                        "background.widgets.visualizer.barsOrigin", "bottom")
+                    onSelected: newValue => Config.setNestedValue(
+                        "background.widgets.visualizer.barsOrigin", newValue)
+                    options: [
+                        { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" },
+                        { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
+                        { displayName: Translation.tr("Center rise"), icon: "center_focus_strong", value: "center" },
+                        { displayName: Translation.tr("Mirrored"), icon: "unfold_more", value: "mirror" },
+                    ]
+                }
+
+                ConfigSelectionArray {
+                    visible: Config.getNestedValue(
+                        "background.widgets.visualizer.vizType", "bars") === "wave"
+                    currentValue: Config.getNestedValue(
+                        "background.widgets.visualizer.waveMode", "fill")
+                    onSelected: newValue => Config.setNestedValue(
+                        "background.widgets.visualizer.waveMode", newValue)
+                    options: [
+                        { displayName: Translation.tr("Fill"), icon: "waves", value: "fill" },
+                        { displayName: Translation.tr("Line"), icon: "line_weight", value: "line" },
+                        { displayName: Translation.tr("Ribbon"), icon: "unfold_more", value: "ribbon" },
+                    ]
+                }
             }
             }
 
             ContentSubsection {
+                visible: Config.getNestedValue(
+                    "background.widgets.visualizer.vizType", "bars") === "bars"
                 title: Translation.tr("Bars")
 
                 GridLayout {
@@ -3124,6 +3178,138 @@ ContentPage {
                             onValueModified: Config.setNestedValue("background.widgets.visualizer.barMinHeight", value)
                         }
                     }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Opacity")
+                        StyledSpinBox {
+                            from: 5; to: 100; stepSize: 5
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.barOpacity", 100)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.barOpacity", value)
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                visible: Config.getNestedValue(
+                    "background.widgets.visualizer.vizType", "bars") === "wave"
+                title: Translation.tr("Wave")
+
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Opacity")
+                        StyledSpinBox {
+                            from: 5; to: 100; stepSize: 5
+                            value: {
+                                const value = Config.getNestedValue(
+                                    "background.widgets.visualizer.waveOpacity", -1)
+                                return value >= 0 ? value
+                                    : (Config.options?.appearance?.cava?.waveOpacity ?? 30)
+                            }
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.waveOpacity", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Line width")
+                        StyledSpinBox {
+                            from: 1; to: 8; stepSize: 1
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.lineWidth", 2)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.lineWidth", value)
+                        }
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Response")
+
+                ConfigSelectionArray {
+                    currentValue: Config.getNestedValue(
+                        "background.widgets.visualizer.frequencyProfile", "flat")
+                    onSelected: newValue => Config.setNestedValue(
+                        "background.widgets.visualizer.frequencyProfile", newValue)
+                    options: [
+                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" },
+                        { displayName: Translation.tr("Bass"), icon: "graphic_eq", value: "bass" },
+                        { displayName: Translation.tr("Warm"), icon: "local_fire_department", value: "warm" },
+                        { displayName: Translation.tr("Vocal"), icon: "record_voice_over", value: "vocal" },
+                        { displayName: Translation.tr("Treble"), icon: "trending_up", value: "treble" },
+                        { displayName: Translation.tr("Smile"), icon: "waves", value: "smile" },
+                    ]
+                }
+
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    Layout.fillWidth: true
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Smoothing")
+                        StyledSpinBox {
+                            from: 0; to: 8; stepSize: 1
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.smoothing", 2)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.smoothing", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Spectrum height (%)")
+                        StyledSpinBox {
+                            from: 10; to: 100; stepSize: 5
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.fillRatio", 90)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.fillRatio", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Edge inset (px)")
+                        StyledSpinBox {
+                            from: 0; to: 32; stepSize: 1
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.edgeInset", 0)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.edgeInset", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Curve headroom (%)")
+                        StyledSpinBox {
+                            from: 0; to: 100; stepSize: 5
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.edgeSoftness", 28)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.edgeSoftness", value)
+                        }
+                    }
+
+                    WidgetSettingRow {
+                        label: Translation.tr("Frequency accent strength (%)")
+                        enabled: Config.getNestedValue(
+                            "background.widgets.visualizer.frequencyProfile", "flat") !== "flat"
+                        opacity: enabled ? 1 : 0.45
+                        StyledSpinBox {
+                            from: 0; to: 100; stepSize: 5
+                            value: Config.getNestedValue(
+                                "background.widgets.visualizer.accentStrength", 70)
+                            onValueModified: Config.setNestedValue(
+                                "background.widgets.visualizer.accentStrength", value)
+                        }
+                    }
                 }
             }
 
@@ -3163,9 +3349,20 @@ ContentPage {
                     "placementStrategy": "free",
                     "preset": "default",
                     "vizType": "bars",
+                    "paletteMode": "cava",
+                    "barsOrigin": "bottom",
+                    "waveMode": "fill",
+                    "frequencyProfile": "flat",
+                    "smoothing": 2,
+                    "fillRatio": 90,
+                    "barOpacity": 100,
                     "waveOpacity": -1,
                     "barCount": 48,
                     "barSpacing": 2,
+                    "lineWidth": 2,
+                    "edgeInset": 0,
+                    "edgeSoftness": 28,
+                    "accentStrength": 70,
                     "dim": 0,
                     "widgetScale": 100,
                     "widgetOpacity": 100,
