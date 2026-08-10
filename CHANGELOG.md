@@ -14,9 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   be selected or unlocked directly from the desktop. Selecting a widget no
   longer changes its layout scale.
 - Wallpaper-aware widget colors now use deterministic full-region sampling and
-  reject stale geometry results while editing. Resource rings keep readable
-  structural ink on difficult wallpapers, and output-local Resource/Media
-  activity no longer depends on a conflicting global enable flag.
+  reject stale geometry results while editing. Graphic accents remain stable
+  theme colors instead of being darkened into rust/brown/olive on bright local
+  regions; readable ink now uses restrained seed tinting, and Resource rings,
+  bars and graphs use neutral keylines/tracks for contrast without recoloring the
+  data palette. Output-local Resource/Media activity no longer depends on a
+  conflicting global enable flag.
 - Desktop widget editing now uses one panel-aware grid for guides, dragging and
   resize handles. Snapping follows the current bar and dock edges, including
   vertical layouts, while turning Snap off still allows full-desktop placement.

@@ -1708,9 +1708,9 @@ AbstractWidget {
 
     // ── Centralized desktop-widget colour identity ──────────────────────────────
     // Keep these roles tied directly to the generated palette — they are the
-    // widget family's identity and never re-tone. Content that needs the accent
-    // to stay legible over the plate/region uses the widgetAccent*Visible
-    // display variants below, which only move when the raw accent doesn't read.
+    // widget family's identity and never re-tone. Graphic consumers use the
+    // stable widgetAccent*Visible aliases below; accent-colored text explicitly
+    // opts into widgetRoleColor() and its contrast-safe tinted-ink fallback.
     // Style-dispatched roles, in [primary, secondary, tertiary] order. Several
     // styles currently resolve to the same generated M3 values, but consuming
     // their public token contracts here keeps desktop widgets correct if those
@@ -1780,36 +1780,35 @@ AbstractWidget {
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
-    // ── Region-legible accent DISPLAY variants ──────────────────────────────
-    // Where free-standing accent ink actually lands: the shared plate when the
-    // widget draws one, the analyzed wallpaper region otherwise. Falls back to
-    // the theme surface until the analysis lands, so nothing re-tones on first
-    // paint. Widgets that force a minimum plate opacity (uptime, news ticker,
-    // weather card) override this with the plate directly.
+    // ── Stable graphic accents + readable accent ink ────────────────────────
+    // Graphic accents are theme identity, not local-wallpaper analysis output.
+    // Re-toning primary/secondary/tertiary at every desktop position made warm
+    // Material palettes collapse into rust/brown/olive on bright wallpapers and
+    // caused visible color shifts after dragging. Shapes keep the generated/style
+    // colors byte-for-byte; local analysis is reserved for ink, keylines and halos.
+    function widgetGraphicColor(seed) {
+        const source = Qt.color(seed);
+        return source.valid ? source : root.widgetInk;
+    }
+
+    // Accent-colored TEXT still needs a contrast floor. Instead of darkening the
+    // same saturated hue (which produces muddy warm colors), blend minimally toward
+    // the already region-correct widget ink. `minSaturation` stays in the signature
+    // for custom-widget compatibility but is intentionally not used as a chroma floor.
     property color accentBackdrop: root.widgetHasSurface ? root.widgetPlateColor
         : root._hasBrightness ? root._regionBg
         : Appearance.colors.colLayer0
-    // The identity roles above stay raw palette; these are how that identity is
-    // DISPLAYED over the backdrop. adaptAccent is a clamp (early-out when the
-    // raw accent already reads), so the usual dark-theme case is byte-identical
-    // and a re-tone can only happen in the same repaint that flips the plate.
     function widgetRoleColor(seed, targetContrast = 4.0, minSaturation = 0.45) {
         const source = Qt.color(seed);
         if (!source.valid)
             return root.widgetInk;
-        if (root.forceLightInk || root.forceDarkInk) {
-            return Qt.hsla(source.hslHue,
-                Math.max(minSaturation, source.hslSaturation),
-                root.forceLightInk ? 0.82 : 0.20,
-                source.a);
-        }
-        return ColorUtils.adaptAccent(source, root.accentBackdrop,
-            targetContrast, minSaturation, 0.12, 0.90);
+        return ColorUtils.readableAccentInk(source, root.accentBackdrop,
+            targetContrast, root.widgetInk);
     }
 
-    readonly property color widgetAccentVisible: root.widgetRoleColor(root.widgetAccent)
-    readonly property color widgetAccent2Visible: root.widgetRoleColor(root.widgetAccent2)
-    readonly property color widgetAccent3Visible: root.widgetRoleColor(root.widgetAccent3)
+    readonly property color widgetAccentVisible: root.widgetGraphicColor(root.widgetAccent)
+    readonly property color widgetAccent2Visible: root.widgetGraphicColor(root.widgetAccent2)
+    readonly property color widgetAccent3Visible: root.widgetGraphicColor(root.widgetAccent3)
 
     // Legibility shadow placed BEHIND text and plate-less elements so they
     // detach from any wallpaper without a visible card. Always dark (a true

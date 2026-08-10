@@ -17,6 +17,11 @@ Item {
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface 
         : Appearance.colors.colSecondaryContainer
+    // Optional full-width track under the active arc. With a slightly larger
+    // secondary stroke this doubles as a contrast keyline without another Shape
+    // or render layer; default keeps the original gapped progress treatment.
+    property bool trackUnderlay: false
+    property real trackUnderlayExtraWidth: 0
     property real gapAngle: 360 / 18
     property bool fill: false
     property int fillOverflow: 2
@@ -58,7 +63,7 @@ Item {
         ShapePath {
             id: secondaryPath
             strokeColor: root.colSecondary
-            strokeWidth: root.lineWidth
+            strokeWidth: root.lineWidth + (root.trackUnderlay ? root.trackUnderlayExtraWidth * 2 : 0)
             capStyle: ShapePath.RoundCap
             fillColor: "transparent"
             PathAngleArc {
@@ -66,8 +71,8 @@ Item {
                 centerY: root.centerY
                 radiusX: root.arcRadius
                 radiusY: root.arcRadius
-                startAngle: root.startAngle - root.gapAngle
-                sweepAngle: -(360 - root.degree - 2 * root.gapAngle)
+                startAngle: root.trackUnderlay ? root.startAngle : root.startAngle - root.gapAngle
+                sweepAngle: root.trackUnderlay ? 360 : -(360 - root.degree - 2 * root.gapAngle)
             }
         }
         ShapePath {
