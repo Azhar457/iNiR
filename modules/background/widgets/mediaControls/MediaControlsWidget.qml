@@ -240,8 +240,10 @@ AbstractBackgroundWidget {
         onTriggered: root._idleShapeIndex = (root._idleShapeIndex + 1) % root._idleShapes.length
     }
 
+    // This instance only exists when its effective output-local enable state is
+    // true. Rechecking the global base would incorrectly disable Cava for a
+    // widget enabled only on this monitor.
     readonly property bool visualizerActive: root.vizPosition !== "none"
-        && (Config.options?.background?.widgets?.mediaControls?.enable ?? false)
         && root.visible && root.powerActive && MprisController.isPlaying
 
     CavaProcess {

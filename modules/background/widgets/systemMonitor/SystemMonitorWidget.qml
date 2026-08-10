@@ -96,7 +96,10 @@ AbstractBackgroundWidget {
     }
 
     // ── Config properties ──
-    readonly property bool _active: Config.getNestedValue("background.widgets.systemMonitor.enable", false)
+    // The loader already represents the effective per-output enabled state.
+    // Rechecking the global base here breaks output-local overrides and can
+    // leave a visible monitor without ResourceUsage keep-alive.
+    readonly property bool _active: root.visible
     readonly property string displayMode: Config.getNestedValue("background.widgets.systemMonitor.displayMode", "bars")
     readonly property bool showCpu: Config.getNestedValue("background.widgets.systemMonitor.showCpu", true)
     readonly property bool showMemory: Config.getNestedValue("background.widgets.systemMonitor.showMemory", true)
@@ -196,12 +199,12 @@ AbstractBackgroundWidget {
     // Shared desktop-widget identity (AbstractBackgroundWidget) so every metric reads
     // as the same wallpaper-generated family across all widgets.
     // Display variants: clamped against the plate/region actually behind them.
-    readonly property color cpuColor: root.widgetRoleColor(root.widgetAccent, 4.0, 0.45)
-    readonly property color memColor: root.widgetRoleColor(root.widgetAccent2, 4.0, 0.45)
-    readonly property color gpuColor: root.widgetRoleColor(root.widgetAccent3, 4.0, 0.45)
-    readonly property color tempColor: root.widgetRoleColor(root.widgetSignal, 3.0, 0.50)
+    readonly property color cpuColor: root.widgetRoleColor(root.widgetAccent, 4.5, 0.45)
+    readonly property color memColor: root.widgetRoleColor(root.widgetAccent2, 4.5, 0.45)
+    readonly property color gpuColor: root.widgetRoleColor(root.widgetAccent3, 4.5, 0.45)
+    readonly property color tempColor: root.widgetRoleColor(root.widgetSignal, 4.0, 0.50)
     readonly property color diskColor: root.widgetRoleColor(
-        ColorUtils.mix(root.widgetAccent2, root.widgetAccent3, 0.55), 3.0, 0.42)
+        ColorUtils.mix(root.widgetAccent2, root.widgetAccent3, 0.55), 4.0, 0.42)
 
     readonly property real _mixedRegionStrength: root.widgetHasSurface ? 0
         : Math.max(0, Math.min(1, (root.regionBrightnessSpread - 0.08) / 0.20))
@@ -480,14 +483,21 @@ AbstractBackgroundWidget {
                         // rendering for most of every 3-second polling cycle.
                         enableAnimation: false
                         colPrimary: ringCol._liveColor
-                        colSecondary: ColorUtils.applyAlpha(ringCol._liveColor, root.trackAlpha + 0.04)
+                        // The track is structural ink rather than a near-
+                        // invisible alpha of the accent. One Shape stays in use,
+                        // but the ring silhouette remains readable on noisy or
+                        // same-hue wallpaper regions.
+                        colSecondary: ColorUtils.applyAlpha(root.widgetInk,
+                            Math.max(0.14, root.trackAlpha + 0.06))
                     }
 
                     // Percentage/value inside the ring
                     StyledText {
                         anchors.centerIn: parent
                         text: ringCol.modelData.key === "temp" ? ResourceUsage.maxTemp + "°" : Math.round(ringCol._animatedValue * 100)
-                        color: ringCol._liveColor
+                        color: root.widgetInk
+                        style: root._labelStyle
+                        styleColor: root._labelKeyline
                         font {
                             pixelSize: Math.max(10, Math.round(ringCol._ringSize * 0.26))
                             family: Appearance.font.family.numbers

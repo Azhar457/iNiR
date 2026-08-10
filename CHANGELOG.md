@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Widget edit mode now scrolls its widget rail without toggling items during a
+  drag, exposes clearer manager navigation, remembers the manager position and
+  size, supports search and active/locked/custom filters, and lets locked widgets
+  be selected or unlocked directly from the desktop. Selecting a widget no
+  longer changes its layout scale.
+- Wallpaper-aware widget colors now use deterministic full-region sampling and
+  reject stale geometry results while editing. Resource rings keep readable
+  structural ink on difficult wallpapers, and output-local Resource/Media
+  activity no longer depends on a conflicting global enable flag.
 - Desktop widget editing now uses one panel-aware grid for guides, dragging and
   resize handles. Snapping follows the current bar and dock edges, including
   vertical layouts, while turning Snap off still allows full-desktop placement.

@@ -77,12 +77,13 @@ AbstractWidget {
         const v = Number(root._readConfigKey("widgetScale") ?? 100);
         return Math.max(0.5, Math.min(2.0, Number.isFinite(v) ? v / 100 : 1.0));
     }
-    // scaleFactor: the final multiplier widgets use for layout dimensions and font sizes.
-    // Includes press bump when dragging. Widgets should multiply their sizes by this
-    // instead of relying on Item.scale (which causes bitmap blur).
+    // scaleFactor is persistent geometry only. Selection/press feedback must
+    // never modify this value: widgets multiply their layout dimensions and
+    // font sizes by it, so the old 1.05 press bump physically moved/resized the
+    // widget as soon as it was selected.
     property bool _isResizing: false
     property var _resizePreviewValues: ({})
-    readonly property real scaleFactor: ((draggable && containsPress && !_isResizing) ? 1.05 : 1.0) * _baseScale
+    readonly property real scaleFactor: _baseScale
     readonly property real widgetOpacity: {
         const v = Number(root._readConfigKey("widgetOpacity") ?? 100);
         return Math.max(0, Math.min(1, Number.isFinite(v) ? v / 100 : 1.0));
@@ -653,6 +654,13 @@ AbstractWidget {
         canvas.cycleOverlappingDesktopWidget(root.editInstanceKey)
     }
 
+    function _bringToFront(): void {
+        const canvas = root.parent?.parent ?? null
+        if (!canvas || typeof canvas.promoteDesktopWidget !== "function")
+            return
+        canvas.promoteDesktopWidget(root.editInstanceKey)
+    }
+
     readonly property string editControlsGeometryReport: {
         const requestedX = root.debugLayoutProbeActive ? root.debugLayoutProbeX : root.x;
         const requestedY = root.debugLayoutProbeActive ? root.debugLayoutProbeY : root.y;
@@ -817,6 +825,78 @@ AbstractWidget {
     onPressed: {
         if (GlobalStates.widgetEditMode)
             GlobalStates.selectDesktopWidget(root.editInstanceKey)
+    }
+
+    // Locked widgets intentionally disable AbstractWidget's drag MouseArea.
+    // Keep selection available through a separate tap handler so locking a
+    // widget never makes it unreachable from the desktop editor.
+    TapHandler {
+        enabled: GlobalStates.widgetEditMode && root.locked
+        acceptedButtons: Qt.LeftButton
+        onTapped: GlobalStates.selectDesktopWidget(root.editInstanceKey)
+    }
+
+    TapHandler {
+        enabled: GlobalStates.widgetEditMode
+        acceptedButtons: Qt.RightButton
+        onTapped: {
+            GlobalStates.selectDesktopWidget(root.editInstanceKey)
+            widgetEditContextMenu.active = true
+        }
+    }
+
+    Item {
+        id: widgetEditContextAnchor
+        width: 1
+        height: 1
+        x: Math.max(0, Math.min(root.width,
+            root.width - root._editScreenMargin))
+        y: Math.max(0, Math.min(root.height,
+            root.height / 2))
+    }
+
+    ContextMenu {
+        id: widgetEditContextMenu
+        anchorItem: widgetEditContextAnchor
+        popupAbove: root.y > root.scaledScreenHeight / 2
+        // The desktop editor runs on Niri layer surfaces. A focus-loss backdrop
+        // can sit above the popup and consume its own clicks, so use the same
+        // hover-close contract as the desktop context menu.
+        closeOnFocusLost: false
+        closeOnHoverLost: true
+        closeOnHoverLostAfterEntered: true
+        closeOnHoverLostDelay: 700
+        model: [
+            {
+                text: root.locked ? Translation.tr("Unlock position")
+                    : Translation.tr("Lock position"),
+                iconName: root.locked ? "lock_open" : "lock",
+                monochromeIcon: true,
+                action: () => root._setOutputValue("locked", !root.locked)
+            },
+            {
+                text: Translation.tr("Bring to front"),
+                iconName: "layers",
+                monochromeIcon: true,
+                action: () => root._bringToFront()
+            },
+            ...((root._effectivePopover !== null && !root.locked) ? [{
+                text: Translation.tr("Quick controls"),
+                iconName: "tune",
+                monochromeIcon: true,
+                action: () => GlobalStates.requestDesktopWidgetQuickControls(
+                    root.editInstanceKey)
+            }] : []),
+            ...(!root.locked ? [
+                { type: "separator" },
+                {
+                    text: Translation.tr("Reset to defaults"),
+                    iconName: "restart_alt",
+                    monochromeIcon: true,
+                    action: () => root.resetToDefaults()
+                }
+            ] : [])
+        ]
     }
 
     // ── Edit mode toolbar (proper Material action bar) ─────────
@@ -1631,9 +1711,16 @@ AbstractWidget {
     // widget family's identity and never re-tone. Content that needs the accent
     // to stay legible over the plate/region uses the widgetAccent*Visible
     // display variants below, which only move when the raw accent doesn't read.
-    // Style-dispatched material roles, in [primary, secondary, tertiary] order.
+    // Style-dispatched roles, in [primary, secondary, tertiary] order. Several
+    // styles currently resolve to the same generated M3 values, but consuming
+    // their public token contracts here keeps desktop widgets correct if those
+    // styles diverge later instead of silently falling back to generic colors.
     readonly property var _accentRoles: Appearance.zzzEverywhere
         ? [Appearance.zzz.accent, Appearance.zzz.secondary, Appearance.zzz.tertiary]
+        : Appearance.angelEverywhere
+            ? [Appearance.angel.colPrimary, Appearance.angel.colSecondary, Appearance.angel.colTertiary]
+        : Appearance.inirEverywhere
+            ? [Appearance.inir.colPrimary, Appearance.inir.colSecondary, Appearance.inir.colTertiary]
         : [Appearance.colors.colPrimary, Appearance.colors.colSecondary, Appearance.colors.colTertiary]
 
     readonly property color widgetAccent: root._accentRoles[0]
@@ -1655,11 +1742,11 @@ AbstractWidget {
         ? root.regionBrightness > 0.55
         : !Appearance.m3colors.darkmode
     readonly property color _plateDark: {
-        const p = Qt.color(Appearance.colors.colPrimary);
+        const p = Qt.color(root.widgetAccent);
         return Qt.hsla(p.hslHue, Math.min(0.22, p.hslSaturation), 0.11, 1.0);
     }
     readonly property color _plateLight: {
-        const p = Qt.color(Appearance.colors.colPrimary);
+        const p = Qt.color(root.widgetAccent);
         return Qt.hsla(p.hslHue, Math.min(0.20, p.hslSaturation), 0.93, 1.0);
     }
     // The plate answers to BOTH the theme and the wallpaper. Dark theme keeps the
@@ -1829,12 +1916,19 @@ AbstractWidget {
         interval: root.liveColorTrackingInterval
         repeat: false
         onTriggered: {
-            if (root.liveColorTracking && root.needsColText && root.isDragging)
+            if (root.liveColorTracking && root.needsColText && root.isDragging
+                    && !GlobalStates.widgetEditMode)
                 root._runColorAnalysis();
         }
     }
     function _queueLiveColorAnalysis(): void {
-        if (!root.liveColorTracking || !root.needsColText || !root.isDragging)
+        // Edit mode prioritizes stable feedback: pointer movement can cross very
+        // different wallpaper regions in a few frames, and applying intermediate
+        // color samples makes a widget visibly flash between palettes. Freeze the
+        // sampled palette during the gesture and analyze the final geometry once
+        // on release. Outside edit mode, opt-in live tracking keeps its old role.
+        if (GlobalStates.widgetEditMode || !root.liveColorTracking
+                || !root.needsColText || !root.isDragging)
             return;
         if (!_liveColorAnalysisTimer.running)
             _liveColorAnalysisTimer.start();
@@ -1870,6 +1964,8 @@ AbstractWidget {
 
     function _colorTargetX(): int { return Math.max(0, Math.round(root.x / Math.max(root.wallpaperScale, 0.001))); }
     function _colorTargetY(): int { return Math.max(0, Math.round(root.y / Math.max(root.wallpaperScale, 0.001))); }
+    function _colorTargetWidth(): int { return Math.max(1, Math.round(root.width / Math.max(root.wallpaperScale, 0.001))); }
+    function _colorTargetHeight(): int { return Math.max(1, Math.round(root.height / Math.max(root.wallpaperScale, 0.001))); }
 
     function _runColorAnalysis(): void {
         if (colorOnlyProc.running) {
@@ -1879,6 +1975,11 @@ AbstractWidget {
         root._colorRerunQueued = false;
         colorOnlyProc.posX = root._colorTargetX();
         colorOnlyProc.posY = root._colorTargetY();
+        colorOnlyProc.sampleWidth = root._colorTargetWidth();
+        colorOnlyProc.sampleHeight = root._colorTargetHeight();
+        colorOnlyProc.sampleScreenWidth = Math.round(root.scaledScreenWidth)
+        colorOnlyProc.sampleScreenHeight = Math.round(root.scaledScreenHeight)
+        colorOnlyProc.sampleWallpaperPath = root.wallpaperPath
         colorOnlyProc.running = true;
     }
     Process {
@@ -1930,17 +2031,20 @@ AbstractWidget {
         // checked against it when it lands.
         property int posX: 0
         property int posY: 0
-        property int contentWidth: Math.max(1, Math.round(root.width / Math.max(root.wallpaperScale, 0.001)))
-        property int contentHeight: Math.max(1, Math.round(root.height / Math.max(root.wallpaperScale, 0.001)))
+        property int sampleWidth: 1
+        property int sampleHeight: 1
+        property int sampleScreenWidth: 1
+        property int sampleScreenHeight: 1
+        property string sampleWallpaperPath: ""
         command: [Quickshell.shellPath("scripts/images/least-busy-region-venv.sh")
             , "--color-only"
             , "--position-x", posX
             , "--position-y", posY
-            , "--screen-width", Math.round(root.scaledScreenWidth)
-            , "--screen-height", Math.round(root.scaledScreenHeight)
-            , "--width", contentWidth
-            , "--height", contentHeight
-            , root.wallpaperPath
+            , "--screen-width", sampleScreenWidth
+            , "--screen-height", sampleScreenHeight
+            , "--width", sampleWidth
+            , "--height", sampleHeight
+            , sampleWallpaperPath
         ]
         stdout: StdioCollector {
             id: colorOnlyOutputCollector
@@ -1949,19 +2053,24 @@ AbstractWidget {
                 if (output.length === 0) return;
                 try {
                     const parsedContent = JSON.parse(output);
-                    const movedSinceSample = colorOnlyProc.posX !== root._colorTargetX()
-                        || colorOnlyProc.posY !== root._colorTargetY();
-                    // During opt-in live tracking, an in-flight result is a valid
-                    // recent sample along the drag path. Apply it smoothly and let
-                    // the serialized queued run catch up. Outside an active drag,
-                    // exact-position freshness remains mandatory.
-                    const acceptsLiveSample = root.liveColorTracking && root.isDragging;
-                    const stale = movedSinceSample && !acceptsLiveSample;
+                    const geometryChanged = colorOnlyProc.posX !== root._colorTargetX()
+                        || colorOnlyProc.posY !== root._colorTargetY()
+                        || colorOnlyProc.sampleWidth !== root._colorTargetWidth()
+                        || colorOnlyProc.sampleHeight !== root._colorTargetHeight()
+                        || colorOnlyProc.sampleScreenWidth !== Math.round(root.scaledScreenWidth)
+                        || colorOnlyProc.sampleScreenHeight !== Math.round(root.scaledScreenHeight)
+                        || colorOnlyProc.sampleWallpaperPath !== root.wallpaperPath
+                    // Opt-in live tracking may consume a recent position sample
+                    // during ordinary dragging, but edit mode never does: editor
+                    // feedback stays chromatically stable until the final drop.
+                    const acceptsLiveSample = root.liveColorTracking && root.isDragging
+                        && !GlobalStates.widgetEditMode
+                    const stale = geometryChanged && !acceptsLiveSample;
                     if (Quickshell.env("INIR_REGION_DEBUG") === "1")
                         console.log("[Region]", root.configEntryName, "COLOR-ONLY for", colorOnlyProc.posX, colorOnlyProc.posY,
                             "now at", root._colorTargetX(), root._colorTargetY(),
                             "bright", parsedContent.brightness,
-                            stale ? "-> STALE, discarded" : acceptsLiveSample && movedSinceSample ? "-> LIVE sample" : "-> applied");
+                            stale ? "-> STALE, discarded" : acceptsLiveSample && geometryChanged ? "-> LIVE sample" : "-> applied");
                     // The widget moved while this was being computed: this colour is
                     // for a place it is not any more. Applying it is the second,
                     // wrong colour change. Drop it and analyse where it actually is.
