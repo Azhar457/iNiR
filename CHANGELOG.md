@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Desktop widget editing now uses one panel-aware grid for guides, dragging and
+  resize handles. Snapping follows the current bar and dock edges, including
+  vertical layouts, while turning Snap off still allows full-desktop placement.
 - The Cava Stereo setting controls both shell visualizers and terminal Cava
   again. The desktop visualizer now starts from its per-output enabled state,
   and the shared internal process no longer ignores the saved channel mode.

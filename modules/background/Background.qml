@@ -1968,14 +1968,17 @@ Scope {
                     readonly property bool hasSelection: GlobalStates.selectedDesktopWidget
                         .startsWith((bgRoot.screen?.name ?? "") + "::")
 
-                    // Grid dots at intersections
+                    // Grid dots at intersections. The lattice uses the same
+                    // panel-aware bounds as drag snapping, so moving the bar or
+                    // dock changes both the visible guide and the committed
+                    // position instead of leaving two competing coordinate systems.
                     readonly property bool gridNonDefault: gridSize !== 32
                     Canvas {
                         id: editGridCanvas
-                        x: editGridOverlay.safeLeft
-                        y: editGridOverlay.safeTop
-                        width: editGridOverlay.safeWidth
-                        height: editGridOverlay.safeHeight
+                        x: editGridOverlay.zoneLeft
+                        y: editGridOverlay.zoneTop
+                        width: editGridOverlay.zoneWidth
+                        height: editGridOverlay.zoneHeight
                         visible: editGridOverlay.gridVisible
                         onPaint: {
                             const ctx = getContext("2d");
@@ -2036,33 +2039,33 @@ Scope {
                     }
 
                     Rectangle {
-                        x: editGridOverlay.safeLeft
-                        y: editGridOverlay.safeTop
-                        width: editGridOverlay.safeWidth
-                        height: editGridOverlay.safeHeight
+                        x: editGridOverlay.zoneLeft
+                        y: editGridOverlay.zoneTop
+                        width: editGridOverlay.zoneWidth
+                        height: editGridOverlay.zoneHeight
                         color: "transparent"
                         radius: Appearance.rounding.small
                         border.width: 1
                         border.color: CF.ColorUtils.applyAlpha(editGridOverlay.gridColor, 0.18)
                     }
 
-                    // Crosshair follows the usable widget area, not raw screen center.
+                    // Crosshair follows the adaptive panel-safe widget area.
                     Rectangle {
-                        x: Math.floor(editGridOverlay.safeLeft + editGridOverlay.safeWidth / 2)
-                        y: editGridOverlay.safeTop
-                        width: 1; height: editGridOverlay.safeHeight
+                        x: Math.floor(editGridOverlay.zoneLeft + editGridOverlay.zoneWidth / 2)
+                        y: editGridOverlay.zoneTop
+                        width: 1; height: editGridOverlay.zoneHeight
                         color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.08)
                     }
                     Rectangle {
-                        x: editGridOverlay.safeLeft
-                        y: Math.floor(editGridOverlay.safeTop + editGridOverlay.safeHeight / 2)
-                        width: editGridOverlay.safeWidth; height: 1
+                        x: editGridOverlay.zoneLeft
+                        y: Math.floor(editGridOverlay.zoneTop + editGridOverlay.zoneHeight / 2)
+                        width: editGridOverlay.zoneWidth; height: 1
                         color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.08)
                     }
                     // Center dot
                     Rectangle {
-                        x: Math.floor(editGridOverlay.safeLeft + editGridOverlay.safeWidth / 2) - 3
-                        y: Math.floor(editGridOverlay.safeTop + editGridOverlay.safeHeight / 2) - 3
+                        x: Math.floor(editGridOverlay.zoneLeft + editGridOverlay.zoneWidth / 2) - 3
+                        y: Math.floor(editGridOverlay.zoneTop + editGridOverlay.zoneHeight / 2) - 3
                         width: 6; height: 6; radius: 3
                         color: CF.ColorUtils.applyAlpha(editGridOverlay.crosshairColor, 0.25)
                     }

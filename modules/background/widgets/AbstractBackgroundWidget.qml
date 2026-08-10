@@ -710,12 +710,65 @@ AbstractWidget {
         return origin + Math.round((value - origin) / _editGridSize) * _editGridSize
     }
 
-    // Snap preview ghost. The grid is anchored to the full desktop canvas,
-    // independent of movable shell surfaces.
-    property real _snapPreviewX: _snapEnabled
-        ? _snapToGrid(root.x, root._safeLeft) : root.x
-    property real _snapPreviewY: _snapEnabled
-        ? _snapToGrid(root.y, root._safeTop) : root.y
+    // Grid snapping uses the panel-aware work area. The grid can therefore
+    // magnetize a widget to the live bar/dock boundary while free placement
+    // remains available across the full desktop when snapping is disabled.
+    readonly property real _editMagnetThreshold: Math.max(6,
+        Math.min(18, root._editGridSize * 0.4))
+
+    function _snapEditEdge(value: real, start: real, end: real): real {
+        const minValue = Number(start) || 0
+        const maxValue = Math.max(minValue, Number(end) || 0)
+        const raw = Math.max(minValue, Math.min(maxValue, Number(value) || 0))
+        const threshold = root._editMagnetThreshold
+        if (Math.abs(raw - minValue) <= threshold)
+            return root._snapToPixel(minValue)
+        if (Math.abs(raw - maxValue) <= threshold)
+            return root._snapToPixel(maxValue)
+        const center = minValue + (maxValue - minValue) / 2
+        if (Math.abs(raw - center) <= threshold)
+            return root._snapToPixel(center)
+        return root._snapToPixel(Math.max(minValue,
+            Math.min(maxValue, root._snapToGrid(raw, minValue))))
+    }
+
+    function _snapEditAxis(value: real, extent: real,
+            start: real, end: real): real {
+        const minValue = Number(start) || 0
+        const maxValue = Math.max(minValue, (Number(end) || 0) - extent)
+        const raw = Math.max(minValue, Math.min(maxValue, Number(value) || 0))
+        const threshold = root._editMagnetThreshold
+
+        // Safe-area edges are stronger targets than the regular lattice. They
+        // correspond to bar/dock boundaries when those surfaces occupy an edge.
+        if (Math.abs(raw - minValue) <= threshold)
+            return root._snapToPixel(minValue)
+        if (Math.abs(raw - maxValue) <= threshold)
+            return root._snapToPixel(maxValue)
+
+        // A center rail makes balanced layouts deterministic even when the
+        // current work-area width is not divisible by the configured grid size.
+        const center = minValue + Math.max(0, maxValue - minValue) / 2
+        if (Math.abs(raw - center) <= threshold)
+            return root._snapToPixel(center)
+
+        return root._snapToPixel(Math.max(minValue,
+            Math.min(maxValue, root._snapToGrid(raw, minValue))))
+    }
+
+    function _snapEditX(value: real): real {
+        return root._snapEditAxis(value, root.width,
+            root._zoneSafeLeft, root._zoneSafeRight)
+    }
+
+    function _snapEditY(value: real): real {
+        return root._snapEditAxis(value, root.height,
+            root._zoneSafeTop, root._zoneSafeBottom)
+    }
+
+    // The ghost is the exact position that will be committed on release.
+    property real _snapPreviewX: _snapEnabled ? root._snapEditX(root.x) : root.x
+    property real _snapPreviewY: _snapEnabled ? root._snapEditY(root.y) : root.y
     Rectangle {
         id: snapGhost
         visible: root.containsPress && root._snapEnabled && root.draggable
@@ -1251,17 +1304,43 @@ AbstractWidget {
                 let newX = rh._startX;
                 let newY = rh._startY;
 
-                if (rh.resizeRight) newW = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth, rh._startWidth + dx));
-                if (rh.resizeLeft) {
-                    const dw = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth, rh._startWidth - dx));
-                    newX = rh._startX + (rh._startWidth - dw);
-                    newW = dw;
+                if (rh.resizeRight) {
+                    let rightEdge = rh._startX + rh._startWidth + dx
+                    if (root._snapEnabled)
+                        rightEdge = root._snapEditEdge(rightEdge,
+                            root._zoneSafeLeft, root._zoneSafeRight)
+                    newW = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth,
+                        rightEdge - rh._startX))
                 }
-                if (rh.resizeBottom) newH = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight, rh._startHeight + dy));
+                if (rh.resizeLeft) {
+                    const fixedRight = rh._startX + rh._startWidth
+                    let leftEdge = rh._startX + dx
+                    if (root._snapEnabled)
+                        leftEdge = root._snapEditEdge(leftEdge,
+                            root._zoneSafeLeft, root._zoneSafeRight)
+                    const dw = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth,
+                        fixedRight - leftEdge))
+                    newX = fixedRight - dw
+                    newW = dw
+                }
+                if (rh.resizeBottom) {
+                    let bottomEdge = rh._startY + rh._startHeight + dy
+                    if (root._snapEnabled)
+                        bottomEdge = root._snapEditEdge(bottomEdge,
+                            root._zoneSafeTop, root._zoneSafeBottom)
+                    newH = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight,
+                        bottomEdge - rh._startY))
+                }
                 if (rh.resizeTop) {
-                    const dh = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight, rh._startHeight - dy));
-                    newY = rh._startY + (rh._startHeight - dh);
-                    newH = dh;
+                    const fixedBottom = rh._startY + rh._startHeight
+                    let topEdge = rh._startY + dy
+                    if (root._snapEnabled)
+                        topEdge = root._snapEditEdge(topEdge,
+                            root._zoneSafeTop, root._zoneSafeBottom)
+                    const dh = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight,
+                        fixedBottom - topEdge))
+                    newY = fixedBottom - dh
+                    newH = dh
                 }
 
                 const preview = {}
@@ -1387,11 +1466,11 @@ AbstractWidget {
         }
 
         if (root._snapEnabled) {
-            newX = root._snapToGrid(newX, root._safeLeft)
-            newY = root._snapToGrid(newY, root._safeTop)
+            newX = root._snapEditX(newX)
+            newY = root._snapEditY(newY)
         }
-        const finalX = root._clampX(newX)
-        const finalY = root._clampY(newY)
+        const finalX = root._snapEnabled ? newX : root._clampX(newX)
+        const finalY = root._snapEnabled ? newY : root._clampY(newY)
         root.x = finalX;
         root.y = finalY;
         const updates = { x: finalX, y: finalY }
