@@ -17,9 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reject stale geometry results while editing. Graphic accents remain stable
   theme colors instead of being darkened into rust/brown/olive on bright local
   regions, while truly neutral ink borrows only a restrained seed tint. Resource
-  telemetry follows the same semantic palette as the bar: one style-owned normal
-  accent, tertiary only for caution, and error only for warnings; tracks stay in
-  the same color family instead of introducing gray/black rings. Output-local
+  telemetry now uses the shell's existing metric/progress tokens: normal accent,
+  tertiary only for caution, error only for warnings, style-owned track/surface
+  roles, and distinct primary/secondary/tertiary only where graph series need
+  identification. Plate-less Aurora rings omit the inactive track, and telemetry
+  text no longer uses outline/keyline compensation. Output-local
   Resource/Media activity no longer depends on a conflicting global enable flag.
 - Desktop widget editing now uses one panel-aware grid for guides, dragging and
   resize handles. Snapping follows the current bar and dock edges, including
