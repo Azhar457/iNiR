@@ -16,10 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wallpaper-aware widget colors now use deterministic full-region sampling and
   reject stale geometry results while editing. Graphic accents remain stable
   theme colors instead of being darkened into rust/brown/olive on bright local
-  regions; readable ink now uses restrained seed tinting, and Resource rings,
-  bars and graphs use neutral keylines/tracks for contrast without recoloring the
-  data palette. Output-local Resource/Media activity no longer depends on a
-  conflicting global enable flag.
+  regions, while truly neutral ink borrows only a restrained seed tint. Resource
+  telemetry follows the same semantic palette as the bar: one style-owned normal
+  accent, tertiary only for caution, and error only for warnings; tracks stay in
+  the same color family instead of introducing gray/black rings. Output-local
+  Resource/Media activity no longer depends on a conflicting global enable flag.
 - Desktop widget editing now uses one panel-aware grid for guides, dragging and
   resize handles. Snapping follows the current bar and dock edges, including
   vertical layouts, while turning Snap off still allows full-desktop placement.

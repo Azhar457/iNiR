@@ -15,22 +15,10 @@ Canvas {
     property color color: Appearance.colors.colPrimary
     property real fillOpacity: 0.5
     property real lineWidth: 2
-    // Optional keyline behind the data stroke. It is painted in the same Canvas
-    // pass, so callers can preserve a theme accent over arbitrary imagery without
-    // allocating a second Graph/Canvas just for contrast.
-    property color outlineColor: "transparent"
-    property real outlineWidth: 0
     property bool smooth: true
     property var alignment: Graph.Alignment.Left
 
     onValuesChanged: root.requestPaint()
-    onColorChanged: root.requestPaint()
-    onFillOpacityChanged: root.requestPaint()
-    onLineWidthChanged: root.requestPaint()
-    onOutlineColorChanged: root.requestPaint()
-    onOutlineWidthChanged: root.requestPaint()
-    onSmoothChanged: root.requestPaint()
-    onAlignmentChanged: root.requestPaint()
     onPaint: {
         var ctx = getContext("2d")
         ctx.clearRect(0, 0, width, height)
@@ -49,7 +37,9 @@ Canvas {
         }
         if (pts.length < 2) return
 
+        ctx.strokeStyle = root.color
         ctx.fillStyle = ColorUtils.transparentize(root.color, 1 - root.fillOpacity)
+        ctx.lineWidth = root.lineWidth
         ctx.lineJoin = "round"
         ctx.lineCap = "round"
         ctx.beginPath()
@@ -66,14 +56,6 @@ Canvas {
             for (var k = 1; k < pts.length; ++k)
                 ctx.lineTo(pts[k].x, pts[k].y)
         }
-
-        if (root.outlineWidth > 0 && root.outlineColor.a > 0) {
-            ctx.strokeStyle = root.outlineColor
-            ctx.lineWidth = root.lineWidth + root.outlineWidth * 2
-            ctx.stroke()
-        }
-        ctx.strokeStyle = root.color
-        ctx.lineWidth = root.lineWidth
         ctx.stroke()
         ctx.lineTo(pts[pts.length - 1].x, height)
         ctx.fill()

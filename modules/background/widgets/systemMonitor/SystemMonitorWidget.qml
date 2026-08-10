@@ -196,15 +196,56 @@ AbstractBackgroundWidget {
     readonly property real cardRadius: root.widgetCardRadius
     readonly property int _innerMargin: Appearance.angelEverywhere || Appearance.inirEverywhere ? 6 : 2
 
-    // Metric graphics keep the generated/style palette stable. Contrast against
-    // arbitrary wallpaper is supplied by a neutral keyline/track, not by pushing
-    // pastel accents to text-level contrast (which turns warm palettes into mud).
-    readonly property color cpuColor: root.widgetAccentVisible
-    readonly property color memColor: root.widgetAccent2Visible
-    readonly property color gpuColor: root.widgetAccent3Visible
-    readonly property color tempColor: root.widgetGraphicColor(root.widgetSignal)
-    readonly property color diskColor: root.widgetGraphicColor(
-        ColorUtils.mix(root.widgetAccent2, root.widgetAccent3, 0.55))
+    // Match the resource indicators used by the bar: metrics do not get an
+    // arbitrary primary/secondary/tertiary/error rainbow. One style-owned accent
+    // is the normal state; tertiary/error are semantic states only. In particular,
+    // temperature is not an error color merely because it is a temperature.
+    readonly property color _metricNormal: root.widgetGraphicColor(
+        Appearance.zzzEverywhere ? Appearance.zzz.accent
+        : Appearance.cookieEverywhere ? Appearance.cookie.primaryFace
+        : Appearance.inirEverywhere ? Appearance.inir.colText
+        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
+        : Appearance.colors.colPrimary)
+    readonly property color _metricCaution: root.widgetGraphicColor(
+        Appearance.zzzEverywhere ? Appearance.zzz.tertiary
+        : Appearance.cookieEverywhere ? Appearance.cookie.tertiaryFace
+        : Appearance.inirEverywhere ? Appearance.inir.colWarning
+        : Appearance.colors.colWarning)
+    readonly property color _metricWarning: root.widgetGraphicColor(root.widgetSignal)
+
+    function _metricSeverity(key: string): int {
+        const value = root._getValue(key) * 100;
+        switch (key) {
+        case "temp": {
+            const caution = Config.options?.bar?.resources?.tempCautionThreshold ?? 65;
+            const warning = Config.options?.bar?.resources?.tempWarningThreshold ?? 80;
+            return value >= warning ? 2 : value >= caution ? 1 : 0;
+        }
+        case "cpu":
+            return value >= (Config.options?.bar?.resources?.cpuWarningThreshold ?? 90) ? 2 : 0;
+        case "mem":
+            return value >= (Config.options?.bar?.resources?.memoryWarningThreshold ?? 90) ? 2 : 0;
+        case "gpu":
+            return value >= (Config.options?.bar?.resources?.gpuWarningThreshold ?? 90) ? 2 : 0;
+        case "disk":
+            return value >= 90 ? 2 : 0;
+        default:
+            return 0;
+        }
+    }
+
+    function _metricColor(key: string): color {
+        const severity = root._metricSeverity(key);
+        return severity >= 2 ? root._metricWarning
+            : severity === 1 ? root._metricCaution
+            : root._metricNormal;
+    }
+
+    readonly property color cpuColor: root._metricColor("cpu")
+    readonly property color memColor: root._metricColor("mem")
+    readonly property color gpuColor: root._metricColor("gpu")
+    readonly property color tempColor: root._metricColor("temp")
+    readonly property color diskColor: root._metricColor("disk")
 
     readonly property real _mixedRegionStrength: root.widgetHasSurface ? 0
         : Math.max(0, Math.min(1, (root.regionBrightnessSpread - 0.08) / 0.20))
@@ -219,28 +260,6 @@ AbstractBackgroundWidget {
         const opposite = lightInk ? Qt.rgba(0, 0, 0, 1) : Qt.rgba(1, 1, 1, 1);
         return ColorUtils.applyAlpha(opposite,
             Math.min(0.72, baseAlpha + root._mixedRegionStrength * 0.34));
-    }
-
-    function _metricNeedsKeyline(metricColor: color): bool {
-        if (root.widgetHasSurface)
-            return false;
-        return ColorUtils.contrastRatio(metricColor, root.accentBackdrop) < 3.0
-            || root._mixedRegionStrength > 0.30;
-    }
-
-    function _metricKeyline(metricColor: color, baseAlpha = 0.62): color {
-        if (!root._metricNeedsKeyline(metricColor))
-            return "transparent";
-        return ColorUtils.applyAlpha(root.widgetInk,
-            Math.min(0.88, baseAlpha + root._mixedRegionStrength * 0.18));
-    }
-
-    function _metricForeground(metricColor: color, target = 3.0): color {
-        if (root.widgetHasSurface
-                || ColorUtils.contrastRatio(metricColor, root.accentBackdrop) >= target)
-            return metricColor;
-        return ColorUtils.readableAccentInk(metricColor, root.accentBackdrop,
-            target, root.widgetInk);
     }
 
     // Animation duration for smooth value transitions
@@ -312,7 +331,7 @@ AbstractBackgroundWidget {
                     visible: root.showLabels
                     text: barRow.modelData.icon
                     iconSize: Appearance.font.pixelSize.small
-                    color: root._metricForeground(barRow._liveColor)
+                    color: barRow._liveColor
                 }
 
                 Item {
@@ -322,9 +341,7 @@ AbstractBackgroundWidget {
                     Rectangle {
                         anchors.fill: parent
                         radius: Appearance.rounding.verysmall
-                        color: root.widgetHasSurface
-                            ? ColorUtils.applyAlpha(barRow._liveColor, root.trackAlpha)
-                            : ColorUtils.applyAlpha(root.widgetInk, Math.max(0.10, root.trackAlpha))
+                        color: ColorUtils.applyAlpha(barRow._liveColor, root.trackAlpha)
                     }
 
                     Rectangle {
@@ -335,9 +352,6 @@ AbstractBackgroundWidget {
                         radius: Appearance.rounding.verysmall
                         color: barRow._liveColor
                         opacity: root.fillOpacity
-                        border.width: root._metricNeedsKeyline(barRow._liveColor)
-                            ? Math.max(1, Math.round(root.scaleFactor)) : 0
-                        border.color: root._metricKeyline(barRow._liveColor, 0.56)
 
                         Behavior on width {
                             enabled: Appearance.animationsEnabled
@@ -387,12 +401,12 @@ AbstractBackgroundWidget {
                     MaterialSymbol {
                         text: modelData.icon
                         iconSize: Appearance.font.pixelSize.smaller
-                        color: root._metricForeground(root._getColor(modelData.key))
+                        color: root._getColor(modelData.key)
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     StyledText {
                         text: root._getDisplayText(modelData.key)
-                        color: root._metricForeground(root._getColor(modelData.key))
+                        color: root._getColor(modelData.key)
                         style: root._labelStyle
                         styleColor: root._opposingKeyline(color, 0.24)
                         font { pixelSize: Appearance.font.pixelSize.smaller; family: Appearance.font.family.numbers }
@@ -440,8 +454,6 @@ AbstractBackgroundWidget {
             values: root.showCpu ? ResourceUsage.cpuUsageHistory : []
             color: root.cpuColor
             fillOpacity: root.graphFillOpacity + 0.05
-            outlineColor: root._metricKeyline(root.cpuColor, 0.52)
-            outlineWidth: root._metricNeedsKeyline(root.cpuColor) ? 1 : 0
             alignment: Graph.Alignment.Right
             visible: root.showCpu
         }
@@ -452,8 +464,6 @@ AbstractBackgroundWidget {
             values: root.showMemory ? ResourceUsage.memoryUsageHistory : []
             color: root.memColor
             fillOpacity: root.graphFillOpacity
-            outlineColor: root._metricKeyline(root.memColor, 0.52)
-            outlineWidth: root._metricNeedsKeyline(root.memColor) ? 1 : 0
             alignment: Graph.Alignment.Right
             visible: root.showMemory
         }
@@ -464,8 +474,6 @@ AbstractBackgroundWidget {
             values: root.showGpu ? ResourceUsage.gpuUsageHistory : []
             color: root.gpuColor
             fillOpacity: root.graphFillOpacity - 0.05
-            outlineColor: root._metricKeyline(root.gpuColor, 0.52)
-            outlineWidth: root._metricNeedsKeyline(root.gpuColor) ? 1 : 0
             alignment: Graph.Alignment.Right
             visible: root.showGpu
         }
@@ -516,26 +524,19 @@ AbstractBackgroundWidget {
                         // rendering for most of every 3-second polling cycle.
                         enableAnimation: false
                         colPrimary: ringCol._liveColor
-                        // Preserve the actual theme color and put contrast behind
-                        // it. trackUnderlay reuses CircularProgress' existing
-                        // secondary ShapePath, so five rings still render two
-                        // paths each rather than allocating outline Shapes.
-                        trackUnderlay: root._metricNeedsKeyline(ringCol._liveColor)
-                        trackUnderlayExtraWidth: trackUnderlay
-                            ? Math.max(1, Math.round(root.scaleFactor)) : 0
-                        colSecondary: trackUnderlay
-                            ? root._metricKeyline(ringCol._liveColor, 0.64)
-                            : ColorUtils.applyAlpha(root.widgetInk,
-                                Math.max(0.18, root.trackAlpha + 0.06))
+                        // Structural track stays in the same theme family as the
+                        // active arc. No neutral underlay and no extra Shape.
+                        colSecondary: ColorUtils.applyAlpha(ringCol._liveColor,
+                            Math.min(0.92, root.trackAlpha + 0.04))
                     }
 
                     // Percentage/value inside the ring
                     StyledText {
                         anchors.centerIn: parent
                         text: ringCol.modelData.key === "temp" ? ResourceUsage.maxTemp + "°" : Math.round(ringCol._animatedValue * 100)
-                        color: root.widgetInk
-                        style: root._labelStyle
-                        styleColor: root._labelKeyline
+                        color: ringCol._liveColor
+                        style: root.widgetHasSurface ? Text.Normal : Text.Outline
+                        styleColor: root._opposingKeyline(ringCol._liveColor, 0.34)
                         font {
                             pixelSize: Math.max(10, Math.round(ringCol._ringSize * 0.26))
                             family: Appearance.font.family.numbers
@@ -586,8 +587,6 @@ AbstractBackgroundWidget {
                 height: chipRow.implicitHeight + 8
                 radius: Appearance.rounding.small
                 color: ColorUtils.applyAlpha(textChip._liveColor, root.trackAlpha)
-                border.width: root._metricNeedsKeyline(textChip._liveColor) ? 1 : 0
-                border.color: root._metricKeyline(textChip._liveColor, 0.46)
 
                 Row {
                     id: chipRow

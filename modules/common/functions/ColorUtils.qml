@@ -397,12 +397,42 @@ Singleton {
     }
 
     /**
-     * Backward-compatible accent contrast helper. Older callers passed HSL band
-     * arguments; retaining those parameters avoids API churn for custom widgets,
-     * but the implementation deliberately no longer performs same-hue deepening.
+     * Region-adaptive accent used by existing components that already render on
+     * a controlled surface (Battery/Cookie Clock). Keep this contract stable;
+     * desktop telemetry graphics use style-owned colors instead of routing raw
+     * shapes through this text-like contrast transform.
      */
     function adaptAccent(accentColor, bgColor, target = 4.0, minSat = 0.45, bandMin = 0.18, bandMax = 0.84) {
-        return readableAccentInk(accentColor, bgColor, target);
+        if (accentColor === undefined || accentColor === null || String(accentColor).length === 0)
+            return accentColor;
+        if (bgColor === undefined || bgColor === null || String(bgColor).length === 0)
+            return accentColor;
+        var fg = Qt.color(accentColor);
+        var bg = Qt.color(bgColor);
+        if (contrastRatio(fg, bg) >= target)
+            return fg;
+        var hue = fg.hslHue;
+        var sat = Math.max(minSat, fg.hslSaturation);
+        var bgLum = relativeLuminance(bg);
+        var regionLight = bgLum >= 0.18;
+        var anchorL = regionLight ? 0.42 : 0.70;
+        var edgeL = regionLight ? bandMin : bandMax;
+        var best = Qt.hsla(hue, sat, anchorL, fg.a);
+        var bestRatio = contrastRatio(best, bg);
+        var steps = 18;
+        for (var i = 0; i <= steps; i++) {
+            var L = anchorL + (edgeL - anchorL) * (i / steps);
+            var satHere = regionLight ? Math.min(1.0, sat + (anchorL - L) * 0.8) : sat;
+            var cand = Qt.hsla(hue, clamp01(satHere), clamp01(L), fg.a);
+            var ratio = contrastRatio(cand, bg);
+            if (ratio >= target)
+                return cand;
+            if (ratio > bestRatio) {
+                best = cand;
+                bestRatio = ratio;
+            }
+        }
+        return best;
     }
 
     /**
@@ -418,7 +448,7 @@ Singleton {
      * @param {number} targetSat - Maximum tint saturation for neutral ink.
      * @returns {color} Restrained theme-tinted ink.
      */
-    function boostInkSaturation(ink, seedColor, targetSat = 0.12) {
+    function boostInkSaturation(ink, seedColor, targetSat = 0.5) {
         if (ink === undefined || ink === null || String(ink).length === 0)
             return ink;
         var seed = Qt.color(seedColor);
@@ -426,14 +456,20 @@ Singleton {
         if (!seed.valid || !c.valid || seed.hslSaturation <= 0.02)
             return c;
 
-        var desiredSat = Math.min(targetSat,
-            Math.max(c.hslSaturation, seed.hslSaturation * 0.14));
-        if (c.hslSaturation >= desiredSat)
-            return c;
+        // Preserve the established behavior for ink that already has a real hue.
+        // The bug is specifically Qt's hue=0 sentinel on achromatic colors: raising
+        // that gray to 50% saturation manufactures red. Neutral ink instead borrows
+        // the seed hue and only receives a restrained tint.
+        if (c.hslSaturation > 0.025) {
+            if (c.hslSaturation >= targetSat)
+                return c;
+            return Qt.hsla(c.hslHue, targetSat, c.hslLightness, c.a);
+        }
 
-        // Achromatic Qt colors expose hue=0; that is not a meaningful red hue.
-        var hue = c.hslSaturation > 0.025 ? c.hslHue : seed.hslHue;
-        return Qt.hsla(hue, desiredSat, c.hslLightness, c.a);
+        var neutralSat = Math.min(0.12, targetSat, seed.hslSaturation * 0.14);
+        return neutralSat > 0
+            ? Qt.hsla(seed.hslHue, neutralSat, c.hslLightness, c.a)
+            : c;
     }
 
     /**
