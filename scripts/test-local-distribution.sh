@@ -196,6 +196,7 @@ bash "$launcher" path >/dev/null
 bash "$launcher" status >/dev/null
 
 step "application launch environment"
+# XWayland is not guaranteed to own :0. Preserve live DISPLAY discovery and validation.
 shell_exec="$runtime_root/modules/common/functions/ShellExec.qml"
 inir_launcher="$runtime_root/scripts/inir"
 if ! grep -Fq 'systemctl --user show-environment' "$shell_exec" \
