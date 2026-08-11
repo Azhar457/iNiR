@@ -37,6 +37,7 @@ Item {
     readonly property color workspaceInactive: root.forceMaterialStyle ? Appearance.m3colors.m3onSurfaceVariant : Appearance.colors.colOnLayer1Inactive
     readonly property color workspaceOnPrimaryReadable: ColorUtils.ensureReadable(root.workspaceOnPrimary, root.workspacePrimary, 4.5)
     readonly property color workspaceOnSecondaryReadable: ColorUtils.ensureReadable(root.workspaceOnSecondaryContainer, root.workspaceSecondaryContainer, 4.5)
+    readonly property color workspaceInactiveReadable: ColorUtils.ensureReadable(root.workspaceInactive, Appearance.colors.colLayer1Base, 4.5)
     property bool configuredPerMonitor: true
     property string scrollBehavior: "workspace"
     property bool configuredDynamicCount: true
@@ -572,7 +573,7 @@ Item {
                             root.useZzzStyle
                                 ? (workspaceOccupied[index] ? Appearance.zzz.onColor : Appearance.zzz.onMuted)
                                 : (workspaceOccupied[index] ? root.workspaceOnSecondaryReadable :
-                                    root.workspaceInactive)
+                                    root.workspaceInactiveReadable)
 
                         Behavior on opacity {
                             animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -591,7 +592,7 @@ Item {
                             : root.useZzzStyle
                                 ? (workspaceOccupied[index] ? Appearance.zzz.onColor : Appearance.zzz.onMuted)
                                 : (workspaceOccupied[index] ? root.workspaceOnSecondaryReadable
-                                    : root.workspaceInactive)
+                                    : root.workspaceInactiveReadable)
                         sourceComponent: root.indicatorStyle === "icon" ? workspaceIconMarker : workspaceDotMarker
 
                         Component {
