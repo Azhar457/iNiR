@@ -35,6 +35,8 @@ Item {
     readonly property color workspaceSecondaryContainer: root.forceMaterialStyle ? Appearance.m3colors.m3secondaryContainer : Appearance.colors.colSecondaryContainer
     readonly property color workspaceOnSecondaryContainer: root.forceMaterialStyle ? Appearance.m3colors.m3onSecondaryContainer : Appearance.colors.colOnSecondaryContainer
     readonly property color workspaceInactive: root.forceMaterialStyle ? Appearance.m3colors.m3onSurfaceVariant : Appearance.colors.colOnLayer1Inactive
+    readonly property color workspaceOnPrimaryReadable: ColorUtils.ensureReadable(root.workspaceOnPrimary, root.workspacePrimary, 4.5)
+    readonly property color workspaceOnSecondaryReadable: ColorUtils.ensureReadable(root.workspaceOnSecondaryContainer, root.workspaceSecondaryContainer, 4.5)
     property bool configuredPerMonitor: true
     property string scrollBehavior: "workspace"
     property bool configuredDynamicCount: true
@@ -564,12 +566,12 @@ Item {
                         }
                         elide: Text.ElideRight
                         color: (currentWorkspaceNumber == button.workspaceValue) ?
-                            root.workspaceOnPrimary :
+                            root.workspaceOnPrimaryReadable :
                             // ZZZ: occupied cells have no plate (transparent), so the dark
                             // onSecondary ink read black-on-black — use light zzz inks instead.
                             root.useZzzStyle
                                 ? (workspaceOccupied[index] ? Appearance.zzz.onColor : Appearance.zzz.onMuted)
-                                : (workspaceOccupied[index] ? root.workspaceOnSecondaryContainer :
+                                : (workspaceOccupied[index] ? root.workspaceOnSecondaryReadable :
                                     root.workspaceInactive)
 
                         Behavior on opacity {
@@ -585,10 +587,10 @@ Item {
                         visible: opacity > 0
                         anchors.centerIn: parent
                         readonly property color markerColor: (currentWorkspaceNumber == button.workspaceValue)
-                            ? root.workspaceOnPrimary
+                            ? root.workspaceOnPrimaryReadable
                             : root.useZzzStyle
                                 ? (workspaceOccupied[index] ? Appearance.zzz.onColor : Appearance.zzz.onMuted)
-                                : (workspaceOccupied[index] ? root.workspaceOnSecondaryContainer
+                                : (workspaceOccupied[index] ? root.workspaceOnSecondaryReadable
                                     : root.workspaceInactive)
                         sourceComponent: root.indicatorStyle === "icon" ? workspaceIconMarker : workspaceDotMarker
 
