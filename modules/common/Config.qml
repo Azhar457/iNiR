@@ -2002,6 +2002,11 @@ Singleton {
                         property int swapWarningThreshold: 85
                         property int cpuWarningThreshold: 90
                     }
+                    property JsonObject tray: JsonObject {
+                        // M3 tray icons follow the semantic pill foreground by default.
+                        // Users can opt out to keep each application's original colors.
+                        property bool monochromeIcons: true
+                    }
                     property JsonObject workspaces: JsonObject {
                         property bool monochromeIcons: true
                         property bool showAppIcons: true

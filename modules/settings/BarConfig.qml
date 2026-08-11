@@ -757,6 +757,22 @@ ContentPage {
                 }
 
                 ContentSubsection {
+                    visible: root.m3HasWidget("sysTray")
+                    title: Translation.tr("System tray")
+
+                    SettingsSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "colors"
+                        text: Translation.tr("Match M3 colors")
+                        checked: Config.options?.bar?.m3?.tray?.monochromeIcons ?? true
+                        onCheckedChanged: root.setM3Value("bar.m3.tray.monochromeIcons", checked)
+                        StyledToolTip {
+                            text: Translation.tr("Use the tray's semantic M3 foreground color instead of each app's original icon colors")
+                        }
+                    }
+                }
+
+                ContentSubsection {
                     visible: root.m3HasWidget("utilButtons")
                     title: Translation.tr("Utility buttons")
 
