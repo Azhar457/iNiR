@@ -632,7 +632,7 @@ Singleton {
             section: Translation.tr("System Tray"),
             label: Translation.tr("Monochrome tray icons"),
             description: Translation.tr("Tint tray icons to match theme"),
-            keywords: ["tray", "monochrome", "tint", "icons", "theme", "color"]
+            keywords: ["tray", "monochrome", "tint", "icons", "theme", "color", "m3", "classic"]
         },
         {
             pageIndex: 2, pageName: root.pages[2].name,
@@ -771,6 +771,13 @@ Singleton {
             label: Translation.tr("Widget edit mode"),
             description: Translation.tr("Grid overlay and snap-to-grid for widget placement"),
             keywords: ["widget", "edit", "grid", "snap", "placement", "drag"]
+        },
+        {
+            pageIndex: 14, pageName: root.pages[14].name,
+            section: Translation.tr("Appearance"),
+            label: Translation.tr("Desktop widgets"),
+            description: Translation.tr("Current iNiR palette"),
+            keywords: ["widget", "color", "colour", "palette", "preset", "primary", "secondary", "tertiary", "signal", "surface", "wallpaper"]
         },
         {
             pageIndex: 14, pageName: root.pages[14].name,
@@ -1833,6 +1840,7 @@ Singleton {
         // Desktop Widgets (page 14)
         // =====================================================================
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Edit Mode"), label: Translation.tr("Widget edit mode"), description: Translation.tr("Grid overlay and snap-to-grid for widget placement"), keywords: ["widget", "edit", "grid", "snap", "placement", "drag"] },
+        { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Appearance"), label: Translation.tr("Desktop widgets"), description: Translation.tr("Current iNiR palette"), keywords: ["widget", "color", "colour", "palette", "preset", "primary", "secondary", "tertiary", "signal", "surface", "wallpaper"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Desktop clock"), description: Translation.tr("Clock widget on the desktop background"), keywords: ["clock", "widget", "cookie", "digital", "background", "desktop", "wallpaper", "adaptive", "colors"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Clock"), label: Translation.tr("Clock style"), description: Translation.tr("Cookie, digital or Android stacked clock"), keywords: ["clock", "style", "cookie", "digital", "android", "stacked", "analog", "hands"] },
         { pageIndex: 14, pageName: root.pages[14].name, section: Translation.tr("Japanese Typography"), label: Translation.tr("Japanese typography widget"), description: Translation.tr("Vertical editorial lettering with layout, font, palette, seal, and footer controls"), keywords: ["japanese", "typography", "vertical", "text", "kanji", "kana", "poster", "magazine", "editorial", "seal", "widget", "font", "mincho", "gothic", "color", "palette", "sumi", "outline"] },
