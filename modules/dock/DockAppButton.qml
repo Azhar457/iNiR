@@ -493,7 +493,7 @@ DockButton {
             return
         }
 
-        action.execute()
+        AppSearch.launchDesktopAction(root.desktopEntry, action)
     }
 
     function buildContextMenuModel(): var {

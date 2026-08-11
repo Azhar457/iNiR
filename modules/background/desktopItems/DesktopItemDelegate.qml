@@ -167,7 +167,7 @@ Item {
             if (entry)
                 AppSearch.launchEntry(entry)
         } else {
-            Quickshell.execDetached(["xdg-open", root.target])
+            ShellExec.execDetachedArgs(["xdg-open", root.target], "Open desktop item")
         }
     }
 
@@ -176,7 +176,7 @@ Item {
             return
         const parent = FileUtils.parentDirectory(root.target)
         if (parent.length > 0)
-            Quickshell.execDetached(["xdg-open", "file://" + parent])
+            ShellExec.execDetachedArgs(["xdg-open", "file://" + parent], "Open desktop item folder")
     }
 
     function _remove(): void {
