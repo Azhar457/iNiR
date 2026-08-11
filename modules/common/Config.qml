@@ -2204,6 +2204,8 @@ Singleton {
                     property list<string> numberMap: ["1", "2"] // Characters to show instead of numbers on workspace indicator
                     property bool useNerdFont: false
                     property bool perMonitor: true // Each bar shows workspaces for its own monitor (Niri)
+                    property bool automaticIndicatorColor: true // Derive active workspace indicator color from the current theme
+                    property string indicatorColor: "" // Manual active workspace indicator color when automaticIndicatorColor is false
                 }
                 property JsonObject weather: JsonObject {
                     property bool enable: true
