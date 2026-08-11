@@ -93,6 +93,9 @@ Button {
     }
 
     StyledToolTip {
+        // Scrolling moves the pointer across many thumbnails. Require real
+        // hover intent for Wallhaven instead of flashing every available tag.
+        delay: root.aspectCrop ? 750 : 16
         extraVisibleCondition: root.enableTooltip && root.imageData && root._tagText.length > 0
         alternativeVisibleCondition: root.enableTooltip && (root.buttonHovered || root.hovered)
         text: `${StringUtils.wordWrap(root._tagText, root.maxTagStringLineLength)}`

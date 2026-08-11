@@ -1539,8 +1539,10 @@ Scope {
                         desktopFocusSink.forceActiveFocus()
                         GlobalStates.clearDesktopItemSelection()
                         if (desktopContextMenu.active) desktopContextMenu.close()
+                        if (desktopItemContextMenu.active) desktopItemContextMenu.close()
                         return
                     }
+                    if (desktopItemContextMenu.active) desktopItemContextMenu.close()
                     desktopMenuAnchor.x = mouse.x
                     desktopMenuAnchor.y = mouse.y
                     desktopContextMenu.active = true
@@ -1613,6 +1615,20 @@ Scope {
                 ]
             }
 
+            // Managed items use the same stable screen-level popup path as the
+            // proven bare-desktop menu. Do not anchor a PopupWindow inside the
+            // transformed WidgetCanvas delegate tree.
+            ContextMenu {
+                id: desktopItemContextMenu
+                z: 27
+                anchorItem: desktopMenuAnchor
+                popupAbove: false
+                closeOnFocusLost: false
+                closeOnHoverLost: true
+                closeOnHoverLostAfterEntered: true
+                closeOnHoverLostDelay: 700
+            }
+
             WidgetCanvas {
                 id: widgetCanvas
                 z: 20
@@ -1679,6 +1695,7 @@ Scope {
                     id: desktopItemsRepeater
                     model: widgetCanvas._desktopItemsForOutput(bgRoot.screen?.name ?? "")
                     delegate: DesktopItemDelegate {
+                        id: desktopItemDelegate
                         required property var modelData
                         itemId: String(modelData.id ?? "")
                         itemData: modelData
@@ -1689,6 +1706,19 @@ Scope {
                         gridSize: Number(Config.getNestedValue("background.widgets.editGrid.size", 16))
                         gridSnap: Boolean(Config.getNestedValue("background.widgets.editGrid.snap", true))
                         dragEnabled: !GlobalStates.screenLocked && !GlobalStates.shellLayoutEditMode
+                        onContextMenuRequested: (menuModel, anchorX, anchorY) => {
+                            const position = desktopItemDelegate.mapToItem(
+                                desktopMenuAnchor.parent, anchorX, anchorY)
+                            if (desktopContextMenu.active) desktopContextMenu.close()
+                            desktopMenuAnchor.x = position.x
+                            desktopMenuAnchor.y = position.y
+                            desktopItemContextMenu.model = menuModel
+                            desktopItemContextMenu.active = true
+                        }
+                        onContextMenuCloseRequested: {
+                            if (desktopItemContextMenu.active)
+                                desktopItemContextMenu.close()
+                        }
                     }
                 }
 
