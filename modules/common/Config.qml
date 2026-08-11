@@ -1154,6 +1154,10 @@ Singleton {
                     // "panel" (stock per-style plate) | "island" (Ricelin card)
                     property string style: "panel"
                     property int dynamicOpacity: 0 // 0-100: reduce widget opacity when windows are on current workspace
+                    // Opt-in local wallpaper sampling. Off keeps semantic widget
+                    // colors stable when widgets move; on lets eligible widgets
+                    // choose readable ink/semantic foregrounds from their region.
+                    property bool adaptColorsToWallpaperPosition: false
                     property JsonObject powerSaving: JsonObject {
                         property bool enable: true
                         property bool pauseOnGameMode: true
@@ -1193,6 +1197,13 @@ Singleton {
                         property real borderOpacity: 0.08
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property JsonObject cookie: JsonObject {
                             property bool aiStyling: false
                             property int sides: 15
@@ -1250,6 +1261,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                     }
 
@@ -1270,6 +1288,13 @@ Singleton {
                         property int dim: 0
                         property int widgetScale: 100
                         property int widgetOpacity: 100
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 120
                         property real y: 320
                     }
@@ -1284,6 +1309,13 @@ Singleton {
                         property int widgetScale: 100
                         property int widgetOpacity: 100
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                         property bool showBackground: true
                         property bool useBlur: false
@@ -1309,6 +1341,13 @@ Singleton {
                         property int widgetScale: 100
                         property int widgetOpacity: 100
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                     }
 
@@ -1347,6 +1386,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 100
                         property real y: 100
                     }
@@ -1381,6 +1427,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 50
                         property real y: 400
                     }
@@ -1409,6 +1462,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 50
                         property real y: 50
                     }
@@ -1434,6 +1494,13 @@ Singleton {
                         property real borderOpacity: 0.12
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 80
                         property real y: 80
                     }
@@ -1500,6 +1567,13 @@ Singleton {
                         property real borderOpacity: 0.12
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 56
                         property real y: 120
                     }
@@ -1526,6 +1600,13 @@ Singleton {
                         property real borderOpacity: 0.12
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property real x: 80
                         property real y: 80
                     }
@@ -1546,6 +1627,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                         property real x: 80
                         property real y: 80
@@ -1567,6 +1655,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                         property real x: 80
                         property real y: 200
@@ -1589,6 +1684,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                         property real x: 80
                         property real y: 420
@@ -1609,6 +1711,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                         property string pose: "reading"
                         property string poseFilter: "all" // all | featured | pixel | street | chibi | loops | manual
@@ -1635,6 +1744,13 @@ Singleton {
                         property real borderOpacity: 0.20
                         property real cornerRadius: -1
                         property string colorMode: "auto"
+                        property JsonObject palette: JsonObject {
+                            property string primary: "primary"
+                            property string secondary: "secondary"
+                            property string tertiary: "tertiary"
+                            property string signal: "signal"
+                            property string surface: "surface"
+                        }
                         property int dim: 0
                         property real x: 100
                         property real y: 260

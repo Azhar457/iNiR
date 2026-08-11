@@ -119,8 +119,7 @@ AbstractBackgroundWidget {
     accentBackdrop: Appearance.colors.colLayer0
     readonly property color mediaSurfaceInk: root.forceLightInk ? root._inkLight
         : root.forceDarkInk ? root._inkDark
-        : ColorUtils.ensureReadable(
-            ColorUtils.boostInkSaturation(Appearance.colors.colOnLayer0, root.widgetAccent),
+        : root.widgetSemanticForeground(root.widgetSurfaceRole,
             Appearance.colors.colLayer0, 4.5)
     readonly property color mediaSurfaceInkMuted: ColorUtils.applyAlpha(root.mediaSurfaceInk, 0.66)
     readonly property QtObject _desktopInkOverride: QtObject {

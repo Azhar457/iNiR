@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
@@ -525,8 +526,10 @@ AbstractWidget {
         if (!Config.ready) return;
         if (root._isZonePlacement) {
             root.snapToZone(root.placementStrategy);
-            // Zone widgets still need color analysis at their position
-            if (root.needsColText) _placementDebounce.restart();
+            // Local wallpaper sampling is explicitly opt-in. Zone placement
+            // itself remains independent from color adaptation.
+            if (root.positionColorAdaptationEnabled && root.needsColText)
+                _placementDebounce.restart();
         } else {
             syncFreePositionFromConfig();
             refreshPlacementIfNeeded();
@@ -1210,7 +1213,9 @@ AbstractWidget {
                 id: popoverLoader
                 anchors.centerIn: parent
                 sourceComponent: root._effectivePopover
-                active: editPopoverPanel.visible && root._effectivePopover !== null
+                // `visible` is effective visibility and inherits the parent chain;
+                // using it as Loader state can latch this popover unloaded forever.
+                active: editPopoverPanel.open && root._effectivePopover !== null
             }
         }
     }
@@ -1561,27 +1566,161 @@ AbstractWidget {
     }
 
     // ── Inline popover for quick controls ─────────────────────
-    // Override in subclasses to provide a per-widget quick-edit panel.
-    // If null and manifestConfigKeys is non-empty, an auto-generated popover is used.
+    // Widget-specific controls stay primary. Color customization uses the same
+    // preset-card language as Settings; detailed role remapping lives there.
     property Component editPopoverContent: null
-    // Manifest-declared config keys for auto-popover (set via setSource for custom widgets)
     property var manifestConfigKeys: ({})
+    property bool semanticPaletteControls: !root.configEntryName.startsWith("custom.")
+    property bool semanticPaletteQuickControls: semanticPaletteControls
     readonly property var _manifestKeyList: {
         const keys = root.manifestConfigKeys;
         if (!keys || typeof keys !== "object") return [];
         return Object.keys(keys).map(k => ({ key: k, spec: keys[k] }));
     }
-    // Effective popover: custom if provided, otherwise auto-generated from manifest
-    readonly property Component _effectivePopover: root.editPopoverContent ?? (root._manifestKeyList.length > 0 ? _autoPopoverComponent : null)
-
-    // Auto-generated popover from manifest configKeys (loaded as separate component)
     property Component _autoPopoverComponent: _manifestKeyList.length > 0 ? _autoPopoverRef : null
+    readonly property Component _widgetSpecificPopover: root.editPopoverContent
+        ?? (root._manifestKeyList.length > 0 ? root._autoPopoverComponent : null)
+    readonly property Component _effectivePopover: root.semanticPaletteControls
+        ? root._semanticPalettePopover : root._widgetSpecificPopover
+
     Component {
         id: _autoPopoverRef
         ManifestPopover {
             configEntryName: root.configEntryName
             manifestKeys: root._manifestKeyList
             readConfigKey: (key) => root._readConfigKey(key)
+        }
+    }
+
+    property Component _semanticPalettePopover: Component {
+        ColumnLayout {
+            id: semanticQuickRoot
+            spacing: 8
+
+            Loader {
+                id: specificQuickLoader
+                active: root._widgetSpecificPopover !== null
+                visible: active
+                sourceComponent: root._widgetSpecificPopover
+                Layout.preferredWidth: item?.implicitWidth ?? 0
+                Layout.preferredHeight: item?.implicitHeight ?? 0
+                Layout.alignment: Qt.AlignHCenter
+            }
+
+            Rectangle {
+                visible: root._widgetSpecificPopover !== null && root.semanticPaletteQuickControls
+                Layout.fillWidth: true
+                implicitHeight: visible ? 1 : 0
+                color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.10)
+            }
+
+            ColumnLayout {
+                id: paletteQuickSection
+                visible: root.semanticPaletteQuickControls
+                Layout.fillWidth: true
+                Layout.preferredWidth: Math.max(244, specificQuickLoader.item?.implicitWidth ?? 0)
+                spacing: 6
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 5
+
+                    MaterialSymbol {
+                        text: "palette"
+                        iconSize: 14
+                        color: Appearance.colors.colSubtext
+                    }
+                    StyledText {
+                        text: Translation.tr("Colors")
+                        color: Appearance.colors.colOnLayer2
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                        font.weight: Font.Medium
+                    }
+                    Item { Layout.fillWidth: true }
+                    StyledText {
+                        text: root.widgetPalettePresetLabel
+                        color: Appearance.colors.colSubtext
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        elide: Text.ElideRight
+                    }
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 2
+                    columnSpacing: 5
+                    rowSpacing: 5
+
+                    Repeater {
+                        model: root.widgetPalettePresets
+
+                        delegate: RippleButton {
+                            id: palettePresetButton
+                            required property var modelData
+                            readonly property color presetAccent: root.widgetSemanticColor(modelData.roles[0])
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 112
+                            Layout.preferredHeight: 34
+                            buttonRadius: Appearance.rounding.small
+                            toggled: root.widgetPalettePreset === modelData.value
+                            colBackground: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.045)
+                            colBackgroundHover: ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.085)
+                            colBackgroundToggled: ColorUtils.applyAlpha(palettePresetButton.presetAccent, 0.10)
+                            colBackgroundToggledHover: ColorUtils.applyAlpha(palettePresetButton.presetAccent, 0.15)
+                            colRipple: ColorUtils.applyAlpha(palettePresetButton.presetAccent, 0.10)
+                            colRippleToggled: ColorUtils.applyAlpha(palettePresetButton.presetAccent, 0.14)
+                            downAction: () => root.applyWidgetPalettePreset(modelData.value)
+
+                            contentItem: Item {
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: palettePresetButton.buttonRadius
+                                    color: "transparent"
+                                    border.width: palettePresetButton.toggled ? 1.5 : 0
+                                    border.color: palettePresetButton.presetAccent
+                                }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 7
+                                    anchors.rightMargin: 7
+                                    spacing: 6
+
+                                    Row {
+                                        spacing: -3
+                                        Repeater {
+                                            model: palettePresetButton.modelData.roles
+                                            Rectangle {
+                                                required property var modelData
+                                                required property int index
+                                                width: 12
+                                                height: 12
+                                                radius: 6
+                                                color: root.widgetSemanticColor(modelData)
+                                                border.width: 1
+                                                border.color: Qt.rgba(0, 0, 0, 0.25)
+                                                z: 3 - index
+                                            }
+                                        }
+                                    }
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        text: palettePresetButton.modelData.label
+                                        color: palettePresetButton.toggled
+                                            ? palettePresetButton.presetAccent
+                                            : Appearance.colors.colOnLayer2
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        font.weight: palettePresetButton.toggled
+                                            ? Font.DemiBold : Font.Normal
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1636,8 +1775,14 @@ AbstractWidget {
                 continue;
             updates[prefix + "." + key] = defaults[key];
         }
+        updates[prefix + ".palette.primary"] = "primary"
+        updates[prefix + ".palette.secondary"] = "secondary"
+        updates[prefix + ".palette.tertiary"] = "tertiary"
+        updates[prefix + ".palette.signal"] = "signal"
+        updates[prefix + ".palette.surface"] = "surface"
         Config.setNestedValues(updates);
-        const layoutKeys = ["locked", "placementStrategy", "x", "y", "widgetScale"]
+        const layoutKeys = ["locked", "placementStrategy", "x", "y", "widgetScale",
+            "palette.primary", "palette.secondary", "palette.tertiary", "palette.signal", "palette.surface"]
         for (const axis of Object.keys(root.resizableAxes ?? {})) {
             const key = String(root.resizableAxes[axis] ?? "")
             if (key.length > 0 && !layoutKeys.includes(key))
@@ -1649,6 +1794,8 @@ AbstractWidget {
     }
 
     property bool needsColText: false
+    readonly property bool positionColorAdaptationEnabled: Boolean(
+        Config.getNestedValue("background.widgets.adaptColorsToWallpaperPosition", false))
     // Opt-in for widgets whose bare content changes ink with the wallpaper under
     // them. Sampling is throttled while dragging; the shared process remains
     // serialized so pointer movement can never spawn an unbounded process fanout.
@@ -1683,12 +1830,10 @@ AbstractWidget {
     // dark mode), m3inverseOnSurface is its generated opposite (dark in dark mode). We
     // pick whichever opposes the wallpaper region's luminance, so text is light on dark
     // regions and dark on bright ones — same tokens, region-aware selection.
-    readonly property color _inkLight: ColorUtils.boostInkSaturation(
-        Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0 : Appearance.m3colors.m3inverseOnSurface,
-        Appearance.m3colors.m3primary)
-    readonly property color _inkDark: ColorUtils.boostInkSaturation(
-        Appearance.m3colors.darkmode ? Appearance.m3colors.m3inverseOnSurface : Appearance.colors.colOnLayer0,
-        Appearance.m3colors.m3primary)
+    readonly property color _inkLight: Appearance.m3colors.darkmode
+        ? Appearance.colors.colOnLayer0 : Appearance.m3colors.m3inverseOnSurface
+    readonly property color _inkDark: Appearance.m3colors.darkmode
+        ? Appearance.m3colors.m3inverseOnSurface : Appearance.colors.colOnLayer0
     readonly property bool forceLightInk: root.colorMode === "light"
     readonly property bool forceDarkInk: root.colorMode === "dark"
     property color colText: {
@@ -1696,6 +1841,8 @@ AbstractWidget {
         if (root.colorMode === "dark") return root._inkDark;
         const onBlurredLock = (GlobalStates.screenLocked && (Config.options?.lock?.blur?.enable ?? false))
         if (onBlurredLock) return Appearance.colors.colOnLayer0;
+        if (!root.positionColorAdaptationEnabled)
+            return Appearance.colors.colOnLayer0;
 
         // Auto: pick the neutral whose luminance opposes the region's MEAN brightness, so
         // text is DARK on bright wallpapers and LIGHT on dark ones — clean and legible,
@@ -1706,72 +1853,138 @@ AbstractWidget {
         return wantLight ? root._inkLight : root._inkDark;
     }
 
-    // ── Centralized desktop-widget colour identity ──────────────────────────────
-    // Keep these roles tied directly to the generated palette — they are the
-    // widget family's identity and never re-tone. Graphic consumers use the
-    // stable widgetAccent*Visible aliases below; accent-colored text explicitly
-    // opts into widgetRoleColor() and its contrast-safe tinted-ink fallback.
-    // Style-dispatched roles, in [primary, secondary, tertiary] order. Several
-    // styles currently resolve to the same generated M3 values, but consuming
-    // their public token contracts here keeps desktop widgets correct if those
-    // styles diverge later instead of silently falling back to generic colors.
-    readonly property var _accentRoles: Appearance.zzzEverywhere
-        ? [Appearance.zzz.accent, Appearance.zzz.secondary, Appearance.zzz.tertiary]
-        : Appearance.angelEverywhere
-            ? [Appearance.angel.colPrimary, Appearance.angel.colSecondary, Appearance.angel.colTertiary]
-        : Appearance.inirEverywhere
-            ? [Appearance.inir.colPrimary, Appearance.inir.colSecondary, Appearance.inir.colTertiary]
-        : [Appearance.colors.colPrimary, Appearance.colors.colSecondary, Appearance.colors.colTertiary]
+    // ── Centralized desktop-widget semantic palette ──────────────────────────
+    // Every built-in widget selects from the palette already generated by the
+    // wallpaper/theme. Local region analysis may choose WHICH generated token is
+    // readable, but never synthesizes a new hue/lightness variant.
+    readonly property string widgetPrimaryRole: String(Config.getNestedValue(root._configPath + ".palette.primary", "primary"))
+    readonly property string widgetSecondaryRole: String(Config.getNestedValue(root._configPath + ".palette.secondary", "secondary"))
+    readonly property string widgetTertiaryRole: String(Config.getNestedValue(root._configPath + ".palette.tertiary", "tertiary"))
+    readonly property string widgetSignalRole: String(Config.getNestedValue(root._configPath + ".palette.signal", "signal"))
+    readonly property string widgetSurfaceRole: String(Config.getNestedValue(root._configPath + ".palette.surface", "surface"))
 
-    readonly property color widgetAccent: root._accentRoles[0]
-    readonly property color widgetAccent2: root._accentRoles[1]
-    readonly property color widgetAccent3: root._accentRoles[2]
-    readonly property color widgetSignal:
-        Appearance.zzzEverywhere ? Appearance.zzz.signal
-        : Appearance.colors.colError
+    readonly property var widgetPalettePresets: [
+        { value: "balanced", label: Translation.tr("Default"), roles: ["primary", "secondary", "tertiary"] },
+        { value: "primary", label: Translation.tr("Primary"), roles: ["primary", "primary", "primary"] },
+        { value: "secondary", label: Translation.tr("Secondary"), roles: ["secondary", "secondary", "secondary"] },
+        { value: "tertiary", label: Translation.tr("Tertiary"), roles: ["tertiary", "tertiary", "tertiary"] }
+    ]
+
+    function widgetPalettePresetSpec(preset: string): var {
+        switch (preset) {
+        case "primary":
+            return { primary: "primary", secondary: "primary", tertiary: "primary", signal: "signal", surface: "surface" };
+        case "secondary":
+            return { primary: "secondary", secondary: "secondary", tertiary: "secondary", signal: "signal", surface: "surface" };
+        case "tertiary":
+            return { primary: "tertiary", secondary: "tertiary", tertiary: "tertiary", signal: "signal", surface: "surface" };
+        default:
+            return { primary: "primary", secondary: "secondary", tertiary: "tertiary", signal: "signal", surface: "surface" };
+        }
+    }
+
+    readonly property string widgetPalettePreset: {
+        const roles = {
+            primary: root.widgetPrimaryRole,
+            secondary: root.widgetSecondaryRole,
+            tertiary: root.widgetTertiaryRole,
+            signal: root.widgetSignalRole,
+            surface: root.widgetSurfaceRole
+        };
+        for (const preset of root.widgetPalettePresets) {
+            const spec = root.widgetPalettePresetSpec(preset.value);
+            if (roles.primary === spec.primary && roles.secondary === spec.secondary
+                    && roles.tertiary === spec.tertiary && roles.signal === spec.signal
+                    && roles.surface === spec.surface)
+                return preset.value;
+        }
+        return "custom";
+    }
+    readonly property string widgetPalettePresetLabel: {
+        const match = root.widgetPalettePresets.find(preset => preset.value === root.widgetPalettePreset);
+        return match ? match.label : Translation.tr("Custom");
+    }
+
+    function applyWidgetPalettePreset(preset: string): void {
+        const spec = root.widgetPalettePresetSpec(preset);
+        const prefix = root._configPath + ".palette.";
+        const updates = {};
+        updates[prefix + "primary"] = spec.primary;
+        updates[prefix + "secondary"] = spec.secondary;
+        updates[prefix + "tertiary"] = spec.tertiary;
+        updates[prefix + "signal"] = spec.signal;
+        updates[prefix + "surface"] = spec.surface;
+        Config.setNestedValues(updates);
+    }
+
+    function widgetSemanticSet(role: string): var {
+        const c = Appearance.colors;
+        switch (role) {
+        case "secondary":
+            return { color: c.colSecondary, onColor: c.colOnSecondary,
+                container: c.colSecondaryContainer, onContainer: c.colOnSecondaryContainer };
+        case "tertiary":
+            return { color: c.colTertiary, onColor: c.colOnTertiary,
+                container: c.colTertiaryContainer, onContainer: c.colOnTertiaryContainer };
+        case "warning":
+            return { color: c.colWarning, onColor: c.colOnTertiary,
+                container: c.colWarningContainer, onContainer: c.colOnWarningContainer };
+        case "signal":
+            return {
+                color: Appearance.zzzEverywhere ? Appearance.zzz.signal
+                    : Appearance.inirEverywhere ? Appearance.inir.colError : c.colError,
+                onColor: Appearance.zzzEverywhere ? Appearance.zzz.onSignal : c.colOnError,
+                container: c.colErrorContainer,
+                onContainer: c.colOnErrorContainer
+            };
+        case "surface":
+            return {
+                color: c.colOnSurfaceVariant,
+                onColor: c.colLayer2,
+                container: Appearance.zzzEverywhere ? Appearance.zzz.chrome
+                    : Appearance.cookieEverywhere ? c.colLayer2
+                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                    : c.colLayer1,
+                onContainer: Appearance.zzzEverywhere ? Appearance.zzz.onBg
+                    : Appearance.cookieEverywhere ? Appearance.cookie.onColor
+                    : c.colOnLayer1
+            };
+        default:
+            return { color: c.colPrimary, onColor: c.colOnPrimary,
+                container: c.colPrimaryContainer, onContainer: c.colOnPrimaryContainer };
+        }
+    }
+
+    function widgetSemanticColor(role: string): color {
+        return root.widgetSemanticSet(role).color;
+    }
+    function widgetSemanticContainer(role: string): color {
+        return root.widgetSemanticSet(role).container;
+    }
+    function widgetSemanticOnColor(role: string): color {
+        return root.widgetSemanticSet(role).onColor;
+    }
+    function widgetSemanticOnContainer(role: string): color {
+        return root.widgetSemanticSet(role).onContainer;
+    }
+
+    readonly property color widgetAccent: root.widgetSemanticColor(root.widgetPrimaryRole)
+    readonly property color widgetAccent2: root.widgetSemanticColor(root.widgetSecondaryRole)
+    readonly property color widgetAccent3: root.widgetSemanticColor(root.widgetTertiaryRole)
+    readonly property color widgetSignal: root.widgetSemanticColor(root.widgetSignalRole)
     readonly property bool widgetHasSurface: root.backgroundOpacity > 0 || root.effectiveBlur
+    readonly property bool regionIsBright: root.positionColorAdaptationEnabled && root._hasBrightness
+        ? root.regionBrightness > 0.55 : !Appearance.m3colors.darkmode
 
-    // ── Region-aware plate ──────────────────────────────────────────────────
-    // A widget plate must oppose the wallpaper region behind it, not the shell
-    // theme: a bright Material container over a bright wallpaper reads as glare
-    // (the media-controls widget already solves this with its dark overlays).
-    // On bright regions every solid plate drops to a near-black, hue-tinted
-    // surface; on dark regions the theme container stands as before. Glass
-    // styles (aurora blur / angel) keep their own treatment — blur separates.
-    readonly property bool regionIsBright: root._hasBrightness
-        ? root.regionBrightness > 0.55
-        : !Appearance.m3colors.darkmode
-    readonly property color _plateDark: {
-        const p = Qt.color(root.widgetAccent);
-        return Qt.hsla(p.hslHue, Math.min(0.22, p.hslSaturation), 0.11, 1.0);
-    }
-    readonly property color _plateLight: {
-        const p = Qt.color(root.widgetAccent);
-        return Qt.hsla(p.hslHue, Math.min(0.20, p.hslSaturation), 0.93, 1.0);
-    }
-    // The plate answers to BOTH the theme and the wallpaper. Dark theme keeps the
-    // near-black derivative everywhere. Light theme gets a hue-tinted paper plate,
-    // EXCEPT over a bright wallpaper region, where a light card reads as glare (the
-    // original reason plates were pinned to black) — there it falls back to black.
-    readonly property bool widgetPlateIsDark: root.forceLightInk ? true
-        : root.forceDarkInk ? false
-        : Appearance.m3colors.darkmode || root.regionIsBright
-    readonly property color _plateAuto: root.widgetPlateIsDark ? root._plateDark : root._plateLight
-    readonly property color widgetPlateColor: root.forceLightInk || root.forceDarkInk
-        ? root._plateAuto
-        : Appearance.zzzEverywhere ? Appearance.zzz.chrome
-        : Appearance.cookieEverywhere ? Appearance.colors.colLayer2
-        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : root._plateAuto
-
-    // Ink opposes the plate it sits on, not the theme.
+    // Surfaces use semantic containers directly. This removes the old HSL
+    // wallpaper-region re-toning that could turn generated warm palettes muddy.
+    readonly property color widgetPlateColor: root.widgetSemanticContainer(root.widgetSurfaceRole)
+    readonly property bool widgetPlateIsDark: ColorUtils.relativeLuminance(root.widgetPlateColor) < 0.38
     readonly property color widgetSurfaceInk: root.forceLightInk ? root._inkLight
         : root.forceDarkInk ? root._inkDark
-        : Appearance.zzzEverywhere ? Appearance.zzz.onBg
-        : Appearance.cookieEverywhere ? Appearance.cookie.onColor
-        : !Appearance.angelEverywhere
-        ? (root.widgetPlateIsDark ? root._inkLight : root._inkDark)
-        : Appearance.colors.colOnLayer1
+        : root.widgetSemanticOnContainer(root.widgetSurfaceRole)
     readonly property color widgetInk: root.widgetHasSurface ? root.widgetSurfaceInk : root.colText
     readonly property color widgetInkMuted: ColorUtils.applyAlpha(root.widgetInk, 0.66)
     readonly property color widgetInkSubtle: ColorUtils.applyAlpha(root.widgetInk, 0.58)
@@ -1780,35 +1993,44 @@ AbstractWidget {
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.normal
-    // ── Stable graphic accents + readable accent ink ────────────────────────
-    // Graphic accents are theme identity, not local-wallpaper analysis output.
-    // Re-toning primary/secondary/tertiary at every desktop position made warm
-    // Material palettes collapse into rust/brown/olive on bright wallpapers and
-    // caused visible color shifts after dragging. Shapes keep the generated/style
-    // colors byte-for-byte; local analysis is reserved for ink, keylines and halos.
-    function widgetGraphicColor(seed) {
-        const source = Qt.color(seed);
-        return source.valid ? source : root.widgetInk;
+
+    property color accentBackdrop: root.widgetHasSurface ? root.widgetPlateColor
+        : root.positionColorAdaptationEnabled && root._hasBrightness ? root._regionBg
+        : Appearance.colors.colLayer0
+
+    // Pick only among existing generated semantic tokens. Movement can therefore
+    // change polarity when required, but cannot manufacture a brown/gray/red hue.
+    function widgetSemanticForeground(role: string, backdrop = root.accentBackdrop,
+            targetContrast = 3.0): color {
+        const set = root.widgetSemanticSet(role);
+        const candidates = [set.color, set.onContainer, set.onColor, set.container, root.widgetInk];
+        let best = candidates[0];
+        let bestRatio = ColorUtils.contrastRatio(best, backdrop);
+        for (let i = 0; i < candidates.length; i++) {
+            const candidate = Qt.color(candidates[i]);
+            if (!candidate.valid) continue;
+            const ratio = ColorUtils.contrastRatio(candidate, backdrop);
+            if (ratio >= targetContrast) return candidate;
+            if (ratio > bestRatio) {
+                best = candidate;
+                bestRatio = ratio;
+            }
+        }
+        return best;
     }
 
-    // Accent-colored TEXT still needs a contrast floor. Instead of darkening the
-    // same saturated hue (which produces muddy warm colors), blend minimally toward
-    // the already region-correct widget ink. `minSaturation` stays in the signature
-    // for custom-widget compatibility but is intentionally not used as a chroma floor.
-    property color accentBackdrop: root.widgetHasSurface ? root.widgetPlateColor
-        : root._hasBrightness ? root._regionBg
-        : Appearance.colors.colLayer0
+    // Compatibility for manual/custom palettes. Built-in semantic graphics should
+    // use widgetSemanticForeground() or widgetAccent* instead.
     function widgetRoleColor(seed, targetContrast = 4.0, minSaturation = 0.45) {
         const source = Qt.color(seed);
-        if (!source.valid)
-            return root.widgetInk;
+        if (!source.valid) return root.widgetInk;
         return ColorUtils.readableAccentInk(source, root.accentBackdrop,
             targetContrast, root.widgetInk);
     }
 
-    readonly property color widgetAccentVisible: root.widgetGraphicColor(root.widgetAccent)
-    readonly property color widgetAccent2Visible: root.widgetGraphicColor(root.widgetAccent2)
-    readonly property color widgetAccent3Visible: root.widgetGraphicColor(root.widgetAccent3)
+    readonly property color widgetAccentVisible: root.widgetSemanticForeground(root.widgetPrimaryRole)
+    readonly property color widgetAccent2Visible: root.widgetSemanticForeground(root.widgetSecondaryRole)
+    readonly property color widgetAccent3Visible: root.widgetSemanticForeground(root.widgetTertiaryRole)
 
     // Legibility shadow placed BEHIND text and plate-less elements so they
     // detach from any wallpaper without a visible card. Always dark (a true
@@ -1816,7 +2038,8 @@ AbstractWidget {
     // glow, not a shadow. colHalo is consumed only by the clock.
     // Alpha scales with region busyness: near-invisible on flat regions, strong
     // on textured ones — a legibility shadow only where it's actually needed.
-    readonly property real _haloAlpha: 0.35 + 0.45 * Math.min(1, root.regionBrightnessSpread / 0.28)
+    readonly property real _haloAlpha: root.positionColorAdaptationEnabled
+        ? 0.35 + 0.45 * Math.min(1, root.regionBrightnessSpread / 0.28) : 0.35
     readonly property color colHalo: ColorUtils.applyAlpha(Qt.rgba(0, 0, 0, 1), root._haloAlpha)
 
     // Compatibility helper: accent identity is owned by MaterialThemeLoader, not by
@@ -1834,16 +2057,32 @@ AbstractWidget {
     onWallpaperPathChanged: {
         root.regionBrightness = -1
         root.regionBrightnessSpread = 0
-        if (root.wallpaperPath.length > 0)
+        if (root.wallpaperPath.length > 0
+                && (root._isAutoPlacement
+                    || (root.positionColorAdaptationEnabled && root.needsColText)))
+            _placementDebounce.restart()
+    }
+    onPositionColorAdaptationEnabledChanged: {
+        root.regionBrightness = -1
+        root.regionBrightnessSpread = 0
+        root.dominantColor = Appearance.colors.colPrimary
+        root._colorRerunQueued = false
+        _liveColorAnalysisTimer.stop()
+        if (colorOnlyProc.running)
+            colorOnlyProc.running = false
+        if (root.positionColorAdaptationEnabled && root.needsColText
+                && root.wallpaperPath.length > 0)
             _placementDebounce.restart()
     }
     // Widgets may gate needsColText on runtime state (e.g. mascot only when its
     // card is on) — kick the analysis when it turns on after load.
-    onNeedsColTextChanged: if (needsColText) _placementDebounce.restart()
+    onNeedsColTextChanged: if (needsColText && positionColorAdaptationEnabled)
+        _placementDebounce.restart()
     onXChanged: root._queueLiveColorAnalysis()
     onYChanged: root._queueLiveColorAnalysis()
     onIsDraggingChanged: {
-        if (!root.liveColorTracking || !root.needsColText)
+        if (!root.positionColorAdaptationEnabled
+                || !root.liveColorTracking || !root.needsColText)
             return;
         if (root.isDragging)
             root._queueLiveColorAnalysis();
@@ -1915,7 +2154,8 @@ AbstractWidget {
         interval: root.liveColorTrackingInterval
         repeat: false
         onTriggered: {
-            if (root.liveColorTracking && root.needsColText && root.isDragging
+            if (root.positionColorAdaptationEnabled && root.liveColorTracking
+                    && root.needsColText && root.isDragging
                     && !GlobalStates.widgetEditMode)
                 root._runColorAnalysis();
         }
@@ -1926,8 +2166,8 @@ AbstractWidget {
         // color samples makes a widget visibly flash between palettes. Freeze the
         // sampled palette during the gesture and analyze the final geometry once
         // on release. Outside edit mode, opt-in live tracking keeps its old role.
-        if (GlobalStates.widgetEditMode || !root.liveColorTracking
-                || !root.needsColText || !root.isDragging)
+        if (GlobalStates.widgetEditMode || !root.positionColorAdaptationEnabled
+                || !root.liveColorTracking || !root.needsColText || !root.isDragging)
             return;
         if (!_liveColorAnalysisTimer.running)
             _liveColorAnalysisTimer.start();
@@ -1945,8 +2185,9 @@ AbstractWidget {
             leastBusyRegionProc.running = true;
             return;
         }
-        // For free/zone widgets that need color: position-aware color-only analysis
-        if (root.needsColText) root._runColorAnalysis();
+        // For free/zone widgets, local color analysis is an explicit global opt-in.
+        if (root.positionColorAdaptationEnabled && root.needsColText)
+            root._runColorAnalysis();
     }
 
     // The colour analysis is a subprocess and the widget can move while it runs.
@@ -1967,6 +2208,8 @@ AbstractWidget {
     function _colorTargetHeight(): int { return Math.max(1, Math.round(root.height / Math.max(root.wallpaperScale, 0.001))); }
 
     function _runColorAnalysis(): void {
+        if (!root.positionColorAdaptationEnabled || !root.needsColText)
+            return;
         if (colorOnlyProc.running) {
             root._colorRerunQueued = true;
             return;
@@ -2008,11 +2251,13 @@ AbstractWidget {
                     if (Quickshell.env("INIR_REGION_DEBUG") === "1")
                         console.log("[Region]", root.configEntryName, "LEAST-BUSY landed",
                             "dom", parsedContent.dominant_color, "bright", parsedContent.brightness);
-                    root.dominantColor = parsedContent.dominant_color || Appearance.colors.colPrimary;
-                    if (parsedContent.brightness !== undefined)
-                        root.regionBrightness = parsedContent.brightness / 255.0;
-                    if (parsedContent.brightness_std !== undefined)
-                        root.regionBrightnessSpread = parsedContent.brightness_std / 255.0;
+                    if (root.positionColorAdaptationEnabled) {
+                        root.dominantColor = parsedContent.dominant_color || Appearance.colors.colPrimary;
+                        if (parsedContent.brightness !== undefined)
+                            root.regionBrightness = parsedContent.brightness / 255.0;
+                        if (parsedContent.brightness_std !== undefined)
+                            root.regionBrightnessSpread = parsedContent.brightness_std / 255.0;
+                    }
                     if (!root._isAutoPlacement) return;
                     root._autoPlaceX = root._clampX(parsedContent.center_x * root.wallpaperScale - root.width / 2);
                     root._autoPlaceY = root._clampY(parsedContent.center_y * root.wallpaperScale - root.height / 2);
@@ -2048,6 +2293,7 @@ AbstractWidget {
         stdout: StdioCollector {
             id: colorOnlyOutputCollector
             onStreamFinished: {
+                if (!root.positionColorAdaptationEnabled) return;
                 const output = colorOnlyOutputCollector.text;
                 if (output.length === 0) return;
                 try {
@@ -2090,6 +2336,7 @@ AbstractWidget {
         // Runs are serialised, so a request that arrived while this one was busy —
         // or a result thrown away as stale — is picked up here, once, at the
         // position the widget actually ended up at.
-        onExited: if (root._colorRerunQueued) Qt.callLater(root._runColorAnalysis)
+        onExited: if (root.positionColorAdaptationEnabled && root._colorRerunQueued)
+            Qt.callLater(root._runColorAnalysis)
     }
 }

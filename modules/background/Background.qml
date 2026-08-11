@@ -156,12 +156,11 @@ Scope {
 
             const key = (screen.name ?? "") + "::" + name
             GlobalStates.setWidgetEditMode(true)
-            if (openControls && name !== "uptime")
+            if (openControls)
                 GlobalStates.requestDesktopWidgetQuickControls(key)
             else
                 GlobalStates.selectDesktopWidget(key)
-            return openControls && name === "uptime"
-                ? key + " (quick controls unavailable)" : key
+            return key
         }
 
         function promoteWidget(widgetName: string): string {

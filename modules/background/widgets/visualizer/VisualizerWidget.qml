@@ -40,11 +40,14 @@ AbstractBackgroundWidget {
     readonly property int waveOpacity: Config.getNestedValue("background.widgets.visualizer.waveOpacity", -1)
     readonly property string paletteMode: Config.getNestedValue(
         "background.widgets.visualizer.paletteMode", "cava")
+    // Cava already owns its own palette. Show the shared widget-color presets
+    // only when this widget is actually consuming the semantic widget palette.
+    semanticPaletteQuickControls: root.paletteMode !== "cava"
     readonly property var spectrumPalette: {
         if (root.paletteMode === "accent")
             return [root.widgetAccentVisible, root.widgetAccent2Visible, root.widgetAccent3Visible]
         if (root.paletteMode === "primary")
-            return [Appearance.colors.colPrimary]
+            return [root.widgetAccent]
         return CavaTheme.visualizerColors
     }
 
