@@ -97,6 +97,14 @@ let
     ++ optionalQt6 "qtvirtualkeyboard"
     ++ optionalQt6 "qtwayland";
 
+  materialSymbolsFont =
+    if builtins.hasAttr "material-symbols" pkgs
+    then pkgs.makeFontsConf { fontDirectories = [ pkgs.material-symbols ]; }
+    else null;
+  materialSymbolsWrapperArg =
+    lib.optionalString (materialSymbolsFont != null)
+      "--set FONTCONFIG_FILE \"${materialSymbolsFont}\" \\";
+
   qmlDeps =
     # kirigami-wrapped ships no QML files, use the unwrapped version.
     (lib.optional
@@ -168,6 +176,7 @@ pkgs.stdenvNoCC.mkDerivation {
       --prefix PATH : "${lib.makeBinPath runtimeDeps}" \
       --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qmlDeps}" \
       --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qmlDeps}" \
+      ${materialSymbolsWrapperArg}
       --set-default INIR_SYSTEM_RUNTIME_DIR "$runtime" \
       --set-default INIR_FALLBACK_SYSTEM_RUNTIME_DIR "$runtime"
 
