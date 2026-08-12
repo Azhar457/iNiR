@@ -5,40 +5,38 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.29.1] - 2026-08-11
+
+A smaller release focused on making the desktop editor easier to trust, fixing a few rough runtime edges, and closing the reports that surfaced after 2.29.0.
+
+### Added
+- **Workspace indicator colors**: the active workspace can now use an automatic theme color or a custom color from Bar Settings. Foreground contrast stays readable automatically. Fixes [#215](https://github.com/snowarch/iNiR/issues/215).
+- **Reusable Nix expressions**: the package, NixOS module, and Home Manager module can now be imported without flakes; the flake remains a thin entrypoint. The Nix wrapper also carries Material Symbols so shell icons work without a separate host font install. Fixes [#216](https://github.com/snowarch/iNiR/issues/216).
+- **Desktop widget palette presets**: Quick Controls and Widgets Settings share the same Default/Primary/Secondary/Tertiary presets, with detailed role overrides available when needed.
+
+### Changed
+- **Desktop widget editing**: dragging, resizing, grid snapping, manager navigation, filters, and locked-widget handling now use the same panel-aware layout rules. Widget selection no longer shifts the layout.
+- **Widget colors**: System Monitor and other desktop widgets now use the shell's existing semantic roles instead of inventing local wallpaper colors. This keeps accent identity and warning states consistent across themes.
+- **Cava controls**: shell visualizers and terminal Cava now share stereo/channel state and expose the same spectrum, palette, response, smoothing, geometry, and opacity controls.
+- **Fingerprint authentication**: lock-screen fingerprint polling now follows Quickshell's real PAM lifecycle, starts after late device discovery, survives locked-state resets, and retries without duplicate sessions. Hardware acceptance remains tracked in [#211](https://github.com/snowarch/iNiR/issues/211).
 
 ### Fixed
-- Widget edit mode now scrolls its widget rail without toggling items during a
-  drag, exposes clearer manager navigation, remembers the manager position and
-  size, supports search and active/locked/custom filters, and lets locked widgets
-  be selected or unlocked directly from the desktop. Selecting a widget no
-  longer changes its layout scale.
-- Wallpaper-aware widget colors now use deterministic full-region sampling and
-  reject stale geometry results while editing. Graphic accents remain stable
-  theme colors instead of being darkened into rust/brown/olive on bright local
-  regions, while truly neutral ink borrows only a restrained seed tint. Resource
-  telemetry now uses the shell's existing metric/progress tokens: normal accent,
-  tertiary only for caution, error only for warnings, style-owned track/surface
-  roles, and distinct primary/secondary/tertiary only where graph series need
-  identification. Plate-less Aurora rings omit the inactive track, and telemetry
-  text no longer uses outline/keyline compensation. Output-local
-  Resource/Media activity no longer depends on a conflicting global enable flag.
-- Desktop widget editing now uses one panel-aware grid for guides, dragging and
-  resize handles. Snapping follows the current bar and dock edges, including
-  vertical layouts, while turning Snap off still allows full-desktop placement.
-- The Cava Stereo setting controls both shell visualizers and terminal Cava
-  again. The desktop visualizer now starts from its per-output enabled state,
-  and the shared internal process no longer ignores the saved channel mode.
-  Its edit controls and Desktop Widgets settings now expose bars and wave
-  shapes, Cava or widget palettes, frequency response, smoothing, geometry,
-  and opacity. The default Cava palette follows Advanced color and gradient
-  settings instead of being replaced by muted widget tokens. Zero-height bars
-  no longer reuse the Canvas clip path and flash a full-widget gradient block.
-- X11-only apps (Warp, Steam, Wine) launched from the shell crashed at
-  launch because the shell's frozen env lacked `DISPLAY` (boot race with
-  xwayland-satellite). `ShellExec` now detects the live user-owned XWayland
-  socket at launch time, and `inir` seeds `DISPLAY` into the shell env with
-  the same filesystem fallback used for `WAYLAND_DISPLAY`/`NIRI_SOCKET`.
+- **XWayland app launches**: apps such as Steam, Wine, and Warp recover the live `DISPLAY` instead of inheriting a stale shell environment. Fixes [#217](https://github.com/snowarch/iNiR/issues/217).
+- **Notification hot reload**: notification wrappers, actions, urgency, text, and animations survive QML reloads without transient type/null warnings.
+- **Blurry dialogs**: shared dialogs keep text and icons on fixed pixel-aligned geometry while their background animates, fixing soft text in Close Confirm, Audio, Wi-Fi, Bluetooth, Hotspot, Night Light, Events, and Polkit.
+- **Audio device dialogs**: device menus close with their parent sidebar, and mixer rows tolerate PipeWire nodes disappearing during teardown instead of leaving a popup or QML warning behind.
+- **M3 tray colors**: the M3 tray uses its own semantic tint setting again instead of inheriting the classic tray value.
+- **Update hover card**: long branch names, commits, versions, and status messages stay inside the popup.
+- **Desktop and popup polish**: managed desktop menus use the correct screen coordinate space, Cookie popup motion stays inside fixed window geometry, and Wallhaven hover actions require clearer intent.
+- **Session/runtime cleanup**: XEmbed tray supervision, screenshot clipboard ownership, SDDM avatar lookup, and legacy GTK4 dark-preference handling are more reliable.
+
+### Issues / PRs
+- Fixed [#215](https://github.com/snowarch/iNiR/issues/215), [#216](https://github.com/snowarch/iNiR/issues/216), and [#217](https://github.com/snowarch/iNiR/issues/217).
+- Continued work on [#211](https://github.com/snowarch/iNiR/issues/211); end-to-end fingerprint acceptance still needs enrolled hardware.
+
+### Contributors
+- [@MacaylaMarvelous81](https://github.com/MacaylaMarvelous81) caught the missing Material Symbols font while working on [#218](https://github.com/snowarch/iNiR/pull/218).
+- [@TildeEthDoUsPart](https://github.com/TildeEthDoUsPart) corrected the Dashboard IPC hint in [#212](https://github.com/snowarch/iNiR/pull/212).
 
 ## [2.29.0] - 2026-08-06
 
