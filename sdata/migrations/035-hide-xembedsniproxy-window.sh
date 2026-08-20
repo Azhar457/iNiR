@@ -28,7 +28,7 @@ migration_apply() {
     awk '
         BEGIN { inserted = 0 }
         !inserted && /^\/\/ ── Privacy:/ {
-            print "// KDE's XEmbed→SNI bridge exposes a transient X11 window during tray"
+            print "// KDE XEmbed-SNI bridge exposes a transient X11 window during tray"
             print "// watcher restarts. Keep it floating, transparent and unfocused."
             print "window-rule {"
             print "    match app-id=r#\"^xembedsniproxy$\"#"
@@ -46,7 +46,7 @@ migration_apply() {
         END {
             if (!inserted) {
                 print ""
-                print "// KDE's XEmbed→SNI bridge exposes a transient X11 window during tray"
+                print "// KDE XEmbed-SNI bridge exposes a transient X11 window during tray"
                 print "// watcher restarts. Keep it floating, transparent and unfocused."
                 print "window-rule {"
                 print "    match app-id=r#\"^xembedsniproxy$\"#"
