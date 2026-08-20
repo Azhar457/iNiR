@@ -57,7 +57,8 @@ Singleton {
     }
 
     function _stopSwayidle() {
-        Quickshell.execDetached(["/usr/bin/pkill", "-x", "swayidle"])
+        _startSwayidleDelayed.stop()
+        swayidleProcess.running = false
     }
 
     function _startSwayidle() {
@@ -99,7 +100,12 @@ Singleton {
         cmd.push("after-resume", `'${StringUtils.shellSingleQuoteEscape(root.launcherPath)}' lock focus`)
 
         if (Quickshell.env("QS_DEBUG") === "1") console.log("[Idle] Starting swayidle")
-        Quickshell.execDetached(cmd)
+        swayidleProcess.command = cmd
+        swayidleProcess.running = true
+    }
+
+    Process {
+        id: swayidleProcess
     }
 
     Timer {
