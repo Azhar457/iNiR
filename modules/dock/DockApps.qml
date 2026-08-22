@@ -252,6 +252,22 @@ Item {
         // Skip separator targets
         if (toAppId === "SEPARATOR" || fromAppId === "SEPARATOR") return
 
+        const fromIsRunning = (fromItem.toplevels?.length ?? 0) > 0
+        const toIsRunning = (toItem.toplevels?.length ?? 0) > 0
+        if (fromIsRunning && toIsRunning) {
+            const fromRunningId = fromAppId.toLowerCase()
+            const toRunningId = toAppId.toLowerCase()
+            const fromRunningIdx = _runningAppOrder.indexOf(fromRunningId)
+            const toRunningIdx = _runningAppOrder.indexOf(toRunningId)
+            if (fromRunningIdx >= 0 && toRunningIdx >= 0) {
+                const [moved] = _runningAppOrder.splice(fromRunningIdx, 1)
+                const insertIdx = toRunningIdx
+                _runningAppOrder.splice(insertIdx, 0, moved)
+                root.rebuildDockItems()
+            }
+            return
+        }
+
         let pinnedApps = [...(Config.options?.dock?.pinnedApps ?? [])]
 
         const fromIsPinned = fromItem.pinned
@@ -289,6 +305,10 @@ Item {
     // so a pinned app going open→closed keeps its delegate and the snapshot
     // would leave a stale running indicator/preview until an unrelated reorder.
     property var toplevelsByUniqueId: ({})
+
+    // Opening order for currently running apps. Entries are removed when the
+    // app has no windows, so a later open appends it to the end.
+    property var _runningAppOrder: []
 
     // Direct reactive binding to Config - will automatically trigger when Config changes
     readonly property bool separatePinnedFromRunning: Config.options?.dock?.separatePinnedFromRunning ?? true
@@ -426,32 +446,39 @@ Item {
             runningAppsMap.get(lowerAppId).toplevels.push(toplevel);
         }
 
+        // Keep an order independent of focus and compositor layout changes.
+        const currentRunning = new Set(runningAppsMap.keys());
+        const runningOrder = root._runningAppOrder.filter(appId => currentRunning.has(appId));
+        for (const [lowerAppId] of runningAppsMap) {
+            if (!runningOrder.includes(lowerAppId))
+                runningOrder.push(lowerAppId);
+        }
+        root._runningAppOrder = runningOrder;
+
         const values = [];
         let order = 0;
 
-        // If separation is disabled, use legacy behavior: combine pinned with their running windows
+        // Keep closed pinned apps in their configured area in either mode.
         if (!separatePinnedFromRunning) {
-            // Add all pinned apps (with or without windows)
+            // Add pinned apps without running windows in their configured order.
             for (const appId of pinnedApps) {
                 const lowerAppId = appId.toLowerCase();
                 const runningEntry = runningAppsMap.get(lowerAppId);
                 // Skip pinned apps with no desktop entry and no running windows
-                if (!runningEntry && !AppSearch.lookupDesktopEntry(appId))
+                if (runningEntry || !AppSearch.lookupDesktopEntry(appId))
                     continue;
                 values.push({
                     uniqueId: "app-" + lowerAppId,
                     appId: lowerAppId,
-                    toplevels: runningEntry?.toplevels ?? [],
+                    toplevels: [],
                     pinned: true,
                     originalAppId: appId,
                     section: "pinned",
                     order: order++
                 });
-                // Remove from running map so we don't add it again
-                runningAppsMap.delete(lowerAppId);
             }
 
-            // Add separator if there are both pinned and unpinned running apps
+            // Add separator if there are both pinned-only and running apps
             if (values.length > 0 && runningAppsMap.size > 0) {
                 values.push({
                     uniqueId: "separator",
@@ -464,16 +491,16 @@ Item {
                 });
             }
 
-            // Add unpinned running apps in a stable alphabetical order so they
-            // don't shuffle as sortedToplevels reorders on focus/layout changes.
-            const unpinned = Array.from(runningAppsMap.entries())
-                .sort((a, b) => a[0].localeCompare(b[0]));
-            for (const [lowerAppId, entry] of unpinned) {
+            // Add all running apps in first-open order.
+            const running = Array.from(runningAppsMap.entries())
+                .sort((a, b) => root._runningAppOrder.indexOf(a[0])
+                    - root._runningAppOrder.indexOf(b[0]));
+            for (const [lowerAppId, entry] of running) {
                 values.push({
                     uniqueId: "app-" + lowerAppId,
                     appId: lowerAppId,
                     toplevels: entry.toplevels,
-                    pinned: false,
+                    pinned: pinnedApps.some(p => p.toLowerCase() === lowerAppId),
                     originalAppId: entry.appId,
                     section: "open",
                     order: order++
@@ -525,23 +552,10 @@ Item {
                     entry: entry
                 });
             }
-            // Sort to keep consistency: pinned+running apps first (by pinned order),
-            // then unpinned apps in a STABLE alphabetical order. Without the
-            // alphabetical fallback, unpinned apps inherit the iteration order of
-            // sortedToplevels which can shuffle as windows are focused / moved
-            // between columns, causing the dock icons to dance.
+            // Add all running apps in first-open order.
             sortedRunningApps.sort((a, b) => {
-                const aIndex = pinnedApps.findIndex(p => p.toLowerCase() === a.lowerAppId);
-                const bIndex = pinnedApps.findIndex(p => p.toLowerCase() === b.lowerAppId);
-
-                const aIsPinned = aIndex !== -1;
-                const bIsPinned = bIndex !== -1;
-
-                if (aIsPinned && bIsPinned) return aIndex - bIndex;
-                if (aIsPinned) return -1;
-                if (bIsPinned) return 1;
-
-                return a.lowerAppId.localeCompare(b.lowerAppId);
+                return root._runningAppOrder.indexOf(a.lowerAppId)
+                    - root._runningAppOrder.indexOf(b.lowerAppId);
             });
 
             for (const {lowerAppId, entry} of sortedRunningApps) {
