@@ -254,7 +254,16 @@ Item {
 
         const fromIsRunning = (fromItem.toplevels?.length ?? 0) > 0
         const toIsRunning = (toItem.toplevels?.length ?? 0) > 0
-        if (fromIsRunning && toIsRunning) {
+        let pinnedApps = [...(Config.options?.dock?.pinnedApps ?? [])]
+
+        const fromIsPinned = fromItem.pinned
+        const toIsPinned = toItem.pinned
+
+        // Running-order drag is only authoritative in the separated running
+        // section. In combined mode, pinned items must keep using pinnedApps so
+        // their persistent identity/order is not replaced by ephemeral state.
+        if (fromIsRunning && toIsRunning
+                && (root.separatePinnedFromRunning || (!fromIsPinned && !toIsPinned))) {
             const fromRunningId = fromAppId.toLowerCase()
             const toRunningId = toAppId.toLowerCase()
             const fromRunningIdx = _runningAppOrder.indexOf(fromRunningId)
@@ -267,11 +276,6 @@ Item {
             }
             return
         }
-
-        let pinnedApps = [...(Config.options?.dock?.pinnedApps ?? [])]
-
-        const fromIsPinned = fromItem.pinned
-        const toIsPinned = toItem.pinned
 
         if (fromIsPinned && toIsPinned) {
             // Both pinned: reorder within pinnedApps
@@ -458,27 +462,28 @@ Item {
         const values = [];
         let order = 0;
 
-        // Keep closed pinned apps in their configured area in either mode.
         if (!separatePinnedFromRunning) {
-            // Add pinned apps without running windows in their configured order.
+            // Combined mode keeps pinned apps as the canonical item even while
+            // running. This preserves their configured desktop identity, pin
+            // state and context actions instead of replacing them with a window
+            // identity just because a window exists.
             for (const appId of pinnedApps) {
                 const lowerAppId = appId.toLowerCase();
                 const runningEntry = runningAppsMap.get(lowerAppId);
-                // Skip pinned apps with no desktop entry and no running windows
-                if (runningEntry || !AppSearch.lookupDesktopEntry(appId))
+                if (!runningEntry && !AppSearch.lookupDesktopEntry(appId))
                     continue;
                 values.push({
                     uniqueId: "app-" + lowerAppId,
                     appId: lowerAppId,
-                    toplevels: [],
+                    toplevels: runningEntry?.toplevels ?? [],
                     pinned: true,
                     originalAppId: appId,
                     section: "pinned",
                     order: order++
                 });
+                runningAppsMap.delete(lowerAppId);
             }
 
-            // Add separator if there are both pinned-only and running apps
             if (values.length > 0 && runningAppsMap.size > 0) {
                 values.push({
                     uniqueId: "separator",
@@ -491,7 +496,7 @@ Item {
                 });
             }
 
-            // Add all running apps in first-open order.
+            // Only unpinned running apps use first-open order in combined mode.
             const running = Array.from(runningAppsMap.entries())
                 .sort((a, b) => root._runningAppOrder.indexOf(a[0])
                     - root._runningAppOrder.indexOf(b[0]));
@@ -500,7 +505,7 @@ Item {
                     uniqueId: "app-" + lowerAppId,
                     appId: lowerAppId,
                     toplevels: entry.toplevels,
-                    pinned: pinnedApps.some(p => p.toLowerCase() === lowerAppId),
+                    pinned: false,
                     originalAppId: entry.appId,
                     section: "open",
                     order: order++
