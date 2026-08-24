@@ -2740,12 +2740,13 @@ Singleton {
                         property string nsfw: ""
                     }
                 }
-                // Wallhaven-specific sidebar module options
+                // Wallpapers sidebar options (path kept as wallhaven for config compatibility)
                 property JsonObject wallhaven: JsonObject {
-                    // Enable/disable the Wallhaven tab in the left sidebar
+                    // Enable/disable the Wallpapers tab in the left sidebar
                     property bool enable: true
                     // Default page size for API search
                     property int limit: 24
+                    property string fitMode: "auto" // "auto" | "native" | "aspect" | "any"
                     // Optional API key for NSFW & user-specific filters
                     property string apiKey: ""
                 }

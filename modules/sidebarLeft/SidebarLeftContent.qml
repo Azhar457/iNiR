@@ -118,7 +118,7 @@ Item {
         if (root.translatorEnabled) result.push({ id: "translator", icon: "translate", name: Translation.tr("Translator") })
         if (root.animeEnabled && !root.animeCloset) result.push({ id: "anime", icon: "bookmark_heart", name: Translation.tr("Anime") })
         if (root.animeScheduleEnabled) result.push({ id: "animeSchedule", icon: "calendar_month", name: Translation.tr("Schedule") })
-        if (root.wallhavenEnabled) result.push({ id: "wallhaven", icon: "collections", name: Translation.tr("Wallhaven") })
+        if (root.wallhavenEnabled) result.push({ id: "wallhaven", icon: "collections", name: Translation.tr("Wallpapers") })
         if (root.newsEnabled) result.push({ id: "news", icon: "newspaper", name: Translation.tr("News") })
         if (root.ytMusicEnabled) result.push({ id: "ytmusic", icon: "library_music", name: Translation.tr("YT Music") })
         if (root.toolsEnabled) result.push({ id: "tools", icon: "build", name: Translation.tr("Tools") })
@@ -587,7 +587,14 @@ Item {
         Component { id: translatorComp; Translator {} }
         Component { id: animeComp; Anime {} }
         Component { id: animeScheduleComp; AnimeScheduleView {} }
-        Component { id: wallhavenComp; WallhavenView {} }
+        Component {
+            id: wallhavenComp
+            WallhavenView {
+                screenWidth: root.screenWidth
+                screenHeight: root.screenHeight
+                panelScreen: root.panelScreen
+            }
+        }
         Component { id: newsComp; NewsView {} }
         Component { id: ytMusicComp; InnerTuneView {} }
         Component { id: toolsComp; ToolsView {} }

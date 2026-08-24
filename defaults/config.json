@@ -1653,6 +1653,7 @@
         "wallhaven": {
             "enable": true,
             "limit": 24,
+            "fitMode": "auto",
             "apiKey": ""
         },
         "news": {
