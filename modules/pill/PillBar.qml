@@ -207,10 +207,32 @@ Scope {
             readonly property bool autoHideEnabled: (Config.options?.bar?.autoHide?.enable ?? false)
                 && !pill.fsHide
             readonly property bool transientMode: pill.mode !== "rest" && pill.mode !== "hover"
-            readonly property bool mustShow: !autoHideEnabled || edgeRevealHover.hovered
-                || superShow || surfaceOpen || pill.held || pill.hovered || transientMode
+            property bool pointerReveal: false
+            readonly property bool mustShow: !autoHideEnabled || pointerReveal
+                || superShow || surfaceOpen || pill.held || pill.hoverLatch || transientMode
             readonly property bool autoHideHidden: autoHideEnabled && !mustShow
             property bool superShow: false
+
+            function syncPointerReveal(): void {
+                if (edgeRevealHover.hovered || pill.hovered) {
+                    pointerHideGrace.stop()
+                    pointerReveal = true
+                } else if (pointerReveal) {
+                    pointerHideGrace.restart()
+                }
+            }
+
+            Timer {
+                id: pointerHideGrace
+                // Only bridges the screen edge to the centred pill. Once the
+                // pointer reaches the pill, Pill.hoverLatch owns collapse timing.
+                interval: 450
+                repeat: false
+                onTriggered: {
+                    if (!edgeRevealHover.hovered && !pill.hovered)
+                        overlay.pointerReveal = false
+                }
+            }
 
             Timer {
                 id: showBarTimer
@@ -295,7 +317,10 @@ Scope {
                 anchors { top: parent.top; left: parent.left; right: parent.right }
                 height: overlay.autoHideEnabled
                     ? Math.max(1, Config.options?.bar?.autoHide?.hoverRegionWidth ?? 2) : 0
-                HoverHandler { id: edgeRevealHover }
+                HoverHandler {
+                    id: edgeRevealHover
+                    onHoveredChanged: overlay.syncPointerReveal()
+                }
             }
 
             MouseArea {
@@ -341,7 +366,10 @@ Scope {
                     && !overlay.surfaceOpen
 
                 HoverHandler {
-                    onHoveredChanged: pill.hovered = hovered
+                    onHoveredChanged: {
+                        pill.hovered = hovered
+                        overlay.syncPointerReveal()
+                    }
                 }
                 Keys.onEscapePressed: root.close()
 
@@ -370,7 +398,9 @@ Scope {
 
                     anchors.top: parent.top
                     anchors.topMargin: pill.mode === "game" ? 0
-                        : overlay.autoHideHidden ? -(pill.height + 1) : overlay.topGapPx
+                        : overlay.autoHideHidden
+                            ? -(pill.hoverH + overlay.topGapPx + 1)
+                            : overlay.topGapPx
                     anchors.horizontalCenter: parent.horizontalCenter
 
                     Behavior on anchors.topMargin {
