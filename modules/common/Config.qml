@@ -721,7 +721,7 @@ Singleton {
 
             property JsonObject appearance: JsonObject {
                 property string theme: "auto" // Theme preset ID: "auto" for wallpaper-based, or preset name like "gruvbox-dark", "catppuccin-mocha", "custom", etc.
-                property string globalStyle: "material" // "material" | "cards" | "aurora" | "inir" | "angel" | "zzz" | "cookie"
+                property string globalStyle: "material" // "material" | "cards" | "aurora" | "inir" | "angel" | "regalia" | "zzz" | "cookie"
                 // Shared skin for every island surface (islands bar, island dock,
                 // island sidebars, island search). Consumed by IslandPanel.
                 property JsonObject island: JsonObject {
@@ -733,6 +733,14 @@ Singleton {
                     property bool sheen: true // 1px lit top edge
                 }
                 property bool colorInvert: false // Rotate all m3 colors 180° (complementary palette). Shell-only, does not affect external apps.
+                property JsonObject regalia: JsonObject {
+                    property bool glass: true
+                    property real glassBlur: 0.72
+                    property real glassTintTransparency: 0.52
+                    property real glassSurfaceOpacity: 0.60
+                    property real glassSaturation: 0.12
+                    property real radiusScale: 1.0
+                }
                 property JsonObject aurora: JsonObject {
                     property JsonObject transparency: JsonObject {
                         property real overlay: 0.38       // Main panels
@@ -840,6 +848,7 @@ Singleton {
                     property int aurora: 0
                     property int inir: 1
                     property int angel: 1
+                    property int regalia: 1
                     property int zzz: 0
                     property int cookie: 1
                 }
