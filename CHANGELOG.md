@@ -23,6 +23,7 @@ A focused polish release for Regalia, wallpapers, startup reliability, bar behav
 ### Fixed
 - **Boot greeting and lock-on-startup**: deferred panel loading no longer misses startup triggers; lock-on-startup is compositor-independent and runs once per real shell session rather than per hot reload.
 - **Bar auto-hide**: M3 keeps its reveal zone on the physical screen edge even with outer gaps; Pill/Pill Bar use a short hover grace across their top gap; both styles honor shared hover-region and push-windows settings. Super-only peek remains available where the compositor exposes held-Super state.
+- **Media player volume**: mouse-wheel volume now controls the player’s actual PipeWire stream when MPRIS volume is missing or ineffective, with shared behavior across bar/vertical/Waffle consumers.
 - **Wallpaper switching with custom themes**: setting an online wallpaper updates the wallpaper path even when a static/custom color theme is active, without replacing that palette.
 - **Regalia polish**: shared text fields/text areas no longer stack Material focus chrome with Regalia; the right-sidebar profile banner uses concentric insets and shared surfaces keep consistent hover/focus treatment.
 - **Waffle controls**: shared button icons remain centered and use the common transition timing token instead of a local animation duration.
