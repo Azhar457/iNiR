@@ -112,13 +112,13 @@ I wanted my desktop to look and work a certain way and nothing else did exactly 
 ## Features
 
 **Two panel families**, switchable on the fly with `Super+Shift+W`:
-- **Material ii**: floating bar, sidebars, dock, and 7 visual styles (Material, Cards, Aurora, iNiR, Angel, ZZZ, Cookie Shapes)
+- **Material ii**: floating bar, sidebars, dock, and 8 visual styles (Material, Cards, Aurora, iNiR, Angel, Regalia, ZZZ, Cookie Shapes)
 - **Waffle**: Windows 11-inspired taskbar, start menu, action center, notification center
 
 **Automatic theming**. Pick a wallpaper and everything adapts:
 - Shell colors via Material You, propagated to GTK3/4, Qt, terminals, Firefox, Discord, SDDM
 - 10 theming targets covering terminals, editors, browsers, Spicetify, Steam, Cava and more
-- Theme presets: Gruvbox, Catppuccin, Rosé Pine, and custom
+- Theme presets: Regalia / Regalia Ivory, Gruvbox, Catppuccin, Rosé Pine, and custom
 
 **Built for Niri.** Hyprland code survives from the fork but is not tested.
 
@@ -129,7 +129,7 @@ I wanted my desktop to look and work a certain way and nothing else did exactly 
 
 ### Theming and appearance
 
-- **7 visual styles**: Material (solid), Cards, Aurora (glass blur), iNiR (TUI-inspired), Angel (neo-brutalism), ZZZ (poster plates), Cookie Shapes (animated shape morphing)
+- **8 visual styles**: Material (solid), Cards, Aurora (glass blur), iNiR (TUI-inspired), Angel (neo-brutalism), Regalia (black engineered chassis, warm ivory ink, restrained champagne hardware), ZZZ (poster plates), Cookie Shapes (animated shape morphing)
 - **Dynamic wallpaper colors** via Material You, propagated system-wide
 - **10 terminal and TUI tools auto-themed**: foot, kitty, alacritty, ghostty, wezterm, starship, fuzzel, btop, lazygit, yazi
 - **App theming**: GTK3/4, Qt (via plasma-integration and darkly), Firefox (MaterialFox), Discord/Vesktop (System24), Zed, Spicetify, Steam, SDDM
