@@ -81,6 +81,13 @@ Scope {
                 property int cornerOpenCutHeight: cutOutCornerOpenZones ? Config.options.sidebar.cornerOpen.cornerRegionHeight : 0
                 mask: Region {
                     item: hoverMaskRegion
+                    // Keep a fixed screen-edge hit strip while barContent is
+                    // translated off-screen. Anchoring the only hit region to
+                    // the moving bar made M3 hide correctly but unable to reveal
+                    // reliably on some layer-shell/compositor combinations.
+                    Region {
+                        item: autoHideEdgeRegion
+                    }
                     Region {
                         intersection: Intersection.Subtract
                         x: 0
@@ -97,6 +104,18 @@ Scope {
                     }
                 }
                 color: "transparent"
+
+                Item {
+                    id: autoHideEdgeRegion
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: !Config.options.bar.bottom ? parent.top : undefined
+                        bottom: Config.options.bar.bottom ? parent.bottom : undefined
+                    }
+                    height: (Config.options?.bar?.autoHide?.enable ?? false)
+                        ? Math.max(1, Config.options?.bar?.autoHide?.hoverRegionWidth ?? 2) : 0
+                }
 
                 // Positioning
                 anchors {
