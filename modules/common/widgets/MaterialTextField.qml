@@ -11,7 +11,7 @@ import QtQuick.Controls
 TextField {
     id: root
     Material.theme: Material.System
-    Material.accent: Appearance.colors.colPrimary
+    Material.accent: Appearance.regaliaEverywhere ? "transparent" : Appearance.colors.colPrimary
     Material.primary: Appearance.colors.colPrimary
     Material.background: Appearance.regaliaEverywhere ? "transparent" : Appearance.colors.colLayer1
     Material.foreground: Appearance.regaliaEverywhere ? Appearance.regalia.onColor : Appearance.colors.colOnSurface
@@ -20,12 +20,13 @@ TextField {
 
     RegaliaControlFace {
         anchors.fill: parent
-        z: -2
+        z: -0.5
         visible: Appearance.regaliaEverywhere
-        fillColor: Appearance.regalia.controlPlate
+        fillColor: root.activeFocus
+            ? Appearance.regalia.controlPlateHover
+            : Appearance.regalia.controlPlate
         radius: Appearance.regalia.roundSmall
-        hovered: root.hovered
-        focused: root.activeFocus
+        hovered: root.hovered && !root.activeFocus
     }
 
     // Settings search integration
