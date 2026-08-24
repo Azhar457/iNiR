@@ -5,6 +5,29 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.29.2] - 2026-08-24
+
+A focused polish release for Regalia, wallpapers, startup reliability, bar behavior, and recent runtime regressions.
+
+### Added
+- **Regalia global style**: a theme-reactive luxury material system with shared surfaces, controls, glass support, a Settings editor, and coverage across bars, dock, sidebars, search, dialogs, overlays, widgets, and Waffle selection parity.
+- **Online wallpaper browser**: Wallhaven-first discovery with Wikimedia Commons, Konachan and yande.re; monitor-aware aspect/resolution filtering, weekly ranking, ricing-focused collections, provider favicons, tag-hover control, configurable results per page, and cleaner paging/navigation.
+- **M3 clock overrides**: per-widget time/date font family and pixel-size controls.
+
+### Changed
+- **Startup loading**: critical panels and deferred services are split more aggressively to reduce first-frame contention.
+- **Dock ordering**: running applications keep first-open order, while notification badges clear when their app is opened.
+- **Window identity**: shared application identities are resolved per window instead of collapsing unrelated windows together.
+
+### Fixed
+- **Boot greeting and lock-on-startup**: deferred panel loading no longer misses startup triggers; lock-on-startup is compositor-independent and runs once per real shell session rather than per hot reload.
+- **Bar auto-hide**: M3 keeps a fixed edge reveal strip while hidden, and both normal Pill and Pill Bar mode now honor the shared auto-hide, Super-peek, hover-region, and push-windows settings.
+- **Wallpaper switching with custom themes**: setting an online wallpaper updates the wallpaper path even when a static/custom color theme is active, without replacing that palette.
+- **Regalia polish**: shared text fields/text areas no longer stack Material focus chrome with Regalia; the right-sidebar profile banner uses concentric insets and shared surfaces keep consistent hover/focus treatment.
+- **Monitor lifecycle**: disconnects and idle power-off no longer produce output flicker.
+- **Updates and migrations**: required migrations still run when the checkout is already current; migration quoting handles apostrophes correctly.
+- **Runtime stability**: guarded null accesses in QML delegates, cleaned orphaned `swayidle`, repaired the Spicetify wrapper asset, preserved VS Code JSONC settings during theme generation, and stopped Steam notifications from stealing focus on Niri.
+
 ## [2.29.1] - 2026-08-11
 
 A smaller release focused on making the desktop editor easier to trust, fixing a few rough runtime edges, and closing the reports that surfaced after 2.29.0.
