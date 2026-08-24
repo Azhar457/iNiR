@@ -1489,6 +1489,10 @@
             "valueScroll": true,
             "visualize": true
         },
+        "edgeOpen": {
+            "enable": false,
+            "regionWidth": 2
+        },
         "style": "panel",
         "cardStyle": false,
         "keepRightSidebarLoaded": true,

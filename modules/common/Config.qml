@@ -2929,6 +2929,10 @@ Singleton {
                     property bool clicklessCornerEnd: true
                     property int clicklessCornerVerticalOffset: 1
                 }
+                property JsonObject edgeOpen: JsonObject {
+                    property bool enable: false
+                    property int regionWidth: 2
+                }
 
                 property JsonObject quickToggles: JsonObject {
                     property string style: "android" // Options: classic, android
