@@ -13,17 +13,19 @@ A focused polish release for Regalia, wallpapers, startup reliability, bar behav
 - **Regalia global style**: a theme-reactive luxury material system with shared surfaces, controls, glass support, a Settings editor, and coverage across bars, dock, sidebars, search, dialogs, overlays, widgets, and Waffle selection parity.
 - **Online wallpaper browser**: Wallhaven-first discovery with Wikimedia Commons, Konachan and yande.re; monitor-aware aspect/resolution filtering, weekly ranking, ricing-focused collections, provider favicons, tag-hover control, configurable results per page, and cleaner paging/navigation.
 - **M3 clock overrides**: per-widget time/date font family and pixel-size controls.
+- **Sidebar edge reveal**: optional full-height left/right hover zones open the physical sidebar on that monitor, follow Shell Layout slot swaps, and auto-close transient reveals after the pointer leaves.
 
 ### Changed
 - **Startup loading**: critical panels and deferred services are split more aggressively to reduce first-frame contention.
-- **Dock ordering**: running applications keep first-open order, while notification badges clear when their app is opened.
+- **Dock ordering**: running applications keep first-open order; combined mode keeps pinned apps canonical while they are running, and notification badges clear when their app is opened.
 - **Window identity**: shared application identities are resolved per window instead of collapsing unrelated windows together.
 
 ### Fixed
 - **Boot greeting and lock-on-startup**: deferred panel loading no longer misses startup triggers; lock-on-startup is compositor-independent and runs once per real shell session rather than per hot reload.
-- **Bar auto-hide**: M3 keeps a fixed edge reveal strip while hidden, and both normal Pill and Pill Bar mode now honor the shared auto-hide, Super-peek, hover-region, and push-windows settings.
+- **Bar auto-hide**: M3 keeps its reveal zone on the physical screen edge even with outer gaps; Pill/Pill Bar use a short hover grace across their top gap; both styles honor shared hover-region and push-windows settings. Super-only peek remains available where the compositor exposes held-Super state.
 - **Wallpaper switching with custom themes**: setting an online wallpaper updates the wallpaper path even when a static/custom color theme is active, without replacing that palette.
 - **Regalia polish**: shared text fields/text areas no longer stack Material focus chrome with Regalia; the right-sidebar profile banner uses concentric insets and shared surfaces keep consistent hover/focus treatment.
+- **Waffle controls**: shared button icons remain centered and use the common transition timing token instead of a local animation duration.
 - **Monitor lifecycle**: disconnects and idle power-off no longer produce output flicker.
 - **Updates and migrations**: required migrations still run when the checkout is already current; migration quoting handles apostrophes correctly.
 - **Runtime stability**: guarded null accesses in QML delegates, cleaned orphaned `swayidle`, repaired the Spicetify wrapper asset, preserved VS Code JSONC settings during theme generation, and stopped Steam notifications from stealing focus on Niri.
