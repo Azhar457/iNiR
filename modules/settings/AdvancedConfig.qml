@@ -12,7 +12,21 @@ ContentPage {
     settingsPageName: Translation.tr("Advanced")
 
     property bool cavaControlsReady: false
+    property string activeSection: "color"
     Component.onCompleted: Qt.callLater(() => root.cavaControlsReady = true)
+
+    SettingsTaskNavigator {
+        icon: "construction"
+        title: Translation.tr("Advanced")
+        description: Translation.tr("Advanced controls are split between color-generation internals and runtime resource instrumentation.")
+        summary: Translation.tr("Color generation · resources")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Color"), icon: "colors", value: "color" },
+            { displayName: Translation.tr("Resources"), icon: "memory_alt", value: "resources" }
+        ]
+    }
 
     function setCavaValue(path, value, regenerateStandalone): void {
         if (!root.cavaControlsReady)
@@ -44,6 +58,8 @@ ContentPage {
     }
 
     SettingsCardSection {
+        settingsTaskSection: "color"
+        visible: root.activeSection === "color"
         expanded: true
         icon: "colors"
         title: Translation.tr("Color generation")
@@ -412,7 +428,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        expanded: false
+        settingsTaskSection: "resources"
+        visible: root.activeSection === "resources"
+        expanded: true
         icon: "memory_alt"
         title: Translation.tr("Resource Monitor")
 
