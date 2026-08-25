@@ -59,7 +59,7 @@ Item { // Bar content region
         const mapped = mouseArea.mapToItem(root, clickX, clickY)
         barContextMenuAnchor.x = mapped.x
         barContextMenuAnchor.y = (Config.options?.bar?.bottom ?? false) ? 0 : root.height
-        barContextMenu.active = true
+        barContextMenu.requestOpen()
     }
 
     ContextMenu {

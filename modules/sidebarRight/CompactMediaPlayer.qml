@@ -375,7 +375,7 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         playerSwitcherMenu.anchorItem = artContainer
-                        playerSwitcherMenu.active = true
+                        playerSwitcherMenu.requestOpen()
                     }
                 }
             }

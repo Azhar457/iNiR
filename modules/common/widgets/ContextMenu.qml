@@ -48,6 +48,12 @@ Loader {
         else root.active = false;
     }
 
+    function requestOpen(): void {
+        if (GlobalStates.activeContextMenu && GlobalStates.activeContextMenu !== root)
+            GlobalStates.activeContextMenu.active = false
+        root.active = true
+    }
+
     function updateAnchor(): void {
         item?.anchor.updateAnchor();
     }
@@ -56,10 +62,14 @@ Loader {
     visible: active
 
     onActiveChanged: {
-        if (active)
+        if (active) {
+            GlobalStates.activeContextMenu = root
             GlobalStates.activeContextMenuCount++
-        else
+        } else {
+            if (GlobalStates.activeContextMenu === root)
+                GlobalStates.activeContextMenu = null
             GlobalStates.activeContextMenuCount--
+        }
     }
 
     sourceComponent: PopupWindow {
