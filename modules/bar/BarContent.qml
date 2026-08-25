@@ -169,6 +169,13 @@ Item { // Bar content region
     // horizontal capsule padding the edge islands wrap their content with.
     readonly property int islandInset: Config.options?.bar?.islands?.inset ?? 4
     readonly property int islandPad: Config.options?.bar?.islands?.padding ?? 12
+    readonly property real islandShadowRadius: root.isIslands
+        && Appearance.effectsEnabled
+        && (Config.options?.appearance?.island?.shadow ?? true)
+        ? leftEdgeIsland.shadowRadius : 0
+    readonly property real islandOuterInset: root.isIslands
+        ? Math.max(Appearance.sizes.hyprlandGapsOut, root.islandShadowRadius)
+        : Appearance.sizes.hyprlandGapsOut
     readonly property bool isScenic: root.barAppearance === "scenic"
     readonly property bool isFrame: root.barAppearance === "frame"
     // Name the exact Region topology published by Bar.qml. A five-card islands
@@ -1029,7 +1036,7 @@ Item { // Bar content region
             anchors.left: parent.left
             anchors.right: root.isIslands ? undefined : parent.right
             anchors.leftMargin: root.isIslands
-                ? Appearance.sizes.hyprlandGapsOut + root.islandPad
+                ? root.islandOuterInset + root.islandPad
                 : Appearance.rounding.screenRounding
             anchors.rightMargin: Appearance.rounding.screenRounding
             spacing: 10
@@ -1339,7 +1346,7 @@ Item { // Bar content region
             anchors.left: root.isIslands ? undefined : parent.left
             anchors.leftMargin: Appearance.rounding.screenRounding
             anchors.rightMargin: root.isIslands
-                ? Appearance.sizes.hyprlandGapsOut + root.islandPad
+                ? root.islandOuterInset + root.islandPad
                 : Appearance.rounding.screenRounding
             spacing: 5
             layoutDirection: Qt.RightToLeft

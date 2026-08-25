@@ -12,6 +12,7 @@ Item {
 
     property bool shadow: Config.options?.appearance?.island?.shadow ?? true
     property real shadowOffset: 3
+    property int shadowRadius: 16
     property real radius: Config.options?.appearance?.island?.radius ?? 18
     property real topLeftRadiusOverride: -1
     property real topRightRadiusOverride: -1
@@ -138,14 +139,6 @@ Item {
             GradientStop { position: 1.0; color: Qt.alpha(Appearance.colors.colLayer1, root.fillOpacity) }
         }
 
-        layer.enabled: Appearance.effectsEnabled && root.shadow && root.visible
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.5)
-            shadowBlur: 0.7
-            shadowVerticalOffset: root.shadowOffset
-        }
-
         Rectangle {
             anchors.top: parent.top
             anchors.left: parent.left
@@ -157,5 +150,17 @@ Item {
             visible: Config.options?.appearance?.island?.sheen ?? true
             color: Qt.alpha(Appearance.colors.colOnLayer0, 0.07)
         }
+    }
+
+    GE.DropShadow {
+        anchors.fill: card
+        source: card
+        visible: Appearance.effectsEnabled && root.shadow && root.visible
+        z: -1
+        color: Qt.rgba(0, 0, 0, 0.35)
+        radius: root.shadowRadius
+        samples: radius * 2 + 1
+        verticalOffset: root.shadowOffset
+        transparentBorder: true
     }
 }
