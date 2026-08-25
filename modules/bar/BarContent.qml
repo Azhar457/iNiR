@@ -296,16 +296,6 @@ Item { // Bar content region
         glassEnabled: true
         nativeBlurActive: root.nativeBlurActive
         screen: root.screen
-        glassScreenX: {
-            const geometryDependency = x + width + (parent?.x ?? 0)
-            return mapToItem(null, 0, 0).x
-        }
-        glassScreenY: {
-            const geometryDependency = y + height + (parent?.y ?? 0)
-            return mapToItem(null, 0, 0).y
-        }
-        glassScreenWidth: root.screen?.width ?? 1920
-        glassScreenHeight: root.screen?.height ?? 1080
 
         readonly property real spectrumX: {
             const geometryDependency = edgeIsland.x + edgeIsland.y

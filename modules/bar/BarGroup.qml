@@ -34,8 +34,9 @@ Item {
     property real padding: islandStyle && !bare ? 12
         : Appearance.regaliaEverywhere && !bare ? Appearance.regalia.tilePadding : 8
     readonly property bool cardStyleEverywhere: (Config.options?.dock?.cardStyle ?? false) && (Config.options?.sidebar?.cardStyle ?? false) && (Config.options?.bar?.cornerStyle === 3)
-    // Islands bar appearance: each group is its own floating surface
-    readonly property bool islandStyle: !vertical && (Config.options?.bar?.appearanceStyle ?? "classic") === "islands"
+    // Islands bar appearance: each group is its own floating surface.
+    // Works in both horizontal and vertical bar modes.
+    readonly property bool islandStyle: (Config.options?.bar?.appearanceStyle ?? "classic") === "islands"
     // Bare: no surface of its own — for groups that live INSIDE another island
     // (e.g. the weather chip in an edge island) so cards never nest.
     property bool bare: false
@@ -106,16 +107,6 @@ Item {
         glassEnabled: true
         nativeBlurActive: root.nativeBlurActive
         screen: root.screen
-        glassScreenX: {
-            const geometryDependency = root.x + root.width + islandSurface.x
-            return islandSurface.mapToItem(null, 0, 0).x
-        }
-        glassScreenY: {
-            const geometryDependency = root.y + root.height + islandSurface.y
-            return islandSurface.mapToItem(null, 0, 0).y
-        }
-        glassScreenWidth: root.screen?.width ?? 1920
-        glassScreenHeight: root.screen?.height ?? 1080
 
         CavaSpectrum {
             anchors.fill: parent
