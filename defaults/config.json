@@ -222,6 +222,7 @@
             "enableVSCode": true,
             "enableChrome": true,
             "enableSpicetify": false,
+            "spicetifyTheme": "Inir",
             "enableSteam": false,
             "enablePearDesktop": true,
             "enableNeovim": false,

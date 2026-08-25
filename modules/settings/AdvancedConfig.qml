@@ -125,6 +125,24 @@ ContentPage {
                     text: Translation.tr("Generate and apply a Spicetify theme from wallpaper colors")
                 }
             }
+
+            ContentSubsection {
+                visible: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
+                title: Translation.tr("Spotify theme")
+                tooltip: Translation.tr("Choose the Spicetify layout while keeping iNiR wallpaper colors")
+
+                ConfigSelectionArray {
+                    currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Inir"
+                    onSelected: newValue => {
+                        Config.setNestedValue("appearance.wallpaperTheming.spicetifyTheme", newValue)
+                        colorRegenTimer.restart()
+                    }
+                    options: [
+                        { displayName: Translation.tr("Sleek"), value: "Inir" },
+                        { displayName: Translation.tr("Text (TUI)"), value: "InirTUI" }
+                    ]
+                }
+            }
             SettingsSwitch {
                 buttonIcon: "sports_esports"
                 text: Translation.tr("Steam (Millennium)")
