@@ -56,6 +56,7 @@ Singleton {
     signal pillSurfaceCommand(string command, string surface)
     property bool altSwitcherOpen: false
     signal altSwitcherCommand(string command)
+    property int activeContextMenuCount: 0
     property bool clipboardOpen: false
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page

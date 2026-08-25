@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Widgets
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
@@ -53,6 +54,13 @@ Loader {
 
     active: false
     visible: active
+
+    onActiveChanged: {
+        if (active)
+            GlobalStates.activeContextMenuCount++
+        else
+            GlobalStates.activeContextMenuCount--
+    }
 
     sourceComponent: PopupWindow {
         id: popupWindow

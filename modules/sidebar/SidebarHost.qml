@@ -643,7 +643,13 @@ Scope {
             interval: 240
             repeat: false
             onTriggered: {
-                if (root.edgeRevealTransient && !sidebarPanelHover.hovered)
+                if (!root.edgeRevealTransient)
+                    return
+                if (GlobalStates.activeContextMenuCount > 0) {
+                    edgeRevealCloseTimer.restart()
+                    return
+                }
+                if (!sidebarPanelHover.hovered)
                     root.setRoleOpen(false)
             }
         }
