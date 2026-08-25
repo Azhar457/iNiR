@@ -53,6 +53,7 @@ Singleton {
     property bool overviewOpen: false
     property string overviewTargetOutput: ""
     property string overviewSearchPrefix: ""
+    signal pillSurfaceCommand(string command, string surface)
     property bool altSwitcherOpen: false
     signal altSwitcherCommand(string command)
     property bool clipboardOpen: false
@@ -62,6 +63,21 @@ Singleton {
     property var _settingsNativeDialogs: ({})
     readonly property bool settingsNativeDialogOpen:
         Object.keys(root._settingsNativeDialogs).length > 0
+
+    function openSettingsPage(index: int): void {
+        const isWaffle = Config.options?.panelFamily === "waffle"
+            && Config.options?.waffles?.settings?.useMaterialStyle !== true
+        if (isWaffle) {
+            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                "waffle-settings-window"])
+        } else if (Config.options?.settingsUi?.overlayMode ?? false) {
+            root.settingsOverlayRequestedPage = index
+            root.settingsOverlayOpen = true
+        } else {
+            Quickshell.execDetached(["/usr/bin/env", `QS_SETTINGS_PAGE=${index}`,
+                Quickshell.shellPath("scripts/inir"), "settings-window"])
+        }
+    }
 
     function setSettingsNativeDialogVisible(dialogKey: string, visible: bool): void {
         const key = String(dialogKey ?? "").trim()
