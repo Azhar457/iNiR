@@ -169,12 +169,12 @@ Item { // Bar content region
     // horizontal capsule padding the edge islands wrap their content with.
     readonly property int islandInset: Config.options?.bar?.islands?.inset ?? 4
     readonly property int islandPad: Config.options?.bar?.islands?.padding ?? 12
-    readonly property real islandShadowRadius: root.isIslands
+    readonly property real islandShadowAllowance: root.isIslands
         && Appearance.effectsEnabled
         && (Config.options?.appearance?.island?.shadow ?? true)
-        ? leftEdgeIsland.shadowRadius : 0
+        ? Appearance.sizes.elevationMargin : 0
     readonly property real islandOuterInset: root.isIslands
-        ? Math.max(Appearance.sizes.hyprlandGapsOut, root.islandShadowRadius)
+        ? Math.max(Appearance.sizes.hyprlandGapsOut, root.islandShadowAllowance)
         : Appearance.sizes.hyprlandGapsOut
     readonly property bool isScenic: root.barAppearance === "scenic"
     readonly property bool isFrame: root.barAppearance === "frame"
@@ -298,7 +298,7 @@ Item { // Bar content region
     // capsule left content poking outside it for the whole animation. Motion
     // is applied at the SOURCE instead (the activeWindow wrapper animates its
     // implicitWidth), so row and capsule move through the same frames.
-    component EdgeIsland: IslandPanel {
+    component EdgeIsland: BarIslandSurface {
         id: edgeIsland
         glassEnabled: true
         nativeBlurActive: root.nativeBlurActive
@@ -1152,7 +1152,7 @@ Item { // Bar content region
             // which would leave dead space in the lighter side). Classic keeps the
             // mirrored width so the two side pills stay visually balanced.
             implicitWidth: empty ? 0 : (root.isIslands ? Math.min(contentWidth, root.centerSideMaxWidth) : root._pillWidth(contentWidth))
-            clip: true
+            clipContent: true
 
             Repeater {
                 model: root._centerLeftIds
@@ -1223,7 +1223,7 @@ Item { // Bar content region
                 // which would leave dead space in the lighter side). Classic keeps the
                 // mirrored width so the two side pills stay visually balanced.
                 implicitWidth: empty ? 0 : (root.isIslands ? Math.min(contentWidth, root.centerSideMaxWidth) : root._pillWidth(contentWidth))
-                clip: true
+                clipContent: true
 
                 Repeater {
                     model: root._centerRightIds

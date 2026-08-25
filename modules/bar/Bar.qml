@@ -67,7 +67,7 @@ Scope {
                 readonly property real panelSurfaceHeight: zzzDetachedRounded
                     ? (Appearance.sizes.baseBarHeight + Appearance.sizes.elevationMargin * 2)
                     : Appearance.sizes.barHeight
-                readonly property real islandShadowAllowance: barContent.islandShadowRadius
+                readonly property real islandShadowAllowance: barContent.islandShadowAllowance
                 // Hug corners belong to the classic bar surface. Islands, scenic,
                 // frame and pill draw their own, so the decorators must go with it.
                 readonly property bool hugCorners: bar.showBarBackground

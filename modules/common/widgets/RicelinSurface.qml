@@ -132,8 +132,7 @@ Item {
         topRightRadius: root.topRightRadius
         bottomLeftRadius: root.bottomLeftRadius
         bottomRightRadius: root.bottomRightRadius
-        border.width: 1
-        border.color: Appearance.colors.colLayer0Border
+        border.width: 0
         gradient: Gradient {
             GradientStop { position: 0.0; color: Qt.alpha(Appearance.colors.colLayer3, root.fillOpacity) }
             GradientStop { position: 1.0; color: Qt.alpha(Appearance.colors.colLayer1, root.fillOpacity) }
