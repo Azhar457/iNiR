@@ -1302,7 +1302,6 @@ ApplicationWindow {
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: Appearance.colors.colSubtext
                             elide: Text.ElideRight
-                            opacity: 0.85
                         }
                     }
 
