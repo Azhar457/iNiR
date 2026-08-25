@@ -554,8 +554,8 @@ Singleton {
             pageIndex: 21, pageName: root.pages[21].name,
             section: Translation.tr("Pill bar"),
             label: Translation.tr("Pill setup"),
-            description: Translation.tr("Behavior, entry points, readability, surfaces, hover-row modules, clock, glyphs and advanced geometry"),
-            keywords: ["ricelin", "pill", "bar", "morph", "launcher", "media", "overview", "kanji", "glyph", "sysmon", "clipboard", "scale", "gap", "expanded", "persistent", "compact", "toast", "osd", "notification", "hover", "row", "workspaces", "weather", "tray", "wifi", "battery", "mixer", "sidebar", "power", "soul", "bead", "icon", "size", "spacing"]
+            description: Translation.tr("Behavior, floating window overlap, entry points, readability, surfaces, modules and geometry"),
+            keywords: ["ricelin", "pill", "bar", "morph", "float", "floating", "overlap", "underlap", "window", "reserve", "launcher", "media", "overview", "kanji", "glyph", "sysmon", "clipboard", "scale", "gap", "expanded", "persistent", "compact", "toast", "osd", "notification", "hover", "row", "workspaces", "weather", "tray", "wifi", "battery", "mixer", "sidebar", "power", "soul", "bead", "icon", "size", "spacing"]
         },
         {
             pageIndex: 2, pageName: root.pages[2].name,
