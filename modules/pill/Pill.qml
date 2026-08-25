@@ -952,10 +952,8 @@ Item {
                         visible: Notifications.unread > 0
                         anchors.top: parent.top
                         anchors.right: parent.right
-                        anchors.topMargin: -2 * pill.s
-                        anchors.rightMargin: -2 * pill.s
-                        width: 5 * pill.s
-                        height: 5 * pill.s
+                        width: Math.max(5, 5 * pill.s)
+                        height: width
                         radius: width / 2
                         color: PillTheme.flameGlow
                     }
