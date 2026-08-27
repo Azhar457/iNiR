@@ -1009,6 +1009,12 @@ Singleton {
 	}
 
 	function _streamIsMoreAudible(candidate, current): bool {
+		const cMeta = root._streamMetadataById[Number(candidate?.id ?? 0)] ?? {};
+		const curMeta = root._streamMetadataById[Number(current?.id ?? 0)] ?? {};
+		const cRunning = cMeta.state === "running";
+		const curRunning = curMeta.state === "running";
+		if (cRunning !== curRunning)
+			return cRunning;
 		const candidateVolume = Number(candidate?.audio?.volume ?? 0);
 		const currentVolume = Number(current?.audio?.volume ?? 0);
 		if (Math.abs(candidateVolume - currentVolume) > 0.01)
@@ -1208,11 +1214,6 @@ Singleton {
 			YtMusic.setVolume(clamped);
 			return;
 		}
-		// Stream node first: write node.audio.volume for immediate UI binding
-		// feedback and real per-app PipeWire change, with wpctl as a backing
-		// hammer. MPRIS volume is only a fallback when no stream matches,
-		// because browser bridges report volumeSupported but rarely move the
-		// active tab's per-stream volume.
 		const node = root.activePlayerStreamNode;
 		if (node?.audio) {
 			node.audio.volume = clamped;
@@ -1221,6 +1222,8 @@ Singleton {
 				Quickshell.execDetached(["wpctl", "set-volume", String(nodeId), String(clamped)]);
 			return;
 		}
+		// No matched stream yet: refresh PipeWire metadata and fall back to MPRIS.
+		_streamMetadataRefresh.restart();
 		if (root.activePlayer && root.activePlayer.volumeSupported && root.activePlayer.canControl)
 			root.activePlayer.volume = clamped;
 	}
