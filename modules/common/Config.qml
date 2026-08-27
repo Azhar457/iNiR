@@ -1421,6 +1421,7 @@ Singleton {
                         property bool showMemory: true
                         property bool showGpu: true
                         property bool showTemp: false
+                        property bool showGpuTemp: false
                         property bool showDisk: false
                         property bool showLabels: true
                         property int contentWidth: 320
