@@ -189,7 +189,7 @@ Scope {
                 "worldClock", "userCard"];
             if (!knownWidgets.includes(widgetName))
                 return "unknown widget: " + widgetName;
-            Config.setNestedValue("background.widgets." + widgetName + ".enable", enabled);
+            DesktopWidgetLayout.setGloballyEnabled(widgetName, enabled);
             return widgetName + (enabled ? " enabled" : " disabled");
         }
 

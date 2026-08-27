@@ -568,10 +568,7 @@ ContentPage {
         Layout.fillWidth: false
         leftmost: true; rightmost: true
         toggled: DesktopWidgetLayout.effectiveEnabled(wec.widgetKey, wec.defaultValue)
-        onClicked: {
-            Config.setNestedValue("background.widgets." + wec.widgetKey + ".enable", !wec.toggled)
-            DesktopWidgetLayout.clearEnableOverrides()
-        }
+        onClicked: DesktopWidgetLayout.setGloballyEnabled(wec.widgetKey, !wec.toggled)
     }
 
     component WidgetStateChip: SelectionGroupButton {
@@ -5005,8 +5002,7 @@ ContentPage {
                             buttonIcon: "drag_pan"
                             buttonText: Translation.tr("Edit on desktop")
                             onClicked: {
-                                Config.setNestedValue("background.widgets.custom." + cwDelegate.modelData.id + ".enable", true);
-                                DesktopWidgetLayout.clearEnableOverrides();
+                                DesktopWidgetLayout.setGloballyEnabled("custom." + cwDelegate.modelData.id, true);
                                 GlobalStates.setWidgetEditMode(true);
                             }
                         }
