@@ -2452,8 +2452,8 @@ Scope {
                                     colBackgroundToggled: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                                     colBackgroundToggledHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
                                     colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                                    releaseAction: () => DesktopWidgetLayout.setEnabled(
-                                        bgRoot.screenName, quickWidgetButton.modelData.key,
+                                    releaseAction: () => DesktopWidgetLayout.setGloballyEnabled(
+                                        quickWidgetButton.modelData.key,
                                         !quickWidgetButton.widgetEnabled)
                                     cancelAction: () => {}
                                     contentItem: MaterialSymbol {
@@ -2483,8 +2483,8 @@ Scope {
                                     colBackgroundToggled: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.16)
                                     colBackgroundToggledHover: CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.24)
                                     colRipple: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
-                                    releaseAction: () => DesktopWidgetLayout.setEnabled(
-                                        bgRoot.screenName, "custom." + customWidgetButton.modelData.id,
+                                    releaseAction: () => DesktopWidgetLayout.setGloballyEnabled(
+                                        "custom." + customWidgetButton.modelData.id,
                                         !customWidgetButton.widgetEnabled)
                                     cancelAction: () => {}
                                     contentItem: MaterialSymbol {

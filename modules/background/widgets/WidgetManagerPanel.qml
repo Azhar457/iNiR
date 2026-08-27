@@ -985,8 +985,8 @@ Item {
                         checked: card._enabled
                         onCheckedChanged: {
                             if (checked !== card._enabled)
-                                DesktopWidgetLayout.setEnabled(
-                                    root.outputName, card._layoutKey, checked)
+                                DesktopWidgetLayout.setGloballyEnabled(
+                                    card._layoutKey, checked)
                         }
                     }
                 }
