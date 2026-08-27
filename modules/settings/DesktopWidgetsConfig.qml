@@ -557,6 +557,23 @@ ContentPage {
         onClicked: Config.setNestedValue(wtc.configPath, !wtc.toggled)
     }
 
+    // Widget enable toggles must agree with the desktop editor, which stores
+    // per-output overrides. Show the effective state and clear overrides on change
+    // so the base enable value is the single source of truth for settings.
+    component WidgetEnableChip: SelectionGroupButton {
+        id: wec
+        required property string widgetKey
+        property bool defaultValue: false
+
+        Layout.fillWidth: false
+        leftmost: true; rightmost: true
+        toggled: DesktopWidgetLayout.effectiveEnabled(wec.widgetKey, wec.defaultValue)
+        onClicked: {
+            Config.setNestedValue("background.widgets." + wec.widgetKey + ".enable", !wec.toggled)
+            DesktopWidgetLayout.clearEnableOverrides()
+        }
+    }
+
     component WidgetStateChip: SelectionGroupButton {
         id: wsc
         property bool active: false
@@ -586,8 +603,10 @@ ContentPage {
             WidgetSettingRow {
                 label: Translation.tr("Enabled")
                 icon: "check"
-                WidgetToggleChip {
-                    configPath: stateControls.configPath + ".enable"
+                WidgetEnableChip {
+                    widgetKey: stateControls.configPath.startsWith("background.widgets.")
+                        ? stateControls.configPath.substring("background.widgets.".length)
+                        : stateControls.configPath
                     defaultValue: stateControls.defaultEnabled
                     buttonIcon: "check"
                     buttonText: Translation.tr("Enable")
@@ -1443,9 +1462,9 @@ ContentPage {
                         { key: "worldClock", icon: "public", label: Translation.tr("World Clock"), def: false },
                         { key: "userCard", icon: "account_circle", label: Translation.tr("User Card"), def: false }
                     ]
-                    delegate: WidgetToggleChip {
+                    delegate: WidgetEnableChip {
                         required property var modelData
-                        configPath: "background.widgets." + modelData.key + ".enable"
+                        widgetKey: modelData.key
                         defaultValue: modelData.def
                         buttonIcon: modelData.icon
                         buttonText: modelData.label
@@ -4987,6 +5006,7 @@ ContentPage {
                             buttonText: Translation.tr("Edit on desktop")
                             onClicked: {
                                 Config.setNestedValue("background.widgets.custom." + cwDelegate.modelData.id + ".enable", true);
+                                DesktopWidgetLayout.clearEnableOverrides();
                                 GlobalStates.setWidgetEditMode(true);
                             }
                         }
