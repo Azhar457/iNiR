@@ -811,6 +811,7 @@ Singleton {
 			function onPlaybackStateChanged() {
 				// Increment version to force activePlayer re-evaluation
 				root._playbackStateVersion++;
+				_streamMetadataRefresh.restart();
 				// Update tracked player if this one started playing
 				if (!root._manualPlayerSelection && modelData.isPlaying && root.trackedPlayer !== modelData && isRealPlayer(modelData)) {
 					root.trackedPlayer = modelData;
@@ -997,14 +998,36 @@ Singleton {
 		let bestTotal = 0;
 		for (const node of Audio.outputAppNodes ?? []) {
 			const s = root._streamMatchScore(player, node);
-			// Require real identity overlap; rank by total so the running-state
-			// tiebreaker only decides between already-matched candidates.
-			if (s.identity >= 12 && (best === null || s.total > bestTotal)) {
-				bestTotal = s.total;
+			if (s.identity < 12) continue;
+			if (best === null || s.total > bestTotal
+					|| (s.total === bestTotal && root._streamIsMoreAudible(node, best))) {
+				if (s.total > bestTotal) bestTotal = s.total;
 				best = node;
 			}
 		}
 		return best;
+	}
+
+	function _streamIsMoreAudible(candidate, current): bool {
+		const candidateVolume = Number(candidate?.audio?.volume ?? 0);
+		const currentVolume = Number(current?.audio?.volume ?? 0);
+		if (Math.abs(candidateVolume - currentVolume) > 0.01)
+			return candidateVolume > currentVolume;
+		return Boolean(current?.audio?.muted) && !Boolean(candidate?.audio?.muted);
+	}
+
+	function streamIsActive(node): bool {
+		const meta = root._streamMetadataById[Number(node?.id ?? 0)];
+		return !meta || meta.state === "running";
+	}
+
+	// Mixer view: browsers spawn one stream per playing tab, so collapsed to the
+	// streams with audio flowing right now; falls back to all streams when none
+	// is running so the mixer never goes empty.
+	readonly property var mixerAppNodes: {
+		const nodes = Audio.outputAppNodes ?? [];
+		const active = nodes.filter(node => root.streamIsActive(node));
+		return active.length > 0 ? active : nodes;
 	}
 
 	function playerForStreamNode(node): MprisPlayer {
