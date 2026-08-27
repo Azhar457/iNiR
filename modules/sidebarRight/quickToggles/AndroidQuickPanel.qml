@@ -82,13 +82,17 @@ AbstractQuickPanel {
 
                 Repeater {
                     id: usedRowsRepeater
+                    // ScriptModel requires unique values: feed the row arrays
+                    // themselves. Array(n) would be n copies of undefined,
+                    // which makes the row diff undefined (stale rows, wrong
+                    // delegates) — the root cause of edit-mode duplication.
                     model: ScriptModel {
-                        values: Array(root.toggleRows.length)
+                        values: root.toggleRows
                     }
                     delegate: ButtonGroup {
                         id: toggleRow
                         required property int index
-                        property var modelData: root.toggleRows[index]
+                        required property var modelData
                         property int startingIndex: {
                             const rows = root.toggleRows;
                             let sum = 0;
@@ -101,7 +105,7 @@ AbstractQuickPanel {
 
                         Repeater {
                             model: ScriptModel {
-                                values: toggleRow?.modelData ?? []
+                                values: toggleRow.modelData ?? []
                                 objectProp: "type"
                             }
                             delegate: AndroidToggleDelegateChooser {
@@ -145,18 +149,20 @@ AbstractQuickPanel {
                 spacing: root.spacing
 
                 Repeater {
+                    // See the used-rows comment: rows must be the values, not
+                    // Array(n) placeholders.
                     model: ScriptModel {
-                        values: Array(root.unusedToggleRows.length)
+                        values: root.unusedToggleRows
                     }
                     delegate: ButtonGroup {
                         id: unusedToggleRow
                         required property int index
-                        property var modelData: root.unusedToggleRows[index]
+                        required property var modelData
                         spacing: root.spacing
 
                         Repeater {
                             model: ScriptModel {
-                                values: unusedToggleRow?.modelData ?? []
+                                values: unusedToggleRow.modelData ?? []
                                 objectProp: "type"
                             }
                             delegate: AndroidToggleDelegateChooser {
