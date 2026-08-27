@@ -82,13 +82,11 @@ AbstractQuickPanel {
 
                 Repeater {
                     id: usedRowsRepeater
-                    // ScriptModel requires unique values: feed the row arrays
-                    // themselves. Array(n) would be n copies of undefined,
-                    // which makes the row diff undefined (stale rows, wrong
-                    // delegates) — the root cause of edit-mode duplication.
-                    model: ScriptModel {
-                        values: root.toggleRows
-                    }
+                    // Plain array Repeater on purpose: ScriptModel + DelegateChooser
+                    // reuse kept stale delegates when rows shifted (pinned toggles
+                    // stayed in the unused list, clicks acted on the wrong one).
+                    // Rows are few; a full rebuild per change is deterministic.
+                    model: root.toggleRows
                     delegate: ButtonGroup {
                         id: toggleRow
                         required property int index
@@ -104,10 +102,7 @@ AbstractQuickPanel {
                         spacing: root.spacing
 
                         Repeater {
-                            model: ScriptModel {
-                                values: toggleRow.modelData ?? []
-                                objectProp: "type"
-                            }
+                            model: toggleRow.modelData ?? []
                             delegate: AndroidToggleDelegateChooser {
                                 startingIndex: toggleRow.startingIndex
                                 editMode: root.editMode
@@ -149,11 +144,8 @@ AbstractQuickPanel {
                 spacing: root.spacing
 
                 Repeater {
-                    // See the used-rows comment: rows must be the values, not
-                    // Array(n) placeholders.
-                    model: ScriptModel {
-                        values: root.unusedToggleRows
-                    }
+                    // See the used-rows comment: deterministic rebuild, no reuse.
+                    model: root.unusedToggleRows
                     delegate: ButtonGroup {
                         id: unusedToggleRow
                         required property int index
@@ -161,10 +153,7 @@ AbstractQuickPanel {
                         spacing: root.spacing
 
                         Repeater {
-                            model: ScriptModel {
-                                values: unusedToggleRow.modelData ?? []
-                                objectProp: "type"
-                            }
+                            model: unusedToggleRow.modelData ?? []
                             delegate: AndroidToggleDelegateChooser {
                                 startingIndex: -1
                                 editMode: root.editMode
