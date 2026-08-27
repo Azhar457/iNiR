@@ -1386,8 +1386,28 @@ ContentPage {
     }
 
     // ── Overview: every widget toggleable at a glance ─────────
+    property string activeSection: "manage"
+
+    SettingsTaskNavigator {
+        icon: "dashboard_customize"
+        title: Translation.tr("Desktop Widgets")
+        description: Translation.tr("Configure your desktop widgets in focused views: layout management, clocks, weather, media and personal widgets.")
+        summary: Translation.tr("Manage \u00b7 Time \u00b7 Weather \u00b7 Media \u00b7 Personal \u00b7 System")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [
+            { displayName: Translation.tr("Manage"), icon: "dashboard_customize", value: "manage" },
+            { displayName: Translation.tr("Time"), icon: "schedule", value: "time" },
+            { displayName: Translation.tr("Weather"), icon: "cloud", value: "weather" },
+            { displayName: Translation.tr("Media"), icon: "album", value: "media" },
+            { displayName: Translation.tr("Personal"), icon: "person", value: "personal" },
+            { displayName: Translation.tr("System"), icon: "monitor_heart", value: "system" }
+        ]
+    }
+
     SettingsCardSection {
-        visible: root.isIiActive
+        settingsTaskSection: "manage"
+        visible: root.isIiActive && root.activeSection === "manage"
         expanded: true
         icon: "dashboard_customize"
         title: Translation.tr("Widgets at a glance")
@@ -1437,6 +1457,8 @@ ContentPage {
 
     // ── Edit Mode & Grid ─────────────────────────────────────
     SettingsCardSection {
+        settingsTaskSection: "manage"
+        visible: root.isIiActive && root.activeSection === "manage"
         expanded: true
         icon: "grid_on"
         title: Translation.tr("Edit Mode")
@@ -1485,6 +1507,8 @@ ContentPage {
 
     // ── Widget colors ─────────────────────────────────────────
     SettingsCardSection {
+        settingsTaskSection: "manage"
+        visible: root.isIiActive && root.activeSection === "manage"
         expanded: true
         icon: "palette"
         title: Translation.tr("Widget Colors")
@@ -1522,7 +1546,9 @@ ContentPage {
     // ── Power Saving ──────────────────────────────────────────
     SettingsCardSection {
         id: powerSavingSection
-        expanded: false
+        settingsTaskSection: "manage"
+        visible: root.isIiActive && root.activeSection === "manage"
+        expanded: true
         icon: "battery_saver"
         title: Translation.tr("Power Saving")
 
@@ -1603,8 +1629,9 @@ ContentPage {
     // ── Clock ────────────────────────────────────────────────
     SettingsCardSection {
         id: clockSection
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "time"
+        visible: root.isIiActive && root.activeSection === "time"
+        expanded: true
         icon: "schedule"
         title: Translation.tr("Clock")
 
@@ -2139,8 +2166,9 @@ ContentPage {
 
     // ── Japanese Typography ─────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "personal"
+        visible: root.isIiActive && root.activeSection === "personal"
+        expanded: true
         icon: "translate"
         title: Translation.tr("Japanese Typography")
 
@@ -2590,8 +2618,9 @@ ContentPage {
 
     // ── Weather ──────────────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "weather"
+        visible: root.isIiActive && root.activeSection === "weather"
+        expanded: true
         icon: "cloud"
         title: Translation.tr("Weather")
 
@@ -2843,8 +2872,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "media"
+        visible: root.isIiActive && root.activeSection === "media"
+        expanded: true
         icon: "add_photo_alternate"
         title: Translation.tr("Custom image")
 
@@ -3200,8 +3230,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "media"
+        visible: root.isIiActive && root.activeSection === "media"
+        expanded: true
         icon: "transform"
         title: Translation.tr("Image converter")
 
@@ -3261,8 +3292,9 @@ ContentPage {
 
     // ── Media Controls ───────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "media"
+        visible: root.isIiActive && root.activeSection === "media"
+        expanded: true
         icon: "album"
         title: Translation.tr("Media Controls")
 
@@ -3365,8 +3397,9 @@ ContentPage {
 
     // ── Visualizer ───────────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "media"
+        visible: root.isIiActive && root.activeSection === "media"
+        expanded: true
         icon: "equalizer"
         title: Translation.tr("Visualizer")
 
@@ -3739,8 +3772,9 @@ ContentPage {
 
     // ── System Monitor ───────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "system"
+        visible: root.isIiActive && root.activeSection === "system"
+        expanded: true
         icon: "monitor_heart"
         title: Translation.tr("System Monitor")
 
@@ -3949,8 +3983,9 @@ ContentPage {
 
     // ── Battery ──────────────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "system"
+        visible: root.isIiActive && root.activeSection === "system"
+        expanded: true
         icon: "battery_full"
         title: Translation.tr("Battery")
 
@@ -4150,8 +4185,9 @@ ContentPage {
 
     // ── Notes ───────────────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "personal"
+        visible: root.isIiActive && root.activeSection === "personal"
+        expanded: true
         icon: "sticky_note_2"
         title: Translation.tr("Notes")
 
@@ -4247,8 +4283,9 @@ ContentPage {
 
     // ── Upcoming Events ─────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "time"
+        visible: root.isIiActive && root.activeSection === "time"
+        expanded: true
         icon: "event"
         title: Translation.tr("Upcoming Events")
 
@@ -4349,8 +4386,9 @@ ContentPage {
 
     // ── System Uptime ────────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "time"
+        visible: root.isIiActive && root.activeSection === "time"
+        expanded: true
         icon: "avg_pace"
         title: Translation.tr("System uptime")
 
@@ -4405,8 +4443,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "time"
+        visible: root.isIiActive && root.activeSection === "time"
+        expanded: true
         icon: "public"
         title: Translation.tr("World clock")
 
@@ -4486,8 +4525,9 @@ ContentPage {
     }
 
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "personal"
+        visible: root.isIiActive && root.activeSection === "personal"
+        expanded: true
         icon: "account_circle"
         title: Translation.tr("User card")
 
@@ -4544,8 +4584,9 @@ ContentPage {
 
     // ── Mascot ───────────────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "personal"
+        visible: root.isIiActive && root.activeSection === "personal"
+        expanded: true
         icon: "pets"
         title: Translation.tr("Mascot")
 
@@ -4683,8 +4724,9 @@ ContentPage {
 
     // ── News Ticker ───────────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "time"
+        visible: root.isIiActive && root.activeSection === "time"
+        expanded: true
         icon: "newspaper"
         title: Translation.tr("News Ticker")
 
@@ -4740,8 +4782,9 @@ ContentPage {
 
     // ── Custom Widgets ──────────────────────────────────────
     SettingsCardSection {
-        visible: root.isIiActive
-        expanded: false
+        settingsTaskSection: "personal"
+        visible: root.isIiActive && root.activeSection === "personal"
+        expanded: true
         icon: "widgets"
         title: Translation.tr("Custom Widgets")
 
