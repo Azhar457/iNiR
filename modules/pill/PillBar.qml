@@ -128,10 +128,10 @@ Scope {
     readonly property bool floatOverWindows:
         Config.options?.bar?.pill?.floatOverWindows ?? false
 
-    function openTrayMenu(item, anchorX, hostWindow) {
+    function openTrayMenu(item, anchorX, anchorY, hostWindow) {
         trayMenu.s = hostWindow ? hostWindow.s : 1;
         trayMenu.hostWindow = hostWindow;
-        trayMenu.open(item, anchorX);
+        trayMenu.open(item, anchorX, anchorY);
     }
 
     /**
@@ -444,7 +444,7 @@ Scope {
                         root.openSurface = name;
                     }
                     onRequestClose: root.close()
-                    onTrayMenuRequested: (item, anchorX) => root.openTrayMenu(item, anchorX, overlay)
+                    onTrayMenuRequested: (item, anchorX, anchorY) => root.openTrayMenu(item, anchorX, anchorY, overlay)
                 }
             }
         }
