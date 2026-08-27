@@ -742,7 +742,7 @@ QtObject {
         root._currentSearchGeneration = requestedGeneration
         runningRequests += 1
 
-        const command = ["/usr/bin/curl", "-s", "--max-time", "20"]
+        const command = ["/usr/bin/curl", "-sS", "--max-time", "20", "-w", "\n__HTTP__%{http_code}"]
         if (requestedProvider === "wallhaven")
             command.push("-H", "User-Agent: " + defaultUserAgent)
         else if (requestedProvider === "waifu.im")
@@ -778,10 +778,47 @@ QtObject {
             return
         }
 
+        let httpStatus = 0
+        let body = text
+        const httpMarker = "\n__HTTP__"
+        const httpIdx = text.lastIndexOf("\n__HTTP__")
+        if (httpIdx >= 0) {
+            body = text.substring(0, httpIdx)
+            httpStatus = parseInt(text.substring(httpIdx + httpMarker.length), 10) || 0
+        } else {
+            const altIdx = text.lastIndexOf("__HTTP__")
+            if (altIdx >= 0) {
+                body = text.substring(0, altIdx).replace(/\n$/, "")
+                httpStatus = parseInt(text.substring(altIdx + 8), 10) || 0
+            }
+        }
+
+        if (httpStatus === 429) {
+            root.rateLimitedUntilMs = Date.now() + 30000
+            newResponse.message = Translation.tr("Wallhaven rate limit reached. Wait a moment and try again.")
+            root._appendResponse(newResponse)
+            root.responseFinished()
+            root._currentSearchResponse = null
+            root._processPendingSearch()
+            return
+        }
+        if (httpStatus > 0 && httpStatus !== 200) {
+            _log("[Wallhaven] HTTP", httpStatus)
+            if (httpStatus === 401)
+                newResponse.message = Translation.tr("Wallhaven rejected your API key. Check the key in settings and that your account allows NSFW.")
+            else
+                newResponse.message = Translation.tr("Wallhaven request failed (HTTP %1).").arg(httpStatus)
+            root._appendResponse(newResponse)
+            root.responseFinished()
+            root._currentSearchResponse = null
+            root._processPendingSearch()
+            return
+        }
+
         try {
             let images = []
             if (root._currentSearchProvider === "wallhaven") {
-                var payload = JSON.parse(text)
+                var payload = JSON.parse(body)
                 if (payload && payload.error) {
                     const apiError = String(payload.error)
                     newResponse.message = apiError.toLowerCase().includes("unauthor")
@@ -826,7 +863,7 @@ QtObject {
                     }
                 })
             } else if (root._currentSearchProvider === "commons") {
-                const payload = JSON.parse(text)
+                const payload = JSON.parse(body)
                 const pages = payload?.query?.pages ?? {}
                 images = Object.keys(pages).map(key => pages[key]).map(pageData => {
                     const info = pageData?.imageinfo?.[0] ?? {}
@@ -852,7 +889,7 @@ QtObject {
                     }
                 })
             } else if (root._currentSearchProvider === "picsum") {
-                const payload = JSON.parse(text)
+                const payload = JSON.parse(body)
                 const fit = root._currentSearchFitProfile
                 const fitToMonitor = fit?.mode !== "any" && fit?.width > 0 && fit?.height > 0
                 images = (Array.isArray(payload) ? payload : []).map(item => {
@@ -887,7 +924,7 @@ QtObject {
             } else {
                 const provider = Booru.providers[root._currentSearchProvider]
                 const payload = provider?.manualParseFunc
-                    ? provider.manualParseFunc(text) : JSON.parse(text)
+                    ? provider.manualParseFunc(body) : JSON.parse(body)
                 images = provider?.manualParseFunc
                     ? payload : (provider?.mapFunc ? provider.mapFunc(payload) : [])
             }
