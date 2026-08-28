@@ -100,7 +100,7 @@ QtObject {
             root.nowMs = Date.now()
             if (!root.pendingSearch)
                 return
-            if (root.runningRequests > 0)
+            if (root.runningRequests > 0 || root.searchProcess.running)
                 return
             if (root.nowMs < root._nextSearchAllowedMs)
                 return
@@ -187,12 +187,13 @@ QtObject {
     property int _currentSearchDisplayLimit: 24
     property int _currentSearchGeneration: 0
     property int searchGeneration: 0
+    property int _searchToken: 0
+    property int _activeSearchToken: 0
 
     property Process searchProcess: Process {
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root._handleSearchResponse(text)
-            }
+        stdout: StdioCollector { id: searchStdout }
+        onExited: (_exitCode, _exitStatus) => {
+            root._handleSearchResponse(searchStdout.text ?? "")
         }
     }
 
@@ -696,7 +697,8 @@ QtObject {
         root.activeFitProfile = requestedFit
 
         if ((requestedProvider === "wallhaven" && root.isRateLimited)
-                || runningRequests > 0 || root.nowMs < root._nextSearchAllowedMs) {
+                || runningRequests > 0 || root.searchProcess.running
+                || root.nowMs < root._nextSearchAllowedMs) {
             root.pendingSearch = {
                 tags: requestedTags,
                 nsfw: nsfw,
@@ -734,6 +736,9 @@ QtObject {
             "message": ""
         })
 
+        root._searchToken += 1
+        root._activeSearchToken = root._searchToken
+
         root._currentSearchUrl = url
         root._currentSearchResponse = newResponse
         root._currentSearchProvider = requestedProvider
@@ -742,7 +747,7 @@ QtObject {
         root._currentSearchGeneration = requestedGeneration
         runningRequests += 1
 
-        const command = ["/usr/bin/curl", "-sS", "--max-time", "20", "-w", "\n__HTTP__%{http_code}"]
+        const command = ["/usr/bin/curl", "-s", "--max-time", "20", "-w", "\n__HTTP__%{http_code}"]
         if (requestedProvider === "wallhaven")
             command.push("-H", "User-Agent: " + defaultUserAgent)
         else if (requestedProvider === "waifu.im")
@@ -752,18 +757,35 @@ QtObject {
         root.searchProcess.running = true
     }
 
+    function _extractJsonPayload(text): string {
+        const raw = String(text ?? "")
+        const objStart = raw.indexOf("{")
+        const objEnd = raw.lastIndexOf("}")
+        if (objStart >= 0 && objEnd > objStart)
+            return raw.substring(objStart, objEnd + 1)
+        const arrStart = raw.indexOf("[")
+        const arrEnd = raw.lastIndexOf("]")
+        if (arrStart >= 0 && arrEnd > arrStart)
+            return raw.substring(arrStart, arrEnd + 1)
+        return raw.trim()
+    }
+
     function _handleSearchResponse(text): void {
+        const token = root._activeSearchToken
         runningRequests = Math.max(0, runningRequests - 1)
-        
+
         var newResponse = root._currentSearchResponse
         if (!newResponse) {
             root._processPendingSearch()
             return
         }
+        if (token !== root._searchToken)
+            return
 
         if (root._currentSearchGeneration !== root.searchGeneration) {
             root._destroyResponsesLater([newResponse])
-            root._currentSearchResponse = null
+            if (root._currentSearchResponse === newResponse)
+                root._currentSearchResponse = null
             root._processPendingSearch()
             return
         }
@@ -773,7 +795,8 @@ QtObject {
             newResponse.message = failMessage
             root._appendResponse(newResponse)
             root.responseFinished()
-            root._currentSearchResponse = null
+            if (root._currentSearchResponse === newResponse)
+                root._currentSearchResponse = null
             root._processPendingSearch()
             return
         }
@@ -792,6 +815,7 @@ QtObject {
                 httpStatus = parseInt(text.substring(altIdx + 8), 10) || 0
             }
         }
+        body = root._extractJsonPayload(body)
 
         if (httpStatus === 429) {
             root.rateLimitedUntilMs = Date.now() + 30000
