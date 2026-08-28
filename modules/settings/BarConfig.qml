@@ -14,6 +14,7 @@ ContentPage {
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
     property string activeSection: "appearance"
+    property int _taskLoadingCount: 0
 
     function activateSettingsSearchSection(section: string): bool {
         const parts = String(section || "").toLowerCase().split(/[·›]/)
@@ -42,7 +43,77 @@ ContentPage {
     }
 
     component LazySection: Loader {
+        id: sectionLoader
+        property bool requested: false
+        property bool resident: false
+        property bool _countedLoading: false
+
         Layout.fillWidth: true
+        asynchronous: true
+        active: resident
+        visible: requested && status !== Loader.Null
+        enabled: requested && status === Loader.Ready && opacity > 0.99
+        opacity: requested && status === Loader.Ready ? 1 : 0
+        Layout.preferredHeight: requested && status === Loader.Ready && item ? item.implicitHeight : 0
+
+        transform: Translate {
+            y: sectionLoader.requested && sectionLoader.status === Loader.Ready ? 0 : 4
+            Behavior on y {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveEnter.duration
+                    easing.type: Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                }
+            }
+        }
+
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+            }
+        }
+
+        function syncLoadingState(): void {
+            const shouldCount = requested && status === Loader.Loading
+            if (shouldCount === _countedLoading)
+                return
+            root._taskLoadingCount = Math.max(0, root._taskLoadingCount + (shouldCount ? 1 : -1))
+            _countedLoading = shouldCount
+        }
+
+        onRequestedChanged: {
+            if (requested) {
+                unloadDelay.stop()
+                resident = true
+            } else if (status === Loader.Ready) {
+                unloadDelay.restart()
+            } else {
+                unloadDelay.stop()
+                resident = false
+            }
+            syncLoadingState()
+        }
+        onStatusChanged: syncLoadingState()
+        Component.onCompleted: {
+            if (requested)
+                resident = true
+            syncLoadingState()
+        }
+        Component.onDestruction: {
+            if (_countedLoading)
+                root._taskLoadingCount = Math.max(0, root._taskLoadingCount - 1)
+        }
+
+        Timer {
+            id: unloadDelay
+            interval: 600
+            repeat: false
+            onTriggered: parent.resident = false
+        }
     }
 
     SettingsTaskNavigator {
@@ -62,6 +133,11 @@ ContentPage {
             { displayName: Translation.tr("Behavior & clock"), icon: "visibility", value: "behavior" },
             { displayName: Translation.tr("Modules"), icon: "widgets", value: "modules" }
         ]
+    }
+
+    SettingsTaskLoadingState {
+        loading: root._taskLoadingCount > 0
+        text: Translation.tr("Loading section…")
     }
     property bool m3ControlsReady: false
     property bool spectrumControlsReady: false
@@ -456,7 +532,7 @@ ContentPage {
     }
 
     LazySection {
-        active: root.isIiActive && root.activeSection === "m3"
+        requested: root.isIiActive && root.activeSection === "m3"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "m3"
@@ -1150,7 +1226,7 @@ ContentPage {
     }
 
     LazySection {
-        active: root.isIiActive && root.activeSection === "islands"
+        requested: root.isIiActive && root.activeSection === "islands"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "islands"
@@ -1336,7 +1412,7 @@ ContentPage {
     }
 
     LazySection {
-        active: root.isIiActive && root.activeSection === "spectrum"
+        requested: root.isIiActive && root.activeSection === "spectrum"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "spectrum"
@@ -1674,7 +1750,7 @@ ContentPage {
     }
 
     LazySection {
-        active: root.isIiActive && root.activeSection === "behavior"
+        requested: root.isIiActive && root.activeSection === "behavior"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "behavior"
@@ -2051,7 +2127,7 @@ ContentPage {
     // MODULES (what to show)
     // ═══════════════════════════════════════════════════════════════════
     LazySection {
-        active: root.isIiActive && root.activeSection === "modules"
+        requested: root.isIiActive && root.activeSection === "modules"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "modules"
@@ -2246,7 +2322,7 @@ ContentPage {
     // MODULE LAYOUT (reorder / relocate)
     // ═══════════════════════════════════════════════════════════════════
     LazySection {
-        active: root.isIiActive && root.activeSection === "modules"
+        requested: root.isIiActive && root.activeSection === "modules"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "modules"
@@ -2288,7 +2364,7 @@ ContentPage {
     // RESOURCES
     // ═══════════════════════════════════════════════════════════════════
     LazySection {
-        active: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "modules"
+        requested: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "modules"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "modules"
@@ -2452,7 +2528,7 @@ ContentPage {
     // MEDIA
     // ═══════════════════════════════════════════════════════════════════
     LazySection {
-        active: root.isIiActive && root.activeSection === "modules"
+        requested: root.isIiActive && root.activeSection === "modules"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "modules"
@@ -2491,7 +2567,7 @@ ContentPage {
     // WORKSPACES
     // ═══════════════════════════════════════════════════════════════════
     LazySection {
-        active: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "modules"
+        requested: root.isIiActive && !(Config.options?.settingsUi?.easyMode ?? false) && root.activeSection === "modules"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "modules"
@@ -2729,7 +2805,7 @@ ContentPage {
     // SYSTEM TRAY
     // ═══════════════════════════════════════════════════════════════════
     LazySection {
-        active: root.isIiActive && root.activeSection === "modules"
+        requested: root.isIiActive && root.activeSection === "modules"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "modules"
@@ -2783,7 +2859,7 @@ ContentPage {
     // UTILITY BUTTONS
     // ═══════════════════════════════════════════════════════════════════
     LazySection {
-        active: root.isIiActive && root.activeSection === "modules"
+        requested: root.isIiActive && root.activeSection === "modules"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "modules"
@@ -2927,7 +3003,7 @@ ContentPage {
     // NOTIFICATIONS
     // ═══════════════════════════════════════════════════════════════════
     LazySection {
-        active: root.isIiActive && root.activeSection === "modules"
+        requested: root.isIiActive && root.activeSection === "modules"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "modules"

@@ -22,6 +22,7 @@ ContentPage {
     property int _customMediaFolderImageCount: 0
     property int _customMediaFolderGifCount: 0
     property int _customMediaFolderVideoCount: 0
+    property int _taskLoadingCount: 0
 
     function activateSettingsSearchSection(section: string): bool {
         const parts = String(section || "").toLowerCase().split(/[·›]/)
@@ -53,7 +54,76 @@ ContentPage {
     }
 
     component LazySection: Loader {
+        id: sectionLoader
+        property bool requested: false
+        property bool resident: false
+        property bool _countedLoading: false
+
         Layout.fillWidth: true
+        asynchronous: true
+        active: resident
+        visible: requested && status !== Loader.Null
+        enabled: requested && status === Loader.Ready && opacity > 0.99
+        opacity: requested && status === Loader.Ready ? 1 : 0
+        Layout.preferredHeight: requested && status === Loader.Ready && item ? item.implicitHeight : 0
+
+        transform: Translate {
+            y: sectionLoader.requested && sectionLoader.status === Loader.Ready ? 0 : 4
+            Behavior on y {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation {
+                    duration: Appearance.animation.elementMoveEnter.duration
+                    easing.type: Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+                }
+            }
+        }
+
+        Behavior on opacity {
+            enabled: Appearance.animationsEnabled
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+            }
+        }
+
+        function syncLoadingState(): void {
+            const shouldCount = requested && status === Loader.Loading
+            if (shouldCount === _countedLoading)
+                return
+            root._taskLoadingCount = Math.max(0, root._taskLoadingCount + (shouldCount ? 1 : -1))
+            _countedLoading = shouldCount
+        }
+
+        onRequestedChanged: {
+            if (requested) {
+                unloadDelay.stop()
+                resident = true
+            } else if (status === Loader.Ready) {
+                unloadDelay.restart()
+            } else {
+                unloadDelay.stop()
+                resident = false
+            }
+            syncLoadingState()
+        }
+        onStatusChanged: syncLoadingState()
+        Component.onCompleted: {
+            if (requested)
+                resident = true
+            syncLoadingState()
+        }
+        Component.onDestruction: {
+            if (_countedLoading)
+                root._taskLoadingCount = Math.max(0, root._taskLoadingCount - 1)
+        }
+        Timer {
+            id: unloadDelay
+            interval: 600
+            repeat: false
+            onTriggered: parent.resident = false
+        }
     }
 
     readonly property var _customImageShapes: [
@@ -1454,6 +1524,11 @@ ContentPage {
         ]
     }
 
+    SettingsTaskLoadingState {
+        loading: root._taskLoadingCount > 0
+        text: Translation.tr("Loading section…")
+    }
+
     SettingsCardSection {
         settingsTaskSection: "manage"
         visible: root.isIiActive && root.activeSection === "manage"
@@ -1677,7 +1752,7 @@ ContentPage {
 
     // ── Clock ────────────────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "time"
+        requested: root.isIiActive && root.activeSection === "time"
         sourceComponent: Component {
             SettingsCardSection {
                 id: clockSection
@@ -2219,7 +2294,7 @@ ContentPage {
 
     // ── Japanese Typography ─────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "personal"
+        requested: root.isIiActive && root.activeSection === "personal"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "personal"
@@ -2675,7 +2750,7 @@ ContentPage {
 
     // ── Weather ──────────────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "weather"
+        requested: root.isIiActive && root.activeSection === "weather"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "weather"
@@ -2933,7 +3008,7 @@ ContentPage {
     }
 
     LazySection {
-        active: root.isIiActive && root.activeSection === "media"
+        requested: root.isIiActive && root.activeSection === "media"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "media"
@@ -3295,7 +3370,7 @@ ContentPage {
     }
 
     LazySection {
-        active: root.isIiActive && root.activeSection === "media"
+        requested: root.isIiActive && root.activeSection === "media"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "media"
@@ -3361,7 +3436,7 @@ ContentPage {
 
     // ── Media Controls ───────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "media"
+        requested: root.isIiActive && root.activeSection === "media"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "media"
@@ -3470,7 +3545,7 @@ ContentPage {
 
     // ── Visualizer ───────────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "media"
+        requested: root.isIiActive && root.activeSection === "media"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "media"
@@ -3849,7 +3924,7 @@ ContentPage {
 
     // ── System Monitor ───────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "system"
+        requested: root.isIiActive && root.activeSection === "system"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "system"
@@ -4064,7 +4139,7 @@ ContentPage {
 
     // ── Battery ──────────────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "system"
+        requested: root.isIiActive && root.activeSection === "system"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "system"
@@ -4270,7 +4345,7 @@ ContentPage {
 
     // ── Notes ───────────────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "personal"
+        requested: root.isIiActive && root.activeSection === "personal"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "personal"
@@ -4372,7 +4447,7 @@ ContentPage {
 
     // ── Upcoming Events ─────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "time"
+        requested: root.isIiActive && root.activeSection === "time"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "time"
@@ -4479,7 +4554,7 @@ ContentPage {
 
     // ── System Uptime ────────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "time"
+        requested: root.isIiActive && root.activeSection === "time"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "time"
@@ -4540,7 +4615,7 @@ ContentPage {
     }
 
     LazySection {
-        active: root.isIiActive && root.activeSection === "time"
+        requested: root.isIiActive && root.activeSection === "time"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "time"
@@ -4626,7 +4701,7 @@ ContentPage {
     }
 
     LazySection {
-        active: root.isIiActive && root.activeSection === "personal"
+        requested: root.isIiActive && root.activeSection === "personal"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "personal"
@@ -4689,7 +4764,7 @@ ContentPage {
 
     // ── Mascot ───────────────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "personal"
+        requested: root.isIiActive && root.activeSection === "personal"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "personal"
@@ -4833,7 +4908,7 @@ ContentPage {
 
     // ── News Ticker ───────────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "time"
+        requested: root.isIiActive && root.activeSection === "time"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "time"
@@ -4895,7 +4970,7 @@ ContentPage {
 
     // ── Custom Widgets ──────────────────────────────────────
     LazySection {
-        active: root.isIiActive && root.activeSection === "personal"
+        requested: root.isIiActive && root.activeSection === "personal"
         sourceComponent: Component {
             SettingsCardSection {
                 settingsTaskSection: "personal"
