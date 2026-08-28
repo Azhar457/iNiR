@@ -705,111 +705,209 @@ Scope {
                     spacing: 0
 
                     // ── Title bar ──
-                    RowLayout {
+                    Item {
+                        id: overlayHeader
                         Layout.fillWidth: true
+                        Layout.preferredHeight: root.navEditMode ? 58 : 44
                         Layout.leftMargin: 4
                         Layout.rightMargin: 4
                         Layout.bottomMargin: 12
-                        spacing: 12
+
+                        function slotBlock(index: int): string {
+                            return SettingsChromeLayout.headerOrder[index] ?? ""
+                        }
+
+                        readonly property real headerGap: root.navEditMode ? 8 : 12
+                        readonly property real identityWidth: root.navEditMode ? 176 : 190
+                        readonly property real actionsWidth: Math.max(112, overlayHeaderActionsRow.implicitWidth)
+                        readonly property bool defaultOrder: SettingsChromeLayout.headerOrder.join(",") === "identity,search,actions"
+
+                        function searchWidth(): real {
+                            const preferred = root.navEditMode ? 390 : 420
+                            const minimum = root.navEditMode ? 150 : 180
+                            if (overlayHeader.defaultOrder) {
+                                const side = Math.max(overlayHeader.identityWidth, overlayHeader.actionsWidth)
+                                return Math.max(minimum, Math.min(preferred,
+                                    overlayHeader.width - 2 * (side + overlayHeader.headerGap)))
+                            }
+                            return Math.max(minimum, Math.min(preferred,
+                                overlayHeader.width - overlayHeader.identityWidth
+                                    - overlayHeader.actionsWidth - 2 * overlayHeader.headerGap))
+                        }
+
+                        function slotWidth(index: int): real {
+                            const block = overlayHeader.slotBlock(index)
+                            if (block === "identity")
+                                return overlayHeader.identityWidth
+                            if (block === "actions")
+                                return overlayHeader.actionsWidth
+                            return overlayHeader.searchWidth()
+                        }
+
+                        function slotX(index: int): real {
+                            const block = overlayHeader.slotBlock(index)
+                            if (overlayHeader.defaultOrder) {
+                                if (block === "identity")
+                                    return 0
+                                if (block === "actions")
+                                    return Math.max(0, overlayHeader.width - overlayHeader.actionsWidth)
+                                return Math.max(0, (overlayHeader.width - overlayHeader.searchWidth()) / 2)
+                            }
+
+                            const total = overlayHeader.identityWidth + overlayHeader.searchWidth()
+                                + overlayHeader.actionsWidth + 2 * overlayHeader.headerGap
+                            let x = Math.max(0, (overlayHeader.width - total) / 2)
+                            for (let i = 0; i < index; ++i)
+                                x += overlayHeader.slotWidth(i) + overlayHeader.headerGap
+                            return x
+                        }
+
 
                         Item {
-                            implicitWidth: 38
-                            implicitHeight: 38
+                            anchors.fill: parent
 
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall : width / 2
-                                color: Appearance.regaliaEverywhere ? "transparent"
-                                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                                    : Appearance.colors.colLayer1
-                                border.width: Appearance.regaliaEverywhere ? 0 : 1
-                                border.color: Appearance.colors.colPrimary
-
-                                RegaliaControlFace {
-                                    anchors.fill: parent
-                                    visible: Appearance.regaliaEverywhere
-                                    fillColor: Appearance.regalia.controlPlate
-                                    radius: parent.radius
-                                }
+                            Item {
+                                id: overlayHeaderSlot0
+                                x: overlayHeader.slotX(0)
+                                width: overlayHeader.slotWidth(0)
+                                height: parent.height
                             }
-
-                            Rectangle {
-                                id: overlayAvatarMask
-                                anchors.centerIn: parent
-                                width: 34
-                                height: 34
-                                radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundVerySmall : width / 2
-                                visible: false
+                            Item {
+                                id: overlayHeaderSlot1
+                                x: overlayHeader.slotX(1)
+                                width: overlayHeader.slotWidth(1)
+                                height: parent.height
                             }
-
-                            Image {
-                                id: overlayAvatarImage
-                                anchors.centerIn: parent
-                                width: 34
-                                height: 34
-                                source: Directories.userAvatarSourcePrimary
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                cache: true
-                                smooth: true
-                                mipmap: true
-                                visible: status === Image.Ready
-                                layer.enabled: visible
-                                layer.effect: GE.OpacityMask {
-                                    maskSource: overlayAvatarMask
-                                }
-                                onStatusChanged: {
-                                    if (status === Image.Error) {
-                                        const nextSource = Directories.nextAvatarSource(source)
-                                        if (nextSource.length > 0 && nextSource !== source)
-                                            source = nextSource
-                                    }
-                                }
-                            }
-
-                            MaterialSymbol {
-                                anchors.centerIn: parent
-                                visible: overlayAvatarImage.status !== Image.Ready
-                                text: "person"
-                                iconSize: 18
-                                color: Appearance.colors.colPrimary
+                            Item {
+                                id: overlayHeaderSlot2
+                                x: overlayHeader.slotX(2)
+                                width: overlayHeader.slotWidth(2)
+                                height: parent.height
                             }
                         }
 
-                        ColumnLayout {
-                            spacing: 0
+                        Item {
+                            id: overlayHeaderIdentity
+                            parent: SettingsChromeLayout.columnFor("identity") === 0 ? overlayHeaderSlot0
+                                : SettingsChromeLayout.columnFor("identity") === 1 ? overlayHeaderSlot1
+                                : overlayHeaderSlot2
+                            anchors.fill: parent
+                            anchors.topMargin: 4
+                            anchors.bottomMargin: 4
 
                             RowLayout {
-                                spacing: 8
-                                StyledText {
-                                    text: Translation.tr("Settings")
-                                    font {
-                                        family: Appearance.font.family.title
-                                        pixelSize: Appearance.font.pixelSize.title
-                                        variableAxes: Appearance.font.variableAxes.title
+                                anchors.fill: parent
+                                spacing: 9
+
+                                Item {
+                                    implicitWidth: 38
+                                    implicitHeight: 38
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall : width / 2
+                                        color: Appearance.regaliaEverywhere ? "transparent"
+                                            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                                            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                                            : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                                            : Appearance.colors.colLayer1
+                                        border.width: Appearance.regaliaEverywhere ? 0 : 1
+                                        border.color: Appearance.colors.colPrimary
+
+                                        RegaliaControlFace {
+                                            anchors.fill: parent
+                                            visible: Appearance.regaliaEverywhere
+                                            fillColor: Appearance.regalia.controlPlate
+                                            radius: parent.radius
+                                        }
                                     }
-                                    color: Appearance.colors.colOnLayer0
+
+                                    Rectangle {
+                                        id: overlayAvatarMask
+                                        anchors.centerIn: parent
+                                        width: 34
+                                        height: 34
+                                        radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundVerySmall : width / 2
+                                        visible: false
+                                    }
+
+                                    Image {
+                                        id: overlayAvatarImage
+                                        anchors.centerIn: parent
+                                        width: 34
+                                        height: 34
+                                        source: Directories.userAvatarSourcePrimary
+                                        fillMode: Image.PreserveAspectCrop
+                                        asynchronous: true
+                                        cache: true
+                                        smooth: true
+                                        mipmap: true
+                                        visible: status === Image.Ready
+                                        layer.enabled: visible
+                                        layer.effect: GE.OpacityMask {
+                                            maskSource: overlayAvatarMask
+                                        }
+                                        onStatusChanged: {
+                                            if (status === Image.Error) {
+                                                const nextSource = Directories.nextAvatarSource(source)
+                                                if (nextSource.length > 0 && nextSource !== source)
+                                                    source = nextSource
+                                            }
+                                        }
+                                    }
+
+                                    MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        visible: overlayAvatarImage.status !== Image.Ready
+                                        text: "person"
+                                        iconSize: 18
+                                        color: Appearance.colors.colPrimary
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 0
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        text: Translation.tr("Settings")
+                                        font {
+                                            family: Appearance.font.family.title
+                                            pixelSize: Appearance.font.pixelSize.title
+                                            variableAxes: Appearance.font.variableAxes.title
+                                        }
+                                        color: Appearance.colors.colOnLayer0
+                                        elide: Text.ElideRight
+                                    }
+
+                                    StyledText {
+                                        Layout.fillWidth: true
+                                        text: SystemInfo.displayName || SystemInfo.username
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        color: Appearance.colors.colSubtext
+                                        elide: Text.ElideRight
+                                    }
                                 }
                             }
 
-                            StyledText {
-                                text: SystemInfo.displayName || SystemInfo.username
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                color: Appearance.colors.colSubtext
+                            SettingsChromeEditFrame {
+                                anchors.fill: parent
+                                active: root.navEditMode
+                                blockId: "identity"
+                                label: Translation.tr("Identity")
+                                targetIndex: SettingsChromeLayout.columnFor("identity")
                             }
                         }
-
-                        Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
 
                         Rectangle {
                             id: overlaySearchContainer
-                            Layout.fillWidth: true
-                            Layout.maximumWidth: 420
-                            Layout.minimumWidth: 180
-                            Layout.preferredHeight: 36
-                            Layout.alignment: Qt.AlignVCenter
+                            parent: SettingsChromeLayout.columnFor("search") === 0 ? overlayHeaderSlot0
+                                : SettingsChromeLayout.columnFor("search") === 1 ? overlayHeaderSlot1
+                                : overlayHeaderSlot2
+                            anchors.fill: parent
+                            anchors.topMargin: root.navEditMode ? 10 : 4
+                            anchors.bottomMargin: root.navEditMode ? 10 : 4
                             radius: Appearance.rounding.full
                             color: overlaySearchField.activeFocus
                                 ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -981,64 +1079,92 @@ Scope {
                                     }
                                 }
                             }
+
+                            SettingsChromeEditFrame {
+                                anchors.fill: parent
+                                active: root.navEditMode
+                                blockId: "search"
+                                label: Translation.tr("Search")
+                                targetIndex: SettingsChromeLayout.columnFor("search")
+                            }
                         }
 
-                        Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
+                        Item {
+                            id: overlayHeaderActions
+                            parent: SettingsChromeLayout.columnFor("actions") === 0 ? overlayHeaderSlot0
+                                : SettingsChromeLayout.columnFor("actions") === 1 ? overlayHeaderSlot1
+                                : overlayHeaderSlot2
+                            anchors.fill: parent
+                            anchors.topMargin: root.navEditMode ? 10 : 4
+                            anchors.bottomMargin: root.navEditMode ? 10 : 4
 
-                        // Easy / Advanced mode toggle
-                        RippleButton {
-                            id: easyModeToggle
-                            buttonRadius: Appearance.rounding.full
-                            implicitWidth: 36
-                            implicitHeight: 36
-                            onClicked: root.setEasyMode(!root.easyMode)
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                horizontalAlignment: Text.AlignHCenter
-                                text: root.easyMode ? "school" : "tune"
-                                iconSize: 20
-                                color: root.easyMode
-                                    ? Appearance.colors.colPrimary
-                                    : Appearance.colors.colOnSurfaceVariant
-                                Behavior on color {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            RowLayout {
+                                id: overlayHeaderActionsRow
+                                anchors.fill: parent
+                                spacing: 4
+
+                                RippleButton {
+                                    id: easyModeToggle
+                                    buttonRadius: Appearance.rounding.full
+                                    implicitWidth: 36
+                                    implicitHeight: 36
+                                    onClicked: root.setEasyMode(!root.easyMode)
+                                    contentItem: MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: root.easyMode ? "school" : "tune"
+                                        iconSize: 20
+                                        color: root.easyMode
+                                            ? Appearance.colors.colPrimary
+                                            : Appearance.colors.colOnSurfaceVariant
+                                        Behavior on color {
+                                            enabled: Appearance.animationsEnabled
+                                            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                                        }
+                                    }
+                                    StyledToolTip {
+                                        position: "left"
+                                        text: root.easyMode
+                                            ? Translation.tr("Switch to Advanced mode")
+                                            : Translation.tr("Switch to Easy mode")
+                                    }
+                                }
+
+                                RippleButton {
+                                    buttonRadius: Appearance.rounding.full
+                                    implicitWidth: 36
+                                    implicitHeight: 36
+                                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
+                                    contentItem: MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: "lock"
+                                        iconSize: 20
+                                        color: Appearance.colors.colOnSurfaceVariant
+                                    }
+                                }
+
+                                RippleButton {
+                                    buttonRadius: Appearance.rounding.full
+                                    implicitWidth: 36
+                                    implicitHeight: 36
+                                    onClicked: GlobalStates.settingsOverlayOpen = false
+                                    contentItem: MaterialSymbol {
+                                        anchors.centerIn: parent
+                                        horizontalAlignment: Text.AlignHCenter
+                                        text: "close"
+                                        iconSize: 20
+                                        color: Appearance.colors.colOnSurfaceVariant
+                                    }
                                 }
                             }
-                            StyledToolTip {
-                                position: "left"
-                                text: root.easyMode
-                                    ? Translation.tr("Switch to Advanced mode")
-                                    : Translation.tr("Switch to Easy mode")
-                            }
-                        }
 
-                        // Close button
-                        RippleButton {
-                            buttonRadius: Appearance.rounding.full
-                            implicitWidth: 36
-                            implicitHeight: 36
-                            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                horizontalAlignment: Text.AlignHCenter
-                                text: "lock"
-                                iconSize: 20
-                                color: Appearance.colors.colOnSurfaceVariant
-                            }
-                        }
-
-                        RippleButton {
-                            buttonRadius: Appearance.rounding.full
-                            implicitWidth: 36
-                            implicitHeight: 36
-                            onClicked: GlobalStates.settingsOverlayOpen = false
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                horizontalAlignment: Text.AlignHCenter
-                                text: "close"
-                                iconSize: 20
-                                color: Appearance.colors.colOnSurfaceVariant
+                            SettingsChromeEditFrame {
+                                anchors.fill: parent
+                                active: root.navEditMode
+                                blockId: "actions"
+                                label: Translation.tr("Actions")
+                                targetIndex: SettingsChromeLayout.columnFor("actions")
                             }
                         }
                     }
@@ -1411,36 +1537,19 @@ Scope {
 
                                 RippleButton {
                                     id: overlayNavEditToggle
-                                    readonly property color editSurface: Appearance.regaliaEverywhere
-                                        ? Appearance.regalia.surfacePlateHover
-                                        : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
-                                        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                                        : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.35)
-                                    readonly property color editSurfaceHover: Appearance.regaliaEverywhere
-                                        ? Appearance.regalia.controlPlateHover
-                                        : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
-                                        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
-                                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
-                                        : Appearance.colors.colLayer1Hover
-                                    readonly property color editAccent: Appearance.regaliaEverywhere
-                                        ? Appearance.regalia.hardwarePrimary
-                                        : Appearance.zzzEverywhere ? Appearance.zzz.accent
-                                        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                        : Appearance.inirEverywhere ? Appearance.inir.colAccent
-                                        : Appearance.colors.colPrimary
+                                    readonly property color editSurface: Appearance.colors.colPrimaryContainer
+                                    readonly property color editSurfaceHover: Appearance.colors.colPrimaryContainerHover
+                                    readonly property color editForeground: Appearance.colors.colOnPrimaryContainer
                                     Layout.fillWidth: true
                                     implicitHeight: 36
                                     buttonRadius: Appearance.rounding.small
                                     toggled: root.navEditMode
-                                    colBackground: root.navEditMode
-                                        ? editSurface : "transparent"
-                                    colBackgroundHover: root.navEditMode
-                                        ? editSurfaceHover
-                                        : Appearance.colors.colLayer1Hover
+                                    colBackground: "transparent"
+                                    colBackgroundHover: Appearance.colors.colLayer1Hover
+                                    colBackgroundToggled: editSurface
+                                    colBackgroundToggledHover: editSurfaceHover
                                     onClicked: root.navEditMode = !root.navEditMode
+
 
                                     contentItem: RowLayout {
                                         anchors.fill: parent
@@ -1452,7 +1561,7 @@ Scope {
                                             text: root.navEditMode ? "done" : "edit"
                                             iconSize: 18
                                             color: root.navEditMode
-                                                ? overlayNavEditToggle.editAccent
+                                                ? overlayNavEditToggle.editForeground
                                                 : Appearance.colors.colOnSurfaceVariant
                                         }
 
@@ -1463,7 +1572,7 @@ Scope {
                                                 : Translation.tr("Edit navigation")
                                             font.pixelSize: Appearance.font.pixelSize.small
                                             color: root.navEditMode
-                                                ? overlayNavEditToggle.editAccent
+                                                ? overlayNavEditToggle.editForeground
                                                 : Appearance.colors.colOnSurfaceVariant
                                             elide: Text.ElideRight
                                         }

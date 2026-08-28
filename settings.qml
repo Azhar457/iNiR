@@ -528,27 +528,100 @@ ApplicationWindow {
             }
         }
 
-        GridLayout { // Titlebar with integrated search
+        Item { // Titlebar with integrated search
+            id: settingsHeader
             visible: Config.options?.windows?.showTitlebar ?? true
             Layout.fillWidth: true
             Layout.preferredHeight: root.navEditMode ? 58 : 52
             Layout.leftMargin: 12
             Layout.rightMargin: 6
-            columns: 3
-            columnSpacing: root.navEditMode ? 8 : 12
-            rowSpacing: 0
 
             Behavior on Layout.preferredHeight {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementResize.duration }
             }
 
+            function slotBlock(index: int): string {
+                return SettingsChromeLayout.headerOrder[index] ?? ""
+            }
+
+            readonly property real headerGap: root.navEditMode ? 8 : 12
+            readonly property real identityWidth: root.navEditMode ? 176 : 210
+            readonly property real actionsWidth: Math.max(108, actionsRow.implicitWidth)
+            readonly property bool defaultOrder: SettingsChromeLayout.headerOrder.join(",") === "identity,search,actions"
+
+            function searchWidth(): real {
+                const preferred = root.navEditMode ? 420 : 480
+                const minimum = root.navEditMode ? 150 : 200
+                if (settingsHeader.defaultOrder) {
+                    const side = Math.max(settingsHeader.identityWidth, settingsHeader.actionsWidth)
+                    return Math.max(minimum, Math.min(preferred,
+                        settingsHeader.width - 2 * (side + settingsHeader.headerGap)))
+                }
+                return Math.max(minimum, Math.min(preferred,
+                    settingsHeader.width - settingsHeader.identityWidth
+                        - settingsHeader.actionsWidth - 2 * settingsHeader.headerGap))
+            }
+
+            function slotWidth(index: int): real {
+                const block = settingsHeader.slotBlock(index)
+                if (block === "identity")
+                    return settingsHeader.identityWidth
+                if (block === "actions")
+                    return settingsHeader.actionsWidth
+                return settingsHeader.searchWidth()
+            }
+
+            function slotX(index: int): real {
+                const block = settingsHeader.slotBlock(index)
+                if (settingsHeader.defaultOrder) {
+                    if (block === "identity")
+                        return 0
+                    if (block === "actions")
+                        return Math.max(0, settingsHeader.width - settingsHeader.actionsWidth)
+                    return Math.max(0, (settingsHeader.width - settingsHeader.searchWidth()) / 2)
+                }
+
+                const total = settingsHeader.identityWidth + settingsHeader.searchWidth()
+                    + settingsHeader.actionsWidth + 2 * settingsHeader.headerGap
+                let x = Math.max(0, (settingsHeader.width - total) / 2)
+                for (let i = 0; i < index; ++i)
+                    x += settingsHeader.slotWidth(i) + settingsHeader.headerGap
+                return x
+            }
+
+
+            Item {
+                anchors.fill: parent
+
+                Item {
+                    id: settingsHeaderSlot0
+                    x: settingsHeader.slotX(0)
+                    width: settingsHeader.slotWidth(0)
+                    height: parent.height
+                }
+                Item {
+                    id: settingsHeaderSlot1
+                    x: settingsHeader.slotX(1)
+                    width: settingsHeader.slotWidth(1)
+                    height: parent.height
+                }
+                Item {
+                    id: settingsHeaderSlot2
+                    x: settingsHeader.slotX(2)
+                    width: settingsHeader.slotWidth(2)
+                    height: parent.height
+                }
+            }
+
             Item {
                 id: headerIdentity
-                Layout.column: SettingsChromeLayout.columnFor("identity")
-                Layout.preferredWidth: root.navEditMode ? 176 : 210
-                Layout.preferredHeight: 44
-                Layout.alignment: Qt.AlignVCenter
+                parent: SettingsChromeLayout.columnFor("identity") === 0 ? settingsHeaderSlot0
+                    : SettingsChromeLayout.columnFor("identity") === 1 ? settingsHeaderSlot1
+                    : settingsHeaderSlot2
+                anchors.fill: parent
+                anchors.topMargin: 4
+                anchors.bottomMargin: 4
 
                 RowLayout {
                     anchors.fill: parent
@@ -655,12 +728,12 @@ ApplicationWindow {
 
             Rectangle {
                 id: searchContainer
-                Layout.column: SettingsChromeLayout.columnFor("search")
-                Layout.fillWidth: true
-                Layout.maximumWidth: root.navEditMode ? 420 : 480
-                Layout.minimumWidth: root.navEditMode ? 150 : 200
-                Layout.preferredHeight: 40
-                Layout.alignment: Qt.AlignVCenter
+                parent: SettingsChromeLayout.columnFor("search") === 0 ? settingsHeaderSlot0
+                    : SettingsChromeLayout.columnFor("search") === 1 ? settingsHeaderSlot1
+                    : settingsHeaderSlot2
+                anchors.fill: parent
+                anchors.topMargin: root.navEditMode ? 8 : 6
+                anchors.bottomMargin: root.navEditMode ? 8 : 6
                 radius: Appearance.rounding.full
                 color: settingsSearchField.activeFocus
                     ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -831,10 +904,12 @@ ApplicationWindow {
 
             Item {
                 id: headerActions
-                Layout.column: SettingsChromeLayout.columnFor("actions")
-                Layout.preferredWidth: actionsRow.implicitWidth
-                Layout.preferredHeight: 40
-                Layout.alignment: Qt.AlignVCenter
+                parent: SettingsChromeLayout.columnFor("actions") === 0 ? settingsHeaderSlot0
+                    : SettingsChromeLayout.columnFor("actions") === 1 ? settingsHeaderSlot1
+                    : settingsHeaderSlot2
+                anchors.fill: parent
+                anchors.topMargin: root.navEditMode ? 8 : 6
+                anchors.bottomMargin: root.navEditMode ? 8 : 6
 
                 RowLayout {
                     id: actionsRow
@@ -1242,36 +1317,19 @@ ApplicationWindow {
 
                     RippleButton {
                         id: navEditToggle
-                        readonly property color editSurface: Appearance.regaliaEverywhere
-                            ? Appearance.regalia.surfacePlateHover
-                            : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
-                            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                            : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.35)
-                        readonly property color editSurfaceHover: Appearance.regaliaEverywhere
-                            ? Appearance.regalia.controlPlateHover
-                            : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
-                            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
-                            : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
-                            : Appearance.colors.colLayer1Hover
-                        readonly property color editAccent: Appearance.regaliaEverywhere
-                            ? Appearance.regalia.hardwarePrimary
-                            : Appearance.zzzEverywhere ? Appearance.zzz.accent
-                            : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                            : Appearance.inirEverywhere ? Appearance.inir.colAccent
-                            : Appearance.colors.colPrimary
+                        readonly property color editSurface: Appearance.colors.colPrimaryContainer
+                        readonly property color editSurfaceHover: Appearance.colors.colPrimaryContainerHover
+                        readonly property color editForeground: Appearance.colors.colOnPrimaryContainer
                         Layout.fillWidth: true
                         implicitHeight: 36
                         buttonRadius: Appearance.rounding.small
                         toggled: root.navEditMode
-                        colBackground: root.navEditMode
-                            ? editSurface : "transparent"
-                        colBackgroundHover: root.navEditMode
-                            ? editSurfaceHover
-                            : Appearance.colors.colLayer1Hover
+                        colBackground: "transparent"
+                        colBackgroundHover: Appearance.colors.colLayer1Hover
+                        colBackgroundToggled: editSurface
+                        colBackgroundToggledHover: editSurfaceHover
                         onClicked: root.navEditMode = !root.navEditMode
+
 
                         contentItem: RowLayout {
                             anchors.fill: parent
@@ -1283,7 +1341,7 @@ ApplicationWindow {
                                 text: root.navEditMode ? "done" : "edit"
                                 iconSize: 18
                                 color: root.navEditMode
-                                    ? navEditToggle.editAccent
+                                    ? navEditToggle.editForeground
                                     : Appearance.colors.colOnSurfaceVariant
                             }
 
@@ -1297,7 +1355,7 @@ ApplicationWindow {
                                     pixelSize: Appearance.font.pixelSize.small
                                 }
                                 color: root.navEditMode
-                                    ? navEditToggle.editAccent
+                                    ? navEditToggle.editForeground
                                     : Appearance.colors.colOnSurfaceVariant
                                 elide: Text.ElideRight
                             }
