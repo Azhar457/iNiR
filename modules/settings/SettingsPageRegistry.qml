@@ -332,6 +332,20 @@ Singleton {
             keywords: ["bar", "position", "screen", "round", "corner"]
         },
         {
+            pageIndex: 0, pageName: root.pages[0].name,
+            section: Translation.tr("Capture locations"),
+            label: Translation.tr("Recordings folder"),
+            description: Translation.tr("Where screen recordings are saved"),
+            keywords: ["capture", "record", "recording", "video", "save", "path", "folder", "directory"]
+        },
+        {
+            pageIndex: 0, pageName: root.pages[0].name,
+            section: Translation.tr("Capture locations"),
+            label: Translation.tr("Screenshots folder"),
+            description: Translation.tr("Where iNiR screenshots are saved"),
+            keywords: ["capture", "screenshot", "snip", "save", "path", "folder", "directory", "picture"]
+        },
+        {
             pageIndex: 19, pageName: root.pages[19].name,
             section: Translation.tr("Mascot"),
             label: Translation.tr("Mascot"),
@@ -1233,10 +1247,24 @@ Singleton {
         },
         {
             pageIndex: 6, pageName: root.pages[6].name,
+            section: Translation.tr("Screen recording"),
+            label: Translation.tr("Recording folder"),
+            description: Translation.tr("Choose where screen recordings are saved"),
+            keywords: ["recording", "video", "save", "path", "folder", "directory", "destination"]
+        },
+        {
+            pageIndex: 6, pageName: root.pages[6].name,
             section: Translation.tr("Region selector (screen snipping/Google Lens)"),
             label: Translation.tr("Region selector"),
             description: Translation.tr("Screenshot region selector tool"),
             keywords: ["region", "selector", "screenshot", "snip", "area", "capture"]
+        },
+        {
+            pageIndex: 6, pageName: root.pages[6].name,
+            section: Translation.tr("Region selector (screen snipping/Google Lens)"),
+            label: Translation.tr("Screenshots folder"),
+            description: Translation.tr("Choose where iNiR screenshots are saved"),
+            keywords: ["screenshot", "snip", "capture", "save", "path", "folder", "directory", "destination"]
         },
         {
             pageIndex: 6, pageName: root.pages[6].name,

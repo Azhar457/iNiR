@@ -2536,11 +2536,6 @@ Singleton {
                     property string imageSource: "https://media.tenor.com/H5U5bJzj3oAAAAAi/kukuru.gif"
                     property real scale: 0.5
                 }
-                property JsonObject recorder: JsonObject {
-                    property bool autoHideOnFullscreen: true
-                    property bool suppressToasts: true
-                    property bool disableNiriAnims: false
-                }
             }
 
             property JsonObject overview: JsonObject {
@@ -2641,6 +2636,7 @@ Singleton {
                     // instead of the external swappy/satty tools.
                     property bool useNativeEditor: true
                 }
+                property string savePath: "" // Empty = use XDG Pictures/Screenshots
                 property string screenshotNameFormat: "ss-%Y%m%d-%H%M%S" // date(1) format for screenshot filenames (without extension)
             }
 
