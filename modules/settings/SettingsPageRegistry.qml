@@ -773,6 +773,13 @@ Singleton {
         {
             pageIndex: 3, pageName: root.pages[3].name,
             section: Translation.tr("Multi-monitor"),
+            label: Translation.tr("Show entire backdrop"),
+            description: Translation.tr("Fit the full backdrop without cropping"),
+            keywords: ["backdrop", "wallpaper", "fit", "full", "entire", "crop", "zoom", "bars"]
+        },
+        {
+            pageIndex: 3, pageName: root.pages[3].name,
+            section: Translation.tr("Multi-monitor"),
             label: Translation.tr("Backdrop vignette"),
             description: Translation.tr("Vignette darkening effect on backdrop"),
             keywords: ["backdrop", "vignette", "darken", "edges", "effect"]

@@ -1805,6 +1805,7 @@ Singleton {
                 property JsonObject backdrop: JsonObject {
                     property bool enable: true
                     property bool hideWallpaper: false
+                    property string fillMode: "fill" // "fill", "fit"
                     property bool useMainWallpaper: true
                     property string wallpaperPath: ""
                     property string thumbnailPath: "" // Thumbnail for animated wallpapers (video/gif)
