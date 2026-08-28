@@ -32,6 +32,7 @@ ApplicationWindow {
         return entry;
     })
     property int currentPage: 0
+    property bool navEditMode: false
     property int _requestedStartPage: -1
     property string _requestedStartSection: ""
     property bool _navigationInitialized: false
@@ -858,10 +859,20 @@ ApplicationWindow {
                 id: navRailWrapper
                 Layout.fillHeight: true
                 Layout.margins: 5
-                implicitWidth: 168
+                implicitWidth: root.navEditMode ? 228 : 168
+
+                Behavior on implicitWidth {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation {
+                        duration: Appearance.animation.elementResize.duration
+                        easing.type: Appearance.animation.elementResize.type
+                        easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                    }
+                }
 
                 Flickable {
                     id: navRailFlickable
+                    visible: !root.navEditMode || navEditLoader.status !== Loader.Ready
                     anchors.fill: parent
                     anchors.bottomMargin: navBottomActions.height + 8
                     contentHeight: navCol.implicitHeight
@@ -1135,6 +1146,42 @@ ApplicationWindow {
                     }
                 }
 
+                Loader {
+                    id: navEditLoader
+                    anchors {
+                        top: parent.top
+                        left: parent.left
+                        right: parent.right
+                        bottom: navBottomActions.top
+                        bottomMargin: 8
+                    }
+                    active: root.navEditMode
+                    asynchronous: true
+                    visible: status === Loader.Ready
+                    opacity: visible ? 1 : 0
+
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                    }
+
+                    sourceComponent: Component {
+                        SettingsNavEditPane {
+                            currentPage: root.currentPage
+                            onPageActivated: pageIndex => root.currentPage = pageIndex
+                            onPageHidden: pageIndex => {
+                                if (root.currentPage !== pageIndex)
+                                    return
+                                Qt.callLater(() => {
+                                    if (root.navPageOrder.length > 0)
+                                        root.currentPage = root.navPageOrder[0]
+                                })
+                            }
+                            onDoneRequested: root.navEditMode = false
+                        }
+                    }
+                }
+
                 // Bottom actions: config file + overlay mode
                 ColumnLayout {
                     id: navBottomActions
@@ -1142,6 +1189,56 @@ ApplicationWindow {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     spacing: 2
+
+                    RippleButton {
+                        Layout.fillWidth: true
+                        implicitHeight: 36
+                        buttonRadius: Appearance.rounding.small
+                        toggled: root.navEditMode
+                        colBackground: root.navEditMode
+                            ? Appearance.colors.colPrimaryContainer : "transparent"
+                        colBackgroundHover: root.navEditMode
+                            ? Appearance.colors.colPrimaryContainer
+                            : Appearance.colors.colLayer1Hover
+                        onClicked: root.navEditMode = !root.navEditMode
+
+                        contentItem: RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 8
+                            spacing: 10
+
+                            MaterialSymbol {
+                                text: root.navEditMode ? "done" : "edit"
+                                iconSize: 18
+                                color: root.navEditMode
+                                    ? Appearance.colors.colOnPrimaryContainer
+                                    : Appearance.colors.colOnSurfaceVariant
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: root.navEditMode
+                                    ? Translation.tr("Done")
+                                    : Translation.tr("Edit navigation")
+                                font {
+                                    family: Appearance.font.family.main
+                                    pixelSize: Appearance.font.pixelSize.small
+                                }
+                                color: root.navEditMode
+                                    ? Appearance.colors.colOnPrimaryContainer
+                                    : Appearance.colors.colOnSurfaceVariant
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        StyledToolTip {
+                            position: "top"
+                            text: root.navEditMode
+                                ? Translation.tr("Finish editing navigation")
+                                : Translation.tr("Reorder or hide Settings pages directly in the sidebar")
+                        }
+                    }
 
                     RippleButton {
                         id: configFileBtn

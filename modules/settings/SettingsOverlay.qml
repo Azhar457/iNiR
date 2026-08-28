@@ -23,6 +23,7 @@ Scope {
     id: root
 
     property bool settingsOpen: GlobalStates.settingsOverlayOpen ?? false
+    property bool navEditMode: false
 
     // Keep the PanelWindow alive briefly after close so the scrim backdrop
     // can fade out (the settings card itself shows/hides instantly, matching
@@ -1052,15 +1053,25 @@ Scope {
                         Rectangle {
                             id: navColumn
                             Layout.fillHeight: true
-                            Layout.preferredWidth: 150
+                            Layout.preferredWidth: root.navEditMode ? 228 : 150
                             radius: Appearance.rounding.normal
                             color: "transparent"
 
+                            Behavior on Layout.preferredWidth {
+                                enabled: Appearance.animationsEnabled
+                                NumberAnimation {
+                                    duration: Appearance.animation.elementResize.duration
+                                    easing.type: Appearance.animation.elementResize.type
+                                    easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                                }
+                            }
+
                             Flickable {
                                 id: navFlickable
+                                visible: !root.navEditMode || navEditLoader.status !== Loader.Ready
                                 anchors.fill: parent
                                 anchors.margins: 2
-                                anchors.bottomMargin: overlayWindowToggle.height + 6
+                                anchors.bottomMargin: overlayNavActions.height + 6
                                 contentHeight: navCol.implicitHeight
                                 clip: true
                                 boundsBehavior: Flickable.StopAtBounds
@@ -1353,62 +1364,146 @@ Scope {
                                 }
                             }
 
-                            // Window mode toggle at bottom of nav
-                            RippleButton {
-                                id: overlayWindowToggle
+                            Loader {
+                                id: navEditLoader
+                                anchors {
+                                    top: parent.top
+                                    left: parent.left
+                                    right: parent.right
+                                    bottom: overlayNavActions.top
+                                    margins: 2
+                                    bottomMargin: 6
+                                }
+                                active: root.navEditMode
+                                asynchronous: true
+                                visible: status === Loader.Ready
+                                opacity: visible ? 1 : 0
+
+                                Behavior on opacity {
+                                    enabled: Appearance.animationsEnabled
+                                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                }
+
+                                sourceComponent: Component {
+                                    SettingsNavEditPane {
+                                        currentPage: overlayCurrentPage
+                                        onPageActivated: pageIndex => overlayCurrentPage = pageIndex
+                                        onPageHidden: pageIndex => {
+                                            if (overlayCurrentPage !== pageIndex)
+                                                return
+                                            Qt.callLater(() => {
+                                                if (root.navPageOrder.length > 0)
+                                                    overlayCurrentPage = root.navPageOrder[0]
+                                            })
+                                        }
+                                        onDoneRequested: root.navEditMode = false
+                                    }
+                                }
+                            }
+
+                            ColumnLayout {
+                                id: overlayNavActions
                                 anchors.bottom: parent.bottom
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.margins: 2
-                                height: 36
-                                buttonRadius: Appearance.rounding.small
-                                colBackground: "transparent"
-                                colBackgroundHover: Appearance.angelEverywhere
-                                    ? Appearance.angel.colGlassCard
-                                    : Appearance.inirEverywhere
-                                        ? Appearance.inir.colLayer1Hover
-                                        : Appearance.auroraEverywhere
-                                            ? Appearance.aurora.colSubSurface
-                                            : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
+                                spacing: 2
 
-                                onClicked: {
-                                    // Launch the window FIRST — once overlayMode flips,
-                                    // the LazyLoader in shell.qml unloads this whole
-                                    // component (timers and all), so a deferred restart
-                                    // never gets to fire.  The spawned process survives
-                                    // independently of our QML scope.
-                                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"])
-                                    Config.setNestedValue("settingsUi.overlayMode", false)
-                                    GlobalStates.settingsOverlayOpen = false
-                                }
+                                RippleButton {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 36
+                                    buttonRadius: Appearance.rounding.small
+                                    toggled: root.navEditMode
+                                    colBackground: root.navEditMode
+                                        ? Appearance.colors.colPrimaryContainer : "transparent"
+                                    colBackgroundHover: root.navEditMode
+                                        ? Appearance.colors.colPrimaryContainer
+                                        : Appearance.colors.colLayer1Hover
+                                    onClicked: root.navEditMode = !root.navEditMode
 
-                                contentItem: RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 8
-                                    spacing: 10
+                                    contentItem: RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 8
+                                        spacing: 10
 
-                                    MaterialSymbol {
-                                        text: "open_in_new"
-                                        iconSize: 18
-                                        color: Appearance.colors.colOnSurfaceVariant
-                                    }
-
-                                    StyledText {
-                                        Layout.fillWidth: true
-                                        text: Translation.tr("Window")
-                                        font {
-                                            family: Appearance.font.family.main
-                                            pixelSize: Appearance.font.pixelSize.small
+                                        MaterialSymbol {
+                                            text: root.navEditMode ? "done" : "edit"
+                                            iconSize: 18
+                                            color: root.navEditMode
+                                                ? Appearance.colors.colOnPrimaryContainer
+                                                : Appearance.colors.colOnSurfaceVariant
                                         }
-                                        color: Appearance.colors.colOnSurfaceVariant
-                                        elide: Text.ElideRight
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: root.navEditMode
+                                                ? Translation.tr("Done")
+                                                : Translation.tr("Edit navigation")
+                                            font.pixelSize: Appearance.font.pixelSize.small
+                                            color: root.navEditMode
+                                                ? Appearance.colors.colOnPrimaryContainer
+                                                : Appearance.colors.colOnSurfaceVariant
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+
+                                    StyledToolTip {
+                                        position: "top"
+                                        text: root.navEditMode
+                                            ? Translation.tr("Finish editing navigation")
+                                            : Translation.tr("Reorder or hide Settings pages directly in the sidebar")
                                     }
                                 }
 
-                                StyledToolTip {
-                                    position: "top"
-                                    text: Translation.tr("Switch to window mode")
+                                RippleButton {
+                                    id: overlayWindowToggle
+                                    Layout.fillWidth: true
+                                    implicitHeight: 36
+                                    buttonRadius: Appearance.rounding.small
+                                    colBackground: "transparent"
+                                    colBackgroundHover: Appearance.angelEverywhere
+                                        ? Appearance.angel.colGlassCard
+                                        : Appearance.inirEverywhere
+                                            ? Appearance.inir.colLayer1Hover
+                                            : Appearance.auroraEverywhere
+                                                ? Appearance.aurora.colSubSurface
+                                                : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.5)
+
+                                    onClicked: {
+                                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"])
+                                        Config.setNestedValue("settingsUi.overlayMode", false)
+                                        GlobalStates.settingsOverlayOpen = false
+                                    }
+
+                                    contentItem: RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 8
+                                        spacing: 10
+
+                                        MaterialSymbol {
+                                            text: "open_in_new"
+                                            iconSize: 18
+                                            color: Appearance.colors.colOnSurfaceVariant
+                                        }
+
+                                        StyledText {
+                                            Layout.fillWidth: true
+                                            text: Translation.tr("Window")
+                                            font {
+                                                family: Appearance.font.family.main
+                                                pixelSize: Appearance.font.pixelSize.small
+                                            }
+                                            color: Appearance.colors.colOnSurfaceVariant
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+
+                                    StyledToolTip {
+                                        position: "top"
+                                        text: Translation.tr("Switch to window mode")
+                                    }
                                 }
                             }
                         }

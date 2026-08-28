@@ -26,19 +26,6 @@ ContentPage {
     readonly property bool groupDragging: dragInfo?.type === "group"
     readonly property int visiblePageCount: SettingsPageRegistry.pages.length - SettingsPageRegistry.hiddenPages.length
 
-    function _snapshot(): var {
-        return ({
-            groups: SettingsPageRegistry.categories.map(c => ({ label: c.label, pages: c.pages.slice() })),
-            hidden: SettingsPageRegistry.hiddenPages.slice()
-        })
-    }
-
-    function _save(snapshot): void {
-        Config.setNestedValue("settingsUi.categories", JSON.stringify(snapshot))
-        root.editingGroup = -1
-        root._endDrag()
-    }
-
     function _pageIndexFromY(y: real, count: int): int {
         return Math.max(0, Math.min(Math.round(y / root.pagePitch), count))
     }
@@ -60,52 +47,21 @@ ContentPage {
         root.pageDropIndex = -1
     }
 
-    function _removePage(snapshot, categoryIndex: int, pageIndex: int, pageIdx: int): int {
-        if (categoryIndex === -1) {
-            const actual = snapshot.hidden.indexOf(pageIdx)
-            if (actual < 0) return -1
-            snapshot.hidden.splice(actual, 1)
-            return pageIdx
-        }
-
-        const pages = snapshot.groups[categoryIndex]?.pages
-        if (!pages) return -1
-        let actual = pageIndex
-        if (actual < 0 || actual >= pages.length || pages[actual] !== pageIdx)
-            actual = pages.indexOf(pageIdx)
-        if (actual < 0) return -1
-        return pages.splice(actual, 1)[0]
-    }
-
     function _moveDraggedPage(targetCategory: int, targetIndex: int): void {
-        if (!root.pageDragging || !SettingsPageRegistry.categories[targetCategory]) {
+        if (!root.pageDragging) {
             root._endDrag()
             return
         }
-
-        const snapshot = root._snapshot()
-        const page = root._removePage(snapshot, root.dragInfo.ci, root.dragInfo.pi, root.dragInfo.pageIdx)
-        if (page < 0) {
-            root._endDrag()
-            return
-        }
-
-        const target = snapshot.groups[targetCategory]?.pages
-        if (!target) {
-            root._endDrag()
-            return
-        }
-        target.splice(Math.max(0, Math.min(targetIndex, target.length)), 0, page)
-        root._save(snapshot)
+        SettingsArrangement.movePage(root.dragInfo.ci, root.dragInfo.pi,
+            root.dragInfo.pageIdx, targetCategory, targetIndex)
+        root.editingGroup = -1
+        root._endDrag()
     }
 
     function _hidePage(categoryIndex: int, pageIndex: int, pageIdx: int): void {
-        if (categoryIndex < 0) return
-        const snapshot = root._snapshot()
-        const page = root._removePage(snapshot, categoryIndex, pageIndex, pageIdx)
-        if (page < 0) return
-        if (!snapshot.hidden.includes(page)) snapshot.hidden.push(page)
-        root._save(snapshot)
+        if (SettingsArrangement.hidePage(categoryIndex, pageIndex, pageIdx))
+            root.editingGroup = -1
+        root._endDrag()
     }
 
     function _hideDraggedPage(): void {
@@ -116,42 +72,10 @@ ContentPage {
         root._hidePage(root.dragInfo.ci, root.dragInfo.pi, root.dragInfo.pageIdx)
     }
 
-    function _bestRestoreCategory(pageIdx: int, groups): int {
-        const defaults = SettingsPageRegistry.defaultCategories
-        let peers = []
-        for (let i = 0; i < defaults.length; i++) {
-            if (defaults[i].pages.includes(pageIdx)) {
-                peers = defaults[i].pages
-                break
-            }
-        }
-
-        let bestIndex = groups.length > 0 ? 0 : -1
-        let bestScore = -1
-        for (let i = 0; i < groups.length; i++) {
-            let score = 0
-            for (let j = 0; j < groups[i].pages.length; j++)
-                if (peers.includes(groups[i].pages[j])) score++
-            if (score > bestScore) {
-                bestScore = score
-                bestIndex = i
-            }
-        }
-        return bestIndex
-    }
-
     function _restorePage(pageIdx: int): void {
-        const snapshot = root._snapshot()
-        const hiddenIndex = snapshot.hidden.indexOf(pageIdx)
-        if (hiddenIndex < 0) return
-        snapshot.hidden.splice(hiddenIndex, 1)
-        const target = root._bestRestoreCategory(pageIdx, snapshot.groups)
-        if (target < 0) {
-            snapshot.groups.push({ label: Translation.tr("Essentials"), pages: [pageIdx] })
-        } else {
-            snapshot.groups[target].pages.push(pageIdx)
-        }
-        root._save(snapshot)
+        if (SettingsArrangement.restorePage(pageIdx))
+            root.editingGroup = -1
+        root._endDrag()
     }
 
     function _moveGroup(insertIndex: int): void {
@@ -159,40 +83,27 @@ ContentPage {
             root._endDrag()
             return
         }
-        const snapshot = root._snapshot()
-        const from = root.dragInfo.index
-        if (!snapshot.groups[from]) {
-            root._endDrag()
-            return
-        }
-        const group = snapshot.groups.splice(from, 1)[0]
-        let target = insertIndex
-        if (insertIndex > from) target--
-        snapshot.groups.splice(Math.max(0, Math.min(target, snapshot.groups.length)), 0, group)
-        root._save(snapshot)
+        SettingsArrangement.moveGroup(root.dragInfo.index, insertIndex)
+        root.editingGroup = -1
+        root._endDrag()
     }
 
     function renameCategory(index: int, label: string): void {
-        const trimmed = label.trim()
-        if (trimmed.length === 0) return
-        const snapshot = root._snapshot()
-        if (!snapshot.groups[index]) return
-        snapshot.groups[index].label = trimmed
-        root._save(snapshot)
+        if (SettingsArrangement.renameCategory(index, label))
+            root.editingGroup = -1
+        root._endDrag()
     }
 
     function removeCategory(index: int): void {
-        const snapshot = root._snapshot()
-        if (snapshot.groups.length <= 1 || !snapshot.groups[index] || snapshot.groups[index].pages.length > 0)
-            return
-        snapshot.groups.splice(index, 1)
-        root._save(snapshot)
+        if (SettingsArrangement.removeCategory(index))
+            root.editingGroup = -1
+        root._endDrag()
     }
 
     function addCategory(): void {
-        const snapshot = root._snapshot()
-        snapshot.groups.push({ label: Translation.tr("New group"), pages: [] })
-        root._save(snapshot)
+        SettingsArrangement.addCategory()
+        root.editingGroup = -1
+        root._endDrag()
     }
 
     component IconAction: RippleButton {
