@@ -35,11 +35,10 @@ Scope {
 
     function scaleForScreen(screen): real {
         if (!screen)
-            return Math.max(0.6, root.uiScale)
+            return root.uiScale
         const shortEdge = Math.min(screen.width, screen.height)
         const resolutionScale = Math.max(0.78, Math.min(1.6, shortEdge / 1080))
-        const requested = resolutionScale * 1.1 * root.uiScale
-        return Math.max(0.6, requested)
+        return resolutionScale * 1.1 * root.uiScale
     }
 
     function setAutoHideShown(screenName: string, shown: bool): void {
@@ -416,7 +415,7 @@ Scope {
 
                 Pill {
                     id: pill
-                    s: overlay.surfaceOpen ? Math.max(1, overlay.s) : overlay.s
+                    s: overlay.s
                     screenName: overlay.modelData ? overlay.modelData.name : ""
                     barWindow: overlay
                     surface: overlay.surface
