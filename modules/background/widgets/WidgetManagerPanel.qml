@@ -983,10 +983,10 @@ Item {
                     StyledSwitch {
                         anchors.verticalCenter: parent.verticalCenter
                         checked: card._enabled
-                        onCheckedChanged: {
-                            if (checked !== card._enabled)
-                                DesktopWidgetLayout.setGloballyEnabled(
-                                    card._layoutKey, checked)
+                        onClicked: {
+                            DesktopWidgetLayout.setGloballyEnabled(
+                                card._layoutKey, !card._enabled)
+                            checked = Qt.binding(() => card._enabled)
                         }
                     }
                 }
