@@ -2047,9 +2047,10 @@ Scope {
 
                             pages: root.pages
                             requestedIndex: root.currentPage
-                            // Stays enabled at level 0 so the LRU keeps recently
-                            // visited pages warm across home ↔ page navigation.
-                            loadEnabled: Config.ready
+                            // Keep recently visited pages warm while Settings is open,
+                            // including home ↔ page navigation, but release them when
+                            // the Settings surface itself closes.
+                            loadEnabled: Config.ready && root.settingsOpen
 
                             // Same soft scroll edge as the home grid. Read through
                             // `var`, not the host's Item-typed currentItem, because

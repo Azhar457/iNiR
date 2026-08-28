@@ -1549,7 +1549,7 @@ Scope {
                                 anchors { top: overlayPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
                                 pages: root.overlayPages
                                 requestedIndex: root.overlayCurrentPage
-                                loadEnabled: Config.ready
+                                loadEnabled: Config.ready && root.settingsOpen
                             }
 
                         }
