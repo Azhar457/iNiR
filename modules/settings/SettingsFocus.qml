@@ -2090,22 +2090,11 @@ Scope {
                                 }
                             }
 
-                            CircularProgress {
-                                anchors.centerIn: parent
-                                z: 10
-                                readonly property bool isLoading: pageHost.loading
-                                opacity: isLoading ? 1 : 0
-                                scale: isLoading ? 1 : 0.7
-                                visible: opacity > 0
-
-                                Behavior on opacity {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                                }
-                                Behavior on scale {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                                }
+                            SettingsPageLoadingOverlay {
+                                anchors.fill: parent
+                                loading: pageHost.loading
+                                text: Translation.tr("Loading page…")
+                                z: 15
                             }
                         }
                     }

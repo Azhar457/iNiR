@@ -57,6 +57,7 @@ ApplicationWindow {
     }
 
     onCurrentPageChanged: root._persistCurrentPage()
+
     property bool uiReady: Config.ready
 
     // Easy mode helpers — derived list filtered to essentials when on
@@ -1335,23 +1336,11 @@ ApplicationWindow {
                     requestedIndex: root.currentPage
                     loadEnabled: Config.ready && root._navigationInitialized
 
-                    // Loading indicator while the target page incubates
-                    CircularProgress {
-                        id: windowPageLoading
-                        anchors.centerIn: parent
-                        z: 10
-                        readonly property bool isLoading: pagesStack.loading
-                        opacity: isLoading ? 1 : 0
-                        scale: isLoading ? 1 : 0.7
-                        visible: opacity > 0
-                        Behavior on opacity {
-                            enabled: Appearance.animationsEnabled
-                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                        }
-                        Behavior on scale {
-                            enabled: Appearance.animationsEnabled
-                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                        }
+                    SettingsPageLoadingOverlay {
+                        anchors.fill: parent
+                        loading: pagesStack.loading
+                        text: Translation.tr("Loading page…")
+                        z: 15
                     }
 
                 }

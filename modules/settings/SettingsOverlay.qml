@@ -1522,34 +1522,19 @@ Scope {
                                 }
                             }
 
-                            // Loading indicator (with morphing entrance/exit)
-                            CircularProgress {
-                                id: pageLoadingIndicator
-                                anchors.centerIn: parent
-                                z: 10
-
-                                readonly property bool isLoading: overlayPagesHost.loading
-
-                                opacity: isLoading ? 1 : 0
-                                scale: isLoading ? 1 : 0.7
-                                visible: opacity > 0
-
-                                Behavior on opacity {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                }
-                                Behavior on scale {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                }
-                            }
-
                             SettingsPageHost {
                                 id: overlayPagesHost
                                 anchors { top: overlayPageHeader.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
                                 pages: root.overlayPages
                                 requestedIndex: root.overlayCurrentPage
                                 loadEnabled: Config.ready && root.settingsOpen
+                            }
+
+                            SettingsPageLoadingOverlay {
+                                anchors.fill: overlayPagesHost
+                                loading: overlayPagesHost.loading
+                                text: Translation.tr("Loading page…")
+                                z: 15
                             }
 
                         }

@@ -170,9 +170,8 @@ Item {
             pendingLoader.x = _direction * Appearance.sizes.spacingMedium * 2
         }
 
-        // The selected page loads synchronously. Asynchronous incubation made
-        // large pages feel much slower and was repeatedly cancelled by normal
-        // navigation. Recently visited pages remain instantiated in a small LRU.
+        // Pending pages incubate while the current page stays visible. The LRU
+        // keeps completed revisits cheap without blocking navigation on creation.
         _retain(_pendingIndex)
 
         Qt.callLater(function() {
@@ -294,7 +293,7 @@ Item {
             // Imperative residency avoids a Loader construction feedback cycle.
             active: false
             source: root._sourceFor(index)
-            asynchronous: index !== root._currentIndex && index !== root._pendingIndex
+            asynchronous: index !== root._currentIndex
             visible: active && (index === root._currentIndex || index === root._pendingIndex)
             enabled: index === root._currentIndex
                 && root._pendingIndex < 0
