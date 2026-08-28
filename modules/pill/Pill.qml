@@ -939,7 +939,10 @@ Item {
                     barWindow: pill.barWindow
                     enabled: hover.live
                     menuOpen: pill.trayMenuOpen
-                    onMenuRequested: (item, anchorX, anchorY) => pill.trayMenuRequested(item, anchorX, anchorY)
+                    onMenuRequested: (item, anchorX, _anchorY) => {
+                        const bottom = pill.mapToItem(null, 0, pill.height);
+                        pill.trayMenuRequested(item, anchorX, bottom.y);
+                    }
                 }
 
                 Item {

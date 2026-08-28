@@ -224,7 +224,7 @@ Scope {
                  * pixels to keep labels sharp; clamped inside the screen. */
                 x: Math.round(Math.max(8 * root.s, Math.min(root.anchorX - width / 2, menu.width - width - 8 * root.s)))
                 y: Math.round(Math.max(8 * root.s, Math.min(
-                    root.anchorY + 6 * root.s, menu.height - height - 8 * root.s)))
+                    root.anchorY + 8 * root.s, menu.height - height - 8 * root.s)))
                 width: Math.round(220 * root.s)
                 radius: 12 * root.s
                 clip: true
