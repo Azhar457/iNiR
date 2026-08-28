@@ -226,7 +226,7 @@ Scope {
         }
 
         // Static section index — coarse targets, ranked below real controls.
-        var index = SettingsPageRegistry.staticSearchIndex;
+        var index = SettingsPageRegistry.searchIndex();
         for (var i = 0; i < index.length; i++) {
             var e = index[i];
             if (!allowed(e.pageIndex))
@@ -326,6 +326,12 @@ Scope {
     function _trySpotlight(): void {
         if (root._pendingOptionId < 0 && root._pendingSection.length === 0)
             return;
+
+        const pageItem = pageHost.currentItem
+        if (pageItem && pageHost.currentIndex === root._pendingPageIndex
+                && root._pendingSection.length > 0
+                && typeof pageItem.activateSettingsSearchSection === "function")
+            pageItem.activateSettingsSearchSection(root._pendingSection)
 
         var control = root._pendingOptionId >= 0
             ? SettingsSearchRegistry.getControlById(root._pendingOptionId)

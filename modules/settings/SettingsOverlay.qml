@@ -63,9 +63,6 @@ Scope {
         onTriggered: root.recomputeOverlaySearchResults()
     }
 
-    // Shared static index — single source of truth in SettingsPageRegistry
-    readonly property var overlaySearchIndex: SettingsPageRegistry.staticSearchIndex
-
     function getWaffleSettingsPageIndex() {
         for (var i = 0; i < overlayPages.length; i++) {
             var componentPath = String(overlayPages[i].component || "");
@@ -89,6 +86,8 @@ Scope {
         var isWaffleActive = Config.options?.panelFamily === "waffle";
         var wafflePageIndex = getWaffleSettingsPageIndex();
         var easyOn = root.easyMode;
+
+        const overlaySearchIndex = SettingsPageRegistry.searchIndex();
 
         // 1. Static index
         for (var i = 0; i < overlaySearchIndex.length; i++) {
@@ -218,6 +217,12 @@ Scope {
     }
 
     function trySpotlight() {
+        const pageItem = overlayPagesHost.currentItem
+        if (pageItem && overlayPagesHost.currentIndex === pendingSpotlightPageIndex
+                && pendingSpotlightSection.length > 0
+                && typeof pageItem.activateSettingsSearchSection === "function")
+            pageItem.activateSettingsSearchSection(pendingSpotlightSection)
+
         var control = null;
 
         // Try by optionId first

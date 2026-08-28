@@ -121,8 +121,6 @@ ApplicationWindow {
     property var searchTargetControl: null
 
     // Static section/option index — shared with the overlay via SettingsPageRegistry.
-    readonly property var settingsSearchIndex: SettingsPageRegistry.staticSearchIndex
-
     function getWaffleSettingsPageIndex() {
         for (var i = 0; i < pages.length; i++) {
             if ((pages[i].component || "").indexOf("modules/settings/WaffleConfig.qml") >= 0)
@@ -147,6 +145,7 @@ ApplicationWindow {
         var easyOn = root.easyMode;
 
         // 1. Buscar en el índice estático de secciones (para navegación rápida a secciones)
+        const settingsSearchIndex = SettingsPageRegistry.searchIndex();
         for (var i = 0; i < settingsSearchIndex.length; i++) {
             var entry = settingsSearchIndex[i];
 
@@ -289,6 +288,12 @@ ApplicationWindow {
     }
 
     function trySpotlight() {
+        const pageItem = pagesStack.currentItem
+        if (pageItem && pagesStack.currentIndex === pendingSpotlightPageIndex
+                && pendingSpotlightSection.length > 0
+                && typeof pageItem.activateSettingsSearchSection === "function")
+            pageItem.activateSettingsSearchSection(pendingSpotlightSection)
+
         var control = null;
 
         // Try by optionId first
@@ -1328,7 +1333,7 @@ ApplicationWindow {
 
                     pages: root.pages
                     requestedIndex: root.currentPage
-                    loadEnabled: Config.ready
+                    loadEnabled: Config.ready && root._navigationInitialized
 
                     // Loading indicator while the target page incubates
                     CircularProgress {

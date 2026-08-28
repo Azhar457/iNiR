@@ -23,6 +23,39 @@ ContentPage {
     property int _customMediaFolderGifCount: 0
     property int _customMediaFolderVideoCount: 0
 
+    function activateSettingsSearchSection(section: string): bool {
+        const parts = String(section || "").toLowerCase().split(/[·›]/)
+        const label = parts[parts.length - 1].trim()
+        const sections = {
+            "clock": "time",
+            "upcoming events": "time",
+            "system uptime": "time",
+            "world clock": "time",
+            "news ticker": "time",
+            "weather": "weather",
+            "custom image": "media",
+            "image converter": "media",
+            "media controls": "media",
+            "visualizer": "media",
+            "system monitor": "system",
+            "battery": "system",
+            "japanese typography": "personal",
+            "notes": "personal",
+            "user card": "personal",
+            "mascot": "personal",
+            "custom widgets": "personal"
+        }
+        const target = sections[label] ?? ""
+        if (!target)
+            return false
+        root.activeSection = target
+        return true
+    }
+
+    component LazySection: Loader {
+        Layout.fillWidth: true
+    }
+
     readonly property var _customImageShapes: [
         { value: "Circle", shape: MaterialShape.Shape.Circle },
         { value: "Square", shape: MaterialShape.Shape.Square },
@@ -1643,11 +1676,13 @@ ContentPage {
     }
 
     // ── Clock ────────────────────────────────────────────────
-    SettingsCardSection {
-        id: clockSection
-        settingsTaskSection: "time"
-        visible: root.isIiActive && root.activeSection === "time"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "time"
+        sourceComponent: Component {
+            SettingsCardSection {
+                id: clockSection
+                settingsTaskSection: "time"
+                expanded: true
         icon: "schedule"
         title: Translation.tr("Clock")
 
@@ -2177,14 +2212,18 @@ ContentPage {
                     "locked": false
 })
             }
+            }
         }
+    }
     }
 
     // ── Japanese Typography ─────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "personal"
-        visible: root.isIiActive && root.activeSection === "personal"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "personal"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "personal"
+                expanded: true
         icon: "translate"
         title: Translation.tr("Japanese Typography")
 
@@ -2630,13 +2669,17 @@ ContentPage {
                 })
             }
         }
+            }
+        }
     }
 
     // ── Weather ──────────────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "weather"
-        visible: root.isIiActive && root.activeSection === "weather"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "weather"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "weather"
+                expanded: true
         icon: "cloud"
         title: Translation.tr("Weather")
 
@@ -2885,12 +2928,16 @@ ContentPage {
 })
             }
         }
+            }
+        }
     }
 
-    SettingsCardSection {
-        settingsTaskSection: "media"
-        visible: root.isIiActive && root.activeSection === "media"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "media"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "media"
+                expanded: true
         icon: "add_photo_alternate"
         title: Translation.tr("Custom image")
 
@@ -3243,12 +3290,16 @@ ContentPage {
                 })
             }
         }
+            }
+        }
     }
 
-    SettingsCardSection {
-        settingsTaskSection: "media"
-        visible: root.isIiActive && root.activeSection === "media"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "media"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "media"
+                expanded: true
         icon: "transform"
         title: Translation.tr("Image converter")
 
@@ -3304,13 +3355,17 @@ ContentPage {
                 })
             }
         }
+            }
+        }
     }
 
     // ── Media Controls ───────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "media"
-        visible: root.isIiActive && root.activeSection === "media"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "media"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "media"
+                expanded: true
         icon: "album"
         title: Translation.tr("Media Controls")
 
@@ -3409,13 +3464,17 @@ ContentPage {
 })
             }
         }
+            }
+        }
     }
 
     // ── Visualizer ───────────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "media"
-        visible: root.isIiActive && root.activeSection === "media"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "media"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "media"
+                expanded: true
         icon: "equalizer"
         title: Translation.tr("Visualizer")
 
@@ -3784,13 +3843,17 @@ ContentPage {
 })
             }
         }
+            }
+        }
     }
 
     // ── System Monitor ───────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "system"
-        visible: root.isIiActive && root.activeSection === "system"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "system"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "system"
+                expanded: true
         icon: "monitor_heart"
         title: Translation.tr("System Monitor")
 
@@ -3995,13 +4058,17 @@ ContentPage {
 })
             }
         }
+            }
+        }
     }
 
     // ── Battery ──────────────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "system"
-        visible: root.isIiActive && root.activeSection === "system"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "system"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "system"
+                expanded: true
         icon: "battery_full"
         title: Translation.tr("Battery")
 
@@ -4197,13 +4264,17 @@ ContentPage {
 })
             }
         }
+            }
+        }
     }
 
     // ── Notes ───────────────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "personal"
-        visible: root.isIiActive && root.activeSection === "personal"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "personal"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "personal"
+                expanded: true
         icon: "sticky_note_2"
         title: Translation.tr("Notes")
 
@@ -4295,13 +4366,17 @@ ContentPage {
                 })
             }
         }
+            }
+        }
     }
 
     // ── Upcoming Events ─────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "time"
-        visible: root.isIiActive && root.activeSection === "time"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "time"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "time"
+                expanded: true
         icon: "event"
         title: Translation.tr("Upcoming Events")
 
@@ -4398,13 +4473,17 @@ ContentPage {
                 })
             }
         }
+            }
+        }
     }
 
     // ── System Uptime ────────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "time"
-        visible: root.isIiActive && root.activeSection === "time"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "time"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "time"
+                expanded: true
         icon: "avg_pace"
         title: Translation.tr("System uptime")
 
@@ -4456,12 +4535,16 @@ ContentPage {
                 })
             }
         }
+            }
+        }
     }
 
-    SettingsCardSection {
-        settingsTaskSection: "time"
-        visible: root.isIiActive && root.activeSection === "time"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "time"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "time"
+                expanded: true
         icon: "public"
         title: Translation.tr("World clock")
 
@@ -4538,12 +4621,16 @@ ContentPage {
                 })
             }
         }
+            }
+        }
     }
 
-    SettingsCardSection {
-        settingsTaskSection: "personal"
-        visible: root.isIiActive && root.activeSection === "personal"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "personal"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "personal"
+                expanded: true
         icon: "account_circle"
         title: Translation.tr("User card")
 
@@ -4596,13 +4683,17 @@ ContentPage {
                 })
             }
         }
+            }
+        }
     }
 
     // ── Mascot ───────────────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "personal"
-        visible: root.isIiActive && root.activeSection === "personal"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "personal"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "personal"
+                expanded: true
         icon: "pets"
         title: Translation.tr("Mascot")
 
@@ -4736,13 +4827,17 @@ ContentPage {
                 })
             }
         }
+            }
+        }
     }
 
     // ── News Ticker ───────────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "time"
-        visible: root.isIiActive && root.activeSection === "time"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "time"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "time"
+                expanded: true
         icon: "newspaper"
         title: Translation.tr("News Ticker")
 
@@ -4794,13 +4889,17 @@ ContentPage {
                 })
             }
         }
+            }
+        }
     }
 
     // ── Custom Widgets ──────────────────────────────────────
-    SettingsCardSection {
-        settingsTaskSection: "personal"
-        visible: root.isIiActive && root.activeSection === "personal"
-        expanded: true
+    LazySection {
+        active: root.isIiActive && root.activeSection === "personal"
+        sourceComponent: Component {
+            SettingsCardSection {
+                settingsTaskSection: "personal"
+                expanded: true
         icon: "widgets"
         title: Translation.tr("Custom Widgets")
 
@@ -5148,6 +5247,8 @@ ContentPage {
                     configEntry: Config.getNestedValue("background.widgets.custom." + cwDelegate.modelData.id, ({}))
                     hasCardControls: root._manifestSupportsSurface(cwDelegate.modelData.configKeys)
                 }
+            }
+        }
             }
         }
     }

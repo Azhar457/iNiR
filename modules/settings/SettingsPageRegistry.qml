@@ -286,7 +286,20 @@ Singleton {
         return (idx >= 0 && idx < pages.length) ? (pages[idx].icon || "settings") : "settings";
     }
 
-    readonly property var staticSearchIndex: [
+    property var _staticSearchIndex: null
+
+    Connections {
+        target: Translation
+        function onLanguageCodeChanged(): void { root._staticSearchIndex = null }
+        function onTranslationsChanged(): void { root._staticSearchIndex = null }
+        function onGeneratedTranslationsChanged(): void { root._staticSearchIndex = null }
+    }
+
+    function searchIndex(): var {
+        if (_staticSearchIndex !== null)
+            return _staticSearchIndex
+
+        _staticSearchIndex = [
         {
             pageIndex: 26, pageName: root.pages[26].name,
             section: Translation.tr("Live shell layout"),
@@ -1749,5 +1762,7 @@ Singleton {
         { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Blur and glass"), label: Translation.tr("Default blur backend"), description: Translation.tr("Let the style choose, use wallpaper glass, compositor blur, or disable blur"), keywords: ["effects", "blur", "backend", "wallpaper", "compositor", "style", "glass"] },
         { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Per-area overrides"), label: Translation.tr("Bars, dock, panels, islands and widgets"), description: Translation.tr("Override the blur backend independently for each shell area"), keywords: ["effects", "area", "bar", "dock", "panel", "island", "ricelin", "widget"] },
         { pageIndex: 25, pageName: root.pages[25].name, section: Translation.tr("Motion and power"), label: Translation.tr("Reduce animations"), description: Translation.tr("Use immediate reduced-motion state changes"), keywords: ["motion", "animation", "reduce", "accessibility", "performance"] }
-    ]
+        ]
+        return _staticSearchIndex
+    }
 }

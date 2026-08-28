@@ -10,7 +10,7 @@ Item {
     required property var pages
     required property int requestedIndex
     property bool loadEnabled: true
-    property int cacheLimit: 5
+    property int cacheLimit: 2
 
     readonly property int currentIndex: _currentIndex
     readonly property Item currentItem: {
