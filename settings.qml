@@ -528,115 +528,137 @@ ApplicationWindow {
             }
         }
 
-        RowLayout { // Titlebar with integrated search
+        GridLayout { // Titlebar with integrated search
             visible: Config.options?.windows?.showTitlebar ?? true
             Layout.fillWidth: true
-            Layout.preferredHeight: 52
+            Layout.preferredHeight: root.navEditMode ? 58 : 52
             Layout.leftMargin: 12
             Layout.rightMargin: 6
-            spacing: 12
+            columns: 3
+            columnSpacing: root.navEditMode ? 8 : 12
+            rowSpacing: 0
 
-                Item {
-                    implicitWidth: 36
-                    implicitHeight: 36
+            Behavior on Layout.preferredHeight {
+                enabled: Appearance.animationsEnabled
+                NumberAnimation { duration: Appearance.animation.elementResize.duration }
+            }
 
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: width / 2
-                        color: Appearance.colors.colLayer1
-                        border.width: 1
-                        border.color: Appearance.colors.colPrimary
-                    }
+            Item {
+                id: headerIdentity
+                Layout.column: SettingsChromeLayout.columnFor("identity")
+                Layout.preferredWidth: root.navEditMode ? 176 : 210
+                Layout.preferredHeight: 44
+                Layout.alignment: Qt.AlignVCenter
 
-                    Rectangle {
-                        id: settingsAvatarMask
-                        anchors.centerIn: parent
-                        width: 32
-                        height: 32
-                        radius: width / 2
-                        visible: false
-                    }
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: 9
 
-                    Image {
-                        id: settingsAvatarImage
-                        anchors.centerIn: parent
-                        width: 32
-                        height: 32
-                        source: settingsAvatarResolver.resolvedSource
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        cache: true
-                        smooth: true
-                        mipmap: true
-                        sourceSize.width: 64
-                        sourceSize.height: 64
-                        visible: status === Image.Ready
-                        layer.enabled: visible
-                        layer.effect: OpacityMask {
-                            maskSource: settingsAvatarMask
+                    Item {
+                        Layout.preferredWidth: 36
+                        Layout.preferredHeight: 36
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: Appearance.colors.colLayer1
+                            border.width: 1
+                            border.color: Appearance.colors.colPrimary
                         }
 
-                        // Walk the fallback chain from the signal, not from a bound
-                        // property: binding status back into the index that feeds
-                        // source is a loop.
-                        onStatusChanged: {
-                            if (settingsAvatarImage.status !== Image.Error)
-                                return
-                            const next = settingsAvatarResolver.avatarIndex + 1
-                            if (next < Directories.userAvatarPaths.length)
-                                settingsAvatarResolver.avatarIndex = next
+                        Rectangle {
+                            id: settingsAvatarMask
+                            anchors.centerIn: parent
+                            width: 32
+                            height: 32
+                            radius: width / 2
+                            visible: false
+                        }
+
+                        Image {
+                            id: settingsAvatarImage
+                            anchors.centerIn: parent
+                            width: 32
+                            height: 32
+                            source: settingsAvatarResolver.resolvedSource
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            cache: true
+                            smooth: true
+                            mipmap: true
+                            sourceSize.width: 64
+                            sourceSize.height: 64
+                            visible: status === Image.Ready
+                            layer.enabled: visible
+                            layer.effect: OpacityMask { maskSource: settingsAvatarMask }
+
+                            onStatusChanged: {
+                                if (settingsAvatarImage.status !== Image.Error)
+                                    return
+                                const next = settingsAvatarResolver.avatarIndex + 1
+                                if (next < Directories.userAvatarPaths.length)
+                                    settingsAvatarResolver.avatarIndex = next
+                            }
+                        }
+
+                        QtObject {
+                            id: settingsAvatarResolver
+                            property int avatarIndex: 0
+                            readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
+                            readonly property string primaryWatch: Directories.userAvatarSourcePrimary
+                            onPrimaryWatchChanged: avatarIndex = 0
+                        }
+
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            visible: settingsAvatarImage.status !== Image.Ready
+                            text: "person"
+                            iconSize: 18
+                            color: Appearance.colors.colPrimary
                         }
                     }
 
-                    // Reactive avatar resolver — retries fallback paths without breaking bindings
-                    QtObject {
-                        id: settingsAvatarResolver
-                        property int avatarIndex: 0
-                        readonly property string resolvedSource: Directories.avatarSourceAt(avatarIndex)
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
 
-                        // Reset to primary whenever Directories re-resolves (e.g. username changes)
-                        readonly property string primaryWatch: Directories.userAvatarSourcePrimary
-                        onPrimaryWatchChanged: avatarIndex = 0
-                    }
+                        StyledText {
+                            Layout.fillWidth: true
+                            color: Appearance.colors.colOnLayer0
+                            text: Translation.tr("Settings")
+                            font {
+                                family: Appearance.font.family.title
+                                pixelSize: Appearance.font.pixelSize.title
+                                variableAxes: Appearance.font.variableAxes.title
+                            }
+                            elide: Text.ElideRight
+                        }
 
-                    MaterialSymbol {
-                        anchors.centerIn: parent
-                        visible: settingsAvatarImage.status !== Image.Ready
-                        text: "person"
-                        iconSize: 18
-                        color: Appearance.colors.colPrimary
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: SystemInfo.displayName || SystemInfo.username
+                            color: Appearance.colors.colSubtext
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            elide: Text.ElideRight
+                        }
                     }
                 }
 
-                ColumnLayout {
-                    spacing: 0
-
-                    StyledText {
-                        color: Appearance.colors.colOnLayer0
-                        text: Translation.tr("Settings")
-                        font {
-                            family: Appearance.font.family.title
-                            pixelSize: Appearance.font.pixelSize.title
-                            variableAxes: Appearance.font.variableAxes.title
-                        }
-                    }
-
-                    StyledText {
-                        text: SystemInfo.displayName || SystemInfo.username
-                        color: Appearance.colors.colSubtext
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        elide: Text.ElideRight
-                    }
+                SettingsChromeEditFrame {
+                    anchors.fill: parent
+                    active: root.navEditMode
+                    blockId: "identity"
+                    label: Translation.tr("Identity")
+                    targetIndex: SettingsChromeLayout.columnFor("identity")
                 }
+            }
 
-                Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
-
-                // Search container with visual feedback
             Rectangle {
                 id: searchContainer
+                Layout.column: SettingsChromeLayout.columnFor("search")
                 Layout.fillWidth: true
-                Layout.maximumWidth: 480
-                Layout.minimumWidth: 200
+                Layout.maximumWidth: root.navEditMode ? 420 : 480
+                Layout.minimumWidth: root.navEditMode ? 150 : 200
                 Layout.preferredHeight: 40
                 Layout.alignment: Qt.AlignVCenter
                 radius: Appearance.rounding.full
@@ -797,58 +819,86 @@ ApplicationWindow {
                         }
                     }
                 }
+
+                SettingsChromeEditFrame {
+                    anchors.fill: parent
+                    active: root.navEditMode
+                    blockId: "search"
+                    label: Translation.tr("Search")
+                    targetIndex: SettingsChromeLayout.columnFor("search")
+                }
             }
 
-                Item { Layout.fillWidth: true; Layout.minimumWidth: 8 }
+            Item {
+                id: headerActions
+                Layout.column: SettingsChromeLayout.columnFor("actions")
+                Layout.preferredWidth: actionsRow.implicitWidth
+                Layout.preferredHeight: 40
+                Layout.alignment: Qt.AlignVCenter
 
-                // Easy / Advanced mode toggle
-                RippleButton {
-                    buttonRadius: Appearance.rounding.full
-                    implicitWidth: 35
-                    implicitHeight: 35
-                    onClicked: root.setEasyMode(!root.easyMode)
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        text: root.easyMode ? "school" : "tune"
-                        iconSize: 20
-                        color: root.easyMode ? Appearance.colors.colPrimary : Appearance.colors.colOnSurfaceVariant
-                        Behavior on color {
-                            enabled: Appearance.animationsEnabled
-                            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                RowLayout {
+                    id: actionsRow
+                    anchors.fill: parent
+                    spacing: 4
+
+                    RippleButton {
+                        buttonRadius: Appearance.rounding.full
+                        implicitWidth: 35
+                        implicitHeight: 35
+                        onClicked: root.setEasyMode(!root.easyMode)
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            text: root.easyMode ? "school" : "tune"
+                            iconSize: 20
+                            color: root.easyMode ? Appearance.colors.colPrimary : Appearance.colors.colOnSurfaceVariant
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                            }
+                        }
+                        StyledToolTip {
+                            text: root.easyMode
+                                ? Translation.tr("Easy mode — click to show all settings")
+                                : Translation.tr("Advanced mode — click to switch to Easy mode (essentials only)")
                         }
                     }
-                    StyledToolTip {
-                        text: root.easyMode
-                            ? Translation.tr("Easy mode — click to show all settings")
-                            : Translation.tr("Advanced mode — click to switch to Easy mode (essentials only)")
+
+                    RippleButton {
+                        buttonRadius: Appearance.rounding.full
+                        implicitWidth: 35
+                        implicitHeight: 35
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            text: "lock"
+                            iconSize: 20
+                        }
+                    }
+
+                    RippleButton {
+                        buttonRadius: Appearance.rounding.full
+                        implicitWidth: 35
+                        implicitHeight: 35
+                        onClicked: root.close()
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            horizontalAlignment: Text.AlignHCenter
+                            text: "close"
+                            iconSize: 20
+                        }
                     }
                 }
 
-                RippleButton {
-                    buttonRadius: Appearance.rounding.full
-                    implicitWidth: 35
-                    implicitHeight: 35
-                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        text: "lock"
-                        iconSize: 20
-                    }
+                SettingsChromeEditFrame {
+                    anchors.fill: parent
+                    active: root.navEditMode
+                    blockId: "actions"
+                    label: Translation.tr("Actions")
+                    targetIndex: SettingsChromeLayout.columnFor("actions")
                 }
-                RippleButton {
-                    buttonRadius: Appearance.rounding.full
-                    implicitWidth: 35
-                    implicitHeight: 35
-                    onClicked: root.close()
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        text: "close"
-                        iconSize: 20
-                    }
-                }
+            }
         }
 
         RowLayout { // Window content with navigation rail and content pane
@@ -1191,14 +1241,35 @@ ApplicationWindow {
                     spacing: 2
 
                     RippleButton {
+                        id: navEditToggle
+                        readonly property color editSurface: Appearance.regaliaEverywhere
+                            ? Appearance.regalia.surfacePlateHover
+                            : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                            : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                            : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                            : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                            : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.35)
+                        readonly property color editSurfaceHover: Appearance.regaliaEverywhere
+                            ? Appearance.regalia.controlPlateHover
+                            : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                            : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                            : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                            : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                            : Appearance.colors.colLayer1Hover
+                        readonly property color editAccent: Appearance.regaliaEverywhere
+                            ? Appearance.regalia.hardwarePrimary
+                            : Appearance.zzzEverywhere ? Appearance.zzz.accent
+                            : Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                            : Appearance.inirEverywhere ? Appearance.inir.colAccent
+                            : Appearance.colors.colPrimary
                         Layout.fillWidth: true
                         implicitHeight: 36
                         buttonRadius: Appearance.rounding.small
                         toggled: root.navEditMode
                         colBackground: root.navEditMode
-                            ? Appearance.colors.colPrimaryContainer : "transparent"
+                            ? editSurface : "transparent"
                         colBackgroundHover: root.navEditMode
-                            ? Appearance.colors.colPrimaryContainer
+                            ? editSurfaceHover
                             : Appearance.colors.colLayer1Hover
                         onClicked: root.navEditMode = !root.navEditMode
 
@@ -1212,7 +1283,7 @@ ApplicationWindow {
                                 text: root.navEditMode ? "done" : "edit"
                                 iconSize: 18
                                 color: root.navEditMode
-                                    ? Appearance.colors.colOnPrimaryContainer
+                                    ? navEditToggle.editAccent
                                     : Appearance.colors.colOnSurfaceVariant
                             }
 
@@ -1226,7 +1297,7 @@ ApplicationWindow {
                                     pixelSize: Appearance.font.pixelSize.small
                                 }
                                 color: root.navEditMode
-                                    ? Appearance.colors.colOnPrimaryContainer
+                                    ? navEditToggle.editAccent
                                     : Appearance.colors.colOnSurfaceVariant
                                 elide: Text.ElideRight
                             }

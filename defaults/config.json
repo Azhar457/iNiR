@@ -1133,6 +1133,7 @@
         "overlayStyle": "rail",
         "easyMode": true,
         "categories": "",
+        "chromeLayout": "",
         "overlayAppearance": {
             "scrimDim": 35,
             "backgroundOpacity": 1.0,

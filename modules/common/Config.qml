@@ -3123,6 +3123,7 @@ Singleton {
                 // JSON-encoded [{label, pages:[int]}] — custom nav arrangement; "" = registry defaults.
                 // String on purpose: property var inside JsonObject crashes the VME.
                 property string categories: ""
+                property string chromeLayout: ""
                 property JsonObject overlayAppearance: JsonObject {
                     property int scrimDim: 35           // % dim of the backdrop scrim behind the settings panel (0-100)
                     // Opacity of the settings panel background (0.6-1.0). The

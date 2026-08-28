@@ -1410,14 +1410,35 @@ Scope {
                                 spacing: 2
 
                                 RippleButton {
+                                    id: overlayNavEditToggle
+                                    readonly property color editSurface: Appearance.regaliaEverywhere
+                                        ? Appearance.regalia.surfacePlateHover
+                                        : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                                        : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
+                                        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                                        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
+                                        : CF.ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 0.35)
+                                    readonly property color editSurfaceHover: Appearance.regaliaEverywhere
+                                        ? Appearance.regalia.controlPlateHover
+                                        : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
+                                        : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                                        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                                        : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
+                                        : Appearance.colors.colLayer1Hover
+                                    readonly property color editAccent: Appearance.regaliaEverywhere
+                                        ? Appearance.regalia.hardwarePrimary
+                                        : Appearance.zzzEverywhere ? Appearance.zzz.accent
+                                        : Appearance.angelEverywhere ? Appearance.angel.colPrimary
+                                        : Appearance.inirEverywhere ? Appearance.inir.colAccent
+                                        : Appearance.colors.colPrimary
                                     Layout.fillWidth: true
                                     implicitHeight: 36
                                     buttonRadius: Appearance.rounding.small
                                     toggled: root.navEditMode
                                     colBackground: root.navEditMode
-                                        ? Appearance.colors.colPrimaryContainer : "transparent"
+                                        ? editSurface : "transparent"
                                     colBackgroundHover: root.navEditMode
-                                        ? Appearance.colors.colPrimaryContainer
+                                        ? editSurfaceHover
                                         : Appearance.colors.colLayer1Hover
                                     onClicked: root.navEditMode = !root.navEditMode
 
@@ -1431,7 +1452,7 @@ Scope {
                                             text: root.navEditMode ? "done" : "edit"
                                             iconSize: 18
                                             color: root.navEditMode
-                                                ? Appearance.colors.colOnPrimaryContainer
+                                                ? overlayNavEditToggle.editAccent
                                                 : Appearance.colors.colOnSurfaceVariant
                                         }
 
@@ -1442,7 +1463,7 @@ Scope {
                                                 : Translation.tr("Edit navigation")
                                             font.pixelSize: Appearance.font.pixelSize.small
                                             color: root.navEditMode
-                                                ? Appearance.colors.colOnPrimaryContainer
+                                                ? overlayNavEditToggle.editAccent
                                                 : Appearance.colors.colOnSurfaceVariant
                                             elide: Text.ElideRight
                                         }
