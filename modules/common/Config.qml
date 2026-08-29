@@ -2601,6 +2601,12 @@ Singleton {
                 property int trailItems: 5
                 property bool showStash: true
                 property string stashRestoreMode: "original"
+                property JsonObject shelf: JsonObject {
+                    property bool enable: true
+                    property list<string> modules: ["locator", "trail", "niri", "actions", "stash"]
+                    property list<string> pinnedActions: ["open-clipboard", "toggle-tiling", "toggle-dashboard"]
+                    property bool closeOnAction: true
+                }
             }
 
             // Settings for the custom Alt-Tab switcher in ii

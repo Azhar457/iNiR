@@ -1396,6 +1396,22 @@
         "showStash": true,
         "showTrail": true,
         "showWorkspaceNumbers": true,
+        "shelf": {
+            "closeOnAction": true,
+            "enable": true,
+            "modules": [
+                "locator",
+                "trail",
+                "niri",
+                "actions",
+                "stash"
+            ],
+            "pinnedActions": [
+                "open-clipboard",
+                "toggle-tiling",
+                "toggle-dashboard"
+            ]
+        },
         "stashRestoreMode": "original",
         "trailItems": 5,
         "windowGap": 4,

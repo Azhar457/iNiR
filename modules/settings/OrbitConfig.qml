@@ -12,18 +12,53 @@ ContentPage {
     property string activeSection: "activation"
 
     readonly property var orbitOptions: Config.options?.orbit ?? {}
+    readonly property var shelfOptions: orbitOptions.shelf ?? {}
+    readonly property var shelfModules: Array.isArray(shelfOptions.modules)
+        ? shelfOptions.modules : ["locator", "trail", "niri", "actions", "stash"]
+    readonly property var actionOptions: {
+        const result = [{ value: "", displayName: Translation.tr("None") }]
+        for (const action of GlobalActions.allActions ?? []) {
+            result.push({
+                value: action.id,
+                displayName: `${action.name} · ${action.category}`
+            })
+        }
+        return result
+    }
+
+    function pinnedAction(slot: int): string {
+        const defaults = ["open-clipboard", "toggle-tiling", "toggle-dashboard"]
+        const actions = Array.isArray(root.shelfOptions.pinnedActions)
+            ? root.shelfOptions.pinnedActions : defaults
+        return actions[slot] ?? ""
+    }
+
+    function actionChoiceIndex(value: string): int {
+        const index = root.actionOptions.findIndex(option => option.value === value)
+        return index >= 0 ? index : 0
+    }
+
+    function setPinnedAction(slot: int, actionId: string): void {
+        const defaults = ["open-clipboard", "toggle-tiling", "toggle-dashboard"]
+        const actions = Array.isArray(root.shelfOptions.pinnedActions)
+            ? [...root.shelfOptions.pinnedActions] : defaults
+        while (actions.length < 3) actions.push("")
+        actions[slot] = actionId
+        Config.setNestedValue("orbit.shelf.pinnedActions", actions)
+    }
 
     SettingsTaskNavigator {
         icon: "hub"
         title: Translation.tr("Orbit")
         description: Translation.tr("Shape the Niri workspace navigator around how you move through windows every day.")
-        summary: Translation.tr("Activation · layout · navigation · motion")
+        summary: Translation.tr("Activation · layout · navigation · shelf · motion")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
             { displayName: Translation.tr("Activation"), icon: "ads_click", value: "activation" },
             { displayName: Translation.tr("Layout"), icon: "view_carousel", value: "layout" },
             { displayName: Translation.tr("Navigation"), icon: "route", value: "navigation" },
+            { displayName: Translation.tr("Shelf"), icon: "shelf_auto_hide", value: "shelf" },
             { displayName: Translation.tr("Motion"), icon: "animation", value: "motion" }
         ]
     }
@@ -216,19 +251,52 @@ ContentPage {
                 stepSize: 1
                 onValueChanged: Config.setNestedValue("orbit.scrollSteps", value)
             }
+        }
+    }
+
+    SettingsCardSection {
+        settingsTaskSection: "shelf"
+        visible: root.activeSection === "shelf"
+        expanded: true
+        icon: "shelf_auto_hide"
+        title: Translation.tr("Orbit Shelf")
+
+        SettingsGroup {
+            ConfigSwitch {
+                text: Translation.tr("Show Shelf")
+                description: Translation.tr("Keep fast window history, Niri controls and shell actions below the workspace band")
+                checked: root.shelfOptions.enable ?? true
+                onCheckedChanged: Config.setNestedValue("orbit.shelf.enable", checked)
+            }
 
             ConfigSwitch {
-                text: Translation.tr("Trail")
-                description: Translation.tr("Show recent windows as a compact MRU row below the workspace band")
+                enabled: root.shelfOptions.enable ?? true
+                text: Translation.tr("Recent window Trail")
+                description: Translation.tr("Allow the Trail module to surface recently focused windows")
                 checked: root.orbitOptions.showTrail ?? true
                 onCheckedChanged: Config.setNestedValue("orbit.showTrail", checked)
             }
 
+            ConfigSwitch {
+                enabled: root.shelfOptions.enable ?? true
+                text: Translation.tr("Enable Stash")
+                description: Translation.tr("Reveal the Stash drop target while dragging; its Shelf module can be hidden independently")
+                checked: root.orbitOptions.showStash ?? true
+                onCheckedChanged: Config.setNestedValue("orbit.showStash", checked)
+            }
+
+            OrbitShelfEditor {
+                enabled: root.shelfOptions.enable ?? true
+            }
+
             ConfigSpinBox {
                 Layout.fillWidth: true
-                enabled: root.orbitOptions.showTrail ?? true
+                enabled: (root.shelfOptions.enable ?? true)
+                    && root.shelfModules.includes("trail")
+                    && (root.orbitOptions.showTrail ?? true)
                 icon: "history"
                 text: Translation.tr("Trail windows")
+                description: Translation.tr("Maximum recent windows shown before the Shelf switches to icon-only layout")
                 value: root.orbitOptions.trailItems ?? 5
                 from: 2
                 to: 8
@@ -236,16 +304,11 @@ ContentPage {
                 onValueChanged: Config.setNestedValue("orbit.trailItems", value)
             }
 
-            ConfigSwitch {
-                text: Translation.tr("Stash")
-                description: Translation.tr("Reveal a drop target while dragging so a window can be parked outside the active workspace flow")
-                checked: root.orbitOptions.showStash ?? true
-                onCheckedChanged: Config.setNestedValue("orbit.showStash", checked)
-            }
-
             ContentSubsection {
                 title: Translation.tr("Restore stashed windows")
-                enabled: root.orbitOptions.showStash ?? true
+                enabled: (root.shelfOptions.enable ?? true)
+                    && root.shelfModules.includes("stash")
+                    && (root.orbitOptions.showStash ?? true)
 
                 ConfigSelectionArray {
                     currentValue: root.orbitOptions.stashRestoreMode ?? "original"
@@ -254,6 +317,68 @@ ContentPage {
                         { displayName: Translation.tr("Original workspace"), icon: "undo", value: "original" },
                         { displayName: Translation.tr("Current workspace"), icon: "my_location", value: "current" }
                     ]
+                }
+            }
+
+            ConfigSwitch {
+                enabled: (root.shelfOptions.enable ?? true)
+                    && root.shelfModules.includes("actions")
+                text: Translation.tr("Close Orbit after an action")
+                description: Translation.tr("Dismiss Orbit before launching a pinned shell action")
+                checked: root.shelfOptions.closeOnAction ?? true
+                onCheckedChanged: Config.setNestedValue("orbit.shelf.closeOnAction", checked)
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                enabled: (root.shelfOptions.enable ?? true)
+                    && root.shelfModules.includes("actions")
+                spacing: 8
+
+                StyledText {
+                    text: Translation.tr("Pinned actions")
+                    font.pixelSize: Appearance.font.pixelSize.normal
+                    font.weight: Font.Medium
+                    color: Appearance.colors.colOnLayer1
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: Translation.tr("Choose any built-in or custom Global Action. The Shelf also keeps an All actions button.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
+                }
+
+                Repeater {
+                    model: 3
+
+                    delegate: RowLayout {
+                        id: actionSlot
+                        required property int index
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        StyledText {
+                            Layout.preferredWidth: 72
+                            text: Translation.tr("Slot %1").arg(actionSlot.index + 1)
+                            color: Appearance.colors.colSubtext
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                        }
+
+                        StyledComboBox {
+                            Layout.fillWidth: true
+                            model: root.actionOptions
+                            textRole: "displayName"
+                            currentIndex: root.actionChoiceIndex(root.pinnedAction(actionSlot.index))
+                            settingsSearchLabel: Translation.tr("Orbit pinned action %1").arg(actionSlot.index + 1)
+                            settingsSearchDescription: Translation.tr("Action launched from the Orbit Shelf")
+                            onActivated: index => {
+                                if (index >= 0 && index < root.actionOptions.length)
+                                    root.setPinnedAction(actionSlot.index, root.actionOptions[index].value)
+                            }
+                        }
+                    }
                 }
             }
         }

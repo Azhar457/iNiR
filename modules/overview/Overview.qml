@@ -443,17 +443,17 @@ Scope {
                 }
 
                 Loader {
-                    id: orbitTrailLoader
+                    id: orbitShelfLoader
                     anchors.horizontalCenter: parent.horizontalCenter
                     active: root.shouldShow && root.orbitMode
-                        && ((root.orbitOptions.showTrail ?? true)
-                            || (root.orbitOptions.showStash ?? true))
+                        && (root.orbitOptions.shelf?.enable ?? true)
                     visible: active && status === Loader.Ready
                     sourceComponent: Component {
-                        OrbitTrail {
+                        OrbitShelf {
                             outputName: root.screen?.name ?? ""
-                            visible: (root.orbitOptions.showTrail ?? true)
-                                || MinimizedWindows.getMinimizedForOutput(outputName).length > 0
+                            availableWidth: root.width
+                                * Math.max(0.6, Math.min(1.0,
+                                    (root.orbitOptions.maxPanelWidthPercent ?? 92) / 100))
                         }
                     }
                 }
