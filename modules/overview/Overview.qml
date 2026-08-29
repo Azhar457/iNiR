@@ -458,6 +458,7 @@ Scope {
                         OverviewDashboard {
                             panelVisible: root.visible
                             availableWidth: dashboardPanel.parent?.width ?? root.width
+                            availableHeight: Math.max(260, root.height * 0.78)
                         }
                     }
 
