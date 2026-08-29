@@ -341,20 +341,25 @@ Singleton {
             root.openOverview(resolved)
     }
 
-    function openTaskView(outputName): void {
-        overviewMode = "taskview"
+    function openOrbit(outputName): void {
+        if (!(Config.options?.orbit?.enable ?? true))
+            return
+        overviewMode = "orbit"
         overviewSearchPrefix = ""
         overviewTargetOutput = root.resolveOutputName(outputName, [])
         overviewOpen = true
     }
 
-    function toggleTaskView(outputName): void {
+    function toggleOrbit(outputName): void {
         const resolved = root.resolveOutputName(outputName, [])
-        if (overviewOpen && overviewMode === "taskview" && overviewPresentationOutput === resolved)
+        if (overviewOpen && overviewMode === "orbit" && overviewPresentationOutput === resolved)
             root.closeOverview()
         else
-            root.openTaskView(resolved)
+            root.openOrbit(resolved)
     }
+
+    function openTaskView(outputName): void { root.openOrbit(outputName) }
+    function toggleTaskView(outputName): void { root.toggleOrbit(outputName) }
 
     function openSidebarLeft(outputName): void {
         sidebarLeftTargetOutput = root.resolveOutputName(outputName,

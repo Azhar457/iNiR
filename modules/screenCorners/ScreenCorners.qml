@@ -34,18 +34,24 @@ Scope {
         readonly property bool cornerOpenMatchesPosition: cornerOpenAtBottom === cornerWidget.isBottom
         readonly property bool shouldShowCornerOpen: cornerOpenEnabled
             && cornerOpenMatchesPosition && !fullscreen
-        readonly property bool shouldShowTaskViewHotCorner: CompositorService.isNiri
+        readonly property string orbitCorner: Config.options?.orbit?.hotCorner ?? "topRight"
+        readonly property string cornerName: cornerWidget.isTopLeft ? "topLeft"
+            : cornerWidget.isTopRight ? "topRight"
+            : cornerWidget.isBottomLeft ? "bottomLeft" : "bottomRight"
+        readonly property bool shouldShowOrbitHotCorner: CompositorService.isNiri
             && (Config.options?.panelFamily ?? "ii") !== "waffle"
-            && cornerWidget.isTopRight
+            && (Config.options?.orbit?.enable ?? true)
+            && (Config.options?.orbit?.hotCornerEnable ?? true)
+            && cornerName === orbitCorner
             && !fullscreen
         readonly property bool shouldShowSidebarCornerOpen: shouldShowCornerOpen
-            && !shouldShowTaskViewHotCorner
+            && !shouldShowOrbitHotCorner
 
-        visible: !fullscreen && (showFakeRounding || shouldShowSidebarCornerOpen || shouldShowTaskViewHotCorner)
+        visible: !fullscreen && (showFakeRounding || shouldShowSidebarCornerOpen || shouldShowOrbitHotCorner)
 
         exclusionMode: ExclusionMode.Ignore
         mask: Region {
-            item: taskViewHotCornerLoader.active ? taskViewHotCornerLoader
+            item: orbitHotCornerLoader.active ? orbitHotCornerLoader
                 : (sidebarCornerOpenInteractionLoader.active ? sidebarCornerOpenInteractionLoader : null)
         }
         WlrLayershell.namespace: "quickshell:screenCorners"
@@ -83,43 +89,71 @@ Scope {
             // Size for corner open interaction area
             readonly property int cornerOpenWidth: Config.options?.sidebar?.cornerOpen?.cornerRegionWidth ?? 20
             readonly property int cornerOpenHeight: Config.options?.sidebar?.cornerOpen?.cornerRegionHeight ?? 20
-            readonly property int taskViewHotCornerSize: 12
+            readonly property int orbitHotCornerSize: Math.max(4, Math.min(40,
+                Config.options?.orbit?.hotCornerSize ?? 12))
 
             implicitSize: roundingSize
             implicitWidth: Math.max(roundingSize,
                 cornerPanelWindow.shouldShowSidebarCornerOpen ? cornerOpenWidth : 0,
-                cornerPanelWindow.shouldShowTaskViewHotCorner ? taskViewHotCornerSize : 0)
+                cornerPanelWindow.shouldShowOrbitHotCorner ? orbitHotCornerSize : 0)
             implicitHeight: Math.max(roundingSize,
                 cornerPanelWindow.shouldShowSidebarCornerOpen ? cornerOpenHeight : 0,
-                cornerPanelWindow.shouldShowTaskViewHotCorner ? taskViewHotCornerSize : 0)
+                cornerPanelWindow.shouldShowOrbitHotCorner ? orbitHotCornerSize : 0)
 
             Loader {
-                id: taskViewHotCornerLoader
-                active: cornerPanelWindow.shouldShowTaskViewHotCorner
-                anchors.top: parent.top
-                anchors.right: parent.right
+                id: orbitHotCornerLoader
+                active: cornerPanelWindow.shouldShowOrbitHotCorner
+                anchors {
+                    top: cornerWidget.isTop ? parent.top : undefined
+                    bottom: cornerWidget.isBottom ? parent.bottom : undefined
+                    left: cornerWidget.isLeft ? parent.left : undefined
+                    right: cornerWidget.isRight ? parent.right : undefined
+                }
 
                 sourceComponent: MouseArea {
-                    id: taskViewHotCornerArea
-                    implicitWidth: cornerWidget.taskViewHotCornerSize
-                    implicitHeight: cornerWidget.taskViewHotCornerSize
+                    id: orbitHotCornerArea
+                    implicitWidth: cornerWidget.orbitHotCornerSize
+                    implicitHeight: cornerWidget.orbitHotCornerSize
                     hoverEnabled: true
                     property bool armed: true
+                    property bool atCorner: false
+
+                    function triggerOrbit(): void {
+                        if (!armed || !atCorner)
+                            return
+                        armed = false
+                        orbitDwellTimer.stop()
+                        GlobalStates.openOrbit(cornerPanelWindow.screen?.name ?? "")
+                    }
 
                     onPositionChanged: mouse => {
-                        const atCorner = mouse.x >= width - 2 && mouse.y <= 2
+                        const atX = cornerWidget.isRight ? mouse.x >= width - 2 : mouse.x <= 2
+                        const atY = cornerWidget.isTop ? mouse.y <= 2 : mouse.y >= height - 2
+                        atCorner = atX && atY
                         if (!atCorner) {
                             armed = true
+                            orbitDwellTimer.stop()
                             return
                         }
                         if (!armed)
                             return
-                        armed = false
-                        GlobalStates.openTaskView(cornerPanelWindow.screen?.name ?? "")
+                        const dwell = Config.options?.orbit?.hotCornerDwellMs ?? 0
+                        if (dwell <= 0)
+                            triggerOrbit()
+                        else if (!orbitDwellTimer.running)
+                            orbitDwellTimer.restart()
                     }
                     onExited: {
-                        if (!GlobalStates.overviewOpen || GlobalStates.overviewMode !== "taskview")
+                        atCorner = false
+                        orbitDwellTimer.stop()
+                        if (!GlobalStates.overviewOpen || GlobalStates.overviewMode !== "orbit")
                             armed = true
+                    }
+
+                    Timer {
+                        id: orbitDwellTimer
+                        interval: Math.max(1, Config.options?.orbit?.hotCornerDwellMs ?? 0)
+                        onTriggered: orbitHotCornerArea.triggerOrbit()
                     }
                 }
             }

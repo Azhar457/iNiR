@@ -25,7 +25,9 @@ Scope {
             required property var modelData
             property bool _presentedOpen: false
             property string searchingText: ""
-            readonly property bool taskViewMode: GlobalStates.overviewMode === "taskview"
+            readonly property bool orbitMode: GlobalStates.overviewMode === "orbit"
+            readonly property var orbitOptions: Config.options?.orbit ?? {}
+            readonly property string orbitMotionStyle: orbitOptions.motionStyle ?? "spring"
             readonly property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(root.screen) : null
             property bool monitorIsFocused: CompositorService.isHyprland 
                 ? (Hyprland.focusedMonitor?.id == monitor?.id)
@@ -34,7 +36,7 @@ Scope {
             readonly property bool isTargetOutput:
                 GlobalStates.overviewPresentationOutput === (root.modelData?.name ?? "")
             readonly property bool shouldShow: GlobalStates.overviewOpen
-                && (taskViewMode ? isTargetOutput : (!activeScreenOnly || isTargetOutput))
+                && (orbitMode ? isTargetOutput : (!activeScreenOnly || isTargetOutput))
             readonly property bool applicationDragActive: searchWidget.applicationDragActive
                 || (allAppsGridLoader.item?.applicationDragActive ?? false)
             screen: modelData
@@ -48,7 +50,7 @@ Scope {
                     root._presentedOpen = true
                     if (!root.isTargetOutput)
                         return
-                    if (root.taskViewMode) {
+                    if (root.orbitMode) {
                         overviewScope.dontAutoCancelSearch = false
                         searchWidget.cancelSearch()
                         columnLayout.forceActiveFocus()
@@ -123,7 +125,9 @@ Scope {
                 z: -1
                 color: {
                     const ov = Config.options?.overview ?? null
-                    const v = (ov && ov.scrimDim !== undefined) ? ov.scrimDim : 35
+                    const v = root.orbitMode
+                        ? (root.orbitOptions.scrimDim ?? 35)
+                        : ((ov && ov.scrimDim !== undefined) ? ov.scrimDim : 35)
                     const clamped = Math.max(0, Math.min(100, v))
                     const a = clamped / 100
                     return ColorUtils.transparentize(Appearance.colors.colLayer0Base, 1 - a)
@@ -284,12 +288,18 @@ Scope {
                 // because opacity leads OUT (below) the slow tail is already invisible
                 // — the surface dissolves upward toward the search bar instead of
                 // visibly squishing to nothing, which is what made the old close ugly.
-                readonly property int motionDuration: root._presentedOpen
-                    ? Appearance.animation.elementMoveEnter.duration
-                    : Appearance.animation.elementMoveExit.duration
-                readonly property var motionCurve: root._presentedOpen
-                    ? Appearance.animation.elementMoveEnter.bezierCurve
-                    : Appearance.animationCurves.emphasizedDecel
+                readonly property int motionDuration: root.orbitMode && root.orbitMotionStyle === "instant"
+                    ? 0
+                    : root._presentedOpen
+                        ? (root.orbitMode && root.orbitMotionStyle === "glide"
+                            ? Appearance.animation.elementMoveFast.duration
+                            : Appearance.animation.elementMoveEnter.duration)
+                        : Appearance.animation.elementMoveExit.duration
+                readonly property var motionCurve: root.orbitMode && root.orbitMotionStyle === "glide"
+                    ? Appearance.animationCurves.emphasizedDecel
+                    : root._presentedOpen
+                        ? Appearance.animation.elementMoveEnter.bezierCurve
+                        : Appearance.animationCurves.emphasizedDecel
                 property real openProgress: root._presentedOpen ? 1 : 0
 
                 // Direction-aware opacity. Open: leads in, fully legible by 70% of the
@@ -303,13 +313,14 @@ Scope {
                 transform: [
                     Scale {
                         origin.x: columnLayout.width / 2
-                        origin.y: root.taskViewMode ? columnLayout.height / 2 : 0
-                        xScale: (root.taskViewMode ? 0.94 : 0.975)
-                            + (root.taskViewMode ? 0.06 : 0.025) * columnLayout.openProgress
-                        yScale: (root.taskViewMode ? 0.94 : 0.93)
-                            + (root.taskViewMode ? 0.06 : 0.07) * columnLayout.openProgress
+                        origin.y: root.orbitMode ? columnLayout.height / 2 : 0
+                        readonly property real orbitStartScale: root.orbitMotionStyle === "glide" ? 0.98 : 0.94
+                        xScale: (root.orbitMode ? orbitStartScale : 0.975)
+                            + (root.orbitMode ? (1 - orbitStartScale) : 0.025) * columnLayout.openProgress
+                        yScale: (root.orbitMode ? orbitStartScale : 0.93)
+                            + (root.orbitMode ? (1 - orbitStartScale) : 0.07) * columnLayout.openProgress
                     },
-                    Translate { y: (1 - columnLayout.openProgress) * (root.taskViewMode ? 8 : -12) }
+                    Translate { y: (1 - columnLayout.openProgress) * (root.orbitMode ? 8 : -12) }
                 ]
 
                 Behavior on openProgress {
@@ -359,13 +370,25 @@ Scope {
                         return centeredMargin;
                     }
                 }
-                spacing: root.taskViewMode ? 0 : -8
+                spacing: root.orbitMode ? 10 : -8
 
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
                         GlobalStates.overviewOpen = false;
-                    } else if (event.key === Qt.Key_Left) {
+                    } else if (root.orbitMode && (event.key === Qt.Key_Tab || event.key === Qt.Key_Down)) {
+                        if (event.modifiers & Qt.ShiftModifier)
+                            overviewLoader.item?.focusPreviousWindow()
+                        else
+                            overviewLoader.item?.focusNextWindow()
+                        event.accepted = true
+                    } else if (root.orbitMode && (event.key === Qt.Key_Backtab || event.key === Qt.Key_Up)) {
+                        overviewLoader.item?.focusPreviousWindow()
+                        event.accepted = true
+                    } else if (root.orbitMode && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
+                        overviewLoader.item?.activateKeyboardWindow()
+                        event.accepted = true
+                    } else if (event.key === Qt.Key_Left || event.key === Qt.Key_PageUp) {
                         if (!root.searchingText) {
                             if (CompositorService.isNiri) {
                                 const outputName = root.screen?.name ?? ""
@@ -379,7 +402,7 @@ Scope {
                                 Hyprland.dispatch("workspace r-1");
                             }
                         }
-                    } else if (event.key === Qt.Key_Right) {
+                    } else if (event.key === Qt.Key_Right || event.key === Qt.Key_PageDown) {
                         if (!root.searchingText) {
                             if (CompositorService.isNiri) {
                                 const outputName = root.screen?.name ?? ""
@@ -399,7 +422,7 @@ Scope {
                 SearchWidget {
                     id: searchWidget
                     anchors.horizontalCenter: parent.horizontalCenter
-                    visible: !root.taskViewMode
+                    visible: !root.orbitMode
                     searchingText: root.searchingText
                     panelVisible: root.visible
                     // Centered mode: limit search results to 60% of screen height
@@ -413,10 +436,26 @@ Scope {
                     readonly property bool dashboardMode: Config.options?.overview?.dashboard?.enable ?? false
                     readonly property bool allAppsGridEnabled: Config.options?.overview?.allAppsGrid ?? false
                     active: root.shouldShow
-                        && (root.taskViewMode || (!dashboardMode && !allAppsGridEnabled))
-                        && (root.taskViewMode || (Config.options?.overview?.enable ?? true))
+                        && (root.orbitMode || (!dashboardMode && !allAppsGridEnabled))
+                        && (root.orbitMode || (Config.options?.overview?.enable ?? true))
                     visible: active && (root.searchingText == "")
                     sourceComponent: CompositorService.isNiri ? niriComponent : hyprComponent
+                }
+
+                Loader {
+                    id: orbitTrailLoader
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    active: root.shouldShow && root.orbitMode
+                        && ((root.orbitOptions.showTrail ?? true)
+                            || (root.orbitOptions.showStash ?? true))
+                    visible: active && status === Loader.Ready
+                    sourceComponent: Component {
+                        OrbitTrail {
+                            outputName: root.screen?.name ?? ""
+                            visible: (root.orbitOptions.showTrail ?? true)
+                                || MinimizedWindows.getMinimizedForOutput(outputName).length > 0
+                        }
+                    }
                 }
 
                 Loader {
@@ -424,7 +463,7 @@ Scope {
                     anchors.horizontalCenter: parent.horizontalCenter
                     readonly property bool allAppsEnabled: Config.options?.overview?.allAppsGrid ?? false
                     readonly property bool dashboardMode: Config.options?.overview?.dashboard?.enable ?? false
-                    active: root.shouldShow && !root.taskViewMode && allAppsEnabled && !dashboardMode
+                    active: root.shouldShow && !root.orbitMode && allAppsEnabled && !dashboardMode
                     visible: active && (root.searchingText == "")
                     sourceComponent: allAppsGridComponent
                 }
@@ -441,7 +480,7 @@ Scope {
                     id: niriComponent
                     OverviewNiriWidget {
                         panelWindow: root
-                        taskViewMode: root.taskViewMode
+                        orbitMode: root.orbitMode
                         visible: (root.searchingText == "")
                     }
                 }
@@ -459,7 +498,7 @@ Scope {
                 Loader {
                     id: dashboardPanel
                     anchors.horizontalCenter: parent.horizontalCenter
-                    active: !root.taskViewMode && (Config.options?.overview?.dashboard?.enable ?? false)
+                    active: !root.orbitMode && (Config.options?.overview?.dashboard?.enable ?? false)
                     visible: active && status === Loader.Ready
                         && root.shouldShow && (root.searchingText == "")
                     opacity: root._presentedOpen ? 1 : 0

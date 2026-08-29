@@ -2579,6 +2579,30 @@ Singleton {
                 }
             }
 
+            property JsonObject orbit: JsonObject {
+                property bool enable: true
+                property bool hotCornerEnable: true
+                property string hotCorner: "topRight"
+                property int hotCornerSize: 12
+                property int hotCornerDwellMs: 0
+                property int workspaceCount: 3
+                property int workspaceScalePercent: 27
+                property int maxPanelWidthPercent: 92
+                property int workspaceSpacing: 18
+                property int windowGap: 4
+                property int scrimDim: 35
+                property bool showWorkspaceNumbers: true
+                property bool balancedGrid: true
+                property bool closeOnSelect: true
+                property bool scrollNavigation: true
+                property int scrollSteps: 1
+                property string motionStyle: "spring"
+                property bool showTrail: true
+                property int trailItems: 5
+                property bool showStash: true
+                property string stashRestoreMode: "original"
+            }
+
             // Settings for the custom Alt-Tab switcher in ii
             property JsonObject altSwitcher: JsonObject {
                 // Preset style: "default" (sidebar) or "list" (centered list)

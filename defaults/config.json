@@ -1380,6 +1380,29 @@
         "windowTileMargin": 6,
         "workspaceSpacing": 5
     },
+    "orbit": {
+        "balancedGrid": true,
+        "closeOnSelect": true,
+        "enable": true,
+        "hotCorner": "topRight",
+        "hotCornerDwellMs": 0,
+        "hotCornerEnable": true,
+        "hotCornerSize": 12,
+        "maxPanelWidthPercent": 92,
+        "motionStyle": "spring",
+        "scrimDim": 35,
+        "scrollNavigation": true,
+        "scrollSteps": 1,
+        "showStash": true,
+        "showTrail": true,
+        "showWorkspaceNumbers": true,
+        "stashRestoreMode": "original",
+        "trailItems": 5,
+        "windowGap": 4,
+        "workspaceCount": 3,
+        "workspaceScalePercent": 27,
+        "workspaceSpacing": 18
+    },
     "performance": {
         "blurAreas": {
             "bar": "inherit",
