@@ -13,20 +13,21 @@ import Quickshell.Wayland
 Item {
     id: root
     required property var panelWindow
+    property bool taskViewMode: false
 
     readonly property var overviewOptions: Config.options?.overview ?? {}
-    readonly property int overviewRows: overviewOptions.rows ?? 3
-    readonly property int overviewColumns: overviewOptions.columns ?? 1
-    readonly property real overviewScale: overviewOptions.scale ?? 0.17
-    readonly property real overviewMaxPanelWidthRatio: overviewOptions.maxPanelWidthRatio ?? 1.0
-    readonly property int overviewWorkspaceSpacing: overviewOptions.workspaceSpacing ?? 5
-    readonly property int overviewWindowTileMargin: overviewOptions.windowTileMargin ?? 6
+    readonly property int overviewRows: taskViewMode ? 1 : (overviewOptions.rows ?? 3)
+    readonly property int overviewColumns: taskViewMode ? 3 : (overviewOptions.columns ?? 1)
+    readonly property real overviewScale: taskViewMode ? 0.27 : (overviewOptions.scale ?? 0.17)
+    readonly property real overviewMaxPanelWidthRatio: taskViewMode ? 0.92 : (overviewOptions.maxPanelWidthRatio ?? 1.0)
+    readonly property int overviewWorkspaceSpacing: taskViewMode ? 18 : (overviewOptions.workspaceSpacing ?? 5)
+    readonly property int overviewWindowTileMargin: taskViewMode ? 12 : (overviewOptions.windowTileMargin ?? 6)
     readonly property int overviewScrollWorkspaceSteps: overviewOptions.scrollWorkspaceSteps ?? 2
 
     readonly property bool overviewFocusAnimEnabled: overviewOptions.focusAnimationEnable ?? true
     readonly property int overviewFocusAnimDurationMs: overviewOptions.focusAnimationDurationMs ?? 180
-    readonly property bool overviewKeepOpenOnWindowClick: overviewOptions.keepOverviewOpenOnWindowClick ?? true
-    readonly property bool overviewShowWorkspaceNumbers: overviewOptions.showWorkspaceNumbers ?? true
+    readonly property bool overviewKeepOpenOnWindowClick: taskViewMode ? false : (overviewOptions.keepOverviewOpenOnWindowClick ?? true)
+    readonly property bool overviewShowWorkspaceNumbers: taskViewMode ? true : (overviewOptions.showWorkspaceNumbers ?? true)
 
     readonly property string wallpaperPathRaw: Config.options?.background?.wallpaperPath ?? ""
     readonly property string wallpaperThumbnailPath: Config.options?.background?.thumbnailPath ?? wallpaperPathRaw
@@ -111,7 +112,7 @@ Item {
     }
 
     property real workspaceNumberMargin: 80
-    property real workspaceNumberSize: 250
+    property real workspaceNumberSize: root.taskViewMode ? 120 : 250
     property int workspaceZ: 0
     property int windowZ: 1
     property int windowDraggingZ: 99999
@@ -214,7 +215,7 @@ Item {
 
     Rectangle {
         id: overviewBackground
-        property real padding: 10
+        property real padding: root.taskViewMode ? 16 : 10
         anchors.fill: parent
         anchors.margins: Appearance.sizes.elevationMargin
 
@@ -495,6 +496,7 @@ Item {
 
                 const collected = []
                 const counters = {}
+                const countsPerWorkspace = {}
                 const maxPerWorkspace = {}
 
                 for (let i = 0; i < wins.length; ++i) {
@@ -512,6 +514,7 @@ Item {
                     const row = pos.length >= 2 && pos[1] ? pos[1] : 1
 
                     const keyWs = wsNumber.toString()
+                    countsPerWorkspace[keyWs] = (countsPerWorkspace[keyWs] || 0) + 1
                     const info = maxPerWorkspace[keyWs] || { maxCol: 1, maxRow: 1 }
                     info.maxCol = Math.max(info.maxCol, col)
                     info.maxRow = Math.max(info.maxRow, row)
@@ -536,6 +539,7 @@ Item {
                         "workspaceNumber": entry.workspaceNumber,
                         "workspaceSlot": entry.workspaceSlot,
                         "indexInWorkspace": count,
+                        "windowCount": countsPerWorkspace[wsKey] || 1,
                         "maxCol": gridInfo.maxCol,
                         "maxRow": gridInfo.maxRow
                     })
@@ -567,13 +571,16 @@ Item {
                 function onOverviewOpenChanged() {
                     if (GlobalStates.overviewOpen) {
                         windowSpace.rebuildWindowItems()
-                        // Capture window previews
                         WindowPreviewService.captureForTaskView()
                     }
                 }
             }
             
-            Component.onCompleted: rebuildWindowItems()
+            Component.onCompleted: {
+                rebuildWindowItems()
+                if (GlobalStates.overviewOpen)
+                    WindowPreviewService.captureForTaskView()
+            }
 
             Repeater {
                 model: ScriptModel {
@@ -588,6 +595,7 @@ Item {
                     readonly property int workspaceNumber: modelData.workspaceNumber
                     readonly property int workspaceSlot: modelData.workspaceSlot
                     readonly property int indexInWorkspace: modelData.indexInWorkspace
+                    readonly property int windowCount: modelData.windowCount || 1
 
                     readonly property int workspaceMaxCol: modelData.maxCol || 1
                     readonly property int workspaceMaxRow: modelData.maxRow || 1
@@ -603,12 +611,21 @@ Item {
                     readonly property int layoutCol: layoutPos.length >= 1 && layoutPos[0] ? layoutPos[0] : 1
                     readonly property int layoutRow: layoutPos.length >= 2 && layoutPos[1] ? layoutPos[1] : 1
 
-                    readonly property real tileWidth: root.workspaceImplicitWidth / workspaceMaxCol
-                    readonly property real tileHeight: root.workspaceImplicitHeight / workspaceMaxRow
+                    readonly property int taskGridColumns: windowCount <= 1 ? 1
+                        : windowCount <= 4 ? 2 : Math.ceil(Math.sqrt(windowCount))
+                    readonly property int taskGridRows: Math.ceil(windowCount / taskGridColumns)
+                    readonly property real tileWidth: root.workspaceImplicitWidth
+                        / (root.taskViewMode ? taskGridColumns : workspaceMaxCol)
+                    readonly property real tileHeight: root.workspaceImplicitHeight
+                        / (root.taskViewMode ? taskGridRows : workspaceMaxRow)
                     readonly property real tileMargin: root.overviewWindowTileMargin * root.scale
 
-                    readonly property real baseX: xOffset + (layoutCol - 1) * tileWidth
-                    readonly property real baseY: yOffset + (layoutRow - 1) * tileHeight
+                    readonly property real baseX: xOffset + (root.taskViewMode
+                        ? (indexInWorkspace % taskGridColumns) * tileWidth
+                        : (layoutCol - 1) * tileWidth)
+                    readonly property real baseY: yOffset + (root.taskViewMode
+                        ? Math.floor(indexInWorkspace / taskGridColumns) * tileHeight
+                        : (layoutRow - 1) * tileHeight)
 
                     x: baseX + tileMargin
                     y: baseY + tileMargin
@@ -663,7 +680,7 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         radius: windowItem.windowRadius
-                        color: "transparent"
+                        color: root.taskViewMode ? Appearance.colors.colLayer1Base : "transparent"
                         border.width: windowItem.isFocused ? 2 : 0
                         border.color: windowItem.isFocused ? Appearance.colors.colLayer2Active : "transparent"
 
@@ -683,7 +700,7 @@ Item {
                         }
 
                         // Window preview image
-                        readonly property bool showPreviews: Config.options?.overview?.showPreviews !== false
+                        readonly property bool showPreviews: root.taskViewMode || Config.options?.overview?.showPreviews !== false
                         Image {
                             id: windowPreview
                             anchors.fill: parent
@@ -691,7 +708,7 @@ Item {
                             property string previewUrl: ""
                             source: parent.showPreviews ? previewUrl : ""
                             asynchronous: true
-                            fillMode: Image.PreserveAspectCrop
+                            fillMode: root.taskViewMode ? Image.PreserveAspectFit : Image.PreserveAspectCrop
                             smooth: true
                             mipmap: true
                             visible: parent.showPreviews && status === Image.Ready
@@ -746,7 +763,7 @@ Item {
                             source: AppSearch.getIconSource(windowData.app_id || windowData.appId || "")
                             asynchronous: true
                             fillMode: Image.PreserveAspectFit
-                            opacity: windowPreview.visible ? 0.6 : 1.0
+                            opacity: windowPreview.visible ? (root.taskViewMode ? 0 : 0.6) : 1.0
                             Behavior on opacity {
                                 enabled: Appearance.animationsEnabled
                                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Easing.OutCubic }

@@ -25,6 +25,7 @@ Scope {
             required property var modelData
             property bool _presentedOpen: false
             property string searchingText: ""
+            readonly property bool taskViewMode: GlobalStates.overviewMode === "taskview"
             readonly property HyprlandMonitor monitor: CompositorService.isHyprland ? Hyprland.monitorFor(root.screen) : null
             property bool monitorIsFocused: CompositorService.isHyprland 
                 ? (Hyprland.focusedMonitor?.id == monitor?.id)
@@ -33,7 +34,7 @@ Scope {
             readonly property bool isTargetOutput:
                 GlobalStates.overviewPresentationOutput === (root.modelData?.name ?? "")
             readonly property bool shouldShow: GlobalStates.overviewOpen
-                && (!activeScreenOnly || isTargetOutput)
+                && (taskViewMode ? isTargetOutput : (!activeScreenOnly || isTargetOutput))
             readonly property bool applicationDragActive: searchWidget.applicationDragActive
                 || (allAppsGridLoader.item?.applicationDragActive ?? false)
             screen: modelData
@@ -47,15 +48,21 @@ Scope {
                     root._presentedOpen = true
                     if (!root.isTargetOutput)
                         return
-                    const prefix = GlobalStates.overviewSearchPrefix
-                    if (prefix.length > 0) {
-                        overviewScope.dontAutoCancelSearch = true
-                        root.setSearchingText(prefix)
-                    } else {
+                    if (root.taskViewMode) {
+                        overviewScope.dontAutoCancelSearch = false
                         searchWidget.cancelSearch()
+                        columnLayout.forceActiveFocus()
+                    } else {
+                        const prefix = GlobalStates.overviewSearchPrefix
+                        if (prefix.length > 0) {
+                            overviewScope.dontAutoCancelSearch = true
+                            root.setSearchingText(prefix)
+                        } else {
+                            searchWidget.cancelSearch()
+                        }
+                        searchWidget.focusSearchInput()
+                        root.maybeSwitchWorkspaceOnOpen()
                     }
-                    searchWidget.focusSearchInput()
-                    root.maybeSwitchWorkspaceOnOpen()
                     delayedGrabTimer.start()
                 })
             }
@@ -150,7 +157,7 @@ Scope {
                     // Check against searchWidget and overviewLoader, not columnLayout
                     // because columnLayout fills the whole window height
                     const searchPos = mapToItem(searchWidget, mouse.x, mouse.y)
-                    const inSearch = searchPos.x >= 0 && searchPos.x <= searchWidget.width &&
+                    const inSearch = searchWidget.visible && searchPos.x >= 0 && searchPos.x <= searchWidget.width &&
                                      searchPos.y >= 0 && searchPos.y <= searchWidget.height
                     
                     const overviewPos = overviewLoader.item ? mapToItem(overviewLoader.item, mouse.x, mouse.y) : null
@@ -296,15 +303,13 @@ Scope {
                 transform: [
                     Scale {
                         origin.x: columnLayout.width / 2
-                        origin.y: 0
-                        // Gentle anisotropy — the vertical axis travels a touch further
-                        // than the horizontal so the panel reads as unfolding from the
-                        // search bar downward, without the heavy squish of a big yScale.
-                        xScale: 0.975 + 0.025 * columnLayout.openProgress
-                        yScale: 0.93 + 0.07 * columnLayout.openProgress
+                        origin.y: root.taskViewMode ? columnLayout.height / 2 : 0
+                        xScale: (root.taskViewMode ? 0.94 : 0.975)
+                            + (root.taskViewMode ? 0.06 : 0.025) * columnLayout.openProgress
+                        yScale: (root.taskViewMode ? 0.94 : 0.93)
+                            + (root.taskViewMode ? 0.06 : 0.07) * columnLayout.openProgress
                     },
-                    // Recede toward the search-bar anchor at the top.
-                    Translate { y: (1 - columnLayout.openProgress) * -12 }
+                    Translate { y: (1 - columnLayout.openProgress) * (root.taskViewMode ? 8 : -12) }
                 ]
 
                 Behavior on openProgress {
@@ -354,7 +359,7 @@ Scope {
                         return centeredMargin;
                     }
                 }
-                spacing: -8
+                spacing: root.taskViewMode ? 0 : -8
 
 
                 Keys.onPressed: event => {
@@ -394,6 +399,7 @@ Scope {
                 SearchWidget {
                     id: searchWidget
                     anchors.horizontalCenter: parent.horizontalCenter
+                    visible: !root.taskViewMode
                     searchingText: root.searchingText
                     panelVisible: root.visible
                     // Centered mode: limit search results to 60% of screen height
@@ -406,7 +412,9 @@ Scope {
                     anchors.horizontalCenter: parent.horizontalCenter
                     readonly property bool dashboardMode: Config.options?.overview?.dashboard?.enable ?? false
                     readonly property bool allAppsGridEnabled: Config.options?.overview?.allAppsGrid ?? false
-                    active: root.shouldShow && !dashboardMode && !allAppsGridEnabled && (Config.options?.overview?.enable ?? true)
+                    active: root.shouldShow
+                        && (root.taskViewMode || (!dashboardMode && !allAppsGridEnabled))
+                        && (root.taskViewMode || (Config.options?.overview?.enable ?? true))
                     visible: active && (root.searchingText == "")
                     sourceComponent: CompositorService.isNiri ? niriComponent : hyprComponent
                 }
@@ -416,7 +424,7 @@ Scope {
                     anchors.horizontalCenter: parent.horizontalCenter
                     readonly property bool allAppsEnabled: Config.options?.overview?.allAppsGrid ?? false
                     readonly property bool dashboardMode: Config.options?.overview?.dashboard?.enable ?? false
-                    active: root.shouldShow && allAppsEnabled && !dashboardMode
+                    active: root.shouldShow && !root.taskViewMode && allAppsEnabled && !dashboardMode
                     visible: active && (root.searchingText == "")
                     sourceComponent: allAppsGridComponent
                 }
@@ -433,6 +441,7 @@ Scope {
                     id: niriComponent
                     OverviewNiriWidget {
                         panelWindow: root
+                        taskViewMode: root.taskViewMode
                         visible: (root.searchingText == "")
                     }
                 }
@@ -450,7 +459,7 @@ Scope {
                 Loader {
                     id: dashboardPanel
                     anchors.horizontalCenter: parent.horizontalCenter
-                    active: Config.options?.overview?.dashboard?.enable ?? false
+                    active: !root.taskViewMode && (Config.options?.overview?.dashboard?.enable ?? false)
                     visible: active && status === Loader.Ready
                         && root.shouldShow && (root.searchingText == "")
                     opacity: root._presentedOpen ? 1 : 0

@@ -34,12 +34,19 @@ Scope {
         readonly property bool cornerOpenMatchesPosition: cornerOpenAtBottom === cornerWidget.isBottom
         readonly property bool shouldShowCornerOpen: cornerOpenEnabled
             && cornerOpenMatchesPosition && !fullscreen
+        readonly property bool shouldShowTaskViewHotCorner: CompositorService.isNiri
+            && (Config.options?.panelFamily ?? "ii") !== "waffle"
+            && cornerWidget.isTopRight
+            && !fullscreen
+        readonly property bool shouldShowSidebarCornerOpen: shouldShowCornerOpen
+            && !shouldShowTaskViewHotCorner
 
-        visible: !fullscreen && (showFakeRounding || shouldShowCornerOpen)
+        visible: !fullscreen && (showFakeRounding || shouldShowSidebarCornerOpen || shouldShowTaskViewHotCorner)
 
         exclusionMode: ExclusionMode.Ignore
         mask: Region {
-            item: sidebarCornerOpenInteractionLoader.active ? sidebarCornerOpenInteractionLoader : null
+            item: taskViewHotCornerLoader.active ? taskViewHotCornerLoader
+                : (sidebarCornerOpenInteractionLoader.active ? sidebarCornerOpenInteractionLoader : null)
         }
         WlrLayershell.namespace: "quickshell:screenCorners"
         WlrLayershell.layer: WlrLayer.Overlay
@@ -76,14 +83,50 @@ Scope {
             // Size for corner open interaction area
             readonly property int cornerOpenWidth: Config.options?.sidebar?.cornerOpen?.cornerRegionWidth ?? 20
             readonly property int cornerOpenHeight: Config.options?.sidebar?.cornerOpen?.cornerRegionHeight ?? 20
+            readonly property int taskViewHotCornerSize: 12
 
             implicitSize: roundingSize
-            implicitWidth: Math.max(roundingSize, cornerPanelWindow.shouldShowCornerOpen ? cornerOpenWidth : 0)
-            implicitHeight: Math.max(roundingSize, cornerPanelWindow.shouldShowCornerOpen ? cornerOpenHeight : 0)
+            implicitWidth: Math.max(roundingSize,
+                cornerPanelWindow.shouldShowSidebarCornerOpen ? cornerOpenWidth : 0,
+                cornerPanelWindow.shouldShowTaskViewHotCorner ? taskViewHotCornerSize : 0)
+            implicitHeight: Math.max(roundingSize,
+                cornerPanelWindow.shouldShowSidebarCornerOpen ? cornerOpenHeight : 0,
+                cornerPanelWindow.shouldShowTaskViewHotCorner ? taskViewHotCornerSize : 0)
+
+            Loader {
+                id: taskViewHotCornerLoader
+                active: cornerPanelWindow.shouldShowTaskViewHotCorner
+                anchors.top: parent.top
+                anchors.right: parent.right
+
+                sourceComponent: MouseArea {
+                    id: taskViewHotCornerArea
+                    implicitWidth: cornerWidget.taskViewHotCornerSize
+                    implicitHeight: cornerWidget.taskViewHotCornerSize
+                    hoverEnabled: true
+                    property bool armed: true
+
+                    onPositionChanged: mouse => {
+                        const atCorner = mouse.x >= width - 2 && mouse.y <= 2
+                        if (!atCorner) {
+                            armed = true
+                            return
+                        }
+                        if (!armed)
+                            return
+                        armed = false
+                        GlobalStates.openTaskView(cornerPanelWindow.screen?.name ?? "")
+                    }
+                    onExited: {
+                        if (!GlobalStates.overviewOpen || GlobalStates.overviewMode !== "taskview")
+                            armed = true
+                    }
+                }
+            }
 
             Loader {
                 id: sidebarCornerOpenInteractionLoader
-                active: cornerPanelWindow.shouldShowCornerOpen
+                active: cornerPanelWindow.shouldShowSidebarCornerOpen
                 anchors {
                     top: (cornerWidget.isTopLeft || cornerWidget.isTopRight) ? parent.top : undefined
                     bottom: (cornerWidget.isBottomLeft || cornerWidget.isBottomRight) ? parent.bottom : undefined
