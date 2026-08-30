@@ -2868,6 +2868,10 @@ Singleton {
                     property bool allowNsfw: false
                     property string defaultProvider: "yandere"
                     property int limit: 20
+                    property JsonObject gelbooru: JsonObject {
+                        property string apiKey: ""
+                        property string userId: ""
+                    }
                     property JsonObject zerochan: JsonObject {
                         property string username: "[unset]"
                     }
