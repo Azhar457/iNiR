@@ -434,7 +434,7 @@
                 "pauseOnGameMode": true,
                 "pauseOnFullscreen": true,
                 "pauseWhenWindowsPresent": false,
-                "showPausedEffect": true
+                "showPausedEffect": false
             },
             "clock": {
                 "cookie": {
