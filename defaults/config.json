@@ -1381,6 +1381,10 @@
         "workspaceSpacing": 5
     },
     "orbit": {
+        "backdropBlurMode": "shell",
+        "backdropBlurSaturation": 18,
+        "backdropBlurStrength": 72,
+        "backdropBlurTint": 28,
         "balancedGrid": true,
         "closeOnSelect": true,
         "enable": true,
@@ -1389,10 +1393,38 @@
         "hotCornerEnable": true,
         "hotCornerSize": 12,
         "maxPanelWidthPercent": 92,
-        "motionStyle": "spring",
+        "studio": {
+            "density": "compact",
+            "showDescriptions": true,
+            "surfaceStyle": "ricelin",
+            "widthPercent": 26
+        },
+        "presentation": {
+            "advanced": false,
+            "direction": "top",
+            "distance": 92,
+            "enterDurationMs": 300,
+            "entryDelayMs": 64,
+            "entryOpacityPercent": 0,
+            "entryStaggerMs": 42,
+            "entryStyle": "cascade",
+            "exitDurationMs": 220,
+            "preset": "adaptive",
+            "shelfDelayMs": 72
+        },
+        "navigationMotion": {
+            "advanced": false,
+            "durationMs": 320,
+            "easing": "smooth",
+            "preset": "fluid"
+        },
         "scrimDim": 35,
+        "canvasScrubNavigation": true,
+        "canvasScrubThreshold": 96,
         "scrollNavigation": true,
         "scrollSteps": 1,
+        "scrollSwitchWorkspace": true,
+        "scrollWrapAround": false,
         "showStash": true,
         "showTrail": true,
         "showWorkspaceNumbers": true,

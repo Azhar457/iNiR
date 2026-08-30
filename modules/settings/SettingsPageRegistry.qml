@@ -333,8 +333,8 @@ Singleton {
             pageIndex: 27, pageName: root.pages[27].name,
             section: Translation.tr("Material motion"),
             label: Translation.tr("Orbit motion"),
-            description: Translation.tr("Spring, glide and instant entry motion") ,
-            keywords: ["orbit", "animation", "motion", "spring", "glide", "material"]
+            description: Translation.tr("Entry presentation and workspace navigation motion"),
+            keywords: ["orbit", "animation", "motion", "navigation", "glide", "material"]
         },
         {
             pageIndex: 26, pageName: root.pages[26].name,

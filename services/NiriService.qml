@@ -21,6 +21,7 @@ Singleton {
     property string focusedWorkspaceId: ""
     property var currentOutputWorkspaces: []
     property string currentOutput: ""
+    readonly property bool actionReady: requestSocket.connected
 
     // Config load status (updated from ConfigLoaded event)
     property bool configLoaded: false
@@ -113,6 +114,7 @@ Singleton {
             }
         }
     }
+
 
     // Debounce timer for fetchOutputs
     Timer {

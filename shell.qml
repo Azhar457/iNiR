@@ -448,6 +448,27 @@ ShellRoot {
         function toggle(): void { if (CompositorService.isNiri) GlobalStates.toggleOrbit("") }
         function close(): void { if (GlobalStates.overviewMode === "orbit") GlobalStates.closeOverview() }
         function open(): void { if (CompositorService.isNiri) GlobalStates.openOrbit("") }
+        function pocket(): void { if (CompositorService.isNiri) GlobalStates.openOrbitPocket("") }
+        function studio(): void { if (CompositorService.isNiri) GlobalStates.openOrbitStudio("") }
+        function find(query: string): void { if (CompositorService.isNiri) GlobalStates.openOrbitLens("", query) }
+        function stage(): void { if (CompositorService.isNiri) GlobalStates.openOrbitView("", "stage") }
+        function orbital(): void { if (CompositorService.isNiri) GlobalStates.openOrbitView("", "orbital") }
+        function next(): void { if (CompositorService.isNiri) GlobalStates.orbitNavigateRequested(1) }
+        function previous(): void { if (CompositorService.isNiri) GlobalStates.orbitNavigateRequested(-1) }
+        function status(): string {
+            return JSON.stringify(Object.assign({}, GlobalStates.orbitRuntimeStatus, {
+                studioRequested: GlobalStates.orbitStudioRequested,
+                pocketRequested: GlobalStates.orbitPocketRequested,
+                lensRequested: GlobalStates.orbitLensRequested
+            }))
+        }
+        function toggleView(): void {
+            if (!CompositorService.isNiri) return
+            if (GlobalStates.overviewOpen && GlobalStates.overviewMode === "orbit")
+                GlobalStates.toggleOrbitStageView()
+            else
+                GlobalStates.openOrbit("")
+        }
     }
 
     // IPC for settings - overlay mode or separate window based on config
