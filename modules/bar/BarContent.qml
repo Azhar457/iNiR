@@ -1560,6 +1560,15 @@ Item { // Bar content region
                         text: BluetoothStatus.activeIcon
                         iconSize: Appearance.font.pixelSize.larger
                         color: rightSidebarButton.colText
+
+                        HoverHandler {
+                            id: btHover
+                        }
+
+                        StyledToolTip {
+                            extraVisibleCondition: btHover.hovered
+                            text: BluetoothStatus.connectionTooltip()
+                        }
                     }
                 }
             }
