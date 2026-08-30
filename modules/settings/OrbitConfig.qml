@@ -22,6 +22,9 @@ ContentPage {
     readonly property var orbitOptions: Config.options?.orbit ?? {}
     readonly property var shelfOptions: orbitOptions.shelf ?? {}
     readonly property var pocketOptions: orbitOptions.pocket ?? {}
+    readonly property string configuredHotCorner: orbitOptions.hotCorner ?? "topRight"
+    readonly property var hotCornerConflictOutputs: Object.keys(NiriService.outputs ?? {}).filter(outputName =>
+        NiriService.isOverviewHotCornerActive(outputName, root.configuredHotCorner))
     readonly property var shelfModules: Array.isArray(shelfOptions.modules)
         ? shelfOptions.modules : ["locator", "trail", "niri", "actions", "stash"]
     readonly property var niriActionCatalog: [
@@ -33,6 +36,13 @@ ContentPage {
         { id: "consume", name: Translation.tr("Consume"), icon: "merge_type" },
         { id: "expel", name: Translation.tr("Expel"), icon: "call_split" }
     ]
+
+    function hotCornerDisplayName(corner: string): string {
+        if (corner === "topLeft") return Translation.tr("Top left")
+        if (corner === "topRight") return Translation.tr("Top right")
+        if (corner === "bottomLeft") return Translation.tr("Bottom left")
+        return Translation.tr("Bottom right")
+    }
     readonly property var niriActions: Array.isArray(shelfOptions.niriActions)
         ? shelfOptions.niriActions : ["maximize", "consume", "expel"]
     readonly property var availableNiriActions: niriActionCatalog
@@ -123,7 +133,7 @@ ContentPage {
                 enabled: (root.orbitOptions.enable ?? true) && (root.orbitOptions.hotCornerEnable ?? true)
 
                 ConfigSelectionArray {
-                    currentValue: root.orbitOptions.hotCorner ?? "topRight"
+                    currentValue: root.configuredHotCorner
                     onSelected: value => Config.setNestedValue("orbit.hotCorner", value)
                     options: [
                         { displayName: Translation.tr("Top left"), icon: "north_west", value: "topLeft" },
@@ -135,11 +145,11 @@ ContentPage {
 
                 StyledText {
                     Layout.fillWidth: true
-                    visible: String(root.orbitOptions.orbital?.workspaceLabelMode ?? "") === "name"
-                        && !(NiriService.allWorkspaces ?? []).some(workspace =>
-                            String(workspace?.name ?? "").trim().length > 0)
-                    text: Translation.tr("Niri currently reports no named workspaces. Name labels will show Unnamed until workspace names are assigned.")
-                    color: Appearance.colors.colSubtext
+                    visible: root.hotCornerConflictOutputs.length > 0
+                    text: Translation.tr("Niri Overview already owns %1 on %2. Orbit will not claim that corner there.")
+                        .arg(root.hotCornerDisplayName(root.configuredHotCorner))
+                        .arg(root.hotCornerConflictOutputs.join(", "))
+                    color: Appearance.colors.colError
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     wrapMode: Text.WordWrap
                 }
@@ -149,13 +159,26 @@ ContentPage {
                 Layout.fillWidth: true
                 enabled: (root.orbitOptions.enable ?? true) && (root.orbitOptions.hotCornerEnable ?? true)
                 icon: "crop_free"
-                text: Translation.tr("Corner target size")
-                description: Translation.tr("Invisible square used to catch the corner gesture")
+                text: Translation.tr("Corner capture area")
+                description: Translation.tr("Invisible square that receives pointer movement near the corner")
                 value: root.orbitOptions.hotCornerSize ?? 12
                 from: 4
                 to: 40
                 stepSize: 1
                 onValueChanged: Config.setNestedValue("orbit.hotCornerSize", value)
+            }
+
+            ConfigSpinBox {
+                Layout.fillWidth: true
+                enabled: (root.orbitOptions.enable ?? true) && (root.orbitOptions.hotCornerEnable ?? true)
+                icon: "near_me"
+                text: Translation.tr("Activation distance")
+                description: Translation.tr("How close the pointer must get to both screen edges before Orbit opens")
+                value: root.orbitOptions.hotCornerActivationDistance ?? 2
+                from: 1
+                to: 32
+                stepSize: 1
+                onValueChanged: Config.setNestedValue("orbit.hotCornerActivationDistance", value)
             }
 
             ConfigSpinBox {
@@ -581,6 +604,17 @@ ContentPage {
                         { displayName: Translation.tr("Full"), icon: "subject", value: "full" },
                         { displayName: Translation.tr("Hidden"), icon: "visibility_off", value: "off" }
                     ]
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    visible: String(root.orbitOptions.orbital?.workspaceLabelMode ?? "") === "name"
+                        && !(NiriService.allWorkspaces ?? []).some(workspace =>
+                            String(workspace?.name ?? "").trim().length > 0)
+                    text: Translation.tr("Niri currently reports no named workspaces. Name labels will show Unnamed until workspace names are assigned.")
+                    color: Appearance.colors.colSubtext
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    wrapMode: Text.WordWrap
                 }
 
                 ConfigSwitch {

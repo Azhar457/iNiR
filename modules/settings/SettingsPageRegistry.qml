@@ -312,8 +312,8 @@ Singleton {
             pageIndex: 27, pageName: root.pages[27].name,
             section: Translation.tr("Activation"),
             label: Translation.tr("Orbit hot corner"),
-            description: Translation.tr("Open the Niri workspace navigator from any screen corner"),
-            keywords: ["orbit", "overview", "task view", "hot corner", "niri", "workspace", "navigation"]
+            description: Translation.tr("Choose the corner, activation distance and conflict-safe behavior with Niri Overview"),
+            keywords: ["orbit", "overview", "task view", "hot corner", "niri", "workspace", "navigation", "distance", "conflict"]
         },
         {
             pageIndex: 27, pageName: root.pages[27].name,

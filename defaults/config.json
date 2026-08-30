@@ -1392,6 +1392,7 @@
         "hotCornerDwellMs": 0,
         "hotCornerEnable": true,
         "hotCornerSize": 12,
+        "hotCornerActivationDistance": 2,
         "maxPanelWidthPercent": 92,
         "studio": {
             "density": "compact",

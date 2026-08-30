@@ -456,10 +456,21 @@ ShellRoot {
         function next(): void { if (CompositorService.isNiri) GlobalStates.orbitNavigateRequested(1) }
         function previous(): void { if (CompositorService.isNiri) GlobalStates.orbitNavigateRequested(-1) }
         function status(): string {
+            const outputName = NiriService.currentOutput ?? ""
+            const orbitCorner = Config.options?.orbit?.hotCorner ?? "topRight"
             return JSON.stringify(Object.assign({}, GlobalStates.orbitRuntimeStatus, {
                 studioRequested: GlobalStates.orbitStudioRequested,
                 pocketRequested: GlobalStates.orbitPocketRequested,
-                lensRequested: GlobalStates.orbitLensRequested
+                lensRequested: GlobalStates.orbitLensRequested,
+                hotCorner: {
+                    orbit: orbitCorner,
+                    activationDistance: Config.options?.orbit?.hotCornerActivationDistance ?? 2,
+                    output: outputName,
+                    niri: NiriService.overviewHotCornersForOutput(outputName),
+                    conflict: NiriService.isOverviewHotCornerActive(outputName, orbitCorner),
+                    detectionReady: NiriService.overviewHotCornersReady,
+                    detectionError: NiriService.overviewHotCornersError
+                }
             }))
         }
         function toggleView(): void {

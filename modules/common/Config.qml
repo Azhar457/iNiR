@@ -2590,6 +2590,7 @@ Singleton {
                 property bool hotCornerEnable: true
                 property string hotCorner: "topRight"
                 property int hotCornerSize: 12
+                property int hotCornerActivationDistance: 2
                 property int hotCornerDwellMs: 0
                 property int workspaceCount: 3
                 property int workspaceScalePercent: 27

@@ -212,6 +212,7 @@ QtObject {
             "orbit.hotCornerEnable": true,
             "orbit.hotCorner": "topRight",
             "orbit.hotCornerSize": 12,
+            "orbit.hotCornerActivationDistance": 2,
             "orbit.hotCornerDwellMs": 0,
             "orbit.workspaceCount": 3,
             "orbit.workspaceScalePercent": 27,
