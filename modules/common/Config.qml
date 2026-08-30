@@ -1295,6 +1295,8 @@ Singleton {
                         property string shape: "Cookie4Sided"
                         property string fitMode: "cover"
                         property int size: 220
+                        property int contentWidth: 0
+                        property int contentHeight: 0
                         property int dim: 0
                         property int widgetScale: 100
                         property int widgetOpacity: 100
