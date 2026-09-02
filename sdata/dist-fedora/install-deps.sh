@@ -57,7 +57,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [missioncenter]="io.missioncenter.MissionCenter"
   )
 
-  _fed_installflags=""
+  _fed_installflags="--skip-unavailable"
   $ask || _fed_installflags="-y --skip-unavailable"
 
   _fed_miss_cmds=()

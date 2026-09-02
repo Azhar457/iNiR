@@ -117,7 +117,14 @@ check_dependencies() {
     for item in "${cmds[@]}"; do
         local cmd="${item%%:*}"
         local name="${item##*:}"
-        if ! command -v "$cmd" &>/dev/null; then
+        # Distro-specific exclusions
+        if [[ "$cmd" == "checkupdates" && "${OS_GROUP_ID:-unknown}" != "arch" ]]; then
+            continue
+        fi
+        if [[ ("$cmd" == "awww" || "$cmd" == "awww-daemon") && "${OS_GROUP_ID:-unknown}" != "arch" ]] && ! command -v "$cmd" &>/dev/null && ! command -v "$HOME/.local/bin/$cmd" &>/dev/null; then
+            continue
+        fi
+        if ! command -v "$cmd" &>/dev/null && ! command -v "$HOME/.local/bin/$cmd" &>/dev/null; then
             missing+=("$name")
             missing_cmds+=("$cmd")
         fi
