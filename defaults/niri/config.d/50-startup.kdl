@@ -7,9 +7,8 @@
 // Tip: use spawn-sh-at-startup for shell pipelines or variable expansion.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Export XDG_MENU_PREFIX into the systemd user session and rebuild the
-// sycoca database so KDE/Qt apps see the correct .desktop entries.
-spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"
+// Export session environment to D-Bus and systemd user session for screen sharing & portals
+spawn-at-startup "bash" "-c" "dbus-update-activation-environment --systemd --all && systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_MENU_PREFIX && systemctl --user start niri-graphical.service 2>/dev/null || true && kbuildsycoca6"
 
 // Clipboard history: wl-paste watches the clipboard and cliphist stores it.
 // Text goes through clipboard-store.py, which strips browser markup: `--type
