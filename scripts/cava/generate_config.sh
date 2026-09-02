@@ -19,13 +19,9 @@ BARS="${4:-50}"
 STEREO="${5:-false}"
 DESKTOP_ENTRY="${6:-}"
 
-# Detect audio backend (pipewire or pulseaudio)
+# Detect audio backend (pulse works universally on both native PulseAudio and PipeWire via pipewire-pulse)
 get_audio_method() {
-    if pactl info 2>/dev/null | grep -qi "PipeWire"; then
-        echo "pipewire"
-    else
-        echo "pulse"
-    fi
+    echo "pulse"
 }
 
 # Get the default sink's monitor source

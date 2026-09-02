@@ -59,6 +59,19 @@ window-rule {
     shadow { off; }
 }
 
+// XWayland Video Bridge: bridge for legacy X11 app screen sharing (Discord/Zoom).
+// Keep completely hidden, unfocused, and transparent.
+window-rule {
+    match app-id=r#"^org\.kde\.xwaylandvideobridge$"#
+    match title=r#"^Wayland to X Recording Bridge"#
+    open-floating true
+    open-focused false
+    opacity 0.0
+    focus-ring { off; }
+    border { off; }
+    shadow { off; }
+}
+
 // ── Privacy: block password managers from screen capture ────────────────────
 // Uncomment the block below to hide these apps during screencasts.
 // /-window-rule {
