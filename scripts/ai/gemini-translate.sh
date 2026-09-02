@@ -18,7 +18,7 @@ TRANSLATIONS_TARGET_DIR="${SHELL_CONFIG_DIR}/translations"
 SOURCE_LOCALE="en_US"
 NOTIFICATION_APP_NAME="Shell"
 TARGET_LOCALE="$1"
-MODEL="${2:-${GEMINI_MODEL:-gemini-2.5-flash}}"
+MODEL="${2:-${GEMINI_MODEL:-gemini-3.5-flash}}"
 TARGET_FILE="${TRANSLATIONS_TARGET_DIR}/${TARGET_LOCALE}.json"
 
 notify_error() {
@@ -27,8 +27,10 @@ notify_error() {
     exit 1
 }
 
-# Update the source keys for translation
-"${TRANSLATIONS_DIR}/tools/manage-translations.sh" update -l "$SOURCE_LOCALE" --yes
+# Update the source keys for translation (if tool exists)
+if [[ -x "${TRANSLATIONS_DIR}/tools/manage-translations.sh" ]]; then
+    "${TRANSLATIONS_DIR}/tools/manage-translations.sh" update -l "$SOURCE_LOCALE" --yes
+fi
 mkdir -p "$TRANSLATIONS_TARGET_DIR"
 
 # Get API key
@@ -44,6 +46,7 @@ notify-send "Translation started" "Translating to $TARGET_LOCALE with $MODEL. Ta
 instruction='You are to translate the user interface of a **desktop shell**. Given a JSON object of key-value pairs, return a JSON with the same structure, with keys unchanged and values translated to '"$TARGET_LOCALE"'. Be as **concise** as possible to save screen space, and make sure terminology is relevant (e.g. "discharging" refers to the battery status). Preserve placeholders like %1, %2, {0}, <name> verbatim. Preserve newline characters (\n) and HTML/markup tags exactly as in the source.'
 
 # 5-minute timeout — long enough for ~3800 strings, short enough to detect API hang.
+curl_stderr=$(mktemp)
 response=$(jq -n \
     --arg prompt_text "$instruction" \
     --rawfile content "${TRANSLATIONS_DIR}/en_US.json" \
@@ -64,14 +67,19 @@ response=$(jq -n \
     -H "x-goog-api-key: $API_KEY" \
     -H 'Content-Type: application/json' \
     -X POST \
-    -d @- 2>&1)
+    -d @- 2>"$curl_stderr")
 curl_status=$?
 
 if [[ $curl_status -ne 0 ]]; then
     # Try to extract API error message if present
     api_err=$(echo "$response" | jq -r '.error.message // empty' 2>/dev/null)
+    if [[ -z "$api_err" && -s "$curl_stderr" ]]; then
+        api_err=$(cat "$curl_stderr")
+    fi
+    rm -f "$curl_stderr"
     notify_error "Gemini API call failed (curl ${curl_status}). ${api_err:-Network or auth error.}"
 fi
+rm -f "$curl_stderr"
 
 # Extract the JSON content. Bail if Gemini returned an error or empty result.
 translated=$(echo "$response" | jq -r '.candidates[0].content.parts[0].text // empty' 2>/dev/null)
