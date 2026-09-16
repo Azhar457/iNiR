@@ -31,6 +31,35 @@ Singleton {
     property bool sidebarRightOpen: false
     property string sidebarRightTargetOutput: ""
     property bool mediaControlsOpen: false
+    property bool equalizerOpen: false
+    property string equalizerTargetOutput: ""
+    readonly property bool equalizerEnabled: (Config.options?.enabledPanels ?? []).includes("iiEqualizer")
+
+    function openEqualizer(outputName: string): void {
+        if (!root.equalizerEnabled)
+            return
+        const requested = String(outputName ?? "")
+        equalizerTargetOutput = requested.length > 0
+            ? requested
+            : String(root.focusedScreen?.name ?? root.primaryScreen?.name ?? "")
+        equalizerOpen = true
+    }
+
+    function closeEqualizer(): void {
+        equalizerOpen = false
+    }
+
+    function toggleEqualizer(outputName: string): void {
+        if (!root.equalizerEnabled) {
+            closeEqualizer()
+            return
+        }
+        if (equalizerOpen) {
+            closeEqualizer()
+            return
+        }
+        openEqualizer(outputName)
+    }
     property bool osdBrightnessOpen: false
     property bool osdVolumeOpen: false
     property bool osdMicOpen: false
@@ -67,6 +96,8 @@ Singleton {
     property int activeContextMenuCount: 0
     property var activeContextMenu: null
     property bool clipboardOpen: false
+    // True only while iNiR asks Niri for internal window-preview frames.
+    property bool windowPreviewCaptureActive: false
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
     property int settingsOverlayCurrentPage: -1 // Published by whichever overlay chrome is loaded
@@ -101,6 +132,14 @@ Singleton {
     }
 
     property bool regionSelectorOpen: false
+    property bool japaneseLookupOpen: false
+    property bool japaneseLookupExpanded: false
+    property var japaneseLookupResult: ({})
+    property string japaneseLookupScreen: ""
+    property real japaneseLookupX: 0
+    property real japaneseLookupY: 0
+    property real japaneseLookupWidth: 0
+    property real japaneseLookupHeight: 0
     property var regionSelectorAction: 0
     property var regionSelectorMode: 0
     // Explicit screenshot callers must remain deterministic. The dedicated
