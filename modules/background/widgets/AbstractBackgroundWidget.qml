@@ -1643,6 +1643,7 @@ AbstractWidget {
             configEntryName: root.configEntryName
             manifestKeys: root._manifestKeyList
             readConfigKey: (key) => root._readConfigKey(key)
+            outputName: root.outputName
         }
     }
 

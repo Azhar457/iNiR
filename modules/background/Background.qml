@@ -495,8 +495,7 @@ Scope {
         // Desktop items remain pointer-driven until their focus contract is
         // owned by the background surface; do not make a stale global selection
         // turn the Bottom layer keyboard-focusable during reload.
-        readonly property bool _needsKeyboardFocus: bgRoot._widgetEnabled("notes", false)
-            || bgRoot._widgetEnabled("todo", false)
+        readonly property bool _needsKeyboardFocus: true
 
         // Zone occupancy: map zone name → array of widget names
         readonly property var _builtinWidgets: [

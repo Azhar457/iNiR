@@ -7,12 +7,13 @@ import Quickshell
 import Quickshell.Io
 
 /*
- * System updates service. Currently only supports Arch.
+ * System updates service. Supports Arch (checkupdates) and Fedora (dnf check-update).
  */
 Singleton {
     id: root
 
     property bool available: false
+    property string updateCommand: "checkupdates"
     property int count: 0
     
     readonly property bool updateAdvised: available && count > (Config.options?.updates?.adviseUpdateThreshold ?? 75)
@@ -39,7 +40,7 @@ Singleton {
         id: availabilityDefer
         interval: 1500
         repeat: false
-        onTriggered: checkAvailabilityProc.running = true
+        onTriggered: checkAvailabilityArchProc.running = true
     }
 
     Connections {
@@ -50,18 +51,36 @@ Singleton {
     }
 
     Process {
-        id: checkAvailabilityProc
+        id: checkAvailabilityArchProc
         running: false
         command: ["which", "checkupdates"]
         onExited: (exitCode, exitStatus) => {
-            root.available = (exitCode === 0);
-            root.refresh();
+            if (exitCode === 0) {
+                root.updateCommand = "checkupdates";
+                root.available = true;
+                root.refresh();
+            } else {
+                checkAvailabilityFedoraProc.running = true;
+            }
+        }
+    }
+
+    Process {
+        id: checkAvailabilityFedoraProc
+        running: false
+        command: ["which", "dnf"]
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0) {
+                root.updateCommand = "dnf";
+                root.available = true;
+                root.refresh();
+            }
         }
     }
 
     Process {
         id: checkUpdatesProc
-        command: ["checkupdates"]
+        command: root.updateCommand === "dnf" ? ["bash", "-c", "dnf check-update -q | awk '/^[[:alnum:]]/ {print $1}'"] : ["checkupdates"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const t = (text ?? "").trim();
@@ -69,8 +88,8 @@ Singleton {
             }
         }
         onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
-                console.error("[Updates] checkupdates failed", exitCode, exitStatus)
+            if (exitCode !== 0 && exitCode !== 100) { // dnf returns 100 if updates are available
+                console.error("[Updates] update check failed", exitCode, exitStatus)
             }
         }
     }
