@@ -370,7 +370,7 @@ PanelWindow {
         const clipboardCopy = StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/clipboard-copy.sh"));
         switch (root.action) {
             case RegionSelection.SnipAction.Copy:
-                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | '${clipboardCopy}' && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && /usr/bin/notify-send "Screenshot copied" "${rw}x${rh} saved to $_ss" -a "Screenshot" -i camera-photo -t 3000`]
+                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | '${clipboardCopy}' && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && /usr/bin/notify-send "DEBUG INFO" "logical: ${root.regionWidth}x${root.regionHeight} @ ${root.regionX},${root.regionY} physical: ${rw}x${rh} @ ${rx},${ry} screenScale: ${root.monitorScale} qtDpr: ${root.screen.devicePixelRatio}" -a "Screenshot" -i camera-photo -t 3000`]
                 break;
             case RegionSelection.SnipAction.Edit:
                 if (Config.options?.regionSelector?.annotation?.useNativeEditor ?? true) {
