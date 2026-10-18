@@ -29,7 +29,10 @@ Singleton {
 	// drift past 1.5 s becomes an offset that positionOf() applies; nothing is ever seeked.
 	property var positionOffsets: ({})
 	function positionOf(player): real {
-		if (!player) return 0
+		if (!player) {
+			if (root.isYtMusicActive) return Number(YtMusic.currentPosition ?? 0)
+			return 0
+		}
 		const offset = Number(root.positionOffsets[player.dbusName ?? ""] ?? 0)
 		const length = root.lengthOf(player)
 		const at = Number(player.position ?? 0) + offset
@@ -51,10 +54,15 @@ Singleton {
 		root.knownLengths = next
 	}
 	function lengthOf(player): real {
-		if (!player) return 0
+		if (!player) {
+			if (root.isYtMusicActive) return Number(YtMusic.currentDuration ?? 0)
+			return 0
+		}
 		if (player.lengthSupported) return Number(player.length ?? 0)
 		const known = root.knownLengths[player.dbusName ?? ""]
-		return known && known.title === root.titleOf(player) ? known.length : 0
+		if (known && known.title === root.titleOf(player)) return known.length
+		if (root._isYtMusicMpv(player) && YtMusic.currentDuration > 0) return Number(YtMusic.currentDuration)
+		return 0
 	}
 
 	// YouTube plays the thumbnail a pointer rests on, and that preview sets the page's media session: the browser then
@@ -150,19 +158,37 @@ Singleton {
 		return id === entry.id || (id === "" && root._onYoutubeBrowsePage(player)) ? entry : null
 	}
 	function titleOf(player): string {
-		if (!player) return ""
+		if (!player) {
+			if (root.isYtMusicActive && YtMusic.currentTitle) return YtMusic.currentTitle
+			return ""
+		}
 		const held = root._heldTrack(player)
-		return held ? held.title : String(player.trackTitle ?? "")
+		const baseTitle = held ? held.title : String(player.trackTitle ?? "")
+		if (!baseTitle && root._isYtMusicMpv(player) && YtMusic.currentTitle)
+			return YtMusic.currentTitle
+		return baseTitle
 	}
 	function artistOf(player): string {
-		if (!player) return ""
+		if (!player) {
+			if (root.isYtMusicActive && YtMusic.currentArtist) return YtMusic.currentArtist
+			return ""
+		}
 		const held = root._heldTrack(player)
-		return held ? held.artist : String(player.trackArtist ?? "")
+		const baseArtist = held ? held.artist : String(player.trackArtist ?? "")
+		if (!baseArtist && root._isYtMusicMpv(player) && YtMusic.currentArtist)
+			return YtMusic.currentArtist
+		return baseArtist
 	}
 	function artUrlOf(player): string {
-		if (!player) return ""
+		if (!player) {
+			if (root.isYtMusicActive && YtMusic.currentThumbnail) return YtMusic.currentThumbnail
+			return ""
+		}
 		const held = root._heldTrack(player)
-		return held ? held.art : String(player.trackArtUrl ?? "")
+		const baseArt = held ? held.art : String(player.trackArtUrl ?? "")
+		if (!baseArt && root._isYtMusicMpv(player) && YtMusic.currentThumbnail)
+			return YtMusic.currentThumbnail
+		return baseArt
 	}
 	Connections {
 		target: CompositorService.isNiri ? NiriService : null
@@ -1083,8 +1109,8 @@ Singleton {
 		this.__reverse = false;
 	}
 
-	property bool isPlaying: this.activePlayer && this.activePlayer.isPlaying;
-	property bool canTogglePlaying: this.activePlayer?.canTogglePlaying ?? false;
+	property bool isPlaying: (this.activePlayer && this.activePlayer.isPlaying) || (root.isYtMusicActive && YtMusic.isPlaying);
+	property bool canTogglePlaying: (root.isYtMusicActive && YtMusic.currentVideoId) ? true : (this.activePlayer?.canTogglePlaying ?? false);
 	function togglePlaying(): void {
 		if (root.isYtMusicActive && YtMusic.currentVideoId) {
 			YtMusic.togglePlaying();
@@ -1517,6 +1543,10 @@ Singleton {
 	// Preferred art source for a player: real MPRIS art if present, else a
 	// favicon fallback derived from the track's site URL.
 	function effectiveArtUrl(player): string {
+		if (!player && root.isYtMusicActive && YtMusic.currentThumbnail.length > 0)
+			return YtMusic.currentThumbnail;
+		if (root._isYtMusicMpv(player) && YtMusic.currentThumbnail.length > 0)
+			return YtMusic.currentThumbnail;
 		const direct = root.artUrlOf(player);
 		if (direct.length > 0) return direct;
 		if (AnimeWatch.ownsPlayer(player) && AnimeWatch.playingCover.length > 0) return AnimeWatch.playingCover;

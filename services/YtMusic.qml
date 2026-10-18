@@ -1764,15 +1764,24 @@ print("")
     // Having both caused a race condition where playNext() could be called twice, skipping a track
 
     // Check if mpv-mpris plugin exists (optional — IPC fallback works without it)
-    readonly property bool _loadMpvMprisExplicitly: _mpvMprisNeedsExplicitLoad
-    property bool _mpvMprisNeedsExplicitLoad: false
+    readonly property bool _loadMpvMprisExplicitly: _mpvMprisExplicitPath.length > 0
+    property string _mpvMprisExplicitPath: ""
 
     Process {
         id: _checkMpvMpris
-        // Distribution packages normally autoload this plugin from /etc/mpv/scripts.
+        // Distribution packages normally autoload this plugin from /etc/mpv/scripts or ~/.config/mpv/scripts.
         // Passing --script as well registers the same MPRIS objects twice.
-        command: ["/bin/sh", "-c", "test -f /usr/lib/mpv-mpris/mpris.so && test ! -e /etc/mpv/scripts/mpris.so && test ! -e \"$HOME/.config/mpv/scripts/mpris.so\""]
-        onExited: (code) => { root._mpvMprisNeedsExplicitLoad = (code === 0) }
+        command: ["/bin/sh", "-c", "if [ -e /etc/mpv/scripts/mpris.so ] || [ -e \"${XDG_CONFIG_HOME:-$HOME/.config}/mpv/scripts/mpris.so\" ]; then exit 1; fi; for p in /usr/lib64/mpv/mpris.so /usr/lib/mpv-mpris/mpris.so /usr/lib/mpv/mpris.so /usr/lib64/mpv-mpris/mpris.so /usr/lib/*-linux-gnu*/mpv/mpris.so; do [ -f \"$p\" ] && echo -n \"$p\" && exit 0; done; exit 1"]
+        stdout: SplitParser {
+            onRead: line => {
+                if (line.trim()) {
+                    root._mpvMprisExplicitPath = line.trim()
+                }
+            }
+        }
+        onExited: (code) => {
+            if (code !== 0) root._mpvMprisExplicitPath = ""
+        }
     }
 
     Process {
@@ -2081,7 +2090,7 @@ print("")
             "--force-window=no",
             "--audio-display=no",
             "--input-ipc-server=" + root.ipcSocket,
-            ...(root._loadMpvMprisExplicitly ? ["--script=/usr/lib/mpv-mpris/mpris.so"] : []),
+            ...(root._loadMpvMprisExplicitly ? ["--script=" + root._mpvMprisExplicitPath] : []),
             "--force-media-title=" + root.currentTitle + (root.currentArtist ? " - " + root.currentArtist : ""),
             "--metadata-codepage=utf-8",
             "--volume=" + root._savedVolume,

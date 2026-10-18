@@ -16,6 +16,7 @@ Item {
     id: root
     property bool borderless: Config.options?.bar?.borderless ?? false
     readonly property MprisPlayer activePlayer: MprisController.activePlayer
+    readonly property bool isPlaying: (activePlayer?.isPlaying ?? false) || (MprisController.isYtMusicActive && YtMusic.isPlaying)
     readonly property string cleanedTitle: StringUtils.cleanMusicTitle(MprisController.titleOf(activePlayer)) || Translation.tr("No media")
     readonly property string fullTrackText: `${cleanedTitle}${MprisController.artistOf(activePlayer) ? ' • ' + MprisController.artistOf(activePlayer) : ''}`
     readonly property string popupMode: Config.options?.media?.popupMode ?? "dock"
@@ -288,7 +289,12 @@ Item {
                     : Appearance.inirEverywhere ? Appearance.inir.colPrimary
                     : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                     : Appearance.colors.colOnLayer0
-                enableAnimation: activePlayer?.playbackState === MprisPlaybackState.Playing
+                enableAnimation: root.isPlaying
+                scale: root.isPlaying ? 1.06 : 1.0
+                Behavior on scale {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
 
                 Item {
                     anchors.centerIn: parent
@@ -298,7 +304,7 @@ Item {
                     MaterialSymbol {
                         anchors.centerIn: parent
                         fill: 1
-                        text: activePlayer?.isPlaying ? "pause" : "music_note"
+                        text: root.isPlaying ? "pause" : "music_note"
                         iconSize: Appearance.font.pixelSize.normal
                         color: Appearance.zzzEverywhere ? Appearance.zzz.ink
                             : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary

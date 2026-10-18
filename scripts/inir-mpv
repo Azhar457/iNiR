@@ -50,9 +50,13 @@ case "$start" in ''|*[!0-9]*) start=0 ;; esac
 [ "$start" -gt 0 ] && set -- "--start=$start" "$@"
 
 # The Island controls the episode through MPRIS; load mpv-mpris when mpv would not.
-mpris=/usr/lib/mpv-mpris/mpris.so
-if [ -f "$mpris" ] && [ ! -e /etc/mpv/scripts/mpris.so ] && [ ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/mpv/scripts/mpris.so" ]; then
-    set -- "--script=$mpris" "$@"
+if [ ! -e /etc/mpv/scripts/mpris.so ] && [ ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/mpv/scripts/mpris.so" ]; then
+    for mpris in /usr/lib64/mpv/mpris.so /usr/lib/mpv-mpris/mpris.so /usr/lib/mpv/mpris.so /usr/lib64/mpv-mpris/mpris.so; do
+        if [ -f "$mpris" ]; then
+            set -- "--script=$mpris" "$@"
+            break
+        fi
+    done
 fi
 
 socket="$INIR_ANI_RUN/mpv.sock"

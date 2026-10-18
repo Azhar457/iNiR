@@ -465,6 +465,7 @@ FEDORA_AUDIO_PKGS=(
   easyeffects
   lsp-plugins-lv2
   mpv
+  mpv-mpris
   yt-dlp
   socat
 )

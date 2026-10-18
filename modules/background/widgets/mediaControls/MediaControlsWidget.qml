@@ -583,6 +583,12 @@ AbstractBackgroundWidget {
                     easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
                 }
 
+                scale: idleHover.hovered ? 1.08 : 1.0
+                Behavior on scale {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
+                }
+
                 MaterialSymbol {
                     anchors.centerIn: parent
                     text: "music_note"
@@ -592,12 +598,19 @@ AbstractBackgroundWidget {
                 }
 
                 StyledToolTip {
-                    text: Translation.tr("No active player")
+                    text: Translation.tr("Open sidebar / music")
                     visible: idleHover.hovered
                 }
 
                 HoverHandler {
                     id: idleHover
+                    cursorShape: Qt.PointingHandCursor
+                }
+
+                TapHandler {
+                    onTapped: {
+                        GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen
+                    }
                 }
             }
         }
