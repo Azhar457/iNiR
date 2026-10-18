@@ -918,7 +918,7 @@ Singleton {
             description: Translation.tr("Run a full system update"),
             icon: "system_update_alt",
             category: "system",
-            keywords: ["update", "upgrade", "system", "pacman", "yay", "paru", "xbps"],
+            keywords: ["update", "upgrade", "system", "pacman", "yay", "paru", "dnf", "apt", "xbps"],
             execute: () => { PackageSearch.updateSystem() }
         },
     ]
