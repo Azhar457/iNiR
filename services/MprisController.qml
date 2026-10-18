@@ -213,8 +213,12 @@ Singleton {
 		else next[name] = offset
 		root.positionOffsets = next
 	}
+	// The probe fixes position drift, so when reads keep agreeing it can slow down:
+	// three stable reads in a row stretch the interval 3s -> 9s and cut busctl spawns.
+	property int _probeIntervalMs: 3000
+	property int _calmProbeStreak: 0
 	Timer {
-		interval: 3000
+		interval: root._probeIntervalMs
 		repeat: true
 		running: (root.activePlayer?.isPlaying ?? false) && !(root.activePlayer?.dbusName ?? "").includes("inir")
 		onTriggered: {
@@ -223,10 +227,13 @@ Singleton {
 			positionProbe.running = true
 		}
 	}
-	// Quickshell re-reads Position itself on these, so an offset from before would now be wrong.
-	Connections {
-		target: root.activePlayer
-		function onPlaybackStateChanged(): void { root._setPositionOffset(root.activePlayer?.dbusName ?? "", 0) }
+	// Quickshell re-reads Position itself on these, so an offset from before would now be wrong.		Connections {
+			target: root.activePlayer
+			function onPlaybackStateChanged(): void {
+				root._setPositionOffset(root.activePlayer?.dbusName ?? "", 0)
+				root._calmProbeStreak = 0
+				root._probeIntervalMs = 3000
+			}
 		function onPostTrackChanged(): void { root._setPositionOffset(root.activePlayer?.dbusName ?? "", 0) }
 		function onLengthChanged(): void { root._rememberLength(root.activePlayer) }
 		function onLengthSupportedChanged(): void { root._rememberLength(root.activePlayer) }
@@ -247,7 +254,16 @@ Singleton {
 				// A page that stops publishing (an ad, a lost media session) reports 0 and no length
 				// while it plays: that is not a position to correct toward.
 				if (!player.lengthSupported || (real === 0 && shown > 2)) { root._setPositionOffset(name, 0); return }
-				root._setPositionOffset(name, Math.abs(real - shown) > 1.5 ? real - shown : 0)
+				const drift = Math.abs(real - shown)
+				if (drift > 1.5) {
+					root._setPositionOffset(name, real - shown)
+					root._calmProbeStreak = 0
+					root._probeIntervalMs = 3000
+				} else {
+					root._setPositionOffset(name, 0)
+					root._calmProbeStreak = Math.min(root._calmProbeStreak + 1, 9)
+					if (root._calmProbeStreak >= 3) root._probeIntervalMs = 9000
+				}
 			}
 		}
 	}
@@ -317,7 +333,7 @@ Singleton {
 
 	Timer {
 		id: _streamMetadataRefresh
-		interval: 120
+		interval: 400
 		repeat: false
 		onTriggered: {
 			if (!_streamMetadataProc.running)

@@ -430,20 +430,19 @@ Singleton {
                 if (root.currentDuration <= 0 && root._mpvPlayer.length > 0)
                     root.currentDuration = root._mpvPlayer.length
             } else if (!root._userInitiatedPlay) {
-                _ipcQueryProc.running = true
-                _ipcPauseQueryProc.running = true
+                // satu sicat round trip untuk time-pos, pause, duration, eof-reached
+                _ipcBatchQueryProc.running = true
             }
 
             // mpv knows the real duration once the stream is loaded; MPRIS `length` is often
             // missing for yt-dlp-streamed tracks, leaving the player stuck at 0:00. Query it
             // directly until we have it (stops firing once known).
             if (root.currentDuration <= 0 && root.ipcSocket)
-                _ipcDurationQueryProc.running = true
+                _ipcBatchQueryProc.running = true
 
             // Don't query EOF while a new play is pending — the old socket
             // would return stale eof-reached=true and cause double-advance.
-            if (!root._userInitiatedPlay)
-                _ipcEofQueryProc.running = true
+            // (EOF belongs to the merged batch and is guarded by _userInitiatedPlay.)
 
             // Covers keep-open style endings where mpv doesn't exit,
             // so onExited never fires but eof-reached becomes true.
@@ -455,57 +454,38 @@ Singleton {
         }
     }
     
+    // Merges time-pos, pause, duration and eof-reached into one socat round trip.
+    // Per tick this replaces up to four fork/exec's with a single one; every request
+    // carries an mpv `request_id` so the parser routes each response line in order.
     Process {
-        id: _ipcQueryProc
-        command: ["/bin/sh", "-c", "echo '{ \"command\": [\"get_property\", \"time-pos\"] }' | socat - " + root.ipcSocket + " 2>/dev/null"]
+        id: _ipcBatchQueryProc
+        command: [
+            "/bin/sh", "-c",
+            "printf '%s\\n' " +
+            "'{\"request_id\":1,\"command\":[\"get_property\",\"time-pos\"]}' " +
+            "'{\"request_id\":2,\"command\":[\"get_property\",\"pause\"]}' " +
+            "'{\"request_id\":3,\"command\":[\"get_property\",\"duration\"]}' " +
+            "'{\"request_id\":4,\"command\":[\"get_property\",\"eof-reached\"]}' " +
+            "| socat - '" + root.ipcSocket + "' 2>/dev/null"
+        ]
         stdout: SplitParser {
             onRead: line => {
                 try {
                     const res = JSON.parse(line)
-                    if (res.data !== undefined) root.currentPosition = res.data
-                } catch(e) {}
-            }
-        }
-    }
-    
-    Process {
-        id: _ipcDurationQueryProc
-        command: ["/bin/sh", "-c", "echo '{ \"command\": [\"get_property\", \"duration\"] }' | socat - " + root.ipcSocket + " 2>/dev/null"]
-        stdout: SplitParser {
-            onRead: line => {
-                try {
-                    const res = JSON.parse(line)
-                    if (typeof res.data === "number" && res.data > 0) root.currentDuration = res.data
-                } catch(e) {}
-            }
-        }
-    }
-
-    Process {
-        id: _ipcPauseQueryProc
-        command: ["/bin/sh", "-c", "echo '{ \"command\": [\"get_property\", \"pause\"] }' | socat - " + root.ipcSocket + " 2>/dev/null"]
-        stdout: SplitParser {
-            onRead: line => {
-                try {
-                    const res = JSON.parse(line)
-                    if (res.data !== undefined) root._ipcPaused = res.data
+                    if (typeof res.request_id !== "number" || res.error !== "success") return
+                    if (res.data === undefined) return
+                    if (res.request_id === 1) root.currentPosition = res.data
+                    else if (res.request_id === 2) root._ipcPaused = res.data
+                    else if (res.request_id === 3) {
+                        if (typeof res.data === "number" && res.data > 0 && root.currentDuration <= 0)
+                            root.currentDuration = res.data
+                    } else if (res.request_id === 4)
+                        root._ipcEofReached = !!res.data
                 } catch(e) {}
             }
         }
     }
 
-    Process {
-        id: _ipcEofQueryProc
-        command: ["/bin/sh", "-c", "echo '{ \"command\": [\"get_property\", \"eof-reached\"] }' | socat - " + root.ipcSocket + " 2>/dev/null"]
-        stdout: SplitParser {
-            onRead: line => {
-                try {
-                    const res = JSON.parse(line)
-                    if (res.data !== undefined) root._ipcEofReached = !!res.data
-                } catch(e) {}
-            }
-        }
-    }
     
     property bool _ipcPaused: false
     property bool _ipcEofReached: false
