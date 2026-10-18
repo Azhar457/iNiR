@@ -128,6 +128,14 @@ Singleton {
         )
     }
 
+    function _dnfPipeline(selector: string): string {
+        // dnf lists installed rows before available ones, so the dedupe keeps the installed entry.
+        return "wild=\"*${1//[!A-Za-z0-9._+-]}*\"; " +
+            "dnf -q list " + selector + " \"$wild\" 2>/dev/null | " +
+            "awk 'NF>=3 && $1 ~ /\\./ && $2 ~ /^[0-9]/ { st=($3 ~ /^@/) ? \"i\" : \"a\"; sub(/^@/, \"\", $3); sub(/\\..*$/, \"\", $1); printf \"__DNF__\\t%s\\t%s\\t%s\\t\\t\\n\", st, $1, $2, $3 }' | " +
+            "awk '!seen[$3]++'"
+    }
+
     function _xbpsSearchPipeline(mode: string, limit: int): string {
         return "xbps-query " + mode + " \"$1\" 2>/dev/null | head -" + limit + " | " +
             "while IFS= read -r line; do " +
@@ -168,11 +176,14 @@ Singleton {
             root.error = ""
             _stdout = ""
             const xbpsSearch = root._xbpsSearchPipeline("-Rs", 200)
+            const dnfSearch = root._dnfPipeline("")
             _searchProc.command = ["/usr/bin/bash", "-lc",
                 "if command -v pacman &>/dev/null; then " +
                     "if command -v yay &>/dev/null; then yay -Ss \"$1\" 2>/dev/null | head -200; " +
                     "elif command -v paru &>/dev/null; then paru -Ss \"$1\" 2>/dev/null | head -200; " +
                     "else pacman -Ss \"$1\" 2>/dev/null | head -200; fi; " +
+                "elif command -v dnf &>/dev/null; then " +
+                    dnfSearch + "; " +
                 "elif command -v xbps-query &>/dev/null && command -v xbps-uhelper &>/dev/null; then " +
                     xbpsSearch + "; " +
                 "else exit 127; fi",
@@ -236,6 +247,24 @@ Singleton {
                 continue
             }
 
+            if (line.startsWith("__DNF__\t")) {
+                const fields = line.split("\t")
+                if (fields.length >= 5) {
+                    pkgs.push({
+                        name: fields[2],
+                        version: fields[3],
+                        repo: fields[4] || "dnf",
+                        description: fields.slice(5).join("\t"),
+                        installed: fields[1] === "i",
+                        votes: 0,
+                        popularity: 0,
+                        isAur: false
+                    })
+                }
+                i++
+                continue
+            }
+
             // Package line format: "repo/name version [size] [installed]"
             // or AUR: "aur/name version (+votes popularity) [installed]"
             const pkgMatch = line.match(/^(\S+)\/(\S+)\s+(\S+)\s*(.*)$/)
@@ -286,8 +315,11 @@ Singleton {
         root.error = ""
         _stdout = ""
         const xbpsSearch = root._xbpsSearchPipeline("-s", 100)
+        const dnfInstalled = root._dnfPipeline("installed")
         _installedProc.command = ["/usr/bin/bash", "-lc",
             "if command -v pacman &>/dev/null; then pacman -Qs \"$1\" 2>/dev/null | head -100; " +
+            "elif command -v dnf &>/dev/null; then " +
+                dnfInstalled + "; " +
             "elif command -v xbps-query &>/dev/null && command -v xbps-uhelper &>/dev/null; then " +
                 xbpsSearch + "; " +
             "else exit 127; fi",

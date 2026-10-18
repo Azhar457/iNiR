@@ -107,7 +107,7 @@
 | **Booru** | Multi-booru image board API (yande.re, konachan, danbooru, etc.). |
 | **VoiceSearch** | Voice recording + Gemini transcription + web search. IPC target: `voiceSearch`. |
 | **Emojis** | Emoji picker data. |
-| **PackageSearch** | Async package manager search (pacman + AUR or XBPS). IPC target: `packageSearch`. |
+| **PackageSearch** | Async package manager search (pacman + AUR, dnf or XBPS). IPC target: `packageSearch`. |
 
 ## Utilities
 

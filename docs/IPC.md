@@ -772,7 +772,7 @@ Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and
 
 ### packageSearch
 
-Package search service. Searches pacman/AUR or XBPS repositories and installed packages.
+Package search service. Searches pacman/AUR, dnf or XBPS repositories and installed packages.
 
 | Function | Description |
 |----------|-------------|
