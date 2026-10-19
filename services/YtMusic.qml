@@ -436,9 +436,11 @@ Singleton {
 
             // mpv knows the real duration once the stream is loaded; MPRIS `length` is often
             // missing for yt-dlp-streamed tracks, leaving the player stuck at 0:00. Query it
-            // directly until we have it (stops firing once known).
+            // directly until we have it (stops firing once known). With no mpv socket bound,
+            // the probe now exits before socat can recreate the stale regular file.
             if (root.currentDuration <= 0 && root.ipcSocket)
                 _ipcBatchQueryProc.running = true
+
 
             // Don't query EOF while a new play is pending — the old socket
             // would return stale eof-reached=true and cause double-advance.
@@ -461,12 +463,13 @@ Singleton {
         id: _ipcBatchQueryProc
         command: [
             "/bin/sh", "-c",
+            "s='" + root.ipcSocket + "'; [ -S \"$s\" ] || exit 0; " +
             "printf '%s\\n' " +
             "'{\"request_id\":1,\"command\":[\"get_property\",\"time-pos\"]}' " +
             "'{\"request_id\":2,\"command\":[\"get_property\",\"pause\"]}' " +
             "'{\"request_id\":3,\"command\":[\"get_property\",\"duration\"]}' " +
             "'{\"request_id\":4,\"command\":[\"get_property\",\"eof-reached\"]}' " +
-            "| socat - '" + root.ipcSocket + "' 2>/dev/null"
+            "| socat - \"$s\" 2>/dev/null"
         ]
         stdout: SplitParser {
             onRead: line => {
@@ -801,11 +804,10 @@ Singleton {
         if (code === 0) return true
         return false
     }
-
     Process {
         id: _ipcProc
         property string commandData
-        command: ["/bin/sh", "-c", "echo '" + commandData + "' | socat - " + root.ipcSocket + " 2>/dev/null"]
+        command: ["/bin/sh", "-c", "s='" + root.ipcSocket + "'; [ -S \"$s\" ] || exit 0; echo '" + commandData + "' | socat - \"$s\" 2>/dev/null"]
     }
     
     function _sendIpc(cmd): void {
@@ -2038,6 +2040,7 @@ print("")
 
     // Use a short, guaranteed-existing path for the mpv IPC socket to avoid unix socket length issues
     property string ipcSocket: "/tmp/qs-ytmusic-mpv.sock"
+
 
     Process {
         id: _stopProc
