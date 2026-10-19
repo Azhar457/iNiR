@@ -354,9 +354,17 @@ Singleton {
         }
         try {
             const raw = JSON.parse(text);
-            root.customWidgetData = raw?.background?.widgets?.custom ?? {};
+            // During a write flight the file can hold the adapter's stale copy
+            // of these namespaces (custom widget data never reaches the
+            // adapter), so syncing now would revert a just-toggled value;
+            // live data wins until the pipeline is idle.
+            const inFlight = root._writeInFlight || fileWriteTimer.running
+                || root._pendingCustomInject || root._pendingMascotInject;
+            if (!inFlight) {
+                root.customWidgetData = raw?.background?.widgets?.custom ?? {};
+                root.mascotInstances = raw?.background?.widgets?.mascotInstances ?? {};
+            }
             root.customWidgetDataSynced = true;
-            root.mascotInstances = raw?.background?.widgets?.mascotInstances ?? {};
             root.mascotInstancesSynced = true;
         } catch (e) {
             root.customWidgetDataSynced = false;
