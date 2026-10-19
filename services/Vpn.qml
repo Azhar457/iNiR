@@ -57,6 +57,8 @@ Singleton {
     property bool singboxUp: false
     property string singboxConfig: ""
     property string singboxName: ""
+    // Every config on disk: [{ name, path }]; the active pick comes from the `active` symlink.
+    property var singboxConfigs: []
     readonly property bool hasSingbox: root.singboxConfig.length > 0
     property string lastError: ""
     property bool busy: false
@@ -197,6 +199,34 @@ Singleton {
         root.lastError = ""
         actionProc.exec(["pkill", "-x", "sing-box"])
     }
+    // Point the `active` symlink at another config and switch the live tunnel onto it.
+    function selectSingbox(path: string): void {
+        const target = String(path ?? "")
+        if (target.length === 0 || switchProc.running) return
+        root.busy = true
+        root.lastError = ""
+        root.singboxConfig = target   // startSingbox(true) reads this before the probe catches up
+        switchProc.exec(["sh", "-c", 'ln -sfn "$1" "$HOME/.config/sing-box/active"', "_", target])
+    }
+    // Forget a saved sing-box profile. The last one is kept so the surface stays usable.
+    function removeSingbox(path: string): void {
+        const target = String(path ?? "")
+        if (target.length === 0 || removeProc.running) return
+        if (root.singboxConfigs.length <= 1) {
+            root.lastError = "This is the only saved profile — import another first."
+            return
+        }
+        root.busy = true
+        root.lastError = ""
+        removeProc.exec(["sh", "-c", 'rm -f -- "$1"', "_", target])
+    }
+    // Forget a NetworkManager profile.
+    function removeProfile(uuid: string): void {
+        if (String(uuid ?? "").length === 0) return
+        root.busy = true
+        root.lastError = ""
+        actionProc.exec(["nmcli", "connection", "delete", "uuid", uuid])
+    }
     function toggle(): void {
         if (root.connected) {
             root.busy = true
@@ -251,24 +281,45 @@ Singleton {
         onExited: { root.busy = false; root.refresh() }
     }
     // pgrep -x matches the comm, so the probe never sees itself; the active symlink
-    // says which config to start when nothing runs yet.
+    // says which config to start when nothing runs yet. Output: UP? / ACTIVE= / FILE= lines.
     Process {
         id: singboxProc
         running: false
-        command: ["sh", "-c", 'pgrep -x sing-box >/dev/null && echo up; '
-            + 'a="$HOME/.config/sing-box/active"; '
-            + 'if [ -e "$a" ]; then readlink -f "$a"; '
-            + 'else for f in "$HOME"/.config/sing-box/*.json; do [ -f "$f" ] && { echo "$f"; break; }; done; fi']
+        command: ["sh", "-c", 'pgrep -x sing-box >/dev/null && echo UP; '
+            + 'a="$HOME/.config/sing-box/active"; act=""; '
+            + 'if [ -e "$a" ]; then act=$(readlink -f "$a"); '
+            + 'else for f in "$HOME"/.config/sing-box/*.json; do [ -f "$f" ] && { act="$f"; break; }; done; fi; '
+            + 'echo "ACTIVE=$act"; '
+            + 'for f in "$HOME"/.config/sing-box/*.json; do [ -f "$f" ] && echo "FILE=$f"; done']
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0)
-                root.singboxUp = lines.includes("up")
-                const config = lines.find(line => line.endsWith(".json")) ?? ""
-                root.singboxConfig = config
-                const base = config.length > 0 ? config.split("/").pop().replace(/\.json$/, "") : ""
+                root.singboxUp = lines.includes("UP")
+                const active = (lines.find(line => line.startsWith("ACTIVE=")) ?? "ACTIVE=").slice(7)
+                root.singboxConfig = active
+                const base = active.length > 0 ? active.split("/").pop().replace(/\.json$/, "") : ""
                 root.singboxName = base.length > 0 ? base.charAt(0).toUpperCase() + base.slice(1) : ""
+                root.singboxConfigs = lines.filter(line => line.startsWith("FILE=")).map(line => {
+                    const path = line.slice(5)
+                    const name = path.split("/").pop().replace(/\.json$/, "")
+                    return { path: path, name: name.length > 0 ? name.charAt(0).toUpperCase() + name.slice(1) : name }
+                })
             }
         }
+    }
+    Process {
+        id: switchProc
+        running: false
+        onExited: exitCode => {
+            root.busy = false
+            if (exitCode === 0) root.startSingbox(true)
+            else root.lastError = "Could not switch the profile"
+        }
+    }
+    Process {
+        id: removeProc
+        running: false
+        onExited: { root.busy = false; root.refresh() }
     }
     Process {
         id: importProc
