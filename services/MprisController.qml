@@ -227,7 +227,8 @@ Singleton {
 			positionProbe.running = true
 		}
 	}
-	// Quickshell re-reads Position itself on these, so an offset from before would now be wrong.		Connections {
+	// Quickshell re-reads Position itself on these, so an offset from before would now be wrong.
+	Connections {
 			target: root.activePlayer
 			function onPlaybackStateChanged(): void {
 				root._setPositionOffset(root.activePlayer?.dbusName ?? "", 0)
