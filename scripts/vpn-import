@@ -189,13 +189,20 @@ PARSERS = {"trojan": parse_trojan, "vmess": parse_vmess, "vless": parse_vless, "
 
 
 def client_config(proxy):
-    # Inbounds match the proven working local ports: SOCKS5 1080, HTTP 1081.
+    # SOCKS5 1080 + HTTP 1081 for apps that take a proxy, and a TUN inbound so
+    # everything else follows the tunnel too (needs the setcap'd sing-box binary).
     return {
         "log": {"level": "info", "timestamp": True},
         "inbounds": [
             {"type": "socks", "tag": "socks-in", "listen": "127.0.0.1", "listen_port": 1080},
             {"type": "http", "tag": "http-in", "listen": "127.0.0.1", "listen_port": 1081},
+            {"type": "tun", "tag": "tun-in", "address": ["172.19.0.1/30", "fdfe:dcba:9876::1/126"],
+             "auto_route": True, "strict_route": True},
         ],
+        "route": {"auto_detect_interface": True,
+                  "rules": [{"protocol": "dns", "action": "hijack-dns"}]},
+        "dns": {"servers": [{"type": "udp", "tag": "cf", "server": "1.1.1.1", "server_port": 53}],
+                "final": "cf"},
         "outbounds": [proxy, {"type": "direct", "tag": "direct"}],
     }
 
