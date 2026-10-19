@@ -333,6 +333,7 @@ Item { // Bar content region
         } else if (action === "volume") {
             if (isUp) Audio.incrementVolume();
             else Audio.decrementVolume();
+            GlobalStates.osdVolumeOpen = true;
         } else if (action === "workspace") {
             let up = isUp;
             if (Config.options?.bar?.workspaces?.invertScroll ?? false) up = !up;
