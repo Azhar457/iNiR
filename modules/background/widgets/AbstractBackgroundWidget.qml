@@ -2621,7 +2621,7 @@ AbstractWidget {
         onTriggered: root.refreshPlacementIfNeeded()
     }
     function refreshPlacementIfNeeded() {
-        if (!Config.ready || !root._isAutoPlacement) return;
+        if (!Config.ready || !root._isAutoPlacement || root.locked) return;
         if (!root.wallpaperPath || root.wallpaperPath.length === 0) return;
         leastBusyRegionProc.running = false;
         leastBusyRegionProc.running = true;
@@ -2645,7 +2645,7 @@ AbstractWidget {
             id: leastBusyRegionOutputCollector
             onStreamFinished: {
                 const output = leastBusyRegionOutputCollector.text;
-                if (output.length === 0 || !root._isAutoPlacement) return;
+                if (output.length === 0 || !root._isAutoPlacement || root.locked) return;
                 try {
                     const parsedContent = JSON.parse(output);
                     root._autoPlaceX = root._clampX(parsedContent.center_x * root.wallpaperScale - root.width / 2);

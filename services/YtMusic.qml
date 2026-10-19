@@ -2096,15 +2096,21 @@ print("")
         }
         command: {
             const args = _playProc._mpvArgs()
-            if (!root._playWithCookies || !root._hasCookieSession || !root._mpvCookiesFile) return args
-            // Copy and exec in one process lifecycle: mpv cannot start against a half-written jar,
-            // and Quickshell still supervises the final mpv process directly after shell `exec`.
-            return [
-                "/bin/sh", "-c",
-                "/usr/bin/install -Dm600 -- \"$1\" \"$2\" && shift 2 && exec \"$@\"",
-                "_", root._mpvCookiesFile, root._playbackCookiesFile,
-                ...args
-            ]
+            // Always clear a stale entry at the IPC socket path before mpv binds it.
+            // If mpv failed to bind last time (or was killed mid-play), socat's IPC query
+            // procs can leave a REGULAR file there (they auto-detect a non-socket path as
+            // OPEN:output and write the JSON request into it). That regular file then
+            // blocks the next mpv from creating its --input-ipc-server unix socket, so
+            // playback silently never registers with the sidebar ("gagal play" while login OK).
+            const sock = root.ipcSocket
+            if (!root._playWithCookies || !root._hasCookieSession || !root._mpvCookiesFile) {
+                return ["/bin/sh", "-c", "rm -f -- \"$1\" && shift && exec \"$@\"", "_", sock, ...args]
+            }
+            // Copy cookies and exec in one process lifecycle: mpv cannot start against a
+            // half-written jar, and Quickshell still supervises the final mpv process
+            // directly after shell `exec`. rm runs first so a stale regular-file socket
+            // can't block mpv's IPC bind.
+            return ["/bin/sh", "-c", "rm -f -- \"$1\" && /usr/bin/install -Dm600 -- \"$2\" \"$3\" && shift 3 && exec \"$@\"", "_", sock, root._mpvCookiesFile, root._playbackCookiesFile, ...args]
         }
         stderr: SplitParser {
             onRead: line => { _playProc._stderr += line + "\n" }
