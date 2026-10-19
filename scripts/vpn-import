@@ -1,0 +1,265 @@
+#!/usr/bin/env python3
+"""Turn a share link into a sing-box client config.
+
+Usage: vpn-import '<share link>' | <file containing a link> | <sing-box JSON>
+
+Supported schemes: trojan://, vmess://, vless://, ss:// — a full sing-box JSON
+(config with inbounds, or a bare outbound with "type" and "server") passes
+through as-is. The result lands in ~/.config/sing-box/<name>.json, the
+`active` symlink is pointed at it, and the config path is printed on stdout.
+
+ponytail: TLS verification defaults to off (insecure) because free providers
+ship expired/broken certificates; pass allowInsecure=0 in the link to enforce
+verification instead.
+"""
+import base64
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from urllib.parse import parse_qs, unquote, urlsplit
+
+SCHEMES = ("trojan", "vmess", "vless", "ss")
+
+
+def fail(message):
+    sys.stderr.write(message + "\n")
+    sys.exit(1)
+
+
+def b64(text):
+    """Tolerant base64: strips whitespace, fixes padding, accepts url-safe."""
+    raw = re.sub(r"\s+", "", text)
+    raw += "=" * (-len(raw) % 4)
+    return base64.urlsafe_b64decode(raw)
+
+
+def int_or(value, default):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def transport_of(query, params):
+    """ws/grpc/h2 transport from share-link query params (empty when tcp)."""
+    kind = (params.get("type") or query.get("type") or ["tcp"])[0].lower()
+    path = unquote((params.get("path") or query.get("path") or [""])[0])
+    host = (params.get("host") or query.get("host") or [""])[0]
+    if kind == "ws":
+        headers = {"Host": host} if host else {}
+        return {"type": "ws", "path": path or "/", "headers": headers}
+    if kind == "grpc":
+        return {"type": "grpc", "service_name": path.lstrip("/")}
+    if kind in ("h2", "http"):
+        return {"type": "http", "path": path, "host": [host] if host else []}
+    return None
+
+
+def tls_of(query, params, server_name):
+    security = (params.get("security") or query.get("security") or [""])[0].lower()
+    if security == "none":
+        return None
+    sni = (params.get("sni") or params.get("peer") or query.get("sni") or [""])[0] or server_name
+    insecure_raw = (params.get("allowInsecure") or params.get("allow_insecure") or query.get("allowInsecure") or ["1"])[0]
+    tls = {"enabled": True, "server_name": sni, "insecure": insecure_raw not in ("0", "false")}
+    fp = (params.get("fp") or query.get("fp") or [""])[0]
+    if fp:
+        tls["utls"] = {"enabled": True, "fingerprint": fp}
+    if security == "reality":
+        tls["reality"] = {
+            "enabled": True,
+            "public_key": (params.get("pbk") or query.get("pbk") or [""])[0],
+            "short_id": (params.get("sid") or query.get("sid") or [""])[0],
+        }
+        tls.setdefault("utls", {"enabled": True, "fingerprint": fp or "chrome"})
+    return tls
+
+
+def parse_trojan(uri):
+    parts = urlsplit(uri)
+    # trojan links carry only a secret: `trojan://password@host:port`.
+    secret = parts.password if parts.password is not None else parts.username
+    if not parts.hostname or not secret:
+        fail("trojan link needs password@host:port")
+    query = parse_qs(parts.query)
+    server_name = (query.get("sni") or query.get("peer") or [parts.hostname])[0]
+    outbound = {
+        "type": "trojan",
+        "server": parts.hostname,
+        "server_port": int_or(parts.port, 443),
+        "password": unquote(secret),
+    }
+    tls = tls_of(query, query, server_name)
+    if tls:
+        outbound["tls"] = tls
+    transport = transport_of(query, query)
+    if transport:
+        outbound["transport"] = transport
+    name = unquote(parts.fragment) if parts.fragment else f"trojan-{parts.hostname}"
+    return name, outbound
+
+
+def parse_vmess(uri):
+    payload = uri[len("vmess://"):]
+    try:
+        data = json.loads(b64(payload))
+    except Exception:
+        fail("vmess link is not valid base64 JSON")
+    server = str(data.get("add", "")).strip()
+    if not server:
+        fail("vmess link has no server")
+    query = {"type": [str(data.get("net") or "tcp")], "path": [str(data.get("path") or "")],
+             "host": [str(data.get("host") or "")], "sni": [str(data.get("sni") or "")],
+             "fp": [str(data.get("fp") or "")], "security": [str(data.get("tls") or "")]}
+    if str(data.get("tls") or "") == "reality":
+        query["pbk"] = [str(data.get("pbk") or "")]
+        query["sid"] = [str(data.get("sid") or "")]
+    outbound = {
+        "type": "vmess",
+        "server": server,
+        "server_port": int_or(data.get("port"), 443),
+        "uuid": str(data.get("id", "")),
+        "security": str(data.get("scy") or "auto"),
+        "alter_id": int_or(data.get("aid"), 0),
+    }
+    tls = tls_of(query, query, server)
+    if tls:
+        outbound["tls"] = tls
+    transport = transport_of(query, query)
+    if transport:
+        outbound["transport"] = transport
+    name = unquote(str(data.get("ps") or "")) or f"vmess-{server}"
+    return name, outbound
+
+
+def parse_vless(uri):
+    parts = urlsplit(uri)
+    if not parts.hostname or not parts.username:
+        fail("vless link needs uuid@host:port")
+    query = parse_qs(parts.query)
+    server_name = (query.get("sni") or [parts.hostname])[0]
+    outbound = {
+        "type": "vless",
+        "server": parts.hostname,
+        "server_port": int_or(parts.port, 443),
+        "uuid": unquote(parts.username),
+    }
+    flow = (query.get("flow") or [""])[0]
+    if flow:
+        outbound["flow"] = flow
+    tls = tls_of(query, query, server_name)
+    if tls:
+        outbound["tls"] = tls
+    transport = transport_of(query, query)
+    if transport:
+        outbound["transport"] = transport
+    name = unquote(parts.fragment) if parts.fragment else f"vless-{parts.hostname}"
+    return name, outbound
+
+
+def parse_ss(uri):
+    body = uri[len("ss://"):]
+    body, _, fragment = body.partition("#")
+    body, _, query = body.partition("?")
+    if "@" in body:
+        userinfo, hostport = body.rsplit("@", 1)
+    else:
+        userinfo, hostport = b64(body).decode().rsplit("@", 1)  # base64(method:password@host:port)
+    try:
+        decoded = b64(userinfo).decode()                        # base64(method:password)
+        if ":" not in decoded:
+            raise ValueError
+        userinfo = decoded
+    except Exception:
+        userinfo = unquote(userinfo)                            # plain method:password
+    method, password = userinfo.split(":", 1)
+    host, _, port = hostport.rpartition(":")
+    if "plugin=" in query:
+        sys.stderr.write("warning: ss plugin options ignored, connecting plain\n")
+    outbound = {"type": "shadowsocks", "server": host, "server_port": int_or(port, 8388),
+                "method": method, "password": password}
+    name = unquote(fragment) if fragment else f"ss-{host}"
+    return name, outbound
+
+
+PARSERS = {"trojan": parse_trojan, "vmess": parse_vmess, "vless": parse_vless, "ss": parse_ss}
+
+
+def client_config(proxy):
+    # Inbounds match the proven working local ports: SOCKS5 1080, HTTP 1081.
+    return {
+        "log": {"level": "info", "timestamp": True},
+        "inbounds": [
+            {"type": "socks", "tag": "socks-in", "listen": "127.0.0.1", "listen_port": 1080},
+            {"type": "http", "tag": "http-in", "listen": "127.0.0.1", "listen_port": 1081},
+        ],
+        "outbounds": [proxy, {"type": "direct", "tag": "direct"}],
+    }
+
+
+def main():
+    if len(sys.argv) < 2 or not sys.argv[1].strip():
+        fail("usage: vpn-import '<share link>' | <file> | <sing-box JSON>")
+    arg = sys.argv[1].strip()
+    proxy = None
+    name = None
+
+    payload = None
+    if arg.startswith("{"):  # raw JSON on the command line
+        payload = json.loads(arg)
+    elif os.path.isfile(arg):
+        text = open(arg, encoding="utf-8", errors="replace").read().strip()
+        match = re.search(r"^(%s)://\S+" % "|".join(SCHEMES), text, re.M)
+        if match:
+            arg = match.group(0).strip()
+        elif text.startswith("{"):
+            payload = json.loads(text)
+        else:
+            fail(f"{arg}: no share link or JSON found inside")
+    elif re.match(r"^[a-z0-9-]+://", arg):
+        pass  # a link on its own
+    else:
+        fail("argument is neither a share link nor an existing file")
+
+    if payload is not None:
+        if "inbounds" in payload:
+            name, config = "imported", payload          # full client config as-is
+        elif "type" in payload and "server" in payload:
+            name, proxy = "imported", payload           # bare outbound → wrap
+            config = client_config(proxy)
+        else:
+            fail("JSON has neither inbounds nor a type/server outbound")
+    else:
+        scheme = arg.split("://", 1)[0].lower()
+        if scheme not in PARSERS:
+            fail(f"unsupported scheme '{scheme}' (supported: {', '.join(SCHEMES)})")
+        name, proxy = PARSERS[scheme](arg)
+        config = client_config(proxy)
+
+    slug = re.sub(r"[^a-z0-9._-]+", "-", name.lower()).strip("-.")[:48] or "imported"
+    directory = os.path.join(os.path.expanduser("~"), ".config", "sing-box")
+    os.makedirs(directory, exist_ok=True)
+    path = os.path.join(directory, slug + ".json")
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(config, handle, indent=4)
+        handle.write("\n")
+    active = os.path.join(directory, "active")
+    try:
+        os.remove(active)
+    except FileNotFoundError:
+        pass
+    os.symlink(path, active)
+
+    checker = shutil.which("sing-box")
+    if checker:
+        result = subprocess.run([checker, "check", "-c", path], capture_output=True, text=True)
+        if result.returncode != 0:
+            fail(f"sing-box check failed: {(result.stderr or result.stdout).strip()}")
+    print(path)
+
+
+if __name__ == "__main__":
+    main()

@@ -53,6 +53,11 @@ Singleton {
     property var lastBytes: ({})
     readonly property bool details: Config.options?.vpn?.details ?? false
     function setDetails(on: bool): void { Config.setNestedValue("vpn.details", on) }
+    // Local sing-box tunnel (trojan…): one JSON under ~/.config/sing-box is one profile, run detached.
+    property bool singboxUp: false
+    property string singboxConfig: ""
+    property string singboxName: ""
+    readonly property bool hasSingbox: root.singboxConfig.length > 0
     property string lastError: ""
     property bool busy: false
 
@@ -77,11 +82,11 @@ Singleton {
 
     readonly property bool tailscaleUp: root.tailscaleState === "Running"
     readonly property var activeProfiles: root.profiles.filter(entry => entry.active)
-    readonly property bool connected: root.activeProfiles.length > 0 || root.tailscaleUp
-    readonly property int activeCount: root.activeProfiles.length + (root.tailscaleUp ? 1 : 0)
-    readonly property bool available: root.profiles.length > 0 || root.tailscaleInstalled
+    readonly property bool connected: root.activeProfiles.length > 0 || root.tailscaleUp || root.singboxUp
+    readonly property int activeCount: root.activeProfiles.length + (root.tailscaleUp ? 1 : 0) + (root.singboxUp ? 1 : 0)
+    readonly property bool available: root.profiles.length > 0 || root.tailscaleInstalled || root.hasSingbox
     readonly property string activeName: root.activeProfiles[0]?.name
-        ?? (root.tailscaleUp ? "Tailscale" : "")
+        ?? (root.singboxUp ? root.singboxName : (root.tailscaleUp ? "Tailscale" : ""))
 
     property int watchers: 0
     function keepAlive(): void { root.watchers += 1; root.refresh() }
@@ -90,6 +95,7 @@ Singleton {
     function refresh(): void {
         profilesProc.running = true
         tailscaleProc.running = true
+        singboxProc.running = true
         root.readDetails()
     }
     readonly property var watchedInterfaces: {
@@ -140,6 +146,8 @@ Singleton {
         const file = String(path ?? "").replace(/^file:\/\//, "")
         if (file.length === 0) return
         root.lastError = ""
+        // Anything that is not an NM profile (a sing-box JSON, a file with a share link) goes to vpn-import.
+        if (!/\.(conf|ovpn)$/i.test(file)) { root.importLink(file); return }
         if (/\.ovpn$/i.test(file) && !root.hasOpenvpnPlugin) { root.lastError = "missing plugin"; return }
         root.busy = true
         actionProc.exec(["nmcli", "connection", "import", "type", /\.ovpn$/i.test(file) ? "openvpn" : "wireguard", "file", file])
@@ -186,14 +194,94 @@ Singleton {
             root.busy = true
             root.lastError = ""
             // One process for every profile: a second exec on the same Process would cut the first short.
-            actionProc.exec(["bash", "-c", 'status=0; [ "$1" = 1 ] && { tailscale down || status=$?; }; shift; '
+            actionProc.exec(["bash", "-c", 'status=0; [ "$1" = 1 ] && { pkill -x sing-box || status=$?; }; shift; '
+                + '[ "$1" = 1 ] && { tailscale down || status=$?; }; shift; '
                 + 'for uuid in "$@"; do nmcli connection down uuid "$uuid" || status=$?; done; exit $status',
-                "_", root.tailscaleUp ? "1" : "0", ...root.activeProfiles.map(entry => entry.uuid)])
+                "_", root.singboxUp ? "1" : "0", root.tailscaleUp ? "1" : "0", ...root.activeProfiles.map(entry => entry.uuid)])
             return
         }
+        if (root.hasSingbox) { root.startSingbox(false); return }
         if (root.tailscaleInstalled) { root.setTailscale(true); return }
         const first = root.profiles[0]
         if (first) root.setProfile(first.uuid, true)
+    }
+
+    // Started detached so the tunnel outlives shell restarts; the helper confirms it
+    // came up before the service claims it. restart=true drops a running sing-box first,
+    // which is how an imported link switches onto the live tunnel.
+    function startSingbox(restart): void {
+        if (!root.hasSingbox || singboxStartProc.running) return
+        root.busy = true
+        root.lastError = ""
+        singboxStartProc.exec(["sh", "-c",
+            (restart ? 'pkill -x sing-box; sleep 0.3; ' : "")
+            + 'mkdir -p "$HOME/.cache"; sing-box run -c "$1" >>"$HOME/.cache/inir-singbox.log" 2>&1 & '
+            + 'sleep 0.4; pgrep -x sing-box >/dev/null && echo up', "_", root.singboxConfig])
+    }
+    // trojan://, vmess://, vless://, ss:// share links (a URI, a file holding one, or a
+    // full sing-box JSON) become ~/.config/sing-box/<name>.json and become the active pick.
+    function importLink(link: string): void {
+        const value = String(link ?? "").trim()
+        if (value.length === 0) { root.chooseProfileFile(); return }
+        if (importProc.running) return
+        root.busy = true
+        root.lastError = ""
+        importProc.exec([Quickshell.shellPath("scripts/vpn-import"), value])
+    }
+
+    Process {
+        id: singboxStartProc
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.singboxUp = text.includes("up")
+                root.busy = false
+                if (!root.singboxUp) root.lastError = "sing-box exited — check the config or the log"
+                root.refresh()
+            }
+        }
+        onExited: { root.busy = false; root.refresh() }
+    }
+    // pgrep -x matches the comm, so the probe never sees itself; the active symlink
+    // says which config to start when nothing runs yet.
+    Process {
+        id: singboxProc
+        running: false
+        command: ["sh", "-c", 'pgrep -x sing-box >/dev/null && echo up; '
+            + 'a="$HOME/.config/sing-box/active"; '
+            + 'if [ -e "$a" ]; then readlink -f "$a"; '
+            + 'else for f in "$HOME"/.config/sing-box/*.json; do [ -f "$f" ] && { echo "$f"; break; }; done; fi']
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.split("\n").map(line => line.trim()).filter(line => line.length > 0)
+                root.singboxUp = lines.includes("up")
+                const config = lines.find(line => line.endsWith(".json")) ?? ""
+                root.singboxConfig = config
+                const base = config.length > 0 ? config.split("/").pop().replace(/\.json$/, "") : ""
+                root.singboxName = base.length > 0 ? base.charAt(0).toUpperCase() + base.slice(1) : ""
+            }
+        }
+    }
+    Process {
+        id: importProc
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const path = text.trim().split("\n").pop() ?? ""
+                if (path.endsWith(".json")) root.singboxConfig = path
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                const line = text.trim().split("\n")[0] ?? ""
+                if (line.length > 0) root.lastError = line
+            }
+        }
+        onExited: exitCode => {
+            root.busy = false
+            root.refresh()
+            if (exitCode === 0 && root.singboxConfig.length > 0) root.startSingbox(true)
+        }
     }
 
     Connections {
@@ -283,7 +371,7 @@ Singleton {
         title: Translation.tr("Import a VPN profile")
         fileMode: FileDialog.OpenFile
         currentFolder: "file://" + Directories.homePath
-        nameFilters: [Translation.tr("WireGuard or OpenVPN") + " (*.conf *.ovpn)", Translation.tr("All files") + " (*)"]
+        nameFilters: [Translation.tr("WireGuard, OpenVPN, sing-box or share link") + " (*.conf *.ovpn *.json *.txt)", Translation.tr("All files") + " (*)"]
         onAccepted: root.importProfile(String(selectedFile))
     }
     Process {
@@ -386,6 +474,10 @@ Singleton {
             if (String(path ?? "").length === 0) { root.chooseProfileFile(); return "choosing" }
             root.importProfile(path)
             return "importing " + path
+        }
+        function importLink(link: string): string {
+            root.importLink(link)
+            return "importing"
         }
         function add(kind: string): string {
             if (!root.canCreate) return root.missingEditorText
