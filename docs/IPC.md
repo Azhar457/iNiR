@@ -860,15 +860,16 @@ Whether the shell can reach the internet, as NetworkManager sees it. Surfaces th
 
 ### vpn
 
-NetworkManager VPN profiles (OpenVPN, WireGuard, anything with an NM plugin) and Tailscale, as the VPN piece and its card show them.
+NetworkManager VPN profiles (OpenVPN, WireGuard, anything with an NM plugin), Tailscale, and local sing-box tunnels imported from trojan/vmess/vless/ss share links, as the VPN piece and its card show them.
 
 | Function | Description |
 |----------|-------------|
 | `status` | Print the state as JSON: connected, through what, Tailscale's state, its devices and how many are online, your profiles |
-| `toggle` | Turn every active VPN off, or connect Tailscale (else your first profile) when none is on |
+| `toggle` | Turn every active VPN off, or connect your local sing-box profile (else Tailscale, else your first profile) when none is on |
 | `details <state>` | `on`, `off` or `toggle` the card's details: addresses, name, account, exit node, devices and live traffic |
 | `refresh` | Read profiles and Tailscale again |
-| `importFile <path>` | Add a WireGuard `.conf` or OpenVPN `.ovpn` file as a NetworkManager profile; with no path, open the file chooser (*Import a file…* in the card) |
+| `importFile <path>` | Add a WireGuard `.conf` or OpenVPN `.ovpn` file as a NetworkManager profile; anything else (a sing-box JSON, a file holding a share link) goes to `importLink`; with no path, open the file chooser (*Import a file…* in the card) |
+| `importLink <share link>` | Import a `trojan://`, `vmess://`, `vless://` or `ss://` share link (or a file holding one, or a full sing-box JSON) as a local sing-box profile, make it the active pick and connect to it |
 | `add <kind>` | Create a VPN in NetworkManager's connection editor: `wireguard`, or `vpn` for the installed plugins (OpenVPN, L2TP…); `nmtui` in your terminal when the editor is not installed |
 
 ```kdl
