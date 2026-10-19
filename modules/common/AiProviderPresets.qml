@@ -218,7 +218,7 @@ Singleton {
             "authScheme": "bearer",
             "id": "9router",
             "name": "9Router",
-            "icon": "network-wired",
+            "icon": "9router-symbolic",
             "endpoint": "http://127.0.0.1:20128/v1/chat/completions",
             "model": "ag-ai/agnes-3.0-flash",
             "api_format": "openai",
