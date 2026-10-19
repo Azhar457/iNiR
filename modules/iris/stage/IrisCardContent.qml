@@ -609,13 +609,21 @@ Item {
             }
             IrisText {
                 Layout.fillWidth: true
-                visible: Vpn.profiles.length === 0
+                visible: Vpn.profiles.length === 0 && !Vpn.hasSingbox
                 text: Vpn.available
                     ? Translation.tr("OpenVPN and WireGuard profiles you add in NetworkManager show up here too.")
                     : Translation.tr("No VPN yet. Add an OpenVPN or WireGuard profile in NetworkManager, or install Tailscale.")
                 color: IrisStyle.muted
                 wrapMode: Text.WordWrap
                 font.pixelSize: IrisStyle.typeMeta
+            }
+            VpnRow {
+                Layout.fillWidth: true
+                visible: Vpn.hasSingbox
+                label: Vpn.singboxName
+                detail: Vpn.singboxUp ? Translation.tr("Local tunnel · SOCKS 1080") : Translation.tr("Local tunnel")
+                on: Vpn.singboxUp
+                onToggled: Vpn.setSingbox(on)
             }
             VpnRow {
                 Layout.fillWidth: true
@@ -812,9 +820,14 @@ Item {
                 IrisButton {
                     Layout.fillWidth: true
                     enabled: !Vpn.busy
-                    text: Translation.tr("Import a file…")
+                    text: Translation.tr("Import…")
                     buttonRadius: IrisStyle.radiusTile
-                    onClicked: Vpn.chooseProfileFile()
+                    // A copied share link imports straight away; anything else opens the file chooser.
+                    onClicked: {
+                        const clip = String(Quickshell.clipboardText ?? "").trim()
+                        if (/^(trojan|vmess|vless|ss):\/\//i.test(clip)) Vpn.importLink(clip)
+                        else Vpn.chooseProfileFile()
+                    }
                 }
             }
             IrisButton {

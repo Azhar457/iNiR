@@ -189,6 +189,14 @@ Singleton {
         actionProc.exec(["tailscale", "set", "--exit-node=" + String(address ?? "")])
     }
     function toggleTailscale(): void { root.setTailscale(!root.tailscaleUp) }
+    // Connect/disconnect the local sing-box tunnel on its own, independent of NM/Tailscale.
+    function setSingbox(up: bool): void {
+        if (up) { root.startSingbox(false); return }
+        if (!root.singboxUp) return
+        root.busy = true
+        root.lastError = ""
+        actionProc.exec(["pkill", "-x", "sing-box"])
+    }
     function toggle(): void {
         if (root.connected) {
             root.busy = true
