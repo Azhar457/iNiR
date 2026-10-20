@@ -208,14 +208,12 @@ Singleton {
         root.singboxConfig = target   // startSingbox(true) reads this before the probe catches up
         switchProc.exec(["sh", "-c", 'ln -sfn "$1" "$HOME/.config/sing-box/active"', "_", target])
     }
-    // Forget a saved sing-box profile. The last one is kept so the surface stays usable.
+    // Forget a saved sing-box profile. Removing the last one is allowed:
+    // daily-expiry links are the normal case, and with nothing left the
+    // surface just reports no profile until the next import.
     function removeSingbox(path: string): void {
         const target = String(path ?? "")
         if (target.length === 0 || removeProc.running) return
-        if (root.singboxConfigs.length <= 1) {
-            root.lastError = "This is the only saved profile — import another first."
-            return
-        }
         root.busy = true
         root.lastError = ""
         removeProc.exec(["sh", "-c", 'rm -f -- "$1"', "_", target])
