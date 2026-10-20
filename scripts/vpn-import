@@ -200,7 +200,10 @@ def client_config(proxy):
              "auto_route": True, "strict_route": True},
         ],
         "route": {"auto_detect_interface": True,
-                  "rules": [{"protocol": "dns", "action": "hijack-dns"}]},
+                  # Port matcher hijacks deterministically; "protocol": "dns"
+                  # only matches sniffed traffic and silently loops DNS into
+                  # the tunnel instead.
+                  "rules": [{"port": 53, "action": "hijack-dns"}]},
         "dns": {"servers": [{"type": "udp", "tag": "cf", "server": "1.1.1.1", "server_port": 53}],
                 "final": "cf"},
         "outbounds": [proxy, {"type": "direct", "tag": "direct"}],
