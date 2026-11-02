@@ -96,8 +96,9 @@ Item {
                 ConfigSwitch {
                     buttonIcon: "nightlight"
                     text: Translation.tr("Night light")
+                    autoToggle: false
                     checked: Hyprsunset.active ?? false
-                    onCheckedChanged: if (checked !== Hyprsunset.active) Hyprsunset.toggle()
+                    onToggledByUser: checked => Hyprsunset.toggle(checked)
                 }
                 ConfigSwitch {
                     buttonIcon: "coffee"
