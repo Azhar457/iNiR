@@ -145,8 +145,21 @@ Singleton {
         onExited: (code, status) => {
             if (code === 0) {
                 root._log("[MaterialThemeLoader] mode-cache hit:", modeCacheGetProc.mode)
-                root.scheduleReload()
+                root._forceApply = true
+                // Apply immediately from the cached colors.json to avoid UI lag
+                themeFileView.reload()
+                const txt = themeFileView.text()
+                if (txt && txt.trim().length > 0) {
+                    try {
+                        root.applyColors(txt)
+                    } catch (e) {
+                        _log("[MaterialThemeLoader] mode-cache direct apply failed:", e)
+                    }
+                }
+                delayedExternalApply.restart()
+                return
             }
+            // Cache miss -> normal regeneration flow continues
         }
     }
 

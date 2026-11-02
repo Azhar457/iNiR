@@ -77,8 +77,9 @@ Item {
             name: Translation.tr("Automatic")
             description: Translation.tr("Turn on from sunset to sunrise")
             iconName: "auto"
+            autoToggle: false
             checked: Config.options?.light?.night?.automatic ?? false
-            onCheckedChanged: {
+            onToggledByUser: checked => {
                 Config.setNestedValue("light.night.automatic", checked)
             }
         }
@@ -87,8 +88,9 @@ Item {
             name: Translation.tr("Enable now")
             description: Translation.tr("More comfortable viewing at night")
             iconName: WIcons.nightLightIcon
+            autoToggle: false
             checked: Hyprsunset.active
-            onCheckedChanged: {
+            onToggledByUser: checked => {
                 Hyprsunset.toggle(checked);
             }
         }
