@@ -385,6 +385,10 @@ switch() {
                 imgpath=$(resolve_effective_theming_wallpaper)
                 if [[ -z "$imgpath" || ! -f "$imgpath" ]]; then
                     echo "[switchwall.sh] --noswitch: No valid wallpaper path in config"
+                    # Still apply the requested dark/light mode so the GTK
+                    # color-scheme stays consistent even when there is no
+                    # wallpaper to regenerate colors from.
+                    pre_process "$mode_flag"
                     exit 0
                 fi
                 echo "[switchwall.sh] --noswitch: Using current wallpaper for color regeneration: $imgpath"
