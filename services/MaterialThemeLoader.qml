@@ -54,6 +54,12 @@ Singleton {
         const scheme = String(Config.options?.iris?.appearance?.scheme ?? "auto")
         if ((Config.options?.panelFamily ?? "ii") === "iris" && scheme !== "auto")
             Config.setNestedValue("iris.appearance.scheme", dark ? "dark" : scheme === "ink" ? "ink" : "light")
+        darkModeProc.requestedDark = dark
+        // Instant swap: if the opposite-mode palette is cached for the same
+        // wallpaper/seed, apply it now and let the regeneration refresh the
+        // cache. Cache miss = normal regeneration flow unchanged.
+        modeCacheGetProc.mode = dark ? "dark" : "light"
+        modeCacheGetProc.running = true
         darkModeProc.command = [
             "/usr/bin/bash",
             Directories.wallpaperSwitchScriptPath,
@@ -72,6 +78,7 @@ Singleton {
         // Clear any stale force flag from a previous run
         root._forceApply = false
         Config.setNestedValue("appearance.palette.accentColor", seedColor)
+        schemeVariantProc.requestedMode = mode
         schemeVariantProc.command = [
             "/usr/bin/bash",
             Directories.wallpaperSwitchScriptPath,
@@ -87,13 +94,20 @@ Singleton {
     Process {
         id: schemeVariantProc
         running: false
+        property string requestedMode: ""
         onExited: (code, status) => {
             if (code === 0) {
                 // Script succeeded — colors.json is ready. Set force flag so the
                 // next applyColors call bypasses the isAutoTheme gate.
                 root._forceApply = true
+                if (schemeVariantProc.requestedMode !== "") {
+                    modeCachePutProc.mode = schemeVariantProc.requestedMode
+                    modeCachePutProc.running = true
+                }
                 // Route through reloadDebounce so this doesn't race the
                 // onFileChanged that the script's own write is about to fire.
+                reloadDebounce.restart()
+            } else {
                 reloadDebounce.restart()
             }
             // Safety net: poll for file changes in case the immediate reload misses
@@ -106,13 +120,43 @@ Singleton {
     Process {
         id: darkModeProc
         running: false
+        property bool requestedDark: false
+        command: [] // set by setDarkMode()
         onExited: (code, status) => {
             if (code === 0) {
                 root._forceApply = true
+                // Cache the freshly generated palette for instant switching.
+                modeCachePutProc.mode = darkModeProc.requestedDark ? "dark" : "light"
+                modeCachePutProc.running = true
             }
             root.scheduleReload()
             delayedExternalApply.restart()
         }
+    }
+
+    // Applies a cached palette for the requested mode (if it matches the
+    // current wallpaper/seed) by copying it over colors.json — the file
+    // watcher picks it up instantly.
+    Process {
+        id: modeCacheGetProc
+        running: false
+        property string mode: "light"
+        command: ["/usr/bin/bash", Directories.modeCacheScriptPath, "get", mode]
+        onExited: (code, status) => {
+            if (code === 0) {
+                root._log("[MaterialThemeLoader] mode-cache hit:", modeCacheGetProc.mode)
+                root.scheduleReload()
+            }
+        }
+    }
+
+    // Stores the just-generated palette under colors.<mode>.json together with
+    // its generation key, for later instant swaps.
+    Process {
+        id: modeCachePutProc
+        running: false
+        property string mode: "light"
+        command: ["/usr/bin/bash", Directories.modeCacheScriptPath, "put", mode]
     }
 
     function _log(...args): void {
