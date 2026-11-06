@@ -248,12 +248,7 @@ Item { // Wrapper
                 cleanedCommand = cleanedCommand.trim();
                 if (!cleanedCommand.length) return;
                 const term = String(Config.options?.apps?.terminal ?? "ghostty").trim() || "ghostty";
-                const quotedCommand = `'${StringUtils.shellSingleQuoteEscape(cleanedCommand)}'`;
-                if (term.indexOf("ghostty") !== -1) {
-                    ShellExec.execCmd(`${term} -e /usr/bin/sh -lc ${quotedCommand}`);
-                } else {
-                    ShellExec.execCmd(`${term} /usr/bin/bash -lc ${quotedCommand}`);
-                }
+                ShellExec.execDetachedArgs(ShellExec.terminalExecArgs(term, ["/usr/bin/bash", "-lc", cleanedCommand]))
             }
         };
 

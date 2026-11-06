@@ -360,11 +360,7 @@ Singleton {
 
     function _resumeCli(id: string): void {
         const command = ["/usr/bin/bash", "-lc", id + " -c"]
-        const terminal = root._terminal()
-        if (terminal === "wezterm")
-            ShellExec.execDetachedArgs([terminal, "start", "--always-new-process", "--", ...command], "Resume anime")
-        else
-            ShellExec.execDetachedArgs([terminal, "-e", ...command], "Resume anime")
+        ShellExec.execDetachedArgs(ShellExec.terminalExecArgs(root._terminal(), command), "Resume anime")
     }
 
     // ani-cli exited: the run is over whatever phase it was in. Its last complaint is

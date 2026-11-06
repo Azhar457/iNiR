@@ -350,12 +350,7 @@ Singleton {
         if (command.length > 0) {
             if (entry.runInTerminal ?? rawEntry?.runInTerminal ?? false) {
                 const terminal = String(Config.options?.apps?.terminal ?? "kitty").trim() || "kitty"
-                const quotedCommand = command.map(arg => `'${StringUtils.shellSingleQuoteEscape(arg)}'`).join(" ")
-                if (terminal === "wezterm") {
-                    ShellExec.execCmd(`${terminal} start --always-new-process -- ${quotedCommand}`, workingDirectory)
-                } else {
-                    ShellExec.execCmd(`${terminal} -e ${quotedCommand}`, workingDirectory)
-                }
+                ShellExec.execDetachedArgs(ShellExec.terminalExecArgs(terminal, command), "", workingDirectory)
                 return true
             }
 

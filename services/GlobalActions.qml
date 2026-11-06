@@ -960,9 +960,7 @@ Singleton {
     function _runSetup(target): void {
         const path = `${Directories.scriptsPath}/setup/${target.slug}.sh`
         const term = root._safeTerminal()
-        ShellExec.execDetachedArgs(term === "wezterm"
-            ? [term, "start", "--always-new-process", "--", "/usr/bin/bash", path]
-            : [term, "-e", "/usr/bin/bash", path], `Setup ${target.name}`)
+        ShellExec.execDetachedArgs(ShellExec.terminalExecArgs(term, ["/usr/bin/bash", path]), `Setup ${target.name}`)
         Quickshell.execDetached(["/usr/bin/notify-send",
             "-a", "Setup", "-i", target.icon || "download",
             "-h", `string:x-canonical-private-synchronous:setup-${target.slug}`,

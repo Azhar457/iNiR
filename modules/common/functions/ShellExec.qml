@@ -219,6 +219,18 @@ Singleton {
         root.execDetachedArgs([root.bashPath, "-lc", c], "", workingDirectory)
     }
 
+    // Terminals disagree on how they take a command: ptyxis/gnome-terminal use
+    // `--`, wezterm takes a start subcommand, konsole/kitty/foot/alacritty/ghostty use `-e`.
+    function terminalExecArgs(terminal, argv): var {
+        const t = String(terminal ?? "").trim() || "kitty"
+        const args = Array.from(argv ?? []).map(arg => String(arg ?? "")).filter(arg => arg.length > 0)
+        if (args.length === 0) return []
+        const base = t.split("/").pop().toLowerCase()
+        if (base.startsWith("wezterm")) return [t, "start", "--always-new-process", "--", ...args]
+        if (base === "ptyxis" || base === "gnome-terminal" || base === "kgx") return [t, "--", ...args]
+        return [t, "-e", ...args]
+    }
+
     function execFishOrBashOneLiner(fishCmd: string, bashCmd: string): void {
         const f = String(fishCmd ?? "").trim()
         const b = String(bashCmd ?? "").trim()

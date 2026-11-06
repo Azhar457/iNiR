@@ -326,7 +326,7 @@ Item {
                 ActionButton {
                     btnIcon: "info"
                     label: Translation.tr("System info")
-                    onClicked: ShellExec.execDetachedArgs([Config.options?.apps?.terminal ?? "/usr/bin/kitty", "-e", "fish", "-c", "fastfetch; read -P 'Press Enter to close...'"], "Show system info")
+                    onClicked: ShellExec.execDetachedArgs(ShellExec.terminalExecArgs(Config.options?.apps?.terminal ?? "/usr/bin/kitty", ["fish", "-c", "fastfetch; read -P 'Press Enter to close...'"]), "Show system info")
                 }
             }
 

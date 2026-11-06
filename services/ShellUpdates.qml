@@ -298,10 +298,11 @@ Singleton {
             simulatedUpdate.restart()
             if (Config.options?.shellUpdates?.openTerminalOnUpdate ?? true) {
                 const slot = (AppLauncher && typeof AppLauncher.commandFor === "function") ? AppLauncher.commandFor("terminal") : ""
-                ShellExec.execDetachedArgs([(slot.length > 0 ? slot : "kitty").trim().split(/\s+/)[0], "-e", "/usr/bin/bash", "-c",
+                const termBin = (slot.length > 0 ? slot : "kitty").trim().split(/\s+/)[0]
+                ShellExec.execDetachedArgs(ShellExec.terminalExecArgs(termBin, ["/usr/bin/bash", "-c",
                     "echo 'Simulated iNiR update: nothing is downloaded or changed.'; echo; "
                     + "for s in Fetching Applying 'Restarting the shell'; do echo \"==> $s\"; sleep 1; done; "
-                    + "echo; echo 'All good. You can close this window whenever you want.'; read -r _"], "Update iNiR", root.repoPath)
+                    + "echo; echo 'All good. You can close this window whenever you want.'; read -r _"]), "Update iNiR", root.repoPath)
             }
             return
         }
@@ -356,7 +357,7 @@ Singleton {
                 ? AppLauncher.commandFor("terminal") : ""
             const termBin = (termSlot.length > 0 ? termSlot : "kitty").trim().split(/\s+/)[0]
             ShellExec.execDetachedArgs(
-                [termBin, "-e", "/usr/bin/bash", "-c", bashCmd],
+                ShellExec.terminalExecArgs(termBin, ["/usr/bin/bash", "-c", bashCmd]),
                 "Update iNiR", repoDir)
             print("[ShellUpdates] Update launched in terminal (" + termBin + ") from: " + repoDir)
         } else {

@@ -41,12 +41,7 @@ Singleton {
 
     function _runTerminalScript(script: string, args): void {
         const command = ["/usr/bin/bash", "-lc", script + "\nprintf \"\\nPress Enter to close...\"\nread", "bash", ...(args ?? [])]
-        const terminal = root._safeTerminal()
-        if (terminal === "wezterm") {
-            ShellExec.execDetachedArgs([terminal, "start", "--always-new-process", "--", ...command], "Run package action")
-            return
-        }
-        ShellExec.execDetachedArgs([terminal, "-e", ...command], "Run package action")
+        ShellExec.execDetachedArgs(ShellExec.terminalExecArgs(root._safeTerminal(), command), "Run package action")
     }
 
     function isSafePackageName(name: string): bool {

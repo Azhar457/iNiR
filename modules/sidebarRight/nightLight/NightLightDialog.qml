@@ -151,14 +151,13 @@ Rectangle {
                     left: parent.left
                     right: parent.right
                 }
-                icon: "thermometer"
                 text: Translation.tr("Color temperature")
                 value: Config.options?.light?.night?.colorTemperature ?? 6000
                 from: 1000
                 to: 6000
                 stepSize: 100
                 stopIndicatorValues: [6000]
-                tooltip: Translation.tr("Lower the temperature to reduce blue light exposure. On Niri/wlsunset this affects the current filter temperature when Night Light is active.")
+                tooltipContent: Translation.tr("Lower the temperature to reduce blue light exposure. On Niri/wlsunset this affects the current filter temperature when Night Light is active.")
                 onValueChanged: {
                     Config.setNestedValue("light.night.colorTemperature", value);
                 }

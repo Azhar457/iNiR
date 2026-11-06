@@ -213,12 +213,7 @@ Singleton {
 
     function _runTerminalScript(script: string, args): void {
         const command = ["/usr/bin/bash", "-lc", script + "\nprintf \"\\nPress Enter to close...\"\nread", "bash", ...(args ?? [])]
-        const terminal = root._safeTerminal()
-        if (terminal === "wezterm") {
-            ShellExec.execDetachedArgs([terminal, "start", "--always-new-process", "--", ...command], "Run catalog action")
-            return
-        }
-        ShellExec.execDetachedArgs([terminal, "-e", ...command], "Run catalog action")
+        ShellExec.execDetachedArgs(ShellExec.terminalExecArgs(root._safeTerminal(), command), "Run catalog action")
     }
 
     function _getInstallTarget(app: var): var {
