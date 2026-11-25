@@ -283,7 +283,7 @@ Singleton {
         }
     }
 
-    // Set sink volume safely. When protection is enabled, large jumps are rejected as "Illegal increment".
+    // Set sink volume safely. When protection is enabled, large jumps are rejected.
     // To keep UX consistent with brightness (click anywhere on slider), we ramp in small steps.
     // The queued wpctl path also works while Quickshell is rebuilding its node bindings.
     function setSinkVolume(target: real): void {
@@ -298,10 +298,11 @@ Singleton {
         }
 
         root._rampTarget = clamped;
-        root._rampTimer.restart();
+        // Start, never restart: a slider dragged faster than 16 ms per event kept pushing the first step back.
+        if (!root._rampTimer.running) root._rampTimer.start();
     }
 
-    // Ramp helper (prevents "Illegal increment" when user clicks far away on slider)
+    // Ramp helper (keeps the guard from rejecting a jump when user clicks far away on slider)
     property real _rampTarget: 0
     property alias _rampTimer: _rampTimerInternal
     Timer {
@@ -418,10 +419,10 @@ Singleton {
 
             if (newVolume - lastVolume > maxAllowedIncrease) {
                 root._queueSinkVolume(lastVolume)
-                root.sinkProtectionTriggered(Translation.tr("Illegal increment"));
+                root.sinkProtectionTriggered(Translation.tr("It rose more than %1% at once").arg(Math.round(maxAllowedIncrease * 100)));
                 return
             } else if (newVolume > maxAllowed || newVolume > root.hardMaxValue) {
-                root.sinkProtectionTriggered(Translation.tr("Exceeded max allowed"));
+                root.sinkProtectionTriggered(Translation.tr("%1% is the most allowed").arg(Math.round(maxAllowed * 100)));
                 lastVolume = Math.min(lastVolume, maxAllowed)
                 root._queueSinkVolume(lastVolume)
                 return
@@ -463,7 +464,7 @@ Singleton {
         if (override.startsWith("/") || override.startsWith("file://")) {
             const volume = Config.options?.sounds?.volume ?? 0.5;
             const path = override.startsWith("file://") ? override.slice(7) : override;
-            Quickshell.execDetached(["/usr/bin/pw-play", "--volume", volume.toString(), path]);
+            Quickshell.execDetached(["pw-play", "--volume", volume.toString(), path]);
             return;
         }
         playSystemSound(override.length > 0 ? override : (root.soundEvents[eventId] ?? "bell"));
@@ -485,25 +486,32 @@ Singleton {
     }
 
     // IPC handlers for external control (keybinds, etc.)
+    /// Volume and mute control.
     IpcHandler {
         target: "audio"
 
+        /// Increase volume
         function volumeUp(): void {
             root.incrementVolume();
         }
 
+        /// Decrease volume
         function volumeDown(): void {
             root.decrementVolume();
         }
 
+        /// Toggle speaker mute
         function mute(): void {
             root.toggleMute();
         }
 
+        /// Play a shell event sound (e.g. `notification`, `batteryLow`, `timerDone`), honoring the user's per-event
+        /// override
         function playEvent(event: string): void {
             root.playEvent(event);
         }
 
+        /// Toggle microphone mute
         function micMute(): void {
             root.toggleMicMute();
         }

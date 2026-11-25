@@ -39,10 +39,17 @@ Singleton {
 
     signal responseFinished()
 
+    /// Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and
+    /// Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is
+    /// separate from execution readiness, so public model lists remain browseable without pretending an API key
+    /// exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal
+    /// shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode.
     IpcHandler {
         target: "ai"
 
+        /// Force-load models, provider catalogs and API keys
         function ensureInitialized(): void { root.ensureInitialized() }
+        /// Dump current AI, catalog and tool state as JSON
         function diagnose(): string {
             const policy = (Config.options?.policies?.ai ?? 0)
             const model = root.models?.[root.currentModelId]
@@ -76,11 +83,13 @@ Singleton {
             })
         }
 
+        /// Refresh every live provider model catalog
         function refreshCatalog(): void {
             root.ensureInitialized()
             AiProviderCatalog.refreshAll()
         }
 
+        /// Search up to 100 normalized live model records
         function catalog(query: string): string {
             root.ensureInitialized()
             const normalizedQuery = String(query ?? "").trim().toLowerCase()
@@ -105,6 +114,7 @@ Singleton {
             })))
         }
 
+        /// Return provider health, key state and live model counts
         function providers(): string {
             root.ensureInitialized()
             return JSON.stringify(AiProviderCatalog.providers.map(provider => ({
@@ -116,6 +126,7 @@ Singleton {
             })))
         }
 
+        /// Send a message or compatibility `/command` to AI chat
         function run(inputText: string): void {
             const text = (inputText ?? "").trim()
             if (text.length === 0) return
@@ -201,6 +212,7 @@ Singleton {
             }
         }
 
+        /// Run an AI command and return the last response
         function runGet(inputText: string): string {
             root._lastInterfaceMessage = null
             run(inputText)
@@ -321,7 +333,7 @@ Singleton {
                         "properties": {
                             "key": {
                                 "type": "string",
-                                "description": "The key to set, e.g. `bar.borderless`. MUST NOT BE GUESSED, use `get_shell_config` to see what keys are available before setting.",
+                                "description": "The key to set, e.g. `material.bar.borderless`. MUST NOT BE GUESSED, use `get_shell_config` to see what keys are available before setting.",
                             },
                             "value": {
                                 "type": "string",
@@ -420,7 +432,7 @@ Singleton {
                             "properties": {
                                 "key": {
                                     "type": "string",
-                                    "description": "The key to set, e.g. `bar.borderless`. MUST NOT BE GUESSED, use `get_shell_config` to see what keys are available before setting.",
+                                    "description": "The key to set, e.g. `material.bar.borderless`. MUST NOT BE GUESSED, use `get_shell_config` to see what keys are available before setting.",
                                 },
                                 "value": {
                                     "type": "string",
@@ -503,7 +515,7 @@ Singleton {
                             "properties": {
                                 "key": {
                                     "type": "string",
-                                    "description": "The key to set, e.g. `bar.borderless`. MUST NOT BE GUESSED, use `get_shell_config` to see what keys are available before setting.",
+                                    "description": "The key to set, e.g. `material.bar.borderless`. MUST NOT BE GUESSED, use `get_shell_config` to see what keys are available before setting.",
                                 },
                                 "value": {
                                     "type": "string",
@@ -575,7 +587,7 @@ Singleton {
                         "properties": {
                             "key": {
                                 "type": "string",
-                                "description": "The key to set, e.g. `bar.borderless`. MUST NOT BE GUESSED, use `get_shell_config` to see what keys are available before setting.",
+                                "description": "The key to set, e.g. `material.bar.borderless`. MUST NOT BE GUESSED, use `get_shell_config` to see what keys are available before setting.",
                             },
                             "value": {
                                 "type": "string",
@@ -654,7 +666,7 @@ Singleton {
                             "properties": {
                                 "key": {
                                     "type": "string",
-                                    "description": "The key to set, e.g. `bar.borderless`. MUST NOT BE GUESSED, use `get_shell_config` to see what keys are available before setting.",
+                                    "description": "The key to set, e.g. `material.bar.borderless`. MUST NOT BE GUESSED, use `get_shell_config` to see what keys are available before setting.",
                                 },
                                 "value": {
                                     "type": "string",
@@ -1018,7 +1030,7 @@ Singleton {
     Process {
         id: getDefaultPrompts
         running: false
-        command: ["/usr/bin/ls", "-1", Directories.defaultAiPrompts]
+        command: ["ls", "-1", Directories.defaultAiPrompts]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.length === 0) return;
@@ -1032,7 +1044,7 @@ Singleton {
     Process {
         id: getUserPrompts
         running: false
-        command: ["/usr/bin/ls", "-1", Directories.userAiPrompts]
+        command: ["ls", "-1", Directories.userAiPrompts]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.length === 0) return;
@@ -1046,7 +1058,7 @@ Singleton {
     Process {
         id: getSavedChats
         running: false
-        command: ["/usr/bin/ls", "-1", Directories.aiChats]
+        command: ["ls", "-1", Directories.aiChats]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.length === 0) return;
@@ -1277,7 +1289,7 @@ Singleton {
 
     Process {
         id: requester
-        property list<string> baseCommand: ["/usr/bin/bash"]
+        property list<string> baseCommand: ["bash"]
         property AiMessageData message
         property ApiStrategy currentStrategy
         property int httpStatus: 0
@@ -1669,7 +1681,7 @@ Singleton {
         property string shellCommand: ""
         property AiMessageData message
         property string baseMessageContent: ""
-        command: ["/usr/bin/bash", "-c", shellCommand]
+        command: ["bash", "-c", shellCommand]
         stdout: SplitParser {
             onRead: (output) => {
                 commandExecutionProc.message.functionResponse += output + "\n\n";
@@ -1818,14 +1830,20 @@ Singleton {
 
     function deleteChat(chatName) {
         if (!chatName || chatName.trim().length === 0) return;
-        chatFileOps.exec(["/usr/bin/rm", "-f", "--", chatPathForName(chatName)]);
+        const path = chatPathForName(chatName);
+        // Held in the runtime dir while its Undo notice is up.
+        const held = `${Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"}/inir-undo/chat-${Date.now()}.json`;
+        chatFileOps.exec(["bash", "-c", 'mkdir -p -- "${2%/*}" && mv -- "$1" "$2"', "hold", path, held]);
+        Undo.offer(Translation.tr("Removed %1").arg(chatName.trim()),
+            () => chatFileOps.exec(["mv", "-n", "--", held, path]),
+            () => Quickshell.execDetached(["rm", "-f", "--", held]));
     }
 
     function renameChat(oldName, newName) {
         if (!oldName || !newName) return;
         const clean = newName.trim().replace(/[\/\0]/g, "-");
         if (clean.length === 0 || clean === oldName.trim()) return;
-        chatFileOps.exec(["/usr/bin/mv", "--", chatPathForName(oldName), chatPathForName(clean)]);
+        chatFileOps.exec(["mv", "--", chatPathForName(oldName), chatPathForName(clean)]);
     }
 
     // Stash the current conversation under a timestamped name, then clear

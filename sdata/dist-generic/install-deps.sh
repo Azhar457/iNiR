@@ -50,13 +50,16 @@ echo ""
 echo -e "${STY_BLUE}Runtime tools:${STY_RST}"
 check_cmd "fish" "Fish shell"
 check_cmd "jq" "jq"
+check_cmd "file" "file"
 check_cmd "curl" "curl"
+check_cmd "unzip" "unzip"
 check_cmd "wl-copy" "wl-clipboard"
 check_cmd "grim" "grim"
 check_cmd "slurp" "slurp"
 check_cmd "cliphist" "cliphist"
 check_cmd "pipewire" "PipeWire"
 check_cmd "wpctl" "WirePlumber"
+check_cmd "pw-dump" "PipeWire tools"
 
 echo ""
 
@@ -122,7 +125,6 @@ echo ""
 
 CARGO_PACKAGES=(
   "xwayland-satellite:X11 compatibility layer"
-  "uv:Fast Python package manager"
 )
 
 # awww must be installed from git (not on crates.io)
@@ -216,7 +218,7 @@ echo "  plasma-browser-integration (browser MPRIS sessions and artwork)"
 echo ""
 
 echo -e "${STY_BLUE}Utilities (required):${STY_RST}"
-echo "  fish, jq, curl, git, rsync, ripgrep"
+echo "  fish, jq, file, curl, git, rsync, ripgrep, unzip, python3"
 echo "  libnotify, imagemagick, brightnessctl"
 echo ""
 
@@ -264,10 +266,7 @@ if $ask; then
   echo "  - Fonts (downloaded to ~/.local/share/fonts)"
   echo ""
   
-  local choice
-  read -p "Attempt automatic installation? [y/N]: " choice
-  
-  if [[ "$choice" =~ ^[yY]$ ]]; then
+  if tui_confirm "Attempt automatic installation?" "no"; then
     echo ""
     
     # Install Cargo packages
@@ -304,7 +303,7 @@ if $ask; then
     # JetBrains Mono Nerd Font
     if ! fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd"; then
       echo "  Downloading JetBrains Mono Nerd Font..."
-      TEMP_DIR="/tmp/fonts-$$"
+      TEMP_DIR="${TMPDIR:-/tmp}/fonts-$$"
       mkdir -p "$TEMP_DIR"
       
       if curl -fsSL -o "$TEMP_DIR/JetBrainsMono.zip" \
@@ -372,7 +371,7 @@ fi
 
 echo ""
 echo -e "${STY_CYAN}For more help, see:${STY_RST}"
-echo "  - https://github.com/snowarch/inir/wiki/Manual-Installation"
+echo "  - https://inir.space/docs/install/"
 echo "  - https://quickshell.outfoxxed.me/docs"
 echo "  - https://github.com/YaLTeR/niri/wiki"
 echo ""

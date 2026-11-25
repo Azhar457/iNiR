@@ -1,6 +1,7 @@
 import qs.modules.common
 import qs.modules.common.widgets
 import QtQuick
+import QtQuick.Controls as QQC
 import QtQuick.Controls.Material
 import QtQuick.Controls
 
@@ -9,7 +10,10 @@ import QtQuick.Controls
  * https://m3.material.io/components/text-fields/overview
  */
 TextField {
+    cursorDelegate: TextCursor {}
     id: root
+    QQC.ContextMenu.menu: null
+    QQC.ContextMenu.onRequested: position => TextEditMenu.open(root, position)
     Material.theme: Material.System
     Material.accent: Appearance.regaliaEverywhere ? "transparent" : Appearance.colors.colPrimary
     Material.primary: Appearance.colors.colPrimary

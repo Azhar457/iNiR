@@ -1,4 +1,5 @@
 //@ pragma UseQApplication
+//@ pragma AppId inir
 //@ pragma Env QS_NO_RELOAD_POPUP=1
 //@ pragma Env INIR_STANDALONE_WINDOW=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
@@ -60,7 +61,7 @@ ApplicationWindow {
 
         Process {
             running: true
-            command: ["/usr/bin/pidof", ...conflictGroup.programs]
+            command: ["pidof", ...conflictGroup.programs]
             onExited: (exitCode, exitStatus) => {
                 if (exitCode === 0) {
                     conflictGroup.visible = true
@@ -89,7 +90,7 @@ ApplicationWindow {
                     text: Translation.tr("Always")
                 }
                 onClicked: {
-                    Quickshell.execDetached(["/usr/bin/killall", ...conflictGroup.programs])
+                    Quickshell.execDetached(["killall", ...conflictGroup.programs])
                     conflictGroup.alwaysSelected()
                     conflictGroup.visible = false
                 }
@@ -97,17 +98,17 @@ ApplicationWindow {
             RippleButton {
                 colBackground: Appearance.colors.colLayer2
                 contentItem: StyledText {
-                    text: Translation.tr("Yes")
+                    text: Translation.tr("Stop")
                 }
                 onClicked: {
-                    Quickshell.execDetached(["/usr/bin/killall", ...conflictGroup.programs])
+                    Quickshell.execDetached(["killall", ...conflictGroup.programs])
                     conflictGroup.visible = false
                 }
             }
             RippleButton {
                 colBackground: Appearance.colors.colLayer2
                 contentItem: StyledText {
-                    text: Translation.tr("No")
+                    text: Translation.tr("Keep")
                 }
                 onClicked: conflictGroup.visible = false
             }

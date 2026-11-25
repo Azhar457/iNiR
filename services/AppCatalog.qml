@@ -97,7 +97,7 @@ Singleton {
 
     Process {
         id: _detectPmProc
-        command: ["/usr/bin/bash", "-c",
+        command: ["bash", "-c",
             "pm=unknown; " +
             "command -v pacman &>/dev/null && pm=pacman; " +
             "[ \"$pm\" = unknown ] && command -v xbps-query &>/dev/null && command -v xbps-install &>/dev/null && command -v xbps-remove &>/dev/null && pm=xbps; " +
@@ -153,7 +153,7 @@ Singleton {
         if (root._flatpakAvailable) {
             cmd += "; echo '---FLATPAK---'; flatpak list --app --columns=application 2>/dev/null"
         }
-        _installedProc.command = ["/usr/bin/bash", "-c", cmd]
+        _installedProc.command = ["bash", "-c", cmd]
         _installedProc.running = true
     }
 
@@ -242,7 +242,7 @@ Singleton {
 
         const target = root._getInstallTarget(app)
         if (!target) {
-            Quickshell.execDetached(["/usr/bin/notify-send",
+            Quickshell.execDetached(["notify-send",
                 Translation.tr("Software"),
                 Translation.tr("No package available for your system"),
                 "-a", "iNiR"])
@@ -273,7 +273,7 @@ Singleton {
                 script = 'flatpak install -y "$1"'
                 break
             case "aur-missing":
-                Quickshell.execDetached(["/usr/bin/notify-send",
+                Quickshell.execDetached(["notify-send",
                     Translation.tr("Software"),
                     Translation.tr("This package requires an AUR helper (yay or paru)"),
                     "-a", "iNiR"])
@@ -387,24 +387,29 @@ Singleton {
 
     // ─── IPC ───────────────────────────────────────────────────────
 
+    /// App catalog service. Browse, search, and install curated applications.
     IpcHandler {
         target: "appCatalog"
 
+        /// Refresh the installed-state cache
         function refresh(): string {
             root.refresh()
             return "refreshing installed status"
         }
 
+        /// Filter catalog entries by query
         function search(query: string): string {
             root.searchQuery = query
             return "filter set to: " + query
         }
 
+        /// Install app by catalog ID
         function install(id: string): string {
             const ok = root.installApp(id)
             return ok ? "installing " + id : "failed to install " + id
         }
 
+        /// List catalog apps with install status and descriptions
         function list(): string {
             return root.catalog.map(a => {
                 const installed = root.isInstalled(a.id) ? " [installed]" : ""

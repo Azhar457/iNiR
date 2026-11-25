@@ -60,6 +60,7 @@ Singleton {
     FileView {
         id: persistentStatesFileView
         path: root.filePath
+        printErrors: false
 
         watchChanges: true
         onFileChanged: fileReloadTimer.restart()
@@ -76,7 +77,7 @@ Singleton {
                 console.log("[Persistent] File not found, creating new file.")
                 // Ensure parent directory exists
                 const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'))
-                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
+                Quickshell.execDetached(["mkdir", "-p", parentDir])
                 fileWriteTimer.restart();
             }
         }
@@ -125,90 +126,129 @@ Singleton {
             }
 
             property JsonObject overlay: JsonObject {
-                property list<string> open: ["crosshair", "recorder", "volumeMixer", "resources"]
+                property list<string> open: ["recorder", "volumeMixer", "resources"]
+                // x/y below 0: never placed, the tool takes the first free spot; 0 size: its natural size;
+                // background below 0: the bench's own opacity once pinned.
                 property JsonObject crosshair: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: true
-                    property real x: 827
-                    property real y: 441
-                    property real width: 250
-                    property real height: 100
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
                 }
                 property JsonObject floatingImage: JsonObject {
                     property bool pinned: false
-                    property bool clickthrough: false
-                    property real x: 1650
-                    property real y: 390
+                    property bool clickthrough: true
+                    property real x: -1
+                    property real y: -1
                     property real width: 0
                     property real height: 0
+                    property real background: -1
                 }
                 property JsonObject fpsLimiter: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: false
-                    property real x: 1570
-                    property real y: 615
-                    property real width: 280
-                    property real height: 80
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
                 }
                 property JsonObject recorder: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: false
-                    property real x: 80
-                    property real y: 80
-                    property real width: 350
-                    property real height: 130
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
                 }
                 property JsonObject resources: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: true
-                    property real x: 1500
-                    property real y: 770
-                    property real width: 350
-                    property real height: 200
                     property int tabIndex: 0
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
                 }
                 property JsonObject gamePerformance: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: true
                     property bool detailed: false
-                    property string viewMode: ""
-                    property real x: 1050
-                    property real y: 170
-                    property real width: 420
-                    property real height: 330
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
                 }
                 property JsonObject volumeMixer: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: false
-                    property real x: 80
-                    property real y: 280
-                    property real width: 350
-                    property real height: 600
                     property int tabIndex: 0
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
                 }
                 property JsonObject notes: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: true
-                    property real x: 1400
-                    property real y: 42
-                    property real width: 460
-                    property real height: 330
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
                 }
                 property JsonObject discord: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: false
-                    property real x: 1200
-                    property real y: 560
-                    property real width: 320
-                    property real height: 160
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
                 }
                 property JsonObject notifications: JsonObject {
                     property bool pinned: false
                     property bool clickthrough: false
-                    property real x: 1200
-                    property real y: 80
-                    property real width: 420
-                    property real height: 500
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
+                }
+                property JsonObject clock: JsonObject {
+                    property bool pinned: false
+                    property bool clickthrough: true
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
+                }
+                property JsonObject timer: JsonObject {
+                    property bool pinned: false
+                    property bool clickthrough: false
+                    property int tabIndex: 0
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
+                }
+                property JsonObject network: JsonObject {
+                    property bool pinned: false
+                    property bool clickthrough: true
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
                 }
             }
 
@@ -219,6 +259,7 @@ Singleton {
                     property bool running: false
                     property bool paused: false
                     property int start: 0
+                    property int pausedAt: 0
                     property bool isBreak: false
                     property int cycle: 0
                 }
@@ -226,12 +267,14 @@ Singleton {
                     property bool running: false
                     property bool paused: false
                     property int start: 0
+                    property int pausedAt: 0
                     property list<var> laps: []
                 }
                 property JsonObject countdown: JsonObject {
                     property bool running: false
                     property bool paused: false
                     property int start: 0
+                    property int pausedAt: 0
                     property int duration: 60
                     // Minutes on the iRiS Timers dials, adjusted in place.
                     property list<int> presets: [5, 15, 30]
@@ -265,6 +308,17 @@ Singleton {
 
             property JsonObject screenCast: JsonObject {
                 property bool active: false
+            }
+
+            // The song that played last, so Now Playing at rest shows it instead of an empty platter.
+            property JsonObject lastPlayed: JsonObject {
+                property string title: ""
+                property string artist: ""
+                property string source: ""
+                property string art: ""
+                // The player's desktop entry, so a tap at rest can open it again.
+                property string entry: ""
+                property real at: 0
             }
         }
     }

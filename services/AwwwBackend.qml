@@ -28,11 +28,17 @@ Singleton {
     readonly property string fillMode: Config.options?.background?.fillMode ?? "fill"
     readonly property bool animationEnabled: Config.options?.background?.enableAnimation ?? true
     readonly property string panelFamily: Config.options?.panelFamily ?? "ii"
-    readonly property bool waffleUsesMainWallpaper: Config.options?.waffles?.background?.useMainWallpaper ?? true
-    readonly property string waffleWallpaperPath: Config.options?.waffles?.background?.wallpaperPath ?? ""
-    readonly property bool hideMainWallpaper: panelFamily === "waffle"
-        ? ((Config.options?.waffles?.background?.backdrop?.enable ?? false) && (Config.options?.waffles?.background?.backdrop?.hideWallpaper ?? false))
-        : ((Config.options?.background?.backdrop?.enable ?? false) && (Config.options?.background?.backdrop?.hideWallpaper ?? false))
+    // The active family's own wallpaper and backdrop, when it keeps them apart from the main ones (plugin.json `wallpaper`).
+    readonly property var _ownBackground: {
+        const key = Plugins.settingKey(panelFamily, "wallpaper")
+        return key.length > 0 ? (Config.getNestedValue(key, null) ?? ({})) : null
+    }
+    readonly property string familyWallpaperPath: _ownBackground && !(_ownBackground.useMainWallpaper ?? true)
+        ? (String(_ownBackground.wallpaperPath ?? "") || globalWallpaperPath) : ""
+    readonly property bool hideMainWallpaper: {
+        const backdrop = (_ownBackground ?? Config.options?.background)?.backdrop
+        return (backdrop?.enable ?? false) && (backdrop?.hideWallpaper ?? false)
+    }
     readonly property bool multiMonitorEnabled: WallpaperListener.multiMonitorEnabled
     readonly property var effectivePerMonitor: WallpaperListener.effectivePerMonitor
     readonly property string globalWallpaperPath: Config.options?.background?.wallpaperPath ?? ""
@@ -88,7 +94,7 @@ Singleton {
         root._clearPreviewQueue()
         root.stoppedForNoOutputs = false
         previewProc.activeSignature = signature
-        previewProc.command = ["/usr/bin/bash", "-lc", script]
+        previewProc.command = ["bash", "-lc", script]
         previewProc.running = true
     }
 
@@ -347,10 +353,8 @@ Singleton {
                 continue
 
             const monitorData = multiMonitorEnabled ? (effectivePerMonitor[monitorName] ?? null) : null
-            const waffleOwnPath = (!multiMonitorEnabled && panelFamily === "waffle" && !(waffleUsesMainWallpaper ?? true))
-                ? (waffleWallpaperPath || globalWallpaperPath)
-                : ""
-            const rawPath = waffleOwnPath || ((monitorData && monitorData.path) ? monitorData.path : globalWallpaperPath)
+            const familyOwnPath = multiMonitorEnabled ? "" : familyWallpaperPath
+            const rawPath = familyOwnPath || ((monitorData && monitorData.path) ? monitorData.path : globalWallpaperPath)
             const cleanPath = FileUtils.trimFileProtocol(String(rawPath ?? ""))
             if (!supportsMainWallpaper(cleanPath))
                 continue
@@ -514,7 +518,7 @@ Singleton {
 
         if (applyProc.running) {
             applyProc._queuedSignature = signature
-            applyProc._queuedCommand = ["/usr/bin/bash", "-lc", lines.join("\n")]
+            applyProc._queuedCommand = ["bash", "-lc", lines.join("\n")]
             return
         }
 
@@ -522,7 +526,7 @@ Singleton {
         stoppedForNoOutputs = false
         applyProc._queuedSignature = ""
         applyProc._queuedCommand = []
-        applyProc.command = ["/usr/bin/bash", "-lc", lines.join("\n")]
+        applyProc.command = ["bash", "-lc", lines.join("\n")]
         applyProc._pendingSignature = signature
         applyProc.running = true
     }
@@ -531,7 +535,7 @@ Singleton {
         id: probeProc
         // Check well-known paths first, then fall back to command -v for non-standard installs.
         // Using explicit paths avoids login-shell PATH issues that cause false negatives.
-        command: ["/usr/bin/bash", "-c", "for p in /usr/bin/awww /usr/local/bin/awww; do [ -x \"$p\" ] && { echo client; break; }; done; command -v awww >/dev/null 2>&1 && echo client; for p in /usr/bin/awww-daemon /usr/local/bin/awww-daemon; do [ -x \"$p\" ] && { echo daemon; break; }; done; command -v awww-daemon >/dev/null 2>&1 && echo daemon"]
+        command: ["bash", "-c", "for p in /usr/bin/awww /usr/local/bin/awww; do [ -x \"$p\" ] && { echo client; break; }; done; command -v awww >/dev/null 2>&1 && echo client; for p in /usr/bin/awww-daemon /usr/local/bin/awww-daemon; do [ -x \"$p\" ] && { echo daemon; break; }; done; command -v awww-daemon >/dev/null 2>&1 && echo daemon"]
         stdout: StdioCollector {
             id: probeStdout
         }
@@ -635,7 +639,7 @@ Singleton {
 
     Process {
         id: stopProc
-        command: ["/usr/bin/bash", "-lc", "command -v awww >/dev/null 2>&1 && awww kill >/dev/null 2>&1 || true"]
+        command: ["bash", "-lc", "command -v awww >/dev/null 2>&1 && awww kill >/dev/null 2>&1 || true"]
         onExited: {
             root.lastSyncSignature = ""
             root.lastError = ""
@@ -659,8 +663,7 @@ Singleton {
         syncDebounce.restart()
     }
     onPanelFamilyChanged: syncDebounce.restart()
-    onWaffleUsesMainWallpaperChanged: syncDebounce.restart()
-    onWaffleWallpaperPathChanged: syncDebounce.restart()
+    onFamilyWallpaperPathChanged: syncDebounce.restart()
     onEffectivePerMonitorChanged: {
         if (root.internalShaderTransitionActive)
             root.shaderHandoffPending = true

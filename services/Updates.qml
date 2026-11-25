@@ -32,7 +32,8 @@ Singleton {
             ? ["xbps-install", "-nu"]
             : root._backend === "dnf"
             ? ["/usr/bin/bash", "-c", "sudo dnf check-update -q 2>/dev/null | awk '/^[[:alnum:]]/ {print $1}'"]
-            : ["checkupdates"]
+            : ["bash", "-c",
+                'p=(nice -n 19); command -v ionice >/dev/null && p+=(ionice -c 3); exec "${p[@]}" "$@"', "_", "checkupdates"]
         checkUpdatesProc.running = true;
     }
 
@@ -48,7 +49,8 @@ Singleton {
 
     Timer {
         id: availabilityDefer
-        interval: 1500
+        // Nobody reads the count at boot; the first check waits for the desktop to settle.
+        interval: 20000
         repeat: false
         onTriggered: {
             root._availabilityOutput = ""
@@ -68,7 +70,7 @@ Singleton {
     Process {
         id: checkAvailabilityArchProc
         running: false
-        command: ["/usr/bin/bash", "-c",
+        command: ["bash", "-c",
             "if command -v checkupdates &>/dev/null; then printf 'pacman\\n'; " +
             "elif command -v xbps-install &>/dev/null; then printf 'xbps\\n'; " +
             "elif command -v dnf &>/dev/null; then printf 'dnf\\n'; " +

@@ -15,7 +15,6 @@ SHELL_CONFIG_DIR="$(inir_config_dir)"
 SHELL_CONFIG_FILE="$(inir_config_file)"
 TRANSLATIONS_DIR="${SCRIPT_DIR}/../../translations"
 TRANSLATIONS_TARGET_DIR="${SHELL_CONFIG_DIR}/translations"
-SOURCE_LOCALE="en_US"
 NOTIFICATION_APP_NAME="Shell"
 TARGET_LOCALE="$1"
 MODEL="${2:-${GEMINI_MODEL:-gemini-3.5-flash}}"
@@ -27,10 +26,6 @@ notify_error() {
     exit 1
 }
 
-# Update the source keys for translation (if tool exists)
-if [[ -x "${TRANSLATIONS_DIR}/tools/manage-translations.sh" ]]; then
-    "${TRANSLATIONS_DIR}/tools/manage-translations.sh" update -l "$SOURCE_LOCALE" --yes
-fi
 mkdir -p "$TRANSLATIONS_TARGET_DIR"
 
 # Get API key

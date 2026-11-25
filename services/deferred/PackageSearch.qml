@@ -52,7 +52,7 @@ Singleton {
     function installPackage(name: string, preferAurHelper: bool): bool {
         const pkg = (name ?? "").trim()
         if (!root.isSafePackageName(pkg)) {
-            Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Install Package"),
+            Quickshell.execDetached(["notify-send", Translation.tr("Install Package"),
                 Translation.tr("Invalid package name"), "-a", "Shell"])
             return false
         }
@@ -75,7 +75,7 @@ Singleton {
     function removePackage(name: string): bool {
         const pkg = (name ?? "").trim()
         if (!root.isSafePackageName(pkg)) {
-            Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Remove Package"),
+            Quickshell.execDetached(["notify-send", Translation.tr("Remove Package"),
                 Translation.tr("Invalid package name"), "-a", "Shell"])
             return false
         }
@@ -341,14 +341,17 @@ Singleton {
         }
     }
 
+    /// Package search service. Searches pacman/AUR or XBPS repositories and installed packages.
     IpcHandler {
         target: "packageSearch"
 
+        /// Start a package search
         function search(query: string): string {
             root.search(query)
             return "searching: " + query
         }
 
+        /// Print current search results
         function results(): string {
             return root.results.map(p =>
                 `${p.repo}/${p.name} ${p.version}${p.installed ? " [installed]" : ""}\t${p.description}`

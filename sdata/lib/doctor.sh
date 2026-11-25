@@ -15,6 +15,8 @@ XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 XDG_BIN_HOME="${XDG_BIN_HOME:-$HOME/.local/bin}"
+# Where Nix installs what a person or the system has: NixOS has no /usr/lib for plugins, and sets no LV2_PATH
+DOCTOR_NIX_PROFILES=("$HOME/.nix-profile" "/etc/profiles/per-user/${USER:-$(id -un)}" /run/current-system/sw /nix/var/nix/profiles/default)
 
 doctor_pass() {
     tui_success "$1"
@@ -37,11 +39,11 @@ doctor_detect_compositor_service() {
         return 1
     fi
 
-    if systemctl --user cat niri.service &>/dev/null; then
-        printf 'niri.service'
-        return 0
-    fi
-    return 1
+    # Both compositors iNiR runs on, one per line, as soon as either is installed
+    # (the one installed later starts the shell too); only Niri's when the person
+    # picked Niri alone.
+    source "${REPO_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}/scripts/lib/compositor.sh" 2>/dev/null || return 1
+    compositor_units
 }
 
 ###############################################################################
@@ -51,6 +53,9 @@ doctor_detect_compositor_service() {
 check_dependencies() {
     local missing=()
     local missing_cmds=()
+    # the list differs by distro (Void has no niri-session, Arch adds checkupdates): an update reaches here before
+    # anything detected it, and Void then asked xbps for a niri-session package that doesn't exist
+    detect_distro_quietly || true
     
     # Commands to check (command:friendly_name)
     # These are distro-agnostic - we check for the command, not the package
@@ -61,9 +66,12 @@ check_dependencies() {
         "niri:Niri"
         "nmcli:NetworkManager"
         "wpctl:WirePlumber"
+        "pw-dump:PipeWire tools"
         "jq:jq"
+        "file:file"
         "rsync:rsync"
         "curl:curl"
+        "unzip:unzip"
         "git:git"
         "python3:python3"
         "fish:fish"
@@ -80,7 +88,6 @@ check_dependencies() {
         "flock:util-linux"
         "wlsunset:wlsunset"
         "easyeffects:EasyEffects"
-        "uv:uv"
         "cava:cava"
         "qalc:qalculate"
         "yt-dlp:yt-dlp"
@@ -111,6 +118,8 @@ check_dependencies() {
     if [[ "${OS_GROUP_ID:-unknown}" == "arch" ]]; then
         cmds+=("checkupdates:pacman-contrib")
     fi
+    # the login starts the shell through niri-session and niri.service; Void starts niri itself (docs/VOID.md)
+    [[ "${OS_GROUP_ID:-unknown}" == "void" ]] || cmds+=("niri-session:Niri session")
     if [[ "${OS_GROUP_ID:-unknown}" == "void" ]]; then
         cmds+=(
             "ydotool:ydotool"
@@ -131,11 +140,23 @@ check_dependencies() {
         if [[ ("$cmd" == "awww" || "$cmd" == "awww-daemon") && "${OS_GROUP_ID:-unknown}" != "arch" ]] && ! command -v "$cmd" &>/dev/null && ! command -v "$HOME/.local/bin/$cmd" &>/dev/null; then
             continue
         fi
+        # the shell's runtime is qs-rs as setup installs it, or Quickshell
+        [[ "$cmd" == qs ]] && shell_qs >/dev/null && continue
         if ! command -v "$cmd" &>/dev/null && ! command -v "$HOME/.local/bin/$cmd" &>/dev/null; then
             missing+=("$name")
             missing_cmds+=("$cmd")
         fi
     done
+
+    # the profile buttons' daemon where nothing manages power yet; Void lists it above
+    case "${OS_GROUP_ID:-unknown}" in
+        arch|fedora|debian|ubuntu)
+            if power_profiles_wanted; then
+                missing+=("power-profiles-daemon")
+                missing_cmds+=("power-profiles")
+            fi
+            ;;
+    esac
 
     # Void's source provider is version-pinned, so an old binary is also a
     # repairable dependency rather than merely an available command.
@@ -190,7 +211,11 @@ check_dependencies() {
     # when the actual LSP LV2 DSP backend is absent. Check the bundle itself so
     # Doctor repairs the capability the native iNiR equalizer depends on.
     local lsp_lv2_found=false lsp_dir
-    for lsp_dir in /usr/lib/lv2 /usr/lib64/lv2 /usr/local/lib/lv2 /usr/local/lib64/lv2; do
+    # LV2_PATH first, as LV2 hosts read it, then the Nix profiles (NixOS sets no LV2_PATH and has no /usr/lib/lv2)
+    local -a lv2_dirs=() nix_profile
+    IFS=: read -r -a lv2_dirs <<<"${LV2_PATH:-}"
+    for nix_profile in "${DOCTOR_NIX_PROFILES[@]}"; do lv2_dirs+=("$nix_profile/lib/lv2"); done
+    for lsp_dir in "${lv2_dirs[@]}" /usr/lib/lv2 /usr/lib64/lv2 /usr/local/lib/lv2 /usr/local/lib64/lv2; do
         if compgen -G "$lsp_dir/lsp-plugins*.lv2" >/dev/null \
                 || compgen -G "$lsp_dir/lsp*.lv2" >/dev/null; then
             lsp_lv2_found=true
@@ -208,6 +233,28 @@ check_dependencies() {
     if [[ "$lsp_lv2_found" != true ]]; then
         missing+=("Linux Studio Plugins LV2")
         missing_cmds+=("lsp-plugins-lv2")
+    fi
+
+    # Not commands either: Qt apps take the theme's colors through plasma-integration's platform theme, and emoji
+    # need a color font (the Qt theming and font steps say why). Here an update installs them.
+    local qt_plugins qt_theme_found=false
+    local -a qt_path=()
+    IFS=: read -r -a qt_path <<<"${QT_PLUGIN_PATH:-}"
+    for nix_profile in "${DOCTOR_NIX_PROFILES[@]}"; do qt_path+=("$nix_profile/lib/qt-6/plugins"); done
+    for qt_plugins in "$(qtpaths6 --plugin-dir 2>/dev/null || qtpaths --plugin-dir 2>/dev/null || true)" \
+            "${qt_path[@]}" /usr/lib/qt6/plugins /usr/lib64/qt6/plugins /usr/lib/x86_64-linux-gnu/qt6/plugins; do
+        if [[ -n "$qt_plugins" && -f "$qt_plugins/platformthemes/KDEPlasmaPlatformTheme6.so" ]]; then
+            qt_theme_found=true
+            break
+        fi
+    done
+    if [[ "$qt_theme_found" != true ]]; then
+        missing+=("plasma-integration")
+        missing_cmds+=("plasma-integration")
+    fi
+    if command -v fc-list &>/dev/null && ! fc-list : family 2>/dev/null | grep -qi 'Noto Color Emoji'; then
+        missing+=("Noto Color Emoji")
+        missing_cmds+=("font-noto-color-emoji")
     fi
 
     # Tesseract itself can be installed while the language data iNiR exposes in
@@ -399,7 +446,25 @@ check_critical_files() {
     for file in "${critical[@]}"; do
         [[ ! -f "$target/$file" ]] && { doctor_fail "Missing: $file"; ((missing++)) || true; }
     done
-    
+
+    # families come from the hub: the one in use, and every plugin linked in, must reach its plugin.json
+    local family="ii" config="${DOTS_CORE_CONFDIR}/config.json" link
+    if [[ -f "$config" ]]; then
+        # no jq or a broken config: the family can't be told, so it isn't judged
+        command -v jq &>/dev/null \
+            && family="$(jq -r 'if (.panelFamily | type) == "string" and .panelFamily != "" then .panelFamily else "ii" end' \
+                "$config" 2>/dev/null)" || family=""
+    fi
+    if [[ -n "$family" && ! -f "$target/modules/$family/plugin.json" ]]; then
+        doctor_fail "Desktop family not installed: $family (run: inir hub install $family)"
+        ((missing++)) || true
+    fi
+    for link in "$target"/modules/*; do
+        [[ -L "$link" && ! -e "$link" ]] || continue
+        doctor_fail "Plugin link broken: modules/${link##*/} (run: inir hub install ${link##*/})"
+        ((missing++)) || true
+    done
+
     [[ $missing -eq 0 ]] && doctor_pass "Critical files present"
 }
 
@@ -596,61 +661,21 @@ check_state_directories() {
     [[ $created -gt 0 ]] && doctor_fix "Created $created directory(ies)" || doctor_pass "State directories exist"
 }
 
-check_python_packages() {
-    local venv="${XDG_STATE_HOME}/quickshell/.venv"
-    local req=""
-    local runtime_dir
-    local repo_root
-
-    runtime_dir="$(doctor_runtime_dir)"
-    if [[ -n "$runtime_dir" && -f "${runtime_dir}/sdata/uv/requirements.txt" ]]; then
-        req="${runtime_dir}/sdata/uv/requirements.txt"
-    else
-        repo_root="$(doctor_repo_root || true)"
-        if [[ -n "$repo_root" && -f "${repo_root}/sdata/uv/requirements.txt" ]]; then
-            req="${repo_root}/sdata/uv/requirements.txt"
-        else
-            doctor_runtime_dir_or_fail "Python packages"
-            doctor_pass "Python (no requirements.txt)"
-            return 0
-        fi
-    fi
-    
-    # Check for broken venv (e.g. after python update)
-    if [[ -d "$venv/bin" ]]; then
-        if ! "$venv/bin/python" --version &>/dev/null; then
-            doctor_fail "Broken Python venv detected"
-            rm -rf "$venv"
-        fi
+check_helpers() {
+    # inir-accel answers the Go helpers v2.33 compiled: an accel that moved leaves a hook
+    if ! prebuilt_accel_hooks_ok; then
+        prebuilt_accel_hooks
+        doctor_fix "inir-accel hooks match what is installed again"
     fi
 
-    # Check if venv exists (or was just removed above)
-    if [[ ! -d "$venv" ]]; then
-        if command -v uv &>/dev/null; then
-            uv venv "$venv" -p 3.12 2>/dev/null || uv venv "$venv" 2>/dev/null
-            doctor_fix "Created Python venv"
-        else
-            doctor_fail "Python venv missing (install uv)"
-            return
-        fi
-    fi
-    
-    [[ ! -f "$req" ]] && { doctor_pass "Python (no requirements.txt)"; return; }
-    
-    # Versions count, not just names: a package installed below its floor in requirements.txt breaks the
-    # scripts that rely on the newer API. The offline dry run answers without the network when all is met.
-    if command -v uv &>/dev/null; then
-        local plan
-        plan=$(VIRTUAL_ENV="$venv" uv pip install --dry-run --offline -r "$req" 2>&1)
-        if [[ "$plan" == *"Would make no changes"* ]]; then
-            doctor_pass "Python packages OK"
-        elif VIRTUAL_ENV="$venv" uv pip install -r "$req" &>/dev/null; then
-            doctor_fix "Python packages brought up to requirements"
-        else
-            doctor_fail "Python packages below requirements (uv pip install -r $req failed)"
-        fi
+    if [[ -x "$(ytdlp_dir)/yt-dlp" ]]; then
+        doctor_pass "yt-dlp OK"
+    elif install-ytdlp >/dev/null 2>&1 && [[ -x "$(ytdlp_dir)/yt-dlp" ]]; then
+        doctor_fix "Installed current yt-dlp for YT Music"
+    elif ! ytdlp_build >/dev/null && command -v yt-dlp >/dev/null 2>&1; then
+        doctor_pass "yt-dlp OK (the distro's: no upstream build for this machine)"
     else
-        doctor_fail "uv not installed, cannot check Python packages"
+        doctor_fail "yt-dlp missing for YT Music (inir doctor installs it once online)"
     fi
 
     local deno_bin
@@ -689,12 +714,20 @@ check_fonts() {
         "Rubik:Rubik:optional"
         "Space Grotesk:Space Grotesk:optional"
         "Readex Pro:Readex Pro:optional"
-        "Twemoji:Twemoji:optional"
+        "Twemoji\|Twitter Color Emoji:Twemoji:optional"
     )
 
     if ! command -v fc-list &>/dev/null; then
         doctor_fail "fontconfig not installed (cannot verify fonts)"
         return 1
+    fi
+
+    # the faces the runtime and its plugins ship, linked first: an update checks here before the new shell has done
+    # it, and every update said "Configured fonts unavailable: Geist" for a family it had just installed (11-04)
+    local runtime_fonts
+    runtime_fonts="$(doctor_runtime_dir)"
+    if [[ -n "$runtime_fonts" && -f "$runtime_fonts/scripts/colors/link-bundled-fonts.sh" ]]; then
+        bash "$runtime_fonts/scripts/colors/link-bundled-fonts.sh" >/dev/null 2>&1 || true
     fi
 
     local fc_cache
@@ -735,18 +768,26 @@ check_fonts() {
 
     local config_file="${DOTS_CORE_CONFDIR}/config.json"
     if [[ -f "$config_file" ]] && command -v jq &>/dev/null; then
-        local configured_font
+        local configured_font font_keys runtime manifest
+        # Material's fonts are the base config's; every other family names its setting and the font it falls back to
+        # in plugin.json (settings.font); one broken manifest costs only its own family
+        runtime="$(doctor_runtime_dir)"
+        font_keys="$(for manifest in ${runtime:+"$runtime"/modules/*/plugin.json}; do
+            jq -c '.settings.font? | select(type == "object" and (.key | type) == "string" and .key != "")' \
+                "$manifest" 2>/dev/null
+        done | jq -sc . 2>/dev/null)"
         while IFS= read -r configured_font; do
             [[ -n "$configured_font" ]] || continue
             case "${configured_font,,}" in
                 sans|sans-serif|serif|monospace|system-ui|auto) continue ;;
             esac
             _font_installed "$configured_font" || missing_configured+=("$configured_font")
-        done < <(jq -r '[
+        done < <(jq -r --argjson keys "${font_keys:-[]}" '[
             .appearance.typography.mainFont,
             .appearance.typography.titleFont,
             .appearance.typography.monospaceFont,
-            .waffles.theming.font.family
+            ($keys[] as $f | (try getpath($f.key | split(".")) catch null) as $v
+                | if ($v | type) == "string" and $v != "" then $v else $f.fallback end)
         ] | .[] | select(type == "string" and length > 0)' "$config_file" 2>/dev/null | sort -u)
     fi
 
@@ -868,16 +909,13 @@ _try_install_font_package() {
     mkdir -p "$font_dir"
 
     case "$display_name" in
-        "Material Symbols Rounded")
-            curl -fsSL -o "$font_dir/MaterialSymbolsRounded.ttf" \
-                "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" 2>/dev/null && return 0
-            ;;
-        "Material Symbols Outlined")
-            curl -fsSL -o "$font_dir/MaterialSymbolsOutlined.ttf" \
-                "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" 2>/dev/null && return 0
+        "Material Symbols "*)
+            local glyph_set="${display_name##* }"
+            curl -fsSL -o "$font_dir/MaterialSymbols${glyph_set}.ttf" \
+                "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbols${glyph_set}%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" 2>/dev/null
             ;;
         "JetBrainsMono Nerd Font")
-            local tmp_nf="/tmp/nerdfonts-$$"
+            local tmp_nf="${TMPDIR:-/tmp}/nerdfonts-$$"
             mkdir -p "$tmp_nf"
             if curl -fsSL -o "$tmp_nf/JetBrainsMono.zip" \
                 "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip" 2>/dev/null; then
@@ -888,7 +926,7 @@ _try_install_font_package() {
             rm -rf "$tmp_nf"
             ;;
         "Roboto Flex")
-            local tmp="/tmp/roboto-flex-$$"
+            local tmp="${TMPDIR:-/tmp}/roboto-flex-$$"
             mkdir -p "$tmp"
             if curl -fsSL -o "$tmp/roboto-flex.zip" \
                 "https://github.com/googlefonts/roboto-flex/releases/download/3.200/roboto-flex-fonts.zip" 2>/dev/null; then
@@ -926,6 +964,14 @@ _try_install_font_package() {
 check_niri_running() {
     local current_socket="${NIRI_SOCKET:-}"
 
+    # Umbriel is the other compositor iNiR runs on.
+    if [[ -n "${UMBRIEL_SOCKET:-}" && -S "${UMBRIEL_SOCKET}" ]] \
+            || { declare -F has_usable_systemd_user_manager >/dev/null 2>&1 && has_usable_systemd_user_manager \
+                && systemctl --user is-active --quiet umbriel.service >/dev/null 2>&1; }; then
+        doctor_pass "Umbriel compositor running"
+        return 0
+    fi
+
     if declare -F has_usable_systemd_user_manager >/dev/null 2>&1 \
             && has_usable_systemd_user_manager \
             && systemctl --user is-active --quiet niri.service >/dev/null 2>&1 \
@@ -962,7 +1008,7 @@ check_niri_running() {
     if [[ -n "$current_socket" && -S "$current_socket" ]]; then
         doctor_pass "Niri compositor running"
     else
-        doctor_fail "Niri not detected (run inside Niri session)"
+        doctor_fail "Neither Niri nor Umbriel detected (run inside a Niri or Umbriel session)"
     fi
 }
 
@@ -1076,7 +1122,8 @@ check_service_unit_health() {
         fi
 
         local user_service="${XDG_CONFIG_HOME}/systemd/user/inir.service"
-        if [[ "$service_path" == "$user_service" ]]; then
+        # Home Manager's unit is the package's own, linked from the store
+        if [[ "$service_path" == "$user_service" ]] && ! nix_managed "$user_service"; then
             local packaged_asset="${REPO_ROOT}/assets/systemd/inir.service"
             local packaged_unit=""
             local candidate
@@ -1160,26 +1207,29 @@ check_service_unit_health() {
         tui_warn "systemd is loading inir.service from ${fragment_path}"
     fi
 
-    local has_expected_link=false
+    local missing_links=()
     local stale_links=()
-    local wants_dir
+    local wants_dir target_name
     for wants_dir in "${XDG_CONFIG_HOME}/systemd/user"/*.wants; do
         [[ -d "$wants_dir" ]] || continue
         [[ -e "$wants_dir/inir.service" || -L "$wants_dir/inir.service" ]] || continue
-        local target_name
         target_name="$(basename "${wants_dir%.wants}")"
-        if [[ -n "$expected_target" && "$target_name" == "$expected_target" ]]; then
-            has_expected_link=true
-        else
-            stale_links+=("$target_name")
-        fi
+        grep -qxF "$target_name" <<< "$expected_target" || stale_links+=("$target_name")
     done
+    while read -r target_name; do
+        [[ -n "$target_name" ]] || continue
+        local link="${XDG_CONFIG_HOME}/systemd/user/${target_name}.wants/inir.service"
+        [[ -e "$link" || -L "$link" ]] && continue
+        [[ "$installed_strategy" == "package-manager" ]] && declare -F compositor_wants_inir >/dev/null \
+            && compositor_wants_inir "$target_name" && continue
+        missing_links+=("$target_name")
+    done <<< "$expected_target"
 
-    if [[ -n "$expected_target" && "$has_expected_link" == false ]]; then
+    if [[ ${#missing_links[@]} -gt 0 ]]; then
         if declare -F ensure_user_inir_service_enabled >/dev/null 2>&1 && ensure_user_inir_service_enabled >/dev/null 2>&1; then
-            doctor_fix "Enabled inir.service for ${expected_target}"
+            doctor_fix "Enabled inir.service for ${missing_links[*]}"
         else
-            doctor_fail "inir.service not wired to ${expected_target}"
+            doctor_fail "inir.service not wired to ${missing_links[*]}"
             echo -e "    ${STY_FAINT}Run: inir service enable${STY_RST}"
         fi
     fi
@@ -1246,6 +1296,8 @@ _doctor_abi_detect() {
     _doctor_abi_msg=""
     _doctor_abi_buildtime=""
     _doctor_abi_runtime=""
+    # qs-rs from the pin carries the Qt it was built with (check_quickshell_abi)
+    _doctor_own_runtime >/dev/null && return 0
 
     if ! command -v qs >/dev/null 2>&1; then
         return 0
@@ -1298,7 +1350,39 @@ _doctor_abi_detect() {
     return 0
 }
 
+# runtime/current when setup put qs-rs there (sdata/lib/prebuilt.sh): the launcher starts it before any qs in PATH
+_doctor_own_runtime() {
+    local own
+    own="$(_prebuilt_home)/runtime/current"
+    [[ -L "$own" ]] && printf '%s\n' "$own"
+}
+
+# the qs the shell runs on, or the one the launcher starts when none runs (sdata/lib/prebuilt.sh shell_qs)
+_doctor_qs() { shell_qs; }
+
 check_quickshell_abi() {
+    local own ver
+    if own="$(_doctor_own_runtime)"; then
+        ver="$(readlink "$own")"
+        if timeout 20 env QT_QPA_PLATFORM=offscreen "$own/bin/qs" --version >/dev/null 2>&1; then
+            doctor_pass "qs-rs $ver runs on its own Qt"
+            # an add-on that came to be wanted since the last update (Qt WebEngine once the Web Apps tab is on)
+            local addons
+            addons="$(prebuilt_pending_addons | paste -sd, - | sed 's/,/, /g')"
+            [[ -n "$addons" ]] || return 0
+            if prebuilt_fetch; then
+                doctor_fix "Got $addons"
+                return 0
+            fi
+            doctor_fail "Could not get $addons; inir doctor tries again once online"
+            return 1
+        fi
+        prebuilt_runtime_off
+        doctor_fix "qs-rs $ver does not start here, so the shell runs on Quickshell; inir update tries qs-rs again"
+        return 0
+    fi
+
+
     # Quickshell uses Qt private APIs — any Qt minor version bump (e.g. 6.10→6.11)
     # breaks ABI and requires rebuilding quickshell. This is the #1 cause of
     # "quickshell crashes on any UI interaction" after system updates.
@@ -1334,6 +1418,10 @@ check_polkit_agent() {
         return 0
     fi
 
+    if _doctor_own_runtime >/dev/null; then
+        doctor_pass "Password prompts: answered by the shell"
+        return 0
+    fi
     qs_bin="$(readlink -f "$(command -v qs 2>/dev/null)" 2>/dev/null || true)"
     # ldd reads ELF binaries only; a wrapper script (Nix) proves nothing either way.
     if [[ -z "$qs_bin" ]] || ! ldd "$qs_bin" >/dev/null 2>&1; then
@@ -1351,7 +1439,7 @@ check_polkit_agent() {
 
 check_quickshell_loads() {
     local target
-    local running_output
+    local running_output qs_bin
     target="$(doctor_runtime_dir)"
     if [[ -z "$target" ]]; then
         doctor_runtime_dir_or_fail "Quickshell"
@@ -1369,7 +1457,8 @@ check_quickshell_loads() {
     fi
     
     # If already running, just check it's responsive
-    running_output="$(qs -p "$target" list 2>/dev/null || true)"
+    qs_bin="$(_doctor_qs)"
+    running_output="$("$qs_bin" -p "$target" list 2>/dev/null || true)"
     if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
         doctor_pass "Quickshell running"
         return 0
@@ -1379,8 +1468,8 @@ check_quickshell_loads() {
     echo -e "${STY_FAINT}Starting quickshell...${STY_RST}"
     
     # Start in background and capture initial output
-    local logfile="/tmp/qs-doctor-$$.log"
-    nohup qs -p "$target" >"$logfile" 2>&1 &
+    local logfile="${TMPDIR:-/tmp}/qs-doctor-$$.log"
+    nohup "$qs_bin" -p "$target" >"$logfile" 2>&1 &
     local qs_pid=$!
     disown
     
@@ -1443,46 +1532,25 @@ check_matugen_colors() {
         if [[ -n "$wallpaper" && -f "$wallpaper" && -s "$wallpaper" ]]; then
             local template_dir="${XDG_CONFIG_HOME}/matugen"
 
-            local runtime_dir
-            runtime_dir="$(doctor_runtime_dir)"
-            local gen_material_script=""
-            if [[ -n "$runtime_dir" && -f "${runtime_dir}/scripts/colors/generate_colors_material.py" ]]; then
-                gen_material_script="${runtime_dir}/scripts/colors/generate_colors_material.py"
-            else
-                local repo_root
-                repo_root="$(doctor_repo_root || true)"
-                if [[ -n "$repo_root" && -f "${repo_root}/scripts/colors/generate_colors_material.py" ]]; then
-                    gen_material_script="${repo_root}/scripts/colors/generate_colors_material.py"
-                fi
-            fi
-
-            if [[ -n "$gen_material_script" ]]; then
-                local python_cmd=""
-                local venv_python="${XDG_STATE_HOME}/quickshell/.venv/bin/python3"
-                if [[ -x "$venv_python" ]]; then
-                    python_cmd="$venv_python"
-                elif command -v python3 &>/dev/null; then
-                    python_cmd="python3"
-                fi
-
-                if [[ -n "$python_cmd" ]]; then
-                    mkdir -p "$(dirname "$colors_json")"
-                    local _render_args=()
-                    [[ -d "$template_dir" && -f "$template_dir/templates.json" ]] && _render_args+=(--render-templates "$template_dir")
-                    "$python_cmd" "$gen_material_script" \
-                        --path "$wallpaper" \
-                        --mode dark \
-                        --json-output "$colors_json" \
-                        "${_render_args[@]}" \
-                        >/dev/null 2>&1 || true
-                fi
+            local accel
+            accel="$(prebuilt_accel_bin)"
+            if [[ -x "$accel" ]]; then
+                mkdir -p "$(dirname "$colors_json")"
+                local _render_args=()
+                [[ -d "$template_dir" && -f "$template_dir/templates.json" ]] && _render_args+=(--render-templates "$template_dir")
+                "$accel" material-colors \
+                    --path "$wallpaper" \
+                    --mode dark \
+                    --json-output "$colors_json" \
+                    "${_render_args[@]}" \
+                    >/dev/null 2>&1 || true
             fi
 
             if [[ -f "$colors_json" || -f "$colors_scss" ]]; then
                 doctor_fix "Regenerated theme colors from ${wallpaper_source}"
             else
                 doctor_fail "Theme colors regeneration failed"
-                echo -e "    ${STY_FAINT}Python color generation failed — check venv${STY_RST}"
+                echo -e "    ${STY_FAINT}inir-accel is missing or failed: run inir update${STY_RST}"
                 return 1
             fi
         else
@@ -1555,8 +1623,7 @@ check_conflicting_services() {
 }
 
 check_conflicting_shells() {
-    # Quickshell-based shells that conflict with iNiR at the package level.
-    # These provide/replace quickshell or own overlapping config paths.
+    # Other Quickshell-based shells.
     local shell_pkgs=(
         "cachyos-niri-noctalia"
         "noctalia-shell"
@@ -1583,11 +1650,11 @@ check_conflicting_shells() {
         return 0
     fi
 
+    # They can stay: iNiR runs on its own runtime and config; only two shells in one session clash.
     if [[ ${#found[@]} -gt 0 ]]; then
-        doctor_fail "Conflicting Quickshell shells installed: ${found[*]}"
-        echo -e "    ${STY_FAINT}These must be removed for iNiR to work. Run: ./setup install${STY_RST}"
+        doctor_pass "Other shells installed: ${found[*]} (fine; don't start them in iNiR's session)"
     else
-        doctor_pass "No conflicting Quickshell shells"
+        doctor_pass "No other Quickshell shells"
     fi
 }
 
@@ -1641,7 +1708,6 @@ check_wallpaper_health() {
 }
 
 check_environment_vars() {
-    local venv_path="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
     local fixed=0
     local legacy_malloc_repaired=0
 
@@ -1651,39 +1717,15 @@ check_environment_vars() {
         doctor_fail "Could not clean legacy Quickshell allocator environment"
     fi
     
-    # Check bash — look for INIR_VENV (canonical) or ILLOGICAL_IMPULSE_VIRTUAL_ENV (legacy)
-    if [[ -f "$HOME/.bashrc" ]] && ! grep -q "INIR_VENV" "$HOME/.bashrc" 2>/dev/null; then
-        cat >> "$HOME/.bashrc" << BEOF
-
-# iNiR environment
-export INIR_VENV="${venv_path}"
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
-# end iNiR
-BEOF
-        ((fixed++)) || true
-    fi
-    
-    # Check fish
-    local fish_conf="${XDG_CONFIG_HOME}/fish/conf.d/inir-env.fish"
-    if command -v fish &>/dev/null && [[ ! -f "$fish_conf" ]]; then
-        mkdir -p "$(dirname "$fish_conf")"
-        cat > "$fish_conf" << FEOF
-# iNiR environment — auto-generated by doctor
-set -gx INIR_VENV "${venv_path}"
-set -gx ILLOGICAL_IMPULSE_VIRTUAL_ENV "\$INIR_VENV"
-FEOF
+    # bash and zsh carry the iNiR environment block (terminal colours, prompt)
+    if [[ -f "$HOME/.bashrc" ]] && ! grep -qxF "# iNiR environment" "$HOME/.bashrc" 2>/dev/null; then
+        write_inir_shell_env "$HOME/.bashrc" bash
         ((fixed++)) || true
     fi
     
     # Check zsh
-    if [[ -f "$HOME/.zshrc" ]] && ! grep -q "INIR_VENV" "$HOME/.zshrc" 2>/dev/null; then
-        cat >> "$HOME/.zshrc" << ZEOF
-
-# iNiR environment
-export INIR_VENV="${venv_path}"
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
-# end iNiR
-ZEOF
+    if [[ -f "$HOME/.zshrc" ]] && ! grep -qxF "# iNiR environment" "$HOME/.zshrc" 2>/dev/null; then
+        write_inir_shell_env "$HOME/.zshrc" zsh
         ((fixed++)) || true
     fi
     
@@ -1717,7 +1759,11 @@ check_qt_theming() {
         qt_plugin_dir=$(qtpaths --plugin-dir 2>/dev/null || true)
         [[ -n "$qt_plugin_dir" ]] && search_dirs+=("${qt_plugin_dir}/platformthemes")
     fi
-    # Known fallback paths for common distros
+    # QT_PLUGIN_PATH as Qt reads it (NixOS names its profiles' plugin dirs there), then the usual distro paths
+    local -a qt_path=()
+    IFS=: read -r -a qt_path <<<"${QT_PLUGIN_PATH:-}"
+    for plugindir in "${DOCTOR_NIX_PROFILES[@]}"; do qt_path+=("$plugindir/lib/qt-6/plugins"); done
+    for plugindir in "${qt_path[@]}"; do search_dirs+=("$plugindir/platformthemes"); done
     search_dirs+=(
         /usr/lib/qt6/plugins/platformthemes
         /usr/lib64/qt6/plugins/platformthemes
@@ -1768,6 +1814,10 @@ check_qt_theming() {
         qt_plugin_dir=$(qtpaths --plugin-dir 2>/dev/null || true)
         [[ -n "$qt_plugin_dir" ]] && style_dirs+=("${qt_plugin_dir}/styles")
     fi
+    local -a qt_style_path=()
+    IFS=: read -r -a qt_style_path <<<"${QT_PLUGIN_PATH:-}"
+    for styledir in "${DOCTOR_NIX_PROFILES[@]}"; do qt_style_path+=("$styledir/lib/qt-6/plugins"); done
+    for styledir in "${qt_style_path[@]}"; do style_dirs+=("$styledir/styles"); done
     style_dirs+=(
         /usr/lib/qt6/plugins/styles
         /usr/lib64/qt6/plugins/styles
@@ -1837,8 +1887,15 @@ check_niri_config() {
 # Run a doctor check as an animated step. Output is buffered while the
 # spinner runs. Single-result steps show the result inline on the step
 # line; multi-result steps expand details below.
+# INIR_DOCTOR_ONLY="5,8" runs just those steps (the inir binary checks first and asks
+# for the ones it found failing); with it the hero card and summary stay out.
+_doctor_wants() {
+    [[ -z "${INIR_DOCTOR_ONLY:-}" ]] || [[ ",${INIR_DOCTOR_ONLY}," == *",$1,"* ]]
+}
+
 _doctor_run_step() {
     local step="$1" total="$2" desc="$3"; shift 3
+    _doctor_wants "$step" || return 0
     local tmpfile pre_failed pre_fixed
     tmpfile=$(mktemp)
     pre_failed=$doctor_failed
@@ -1860,13 +1917,17 @@ _doctor_run_step() {
         msg=$(sed 's/\x1b\[[0-9;]*m//g; s/^[[:space:]]*//; s/^[✓✗⚠→] //' "$tmpfile")
     fi
 
+    local status=pass
     if [[ $new_fails -gt 0 ]]; then
+        status=fail
         tui_step_fail "${msg:-$desc}"
     elif [[ $new_fixes -gt 0 ]]; then
+        status=fixed
         tui_step_warn "${msg:-Fixed: $desc}"
     else
         tui_step_done "${msg:-$desc}"
     fi
+    [[ -n "${INIR_DOCTOR_REPORT:-}" ]] && printf '%s %s\n' "$step" "$status" >>"$INIR_DOCTOR_REPORT"
 
     # Expand details for multi-result steps
     (( lines > 1 )) && sed 's/^/  /' "$tmpfile"
@@ -1883,14 +1944,15 @@ run_doctor_with_fixes() {
     # Step 1: Dependencies (special — may trigger interactive install)
     _doctor_run_step 1 $total_steps "Checking dependencies" check_dependencies
 
-    if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
+    if _doctor_wants 1 && [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
         detect_distro
         case "$OS_GROUP_ID" in
             arch|fedora|debian|ubuntu|void)
                 if ! $ask || tui_confirm "Install missing dependencies now?"; then
                     SKIP_SYSUPDATE=true
                     ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
-                    if ! source ./sdata/subcmd-install/1.deps-router.sh; then
+                    # a subshell: a package the distro refuses fails this step, the other checks still run
+                    if ! (source ./sdata/subcmd-install/1.deps-router.sh); then
                         doctor_fail "Dependency installation failed"
                     elif [[ "$OS_GROUP_ID" == void ]] && ! configure_void_ydotool_uinput; then
                         doctor_fail "Could not configure the ydotool provider"
@@ -1899,6 +1961,7 @@ run_doctor_with_fixes() {
                     else
                         # Re-check after a successful repair.
                         doctor_passed=0; doctor_failed=0; doctor_fixed=0
+                        [[ -n "${INIR_DOCTOR_REPORT:-}" ]] && sed -i '/^1 /d' "$INIR_DOCTOR_REPORT"
                         _doctor_run_step 1 $total_steps "Re-checking dependencies" check_dependencies
                     fi
                 fi
@@ -1919,13 +1982,14 @@ run_doctor_with_fixes() {
     _doctor_run_step 9  $total_steps "Checking version tracking"     check_version_tracking
     _doctor_run_step 10 $total_steps "Checking file manifest"        check_manifest
     _doctor_run_step 11 $total_steps "Checking user service"         check_service_unit_health
-    _doctor_run_step 12 $total_steps "Checking Niri compositor"      check_niri_running
-    _doctor_run_step 13 $total_steps "Checking Python packages"      check_python_packages
+    _doctor_run_step 12 $total_steps "Checking the compositor"       check_niri_running
+    _doctor_run_step 13 $total_steps "Checking helpers"              check_helpers
     _doctor_run_step 14 $total_steps "Checking stale local quickshell" check_stale_local_quickshell
 
     # Step 15 pre-check: the CLI owns the rebuild for every install kind (`inir doctor --fix-abi`).
-    # It runs outside _doctor_run_step so the build and its prompts show live in the terminal.
-    if ! _doctor_abi_detect; then
+    # It runs outside _doctor_run_step so the build and its prompts show live in the terminal; the binary asked
+    # already when it hands one step over (--report).
+    if _doctor_wants 15 && [[ -z "${INIR_DOCTOR_REPORT:-}" ]] && ! _doctor_abi_detect; then
         echo ""
         echo -e "  ${STY_YELLOW}Quickshell was built for another Qt version: $_doctor_abi_msg${STY_RST}"
         echo -e "  ${STY_FAINT}Quickshell uses Qt internals and asks to be rebuilt after every Qt update. Until then it can crash.${STY_RST}"
@@ -1946,11 +2010,16 @@ run_doctor_with_fixes() {
     _doctor_run_step 18 $total_steps "Checking theme colors"         check_matugen_colors
     _doctor_run_step 19 $total_steps "Checking Qt theming"           check_qt_theming
     _doctor_run_step 20 $total_steps "Checking conflicting services" check_conflicting_services
-    _doctor_run_step 21 $total_steps "Checking conflicting shells"   check_conflicting_shells
+    _doctor_run_step 21 $total_steps "Checking other shells"         check_conflicting_shells
     _doctor_run_step 22 $total_steps "Checking wallpaper health"     check_wallpaper_health
     _doctor_run_step 23 $total_steps "Checking environment variables" check_environment_vars
     _doctor_run_step 24 $total_steps "Checking Niri config"          check_niri_config
     _doctor_run_step 25 $total_steps "Checking graphics renderer"    check_graphics_stack
+
+    if [[ -n "${INIR_DOCTOR_ONLY:-}" ]]; then
+        [[ $doctor_failed -eq 0 ]]
+        return
+    fi
 
     echo ""
     tui_divider

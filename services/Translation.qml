@@ -26,11 +26,18 @@ Singleton {
     property bool _reloadQueued: false
     property var _pendingTranslations: ({})
     property var _pendingGeneratedTranslations: ({})
+    property var _pendingPluginTranslations: ({})
     property bool _pendingTranslationsReady: false
     property bool _pendingGeneratedReady: false
+    property bool _pendingPluginsReady: false
     property string translationKeepSuffix: "/*keep*/"
     property string translationsDir: Quickshell.shellPath("translations")
     property string generatedTranslationsDir: Directories.shellConfig + "/translations"
+    // A plugin, and a hub widget, keeps the strings only it shows in its own translations/ folder: they arrive and
+    // leave with it. Joined so a re-read manifest doesn't reload the language.
+    readonly property var pluginTranslationDirs: Object.keys(Plugins.manifests).sort().map(id => Plugins.path(id, "translations"))
+        .concat((CustomWidgets.widgets ?? []).map(w => `${w.dirPath}/translations`).sort())
+    readonly property string pluginTranslationKey: root.pluginTranslationDirs.join("\n")
 
     property string languageCode: {
         var configLang = Config.options?.language?.ui ?? "auto";
@@ -83,6 +90,10 @@ Singleton {
         root.reloadLanguage();
     }
 
+    onPluginTranslationKeyChanged: {
+        root.reloadLanguage();
+    }
+
     function reloadLanguage() {
         if (root.isLoading) {
             root._reloadQueued = true;
@@ -95,29 +106,21 @@ Singleton {
         root._activeLoadLocale = locale;
         root._pendingTranslations = {};
         root._pendingGeneratedTranslations = {};
+        root._pendingPluginTranslations = {};
         root._pendingTranslationsReady = false;
         root._pendingGeneratedReady = false;
+        root._pendingPluginsReady = false;
         translationFileView.beginLoad(locale, generation);
         generatedTranslationFileView.beginLoad(locale, generation);
+        pluginTranslationReader.beginLoad(locale, generation);
     }
 
-    function acceptTranslations(locale, generation, data, generated) {
-        if (generation !== root._loadGeneration || locale !== root._activeLoadLocale)
-            return;
-
-        if (generated) {
-            root._pendingGeneratedTranslations = data;
-            root._pendingGeneratedReady = true;
-        } else {
-            root._pendingTranslations = data;
-            root._pendingTranslationsReady = true;
-        }
-
-        if (!root._pendingTranslationsReady || !root._pendingGeneratedReady)
+    function finishLoad(locale) {
+        if (!root._pendingTranslationsReady || !root._pendingGeneratedReady || !root._pendingPluginsReady)
             return;
 
         if (locale === root.catalogLocale) {
-            const combined = Object.assign({}, root._pendingGeneratedTranslations);
+            const combined = Object.assign({}, root._pendingGeneratedTranslations, root._pendingPluginTranslations);
             const primary = root._pendingTranslations;
             for (const key in primary) {
                 if (primary[key])
@@ -141,6 +144,21 @@ Singleton {
         }
     }
 
+    function acceptTranslations(locale, generation, data, generated) {
+        if (generation !== root._loadGeneration || locale !== root._activeLoadLocale)
+            return;
+
+        if (generated) {
+            root._pendingGeneratedTranslations = data;
+            root._pendingGeneratedReady = true;
+        } else {
+            root._pendingTranslations = data;
+            root._pendingTranslationsReady = true;
+        }
+
+        root.finishLoad(locale);
+    }
+
     TranslationReader {
         id: translationFileView
         translationsDir: root.translationsDir
@@ -156,6 +174,50 @@ Singleton {
         onContentLoaded: (locale, generation, data) => {
             root.acceptTranslations(locale, generation, data, true);
         }
+    }
+
+    // One plugin after the other. English is the source text, so there is nothing to read for it; a plugin that
+    // doesn't speak this language fails its read and the next one goes on.
+    FileView {
+        id: pluginTranslationReader
+        property var queue: []
+        property var merged: ({})
+        property string locale: ""
+        property int generation: 0
+        printErrors: false
+
+        function beginLoad(locale, generation) {
+            pluginTranslationReader.locale = locale;
+            pluginTranslationReader.generation = generation;
+            pluginTranslationReader.merged = {};
+            pluginTranslationReader.queue = locale === "en_US" ? [] : root.pluginTranslationDirs.slice();
+            pluginTranslationReader.next();
+        }
+
+        function next() {
+            pluginTranslationReader.path = "";
+            const dir = pluginTranslationReader.queue.shift();
+            if (dir === undefined) {
+                if (pluginTranslationReader.generation !== root._loadGeneration || pluginTranslationReader.locale !== root._activeLoadLocale)
+                    return;
+                root._pendingPluginTranslations = pluginTranslationReader.merged;
+                root._pendingPluginsReady = true;
+                root.finishLoad(pluginTranslationReader.locale);
+                return;
+            }
+            pluginTranslationReader.path = `${dir}/${pluginTranslationReader.locale}.json`;
+            pluginTranslationReader.reload();
+        }
+
+        onLoaded: {
+            try {
+                Object.assign(pluginTranslationReader.merged, JSON.parse(text()));
+            } catch (e) {
+                console.log("[Translation] Failed to load a plugin's translations:", e);
+            }
+            pluginTranslationReader.next();
+        }
+        onLoadFailed: error => pluginTranslationReader.next()
     }
 
     function tr(text) {
@@ -206,7 +268,7 @@ Singleton {
         required property string translationsDir
         signal languagesScanned(var languages)
 
-        command: ["/usr/bin/find", translationScanner.translationsDir, "-maxdepth", "1", "-type", "f", "-name", "*.json", "-exec", "/usr/bin/basename", "{}", ".json", ";"]
+        command: ["find", translationScanner.translationsDir, "-maxdepth", "1", "-type", "f", "-name", "*.json", "-exec", "basename", "{}", ".json", ";"]
         running: false
 
         stdout: StdioCollector {

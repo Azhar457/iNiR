@@ -246,6 +246,15 @@ Singleton {
         return root.setValue(outputName, widgetKey, "enable", Boolean(enabled))
     }
 
+    // Putting a widget on one screen or taking it away there (arranging, a family's gallery). With widgets on a single
+    // screen that is the widget's own switch; with more, that screen's record alone, so the other screens keep theirs.
+    function setEnabledOn(outputName, widgetKey, enabled): bool {
+        if (!root.isLockScope(outputName)
+                && Quickshell.screens.filter(screen => root.outputAllowed(screen?.name)).length <= 1)
+            return root.setGloballyEnabled(widgetKey, enabled)
+        return root.setEnabled(outputName, widgetKey, enabled)
+    }
+
     function initializeOutputLayout(outputName, width, height, widgetValues, leaving): bool {
         const output = root._outputName(outputName)
         const outputWidth = Math.max(0, Math.round(Number(width) || 0))
@@ -369,11 +378,94 @@ Singleton {
         if (!enabled)
             DesktopWidgetStacks.leave(root._widgetKey(widgetKey))
         Config.setNestedValue(path + ".enable", Boolean(enabled))
-        root.clearEnableOverrides()
+        root.clearEnableOverrides(widgetKey)
         return true
     }
 
-    function clearEnableOverrides(): bool {
+    // Settings' truth for a widget option: the base value, with those keys cleared from every screen's own record, so
+    // a value once set from the widget's quick controls cannot silently beat the Settings row. `values` maps key → value.
+    function setEverywhere(widgetKey, values): bool {
+        return root.setEverywhereMany([[widgetKey, values]])
+    }
+
+    // [[widget, values], ...] in one write: every widget's plate off at once was a config write per widget.
+    function setEverywhereMany(entries): bool {
+        const updates = ({})
+        const list = root._normalizedRecords()
+        let cleared = false
+        let wrote = false
+        for (const entry of entries ?? []) {
+            const widgetKey = entry[0]
+            const values = entry[1]
+            const path = root._basePath(widgetKey)
+            const widget = root._widgetKey(widgetKey)
+            const keys = values && typeof values === "object" ? Object.keys(values) : []
+            if (!path || keys.length === 0)
+                continue
+            wrote = true
+            // A key the schema doesn't declare (iris.face, iris.tile.wifi...) has no base to live in: the write was dropped
+            // and its switch did nothing. Those go to every screen's record, where the widget reads them first.
+            // A Hub widget's base (`background.widgets.custom.<id>`) holds any key: its options live there, where
+            // every face reads them (the Island's and Waffle's have no screen); copied per screen, those faces never
+            // saw a change.
+            const declared = key => {
+                if (widget.startsWith("custom."))
+                    return true
+                let node = Config.options?.background?.widgets?.[widget]
+                const parts = String(key).split(".")
+                for (let i = 0; i < parts.length; ++i) {
+                    if (node === null || node === undefined || typeof node !== "object" || !(parts[i] in node))
+                        return false
+                    node = node[parts[i]]
+                }
+                return true
+            }
+            const free = keys.filter(key => !declared(key))
+            for (const key of keys)
+                if (!free.includes(key))
+                    updates[path + "." + key] = values[key]
+            for (const record of list) {
+                if (root.isLockScope(record.output) || !record.widgets[widget])
+                    continue
+                for (const key of keys) {
+                    if (!free.includes(key) && Object.prototype.hasOwnProperty.call(record.widgets[widget], key)) {
+                        delete record.widgets[widget][key]
+                        cleared = true
+                    }
+                }
+                if (Object.keys(record.widgets[widget]).length === 0)
+                    delete record.widgets[widget]
+            }
+            if (free.length > 0) {
+                const outputs = Quickshell.screens.map(screen => root._outputName(screen?.name)).filter(name => name && !root.isLockScope(name))
+                for (const record of list)
+                    if (!root.isLockScope(record.output) && !outputs.includes(record.output))
+                        outputs.push(record.output)
+                for (const output of outputs) {
+                    let record = list.find(item => item.output === output)
+                    if (!record) {
+                        record = { output: output, widgets: ({}) }
+                        list.push(record)
+                    }
+                    for (const key of free) {
+                        const holder = root._holder(output, widget, key)
+                        record.widgets[holder] = Object.assign({}, record.widgets[holder] ?? {}, { [key]: values[key] })
+                    }
+                }
+                cleared = true
+            }
+        }
+        if (!wrote)
+            return false
+        if (cleared)
+            updates["background.widgets.outputOverrides"] = list.filter(record => Object.keys(record.widgets).length > 0
+                || Number(record.layoutVersion ?? 0) > 0)
+        Config.setNestedValues(updates)
+        return true
+    }
+
+    function clearEnableOverrides(onlyWidget = ""): bool {
+        const only = root._widgetKey(onlyWidget)
         const list = root._normalizedRecords()
         let changed = false
         for (let i = 0; i < list.length; ++i) {
@@ -381,6 +473,8 @@ Singleton {
                 continue
             const widgets = list[i].widgets
             for (const widgetKey of Object.keys(widgets)) {
+                if (only && widgetKey !== only)
+                    continue
                 const override = widgets[widgetKey]
                 if (!Object.prototype.hasOwnProperty.call(override, "enable"))
                     continue
@@ -425,8 +519,23 @@ Singleton {
         return root.enabled(name, widgetKey, fallback)
     }
 
+    // Read on every widget row's visibility (Settings › Widgets asks per row): computed once per change of the
+    // records instead of deep-cloning every record on each call.
+    readonly property var savedOutputs: {
+        const seen = new Set()
+        const out = []
+        for (const record of root.records) {
+            const output = root._outputName(record?.output)
+            if (!output || seen.has(output) || root.isLockScope(output))
+                continue
+            seen.add(output)
+            out.push(output)
+        }
+        return out
+    }
+
     function savedOutputNames(): list<string> {
-        return root._normalizedRecords().map(record => record.output).filter(name => !root.isLockScope(name))
+        return root.savedOutputs.slice()
     }
 
     function diagnostics(): string {

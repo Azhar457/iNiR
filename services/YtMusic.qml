@@ -12,45 +12,67 @@ import qs.services.deferred
 Singleton {
     id: root
 
+    // What YT Music keeps between sessions (queue, playlists, liked songs, recent searches, profile, where it was
+    // playing) is its own file in the state folder, never config.json: it grows with use and changes while music plays.
+    // config.json held it until 3.1 (ConfigMigrations.departures moves it here).
+    readonly property string _storePath: Directories.stateUserPath + "/ytmusic.json"
+    property var _stored: ({})
+
+    function _list(value: var): var {
+        return value ? Array.from(value) : []
+    }
+
+    function _store(key: string, value: var): void {
+        if (!root._initialized) return
+        root._stored[key] = value
+        _storeWriteTimer.restart()
+    }
+
+    function _writeStore(): void {
+        _storeWriteTimer.stop()
+        _storeFile.setText(JSON.stringify(root._stored))
+    }
+
+    Timer {
+        id: _storeWriteTimer
+        interval: 1000
+        onTriggered: root._writeStore()
+    }
+
+    FileView {
+        id: _storeFile
+        path: root._initialized ? root._storePath : ""
+        blockAllReads: true
+        printErrors: false
+    }
+
     property bool _resumeRestored: false
-    // What was last written: a paused or stopped track saves nothing new, and each write bumps the config
-    // revision, emits configChanged and rewrites the file.
+    // What was last written: a paused or stopped track saves nothing new.
     property string _resumeSignature: ""
 
     function _persistResume(): void {
         if (!root.currentVideoId) return
         const resume = {
-            'sidebar.ytmusic.resume.videoId': root.currentVideoId,
-            'sidebar.ytmusic.resume.title': root.currentTitle,
-            'sidebar.ytmusic.resume.artist': root.currentArtist,
-            'sidebar.ytmusic.resume.thumbnail': root.currentThumbnail,
-            'sidebar.ytmusic.resume.url': root.currentUrl,
-            'sidebar.ytmusic.resume.position': root.currentPosition,
-            'sidebar.ytmusic.resume.wasPlaying': root.isPlaying,
-            'sidebar.ytmusic.resume.activePlaylist': root.activePlaylist,
-            'sidebar.ytmusic.resume.currentIndex': root.currentIndex,
-            'sidebar.ytmusic.resume.activePlaylistSource': root.activePlaylistSource
+            videoId: root.currentVideoId,
+            title: root.currentTitle,
+            artist: root.currentArtist,
+            thumbnail: root.currentThumbnail,
+            url: root.currentUrl,
+            position: root.currentPosition,
+            wasPlaying: root.isPlaying,
+            activePlaylist: root._list(root.activePlaylist),
+            currentIndex: root.currentIndex,
+            activePlaylistSource: root.activePlaylistSource
         }
         const signature = JSON.stringify(resume)
         if (signature === root._resumeSignature) return
         root._resumeSignature = signature
-        Config.setNestedValues(resume)
+        root._store("resume", resume)
     }
 
     function _clearResume(): void {
         root._resumeSignature = ""
-        Config.setNestedValues({
-            'sidebar.ytmusic.resume.videoId': "",
-            'sidebar.ytmusic.resume.title': "",
-            'sidebar.ytmusic.resume.artist': "",
-            'sidebar.ytmusic.resume.thumbnail': "",
-            'sidebar.ytmusic.resume.url': "",
-            'sidebar.ytmusic.resume.position': 0,
-            'sidebar.ytmusic.resume.wasPlaying': false,
-            'sidebar.ytmusic.resume.activePlaylist': [],
-            'sidebar.ytmusic.resume.currentIndex': -1,
-            'sidebar.ytmusic.resume.activePlaylistSource': ""
-        })
+        root._store("resume", {})
     }
 
     Timer {
@@ -62,9 +84,10 @@ Singleton {
     }
 
     Component.onDestruction: {
-        if (root.currentVideoId) {
-            root._persistResume()
-            Config.flushWrites()
+        if (root.currentVideoId) root._persistResume()
+        if (_storeWriteTimer.running) {
+            _storeFile.blockWrites = true
+            root._writeStore()
         }
         _playProc.running = false
         _killOrphanedMpvProc.running = true
@@ -83,12 +106,12 @@ Singleton {
     }
 
     property bool available: false
-    property bool enabled: Config.options?.sidebar?.ytmusic?.enable ?? false
+    property bool enabled: Config.options?.ytmusic?.enable ?? false
     property bool searching: false
     property bool loading: false
     property bool libraryLoading: false
     property string error: ""
-    property bool verbose: Config.options?.sidebar?.ytmusic?.verbose ?? false
+    property bool verbose: Config.options?.ytmusic?.verbose ?? false
 
     function _log(...args) { if (root.verbose) console.log(...args) }
     
@@ -104,21 +127,21 @@ Singleton {
     property bool canSeek: _mpvPlayer?.canSeek ?? true
     property real volume: _mpvPlayer?.volume ?? (_savedVolume / 100)
     
-    property bool shuffleMode: Config.options?.sidebar?.ytmusic?.shuffleMode ?? false
-    property int repeatMode: Config.options?.sidebar?.ytmusic?.repeatMode ?? 0
-    readonly property bool upNextNotificationsEnabled: Config.options?.sidebar?.ytmusic?.upNextNotifications ?? true
-    readonly property bool suppressUpNextInFullscreen: Config.options?.sidebar?.ytmusic?.suppressUpNextInFullscreen ?? true
+    property bool shuffleMode: Config.options?.ytmusic?.shuffleMode ?? false
+    property int repeatMode: Config.options?.ytmusic?.repeatMode ?? 0
+    readonly property bool upNextNotificationsEnabled: Config.options?.ytmusic?.upNextNotifications ?? true
+    readonly property bool suppressUpNextInFullscreen: Config.options?.ytmusic?.suppressUpNextInFullscreen ?? true
     
-    property string audioQuality: Config.options?.sidebar?.ytmusic?.audioQuality ?? "best"
+    property string audioQuality: Config.options?.ytmusic?.audioQuality ?? "best"
     onAudioQualityChanged: {
-        Config.setNestedValue('sidebar.ytmusic.audioQuality', audioQuality)
+        Config.setNestedValue('ytmusic.audioQuality', audioQuality)
         // Apply the new quality to what's playing NOW (mpv's --ytdl-format is fixed at launch),
         // so the Settings control visibly correlates instead of only affecting the next track.
         if (root.currentVideoId !== "") root._reloadCurrentTrack()
     }
     // EBU R128 loudness normalization — matches YouTube Music's consistent ~-14 LUFS so tracks
     // don't jump between quiet/harsh. Applied as an mpv audio filter; reloads live like quality.
-    readonly property bool normalizeVolume: Config.options?.sidebar?.ytmusic?.normalizeVolume ?? true
+    readonly property bool normalizeVolume: Config.options?.ytmusic?.normalizeVolume ?? true
     onNormalizeVolumeChanged: if (root.currentVideoId !== "") root._reloadCurrentTrack()
 
     // Maps audioQuality setting to yt-dlp format string for mpv's --ytdl-format.
@@ -147,8 +170,8 @@ Singleton {
         _playDelayTimer.restart()
     }
 
-    onShuffleModeChanged: Config.setNestedValue('sidebar.ytmusic.shuffleMode', shuffleMode)
-    onRepeatModeChanged: Config.setNestedValue('sidebar.ytmusic.repeatMode', repeatMode)
+    onShuffleModeChanged: Config.setNestedValue('ytmusic.shuffleMode', shuffleMode)
+    onRepeatModeChanged: Config.setNestedValue('ytmusic.repeatMode', repeatMode)
     
     property var searchResults: []
     property var recentSearches: []
@@ -162,8 +185,6 @@ Singleton {
     property int currentIndex: -1
     property string activePlaylistSource: ""
     
-    // currentArtistInfo removed — was declared but never populated.
-    // Artist header UI in YtMusicView was dead code.
     
     property string userName: ""
     property string userAvatar: ""
@@ -396,7 +417,7 @@ Singleton {
         // Restore previous playback session if applicable.
         if (!root._resumeRestored) {
             root._resumeRestored = true
-            const r = Config.options?.sidebar?.ytmusic?.resume
+            const r = root._stored.resume
             if (r?.videoId && r.wasPlaying && !root.currentVideoId) {
                 const item = {
                     videoId: r.videoId,
@@ -509,7 +530,11 @@ Singleton {
     }
 
     function search(query, filter): void {
-        if (!query.trim() || !root.available) return
+        if (!query.trim()) return
+        if (!root.available && !InnerTube.available) {
+            if (!_checkAvailability.running) _checkAvailability.running = true
+            return
+        }
         root.error = ""
         const trimmed = query.trim()
         const f = filter || "songs"
@@ -539,7 +564,7 @@ Singleton {
         root.searchResults = []
         _searchQuery = trimmed
         // Prefer the InnerTube engine (no browser cookies, real YT Music songs).
-        // Fall back to yt-dlp only when ytmusicapi is unavailable.
+        // Fall back to yt-dlp only when InnerTube is unavailable.
         if (InnerTube.available) {
             root._searchViaInnerTube = true
             InnerTube.search(trimmed, f)
@@ -584,13 +609,23 @@ Singleton {
         function onSearchResultsChanged() {
             if (!root._searchViaInnerTube) return
             root.searchResults = InnerTube.searchResults
-            root.searching = false
-            root._searchViaInnerTube = false
+            if (!InnerTube.searching) {
+                root.searching = false
+                root._searchViaInnerTube = false
+            }
+        }
+        function onSearchingChanged() {
+            if (root._searchViaInnerTube) {
+                root.searching = InnerTube.searching
+                if (!InnerTube.searching) {
+                    root.searchResults = InnerTube.searchResults
+                    root._searchViaInnerTube = false
+                }
+            }
         }
         function onRadioTracksChanged() { root._onRadioTracks() }
     }
     
-    // clearArtistInfo() removed — currentArtistInfo was dead code
 
     property var _pendingItem: null
     property var _pendingAvailabilityItem: null
@@ -835,7 +870,7 @@ Singleton {
     function setVolume(vol): void {
         const clamped = Math.max(0, Math.min(1, vol))
         root._savedVolume = Math.round(clamped * 100)
-        Config.setNestedValue("sidebar.ytmusic.volume", root._savedVolume)
+        Config.setNestedValue("ytmusic.volume", root._savedVolume)
         if (root._mpvPlayer) {
             root._mpvPlayer.volume = clamped
         } else {
@@ -848,7 +883,7 @@ Singleton {
     }
     
     property real _ipcVolume: 1.0
-    property int _savedVolume: Config.options?.sidebar?.ytmusic?.volume ?? 100
+    property int _savedVolume: Config.options?.ytmusic?.volume ?? 100
 
     function toggleShuffle(): void {
         root.shuffleMode = !root.shuffleMode
@@ -875,7 +910,7 @@ Singleton {
         const body = artist.length > 0 ? `${title} - ${artist}` : title
 
         Quickshell.execDetached([
-            "/usr/bin/notify-send",
+            "notify-send",
             Translation.tr("Up Next"),
             body,
             "-a", "YtMusic",
@@ -1068,7 +1103,7 @@ Singleton {
         })
         if (liked.length > root.maxLikedSongs) liked = liked.slice(0, root.maxLikedSongs)
         root.likedSongs = liked
-        Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
+        root._persistLiked()
         // Prefer the InnerTube account login; fall back to the legacy YouTube Data OAuth.
         if (InnerTube.authenticated) {
             InnerTube.rateSong(root.currentVideoId, true)
@@ -1084,7 +1119,7 @@ Singleton {
         let liked = [...root.likedSongs]
         liked.splice(idx, 1)
         root.likedSongs = liked
-        Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
+        root._persistLiked()
         // Prefer the InnerTube account login; fall back to the legacy YouTube Data OAuth.
         if (InnerTube.authenticated) {
             InnerTube.rateSong(videoId, false)
@@ -1097,13 +1132,13 @@ Singleton {
     Process {
         id: _rateLikeProc
         property string _videoId: ""
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "like", _videoId]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "like", _videoId]
     }
 
     Process {
         id: _rateUnlikeProc
         property string _videoId: ""
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "unlike", _videoId]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "unlike", _videoId]
     }
 
     // ── OAuth Setup ────────────────────────────────────────────────────
@@ -1139,7 +1174,7 @@ Singleton {
 
     Process {
         id: _oauthCheckProc
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "check"]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "check"]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -1155,7 +1190,7 @@ Singleton {
         id: _oauthRequestProc
         property string _clientId: ""
         property string _clientSecret: ""
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "setup-request", _clientId, _clientSecret]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "setup-request", _clientId, _clientSecret]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -1193,7 +1228,7 @@ Singleton {
         property string _clientId: ""
         property string _clientSecret: ""
         property string _deviceCode: ""
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "setup-poll", _clientId, _clientSecret, _deviceCode]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "setup-poll", _clientId, _clientSecret, _deviceCode]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -1243,7 +1278,7 @@ Singleton {
         root.googleChecking = true
         root.googleBrowser = browser || ""
         root._useManualCookies = false
-        Config.setNestedValue('sidebar.ytmusic.useManualCookies', false)
+        Config.setNestedValue('ytmusic.useManualCookies', false)
         InnerTube.connect(browser || "auto")
     }
 
@@ -1253,8 +1288,8 @@ Singleton {
         root._useManualCookies = true
         root.googleError = ""
         root.googleChecking = true
-        Config.setNestedValue('sidebar.ytmusic.cookiesPath', path)
-        Config.setNestedValue('sidebar.ytmusic.useManualCookies', true)
+        Config.setNestedValue('ytmusic.cookiesPath', path)
+        Config.setNestedValue('ytmusic.useManualCookies', true)
         InnerTube.connectManual(path)
     }
 
@@ -1267,12 +1302,10 @@ Singleton {
         root.userAvatar = ""
         root.userChannelUrl = ""
         Config.setNestedValues({
-            'sidebar.ytmusic.connected': false,
-            'sidebar.ytmusic.resolvedBrowserArg': "",
-            'sidebar.ytmusic.profile.name': "",
-            'sidebar.ytmusic.profile.avatar': "",
-            'sidebar.ytmusic.profile.url': ""
+            'ytmusic.connected': false,
+            'ytmusic.resolvedBrowserArg': ""
         })
+        root._store("profile", {})
         InnerTube.disconnect()
     }
     
@@ -1335,11 +1368,7 @@ Singleton {
     }
     
     function _persistProfile(): void {
-        Config.setNestedValues({
-            'sidebar.ytmusic.profile.name': root.userName,
-            'sidebar.ytmusic.profile.avatar': root.userAvatar,
-            'sidebar.ytmusic.profile.url': root.userChannelUrl
-        })
+        root._store("profile", { name: root.userName, avatar: root.userAvatar, url: root.userChannelUrl })
     }
     
     function openYtMusicInBrowser(): void {
@@ -1394,8 +1423,7 @@ Singleton {
             if (code === 0 && _fetchLikedProc.newLiked.length > 0) {
                 root.likedSongs = _fetchLikedProc.newLiked
                 root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
-                Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
-                Config.setNestedValue('sidebar.ytmusic.lastLikedSync', root.lastLikedSync)
+                root._persistLiked()
             } else {
                 // Error or empty result — try YouTube LL fallback
                 _fetchLikedFallbackProc.running = true
@@ -1446,8 +1474,7 @@ Singleton {
             if (code === 0 && _fetchLikedFallbackProc.newLiked.length > 0) {
                 root.likedSongs = _fetchLikedFallbackProc.newLiked
                 root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
-                Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
-                Config.setNestedValue('sidebar.ytmusic.lastLikedSync', root.lastLikedSync)
+                root._persistLiked()
             }
         }
     }
@@ -1468,12 +1495,12 @@ Singleton {
     Process {
         id: _fetchLikedOAuthProc
         property var _items: []
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "fetch-liked"]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "fetch-liked"]
         stdout: SplitParser {
             onRead: data => {
                 try {
                     const r = JSON.parse(data)
-                    if (r._done || r._error) return
+                    if (!r.videoId) return
                     _fetchLikedOAuthProc._items.push(r)
                 } catch(e) {}
             }
@@ -1482,8 +1509,7 @@ Singleton {
             if (_fetchLikedOAuthProc._items.length > 0) {
                 root.likedSongs = _fetchLikedOAuthProc._items
                 root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
-                Config.setNestedValue('sidebar.ytmusic.liked', root.likedSongs)
-                Config.setNestedValue('sidebar.ytmusic.lastLikedSync', root.lastLikedSync)
+                root._persistLiked()
                 root.syncingLiked = false
             } else if (root.googleConnected) {
                 // OAuth returned empty or failed — fallback to cookie method
@@ -1573,28 +1599,34 @@ Singleton {
     }
     
     function _loadData(): void {
-        root.recentSearches = Config.options?.sidebar?.ytmusic?.recentSearches ?? []
-        root.queue = Config.options?.sidebar?.ytmusic?.queue ?? []
-        root.playlists = Config.options?.sidebar?.ytmusic?.playlists ?? []
-        root.likedSongs = Config.options?.sidebar?.ytmusic?.liked ?? []
-        root.lastLikedSync = Config.options?.sidebar?.ytmusic?.lastLikedSync ?? ""
-        root.customCookiesPath = Config.options?.sidebar?.ytmusic?.cookiesPath ?? ""
-        root._useManualCookies = Config.options?.sidebar?.ytmusic?.useManualCookies ?? false
+        try {
+            root._stored = JSON.parse(_storeFile.text() || "{}") ?? {}
+        } catch (e) {
+            console.warn("[YtMusic] unreadable " + root._storePath + ", starting empty:", e)
+            root._stored = {}
+        }
+        root.recentSearches = root._stored.recentSearches ?? []
+        root.queue = root._stored.queue ?? []
+        root.playlists = root._stored.playlists ?? []
+        root.likedSongs = root._stored.liked ?? []
+        root.lastLikedSync = root._stored.lastLikedSync ?? ""
+        root.customCookiesPath = Config.options?.ytmusic?.cookiesPath ?? ""
+        root._useManualCookies = Config.options?.ytmusic?.useManualCookies ?? false
         
-        const profile = Config.options?.sidebar?.ytmusic?.profile
+        const profile = root._stored.profile
         if (profile) {
             root.userName = profile.name ?? ""
             root.userAvatar = profile.avatar ?? ""
             root.userChannelUrl = profile.url ?? ""
         }
         
-        const savedBrowser = Config.options?.sidebar?.ytmusic?.browser
+        const savedBrowser = Config.options?.ytmusic?.browser
         if (savedBrowser) {
             root.googleBrowser = savedBrowser
         }
         
         // Restore persisted resolved browser arg (avoids re-resolving on restart)
-        const savedResolvedArg = Config.options?.sidebar?.ytmusic?.resolvedBrowserArg ?? ""
+        const savedResolvedArg = Config.options?.ytmusic?.resolvedBrowserArg ?? ""
         if (savedResolvedArg) {
             root._resolvedBrowserArg = savedResolvedArg
         }
@@ -1603,7 +1635,7 @@ Singleton {
 
     Process {
         id: _detectDefaultBrowserProc
-        command: ["/usr/bin/xdg-settings", "get", "default-web-browser"]
+        command: ["xdg-settings", "get", "default-web-browser"]
         stdout: SplitParser {
             onRead: line => {
                 const desktop = line.trim().toLowerCase()
@@ -1617,7 +1649,7 @@ Singleton {
                 else if (desktop.includes("edge")) browser = "edge"
                 else if (desktop.includes("zen")) browser = "zen"
                 
-                if (browser && !Config.options?.sidebar?.ytmusic?.browser) {
+                if (browser && !Config.options?.ytmusic?.browser) {
                     root.googleBrowser = browser
                     root.defaultBrowser = browser
                 }
@@ -1627,7 +1659,7 @@ Singleton {
 
     Process {
         id: _detectBrowsersProc
-        command: ["/bin/bash", "-c", `
+        command: ["/bin/sh", "-c", `
             for path in ~/.mozilla/firefox ~/.config/google-chrome ~/.config/chromium ~/.config/BraveSoftware ~/.config/vivaldi ~/.config/opera ~/.config/microsoft-edge ~/.zen ~/.librewolf ~/.floorp ~/.waterfox; do
                 [ -d "$path" ] && echo "$path"
             done
@@ -1661,15 +1693,20 @@ Singleton {
     }
 
     function _persistRecentSearches(): void {
-        Config.setNestedValue('sidebar.ytmusic.recentSearches', root.recentSearches)
+        root._store("recentSearches", root._list(root.recentSearches))
     }
 
     function _persistQueue(): void {
-        Config.setNestedValue('sidebar.ytmusic.queue', root.queue)
+        root._store("queue", root._list(root.queue))
     }
 
     function _persistPlaylists(): void {
-        Config.setNestedValue('sidebar.ytmusic.playlists', root.playlists)
+        root._store("playlists", root._list(root.playlists))
+    }
+
+    function _persistLiked(): void {
+        root._store("liked", root._list(root.likedSongs))
+        root._store("lastLikedSync", root.lastLikedSync)
     }
 
     function _resolveBrowserArg(): void {
@@ -1684,32 +1721,25 @@ Singleton {
     Process {
         id: _resolveBrowserArgProc
         property bool _pendingCheck: false
-        command: ["python3", "-c", `
-import sys, os, glob
-browser = '` + root.googleBrowser + `'
-forks = {"zen":"~/.zen","librewolf":"~/.librewolf","floorp":"~/.floorp","waterfox":"~/.waterfox","firefox":"~/.mozilla/firefox"}
-base = os.path.expanduser(forks.get(browser, "~/.mozilla/firefox"))
-if not os.path.exists(base):
-    print("")
-    sys.exit(0)
-for pattern in ["*.default-release", "*.default"]:
-    for m in glob.glob(os.path.join(base, pattern)):
-        if os.path.isdir(m) and os.path.exists(os.path.join(m, "cookies.sqlite")):
-            print("firefox:" + m)
-            sys.exit(0)
-for item in sorted(os.listdir(base)):
-    p = os.path.join(base, item)
-    if os.path.isdir(p) and os.path.exists(os.path.join(p, "cookies.sqlite")):
-        print("firefox:" + p)
-        sys.exit(0)
-print("")
-`]
+        command: ["bash", "-c", `
+case "$1" in
+    zen) base=~/.zen ;;
+    librewolf) base=~/.librewolf ;;
+    floorp) base=~/.floorp ;;
+    waterfox) base=~/.waterfox ;;
+    *) base=~/.mozilla/firefox ;;
+esac
+for profile in "$base"/*.default-release "$base"/*.default "$base"/*; do
+    [ -d "$profile" ] && [ -e "$profile/cookies.sqlite" ] && { echo "firefox:$profile"; exit 0; }
+done
+echo ""
+`, "_", root.googleBrowser]
         stdout: SplitParser {
             onRead: line => {
                 const resolved = line.trim()
                 if (resolved) {
                     root._resolvedBrowserArg = resolved
-                    Config.setNestedValue('sidebar.ytmusic.resolvedBrowserArg', resolved)
+                    Config.setNestedValue('ytmusic.resolvedBrowserArg', resolved)
                     root._log("[YtMusic] Resolved browser arg:", resolved)
                 }
             }
@@ -1770,7 +1800,7 @@ print("")
         id: _checkAvailability
         // Playback owns yt-dlp + mpv + a supported JS runtime. socat is the IPC
         // fallback when MPRIS is absent. Setup/Doctor own installation/repair.
-        command: ["/bin/bash", "-c", "missing=''; \"$1\" --help 2>/dev/null | grep -q -- '--js-runtimes' || missing=\"$missing yt-dlp>=2025.11.12\"; command -v mpv >/dev/null || missing=\"$missing mpv\"; command -v socat >/dev/null || missing=\"$missing socat\"; command -v deno >/dev/null || missing=\"$missing deno\"; [ -z \"$missing\" ] && exit 0 || { echo \"$missing\"; exit 1; }", "_", root._ytDlpRunner]
+        command: ["/bin/sh", "-c", "missing=''; \"$1\" --help 2>/dev/null | grep -q -- '--js-runtimes' || missing=\"$missing yt-dlp>=2025.11.12\"; command -v mpv >/dev/null || missing=\"$missing mpv\"; command -v socat >/dev/null || missing=\"$missing socat\"; command -v deno >/dev/null || missing=\"$missing deno\"; [ -z \"$missing\" ] && exit 0 || { echo \"$missing\"; exit 1; }", "_", root._ytDlpRunner]
         stdout: SplitParser {
             onRead: line => {
                 if (line.trim()) {
@@ -1804,7 +1834,7 @@ print("")
                     const res = JSON.parse(line)
                     if (res.status === "success" && res.cookies_path) {
                         root.customCookiesPath = res.cookies_path
-                        Config.setNestedValue('sidebar.ytmusic.cookiesPath', res.cookies_path)
+                        Config.setNestedValue('ytmusic.cookiesPath', res.cookies_path)
                     }
                 } catch (e) {}
             }
@@ -2238,13 +2268,21 @@ print("")
         }
     }
     
+    /// Direct YtMusic player control. Use these if you want to control YtMusic specifically, regardless of what other
+    /// players are active.
+    ///
+    /// ```kdl
+    /// Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }
+    /// ```
     IpcHandler {
         target: "ytmusic"
 
+        /// Toggle YtMusic play/pause
         function playPause(): void {
             root.togglePlaying()
         }
         
+        /// Play next track in YtMusic
         function next(): void {
             if (!root.canGoNext)
                 return
@@ -2253,6 +2291,7 @@ print("")
                 GlobalStates.showMediaAction("next")
         }
         
+        /// Play previous track in YtMusic
         function previous(): void {
             if (!root.currentVideoId)
                 return
@@ -2261,6 +2300,7 @@ print("")
                 GlobalStates.showMediaAction("previous")
         }
         
+        /// Stop YtMusic playback
         function stop(): void {
             root.stop()
         }

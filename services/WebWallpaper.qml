@@ -21,7 +21,11 @@ Singleton {
     property string lastError: ""
     property int revision: 0
 
+    // Deferred: from inside availableChanged, `active` still reads the old value, and every host saw "off".
     function refresh(): void {
+        Qt.callLater(root.bump)
+    }
+    function bump(): void {
         root.revision++
     }
 
@@ -32,9 +36,10 @@ Singleton {
 
     Process {
         id: runnerProbeProc
+        // Not a login shell: whatever a profile prints (a fetch banner) became the runner path.
         command: [
-            "/usr/bin/bash", "-lc",
-            "command -v qml6 || command -v qml || { [ -x /usr/lib/qt6/bin/qml ] && printf '%s\\n' /usr/lib/qt6/bin/qml; }"
+            "bash", "-c",
+            "command -v qml6 || command -v qml || { for q in /usr/lib/qt6/bin/qml /usr/lib64/qt6/bin/qml; do [ -x \"$q\" ] && printf '%s\\n' \"$q\" && exit 0; done; exit 1; }"
         ]
         stdout: StdioCollector { id: probeOut }
         stderr: StdioCollector { id: probeErr }
@@ -54,7 +59,7 @@ Singleton {
         id: hostProbeProc
         command: [
             root.runner,
-            Quickshell.shellPath("modules/background/WebWallpaperHost.qml"),
+            Quickshell.shellPath("modules/shared/background/WebWallpaperHost.qml"),
             "--", "--probe"
         ]
         stderr: StdioCollector { id: hostProbeErr }
@@ -74,7 +79,7 @@ Singleton {
             required property var modelData
 
             readonly property string screenName: modelData?.name ?? ""
-            readonly property string hostPath: Quickshell.shellPath("modules/background/WebWallpaperHost.qml")
+            readonly property string hostPath: Quickshell.shellPath("modules/shared/background/WebWallpaperHost.qml")
             readonly property string pidFile: "/tmp/quickshell/web-wallpaper-" + screenName.replace(/[^A-Za-z0-9_.-]/g, "_") + ".pid"
             property bool wantStart: false
             property bool restarting: false
@@ -102,7 +107,7 @@ Singleton {
             Process {
                 id: stopProc
                 command: [
-                    "/usr/bin/bash", "-c",
+                    "bash", "-c",
                     `pidfile="$1"; host="$2";
                     if [ -r "$pidfile" ]; then
                         pid=$(cat "$pidfile" 2>/dev/null || true)
@@ -144,7 +149,7 @@ Singleton {
             Process {
                 id: hostProc
                 command: [
-                    "/usr/bin/bash", "-c",
+                    "bash", "-c",
                     `pidfile="$1"; shift;
                     child=""
                     cleanup() {

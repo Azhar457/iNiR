@@ -1,189 +1,109 @@
 # NixOS
 
-> Experimental. The Arch installer is still the primary supported path.
+iNiR ships a flake with a package, a NixOS module, a Home Manager module and a starter template. On NixOS you get
+the same iNiR as on Arch: the same three families, the same Hub, the same Settings and the same updates.
 
-iNiR provides a flake with:
+## How it fits together
 
-| Output | Purpose |
-|---|---|
-| `packages.<system>.default` | Packaged iNiR runtime and `inir` launcher |
-| `packages.<system>.inir-mascot` | Optional mascot art pack companion package |
-| `packages.<system>.inir-with-mascot` | Ready-to-use iNiR package with the mascot art pack |
-| `nixosModules.inir` | NixOS module for system package + user service |
-| `homeModules.inir` | Home Manager module for user package + user service |
+- **The base comes with your flake.** The package holds iNiR's base and the programs it needs. It moves when you
+  update the flake input and rebuild.
+- **Your copy lives in your home.** The first time the shell starts after the package changes, it brings
+  `~/.config/quickshell/inir` in step with the package, as `inir update` does on other distros. Your config,
+  wallpapers and themes stay where they are.
+- **Families, themes and widgets come from the Hub.** Material, Waffle and iRiS are Hub items, like every theme and
+  widget. The shell installs the families your config uses from [inir.space/hub](https://inir.space/hub) on its
+  first start, and **Settings › Hub** adds more. You don't declare them in Nix, and switching family works the moment
+  the shell is up.
 
-The module does not run `./setup install` or `./setup update`. Nix owns the installed files, and iNiR runs from the package store path.
+## Start a new system from the template
 
-The package and modules are ordinary Nix expressions under `nix/`. Flakes are only one entrypoint, so traditional Nix configurations can import them directly. Both entrypoints use the same `package.nix`, NixOS module, and Home Manager module rather than maintaining separate implementations.
-
-## Without flakes
-
-Point `inirSrc` at a local checkout or a source pinned with your preferred Nix fetcher:
-
-```nix
-{ pkgs, ... }:
-let
-  inirSrc = /path/to/inir;
-in
-{
-  imports = [
-    (import (inirSrc + "/nix/nixos-module.nix"))
-  ];
-
-  programs.inir = {
-    enable = true;
-    package = pkgs.callPackage (inirSrc + "/nix/package.nix") { inherit pkgs; };
-    service.compositor = "niri";
-  };
-}
+```bash
+mkdir ~/nixos && cd ~/nixos
+nix flake init -t github:snowarch/inir
+cp /etc/nixos/hardware-configuration.nix .
 ```
 
-For Home Manager, import `nix/home-module.nix` instead. The package expression accepts the consumer's `pkgs` set explicitly, so traditional configurations can choose or pin nixpkgs without converting the project to a flake. Both modules use that same package expression by default unless `programs.inir.package` is overridden.
+Open `configuration.nix` and rename the `you` user to yours. From the `configuration.nix` your installer wrote, copy
+your time zone, language and machine name (the template marks where), and your boot loader lines if your machine
+does not boot with systemd-boot. Then:
 
-## With Niri on NixOS
-
-Add iNiR to your flake inputs:
-
-```nix
-{
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    inir.url = "github:snowarch/inir";
-  };
-}
+```bash
+sudo nixos-rebuild switch --flake .#inir
 ```
 
-The default input tracks the stable branch. To test development builds before
-they reach `main`, point the iNiR input at `github:snowarch/inir/prerelease`
-instead and rebuild through Nix.
+Reboot and pick the Niri session on the login screen. The welcome wizard opens on the first start.
 
-Then import the iNiR module in your NixOS configuration:
+## Add iNiR to your own flake
 
 ```nix
-{ config, inputs, ... }: {
-  imports = [
-    inputs.inir.nixosModules.inir
-  ];
-
-  programs.niri.enable = true;
-
-  programs.inir = {
-    enable = true;
-    service.compositor = "niri";
-    extraPackages = [ config.programs.niri.package ];
-  };
-}
+inputs.inir = {
+  url = "github:snowarch/inir";
+  inputs.nixpkgs.follows = "nixpkgs";
+};
 ```
 
-`programs.inir.service.compositor = "niri"` creates the user unit wiring under `niri.service.wants/inir.service`. The unit waits for `niri.service` readiness, inherits Niri's published `DISPLAY`/Wayland environment, and stays ahead of XDG desktop autostart so the tray watcher is ready before applications register. It is not wired to `graphical-session.target`, so it will not auto-start under KDE, GNOME, or other desktop sessions.
-
-`extraPackages = [ config.programs.niri.package ];` puts the same `niri` client binary used by your compositor on iNiR's runtime `PATH`, so features that call `niri msg` use the matching package.
-
-NixOS already provides Niri through `programs.niri.enable`. A separate `niri-flake` input is not required for a normal installation; use one only when you specifically need what that external flake provides.
-
-Recorder runtime dependencies are provided by the iNiR package itself, including
-`wf-recorder`, `slurp`, `xdg-user-dirs`, `xdg-utils`, PipeWire/Pulse tooling, and
-FFmpeg when available in nixpkgs. They do not need to be duplicated in
-`programs.inir.extraPackages`.
-
-EasyEffects remains an opt-in audio feature. To use the native iNiR equalizer on NixOS,
-make EasyEffects visible to the iNiR service, for example with
-`programs.inir.extraPackages = [ pkgs.easyeffects ];` in addition to your compositor package.
-The nixpkgs EasyEffects wrapper owns its plugin search path; iNiR verifies that the LSP
-Equalizer is actually available at runtime. On a fresh EasyEffects setup with an empty output
-pipeline, iNiR can bootstrap its neutral 10-band `iNiR Equalizer` preset. Existing non-empty
-effect chains are never replaced automatically.
-
-For useful default shortcuts, merge iNiR actions into `programs.niri.settings.binds`:
+Add `inir.nixosModules.default` to your system's `modules`, then:
 
 ```nix
-{
-  programs.niri.settings.binds = {
-    "Mod+Space" = {
-      repeat = false;
-      action.spawn = [ "inir" "overview" "toggle" ];
-    };
-
-    "Mod+V".action.spawn = [ "inir" "clipboard" "toggle" ];
-    "Mod+Comma".action.spawn = [ "inir" "settings" ];
-    "Mod+Slash".action.spawn = [ "inir" "cheatsheet" "toggle" ];
-    "Mod+Shift+W".action.spawn = [ "inir" "panelFamily" "cycle" ];
-
-    "Mod+Alt+L" = {
-      allow-when-locked = true;
-      action.spawn = [ "inir" "lock" "activate" ];
-    };
-
-    "Mod+Shift+S".action.spawn = [ "inir" "region" "screenshot" ];
-    "Mod+Shift+X".action.spawn = [ "inir" "region" "ocr" ];
-    "Mod+Shift+A".action.spawn = [ "inir" "region" "search" ];
-  };
-}
+programs.inir = {
+  enable = true;
+  users = [ "alice" ];
+  desktop.enable = true; # leave it off if your config already sets up Niri and a login screen
+};
 ```
+
+iNiR's flake follows nixos-unstable, and that is where it is tested.
+
+## Options
+
+| Option | Default | What it does |
+|---|---|---|
+| `programs.inir.enable` | `false` | Installs iNiR and its user service, started with Niri |
+| `programs.inir.users` | `[ ]` | People who use iNiR. They join the groups its tools need: `video`, `input`, `i2c`, `ydotool` |
+| `programs.inir.desktop.enable` | `false` | Niri, a login screen, PipeWire, NetworkManager, Bluetooth |
+| `programs.inir.desktop.displayManager` | `"sddm"` | `sddm` (with iNiR's ii-pixel theme), `greetd` or `none` |
+| `programs.inir.desktop.loginBackground` | `null` | A picture for the SDDM login screen |
+| `programs.inir.fonts.enable` | `true` | The fonts iNiR's styles use |
+| `programs.inir.niriConfig.seed` | `true` | Copies iNiR's Niri config to `~/.config/niri` before Niri first starts, if you have none |
+| `programs.inir.webEngine` | `false` | Qt WebEngine for the Web Apps tab of Material's sidebar (about 200 MB) |
+| `programs.inir.extraPackages` | `[ ]` | More programs installed with iNiR, for the apps your config names |
+| `programs.inir.service.enable` | `true` | The `inir` systemd user service |
+| `programs.inir.package` | `inir` | Use `inir.packages.${system}.inir-with-mascot` for Kira's art pack |
+
+The Niri config is copied once and is yours from then on. iNiR never overwrites it.
 
 ## Home Manager
 
-If you manage your user session with Home Manager, import the Home Manager module instead:
+Import `inir.homeModules.default` and set `programs.inir.enable = true;`. It installs the package, its programs and
+fonts for you, iNiR's Niri config if you have none (`niriConfig.seed`), and the user service Niri starts. Niri itself, the login screen, PipeWire, NetworkManager, UPower,
+power profiles and the groups need root: they belong to your NixOS config. On other distros, install iNiR with its
+[install script](INSTALL.md) instead.
 
-```nix
-{ inputs, pkgs, ... }: {
-  imports = [
-    inputs.inir.homeModules.inir
-  ];
+## Updates
 
-  programs.inir = {
-    enable = true;
-    service.compositor = "niri";
-    extraPackages = [ pkgs.niri ];
-  };
-}
-```
-
-`extraPackages` is added to the Home Manager service `PATH`. If your Niri session
-uses a different package, put that matching package there instead.
-
-The Home Manager module can also expose the packaged runtime at:
-
-```text
-~/.config/quickshell/inir
-```
-
-That symlink keeps tools that expect the traditional config path working, but it is opt-in because it will conflict with an existing repo checkout at the same path. Enable it with:
-
-```nix
-programs.inir.configSymlink.enable = true;
-```
-
-## Optional mascot art pack
-
-The mascot artwork stays optional, matching the normal iNiR install. Nix cannot
-add files to an existing store path, so the flake exposes a ready-to-use combined
-package:
-
-```nix
-programs.inir.package = inputs.inir.packages.${pkgs.system}.inir-with-mascot;
-```
-
-`packages.<system>.inir-mascot` remains available as the standalone art pack for
-custom package composition. Both outputs use the same pinned mascot release.
-
-## Manual service wiring
-
-To create the service but avoid auto-start wiring:
-
-```nix
-programs.inir.service.compositor = null;
-```
-
-Then start it manually while a managed Niri session is active:
+The base updates with your flake:
 
 ```bash
-systemctl --user start inir.service
+nix flake update inir
+sudo nixos-rebuild switch --flake .#inir
 ```
 
-## Notes
+Your copy follows the next time the shell starts. To apply it right away, run `inir service restart`.
 
-- Use `inir logs --full` for runtime errors.
-- The packaged `inir` launcher wraps Quickshell and runtime tools in `PATH`.
-- User preferences still live in iNiR's normal config/state files; the packaged QML source itself is immutable.
-- `inir update` is not the right update path for a Nix install. Update through your flake inputs and rebuild.
+Families, themes and widgets update from the Hub, as on every distro. The shell tells you when one has an update.
+Update it from **Settings › Hub** or with `inir update`. On NixOS, `inir update` updates only Hub items and tells you
+the base comes with your flake.
+
+## What is different here
+
+- **The login screen keeps one picture.** On Arch, the SDDM theme follows your wallpaper and colours. On NixOS, the
+  system declares the login screen and the shell can't write to it. Set a picture with
+  `programs.inir.desktop.loginBackground = ./login.png;`.
+- **Coming from the 3.0.1 package:** it left a launcher in `~/.local/bin` and a user unit in
+  `~/.config/systemd/user`, which hide the new package. The module removes them at your next login or rebuild, and
+  logs `inir: removed …, left by an older iNiR package`.
+
+## When something is wrong
+
+`inir doctor` checks the install as on other distros and knows where NixOS keeps things. The shell's log is
+`journalctl --user -u inir`.

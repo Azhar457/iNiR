@@ -127,7 +127,7 @@ Singleton {
         if (!root.hasBackend) {
             root.lastError = Translation.tr("No speech-to-text backend is ready")
             Quickshell.execDetached([
-                "/usr/bin/notify-send",
+                "notify-send",
                 Translation.tr("Voice input"),
                 Translation.tr("Connect Groq, Gemini or OpenAI in AI Settings, or install whisper.cpp locally."),
                 "-a", "Shell",
@@ -170,7 +170,7 @@ Singleton {
         if (!transcription || transcription.length === 0) {
             root.lastError = Translation.tr("No speech detected")
             Quickshell.execDetached([
-                "/usr/bin/notify-send", Translation.tr("Voice input"),
+                "notify-send", Translation.tr("Voice input"),
                 root.lastError, "-a", "Shell",
             ])
             return
@@ -202,8 +202,8 @@ Singleton {
         id: localProbe
         running: false
         command: [
-            "/usr/bin/python3",
-            `${Directories.scriptsPath}/voiceSearch/transcribe-audio.py`,
+            `${Directories.scriptsPath}/lib/accel-run`,
+            "transcribe-audio",
             "--provider", "probe",
             "--local-model", root.localModelPath,
         ]
@@ -227,7 +227,7 @@ Singleton {
         id: recordProc
         running: false
         command: [
-            "/usr/bin/bash",
+            "bash",
             `${Directories.scriptsPath}/voiceSearch/record-voice.sh`,
             String(root.recordDuration),
         ]
@@ -244,7 +244,7 @@ Singleton {
                 } else {
                     root.lastError = Translation.tr("Recording failed")
                     Quickshell.execDetached([
-                        "/usr/bin/notify-send", Translation.tr("Voice input"),
+                        "notify-send", Translation.tr("Voice input"),
                         root.lastError, "-a", "Shell",
                     ])
                 }
@@ -261,8 +261,8 @@ Singleton {
         command: {
             const provider = root.activeProvider
             const command = [
-                "/usr/bin/python3",
-                `${Directories.scriptsPath}/voiceSearch/transcribe-audio.py`,
+                `${Directories.scriptsPath}/lib/accel-run`,
+                "transcribe-audio",
                 "--provider", provider,
                 "--audio", root._audioPath,
                 "--language", root.language,
@@ -292,19 +292,31 @@ Singleton {
             root.lastError = root._transcriptionError.length > 0
                 ? root._transcriptionError : Translation.tr("Transcription failed")
             Quickshell.execDetached([
-                "/usr/bin/notify-send", Translation.tr("Voice input"),
+                "notify-send", Translation.tr("Voice input"),
                 root.lastError, "-a", "Shell",
             ])
         }
     }
 
+    /// Provider-neutral voice input for web search and AI dictation. Auto prefers local whisper.cpp, then connected
+    /// Groq, Gemini and OpenAI speech backends. Keys stay in the system keyring and are passed to adapters through
+    /// the process environment.
+    ///
+    /// ```kdl
+    /// Super+Shift+V { spawn "inir" "voiceSearch" "toggle"; }
+    /// ```
     IpcHandler {
         target: "voiceSearch"
 
+        /// Start recording for voice web search
         function start(): void { root.start() }
+        /// Stop the active recording or transcription
         function stop(): void { root.stop() }
+        /// Toggle recording
         function toggle(): void { root.toggle() }
+        /// Re-detect local and connected speech backends
         function refresh(): void { root.refreshBackends() }
+        /// Return backend, local detection, recording and error state as JSON
         function status(): string {
             return JSON.stringify({
                 configuredProvider: root.configuredProvider,

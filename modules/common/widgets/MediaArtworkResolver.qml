@@ -117,7 +117,8 @@ QtObject {
         const generation = root._generation;
         const nextSource = root._cacheBust(value);
 
-        if (value.startsWith("file://")) {
+        // Our own cache files land whole (written aside, then moved): only a player's file can still be growing.
+        if (value.startsWith("file://") && !root._pathFromFileUrl(value).startsWith(`${root.cacheDirectory}/`)) {
             root._pendingDisplaySource = nextSource;
             root._pendingDisplayGeneration = generation;
             root._pendingDisplayChecksLeft = 5;
@@ -230,6 +231,18 @@ QtObject {
         if (!root._completed)
             return;
 
+        // A track already resolved (a player switched back to, a repeat) shows at once; the resolve that follows
+        // only confirms it. A track with no art never keeps the last one's while it runs.
+        const cached = MediaArtworkCache.lookup(root.metadataKey);
+        if (cached) {
+            root._stopWorkers();
+            root._lastBase = cached.base;
+            root._adoptBase = cached.base;
+            root.displaySource = cached.source;
+            root.ready = true;
+        } else if (root.normalizedSourceUrl.length === 0) {
+            root._reset(false);
+        }
         root.refresh();
     }
 
@@ -260,8 +273,9 @@ QtObject {
         root._refreshNow();
     }
 
+    // Title, artist and art arrive as separate signals: one short wait gathers them into one resolve.
     property var metadataRefreshTimer: Timer {
-        interval: 500
+        interval: 150
         repeat: false
         onTriggered: {
             root._reset(root.normalizedSourceUrl.length > 0);
@@ -298,14 +312,14 @@ QtObject {
         property string filePath: ""
         property int checkedGeneration: 0
 
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             path="$1"
             if [ -z "$path" ]; then exit 1; fi
             [ -s "$path" ] || exit 1
-            size1=$(/usr/bin/stat -c%s -- "$path" 2>/dev/null) || exit 1
-            /usr/bin/sleep 0.2
+            size1=$(stat -c%s -- "$path" 2>/dev/null) || exit 1
+            sleep 0.2
             [ -s "$path" ] || exit 1
-            size2=$(/usr/bin/stat -c%s -- "$path" 2>/dev/null) || exit 1
+            size2=$(stat -c%s -- "$path" 2>/dev/null) || exit 1
             [ "$size1" = "$size2" ] || exit 1
         `, "_", filePath]
 
@@ -339,14 +353,14 @@ QtObject {
     property var localExistsChecker: Process {
         property string filePath: ""
 
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             path="$1"
             cached="$2"
             [ -s "$path" ] || exit 1
-            mime=$(/usr/bin/file -b --mime-type -- "$path" 2>/dev/null) || exit 1
+            mime=$(file -b --mime-type -- "$path" 2>/dev/null) || exit 1
             case "$mime" in
                 image/*) exit 0 ;;
-                *) [ -n "$cached" ] && /usr/bin/rm -f -- "$cached"; exit 2 ;;
+                *) [ -n "$cached" ] && rm -f -- "$cached"; exit 2 ;;
             esac
         `, "_", filePath, root.localCachedArtFilePath]
         onExited: (exitCode, exitStatus) => {
@@ -377,18 +391,18 @@ QtObject {
         property string sourceFilePath: ""
         property string artFilePath: ""
 
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             src="$1"
             out="$2"
             dir="$3"
             if [ -z "$src" ] || [ -z "$out" ]; then exit 1; fi
             if [ "$src" = "$out" ]; then exit 0; fi
             [ -s "$src" ] || exit 1
-            /usr/bin/file -b --mime-type -- "$src" 2>/dev/null | /usr/bin/grep -q '^image/' || { /usr/bin/rm -f -- "$out"; exit 2; }
+            file -b --mime-type -- "$src" 2>/dev/null | grep -q '^image/' || { rm -f -- "$out"; exit 2; }
             mkdir -p "$dir"
             tmp="$out.tmp.$$"
-            /usr/bin/cp -f -- "$src" "$tmp" && \
-            [ -s "$tmp" ] && /usr/bin/mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
+            cp -f -- "$src" "$tmp" && \
+            [ -s "$tmp" ] && mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
         `, "_", sourceFilePath, artFilePath, root.cacheDirectory]
 
         onExited: (exitCode) => {
@@ -412,7 +426,7 @@ QtObject {
     property var artExistsChecker: Process {
         property string artFilePath: ""
 
-        command: ["/usr/bin/test", "-s", artFilePath]
+        command: ["test", "-s", artFilePath]
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0 && exitCode !== 1)
                 return;
@@ -440,7 +454,7 @@ QtObject {
         property string payload: ""
         property string artFilePath: ""
 
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             b64="$1"
             out="$2"
             dir="$3"
@@ -448,9 +462,9 @@ QtObject {
             if [ -s "$out" ]; then exit 0; fi
             mkdir -p "$dir"
             tmp="$out.tmp.$$"
-            printf '%s' "$b64" | /usr/bin/base64 -d > "$tmp" 2>/dev/null && \
-            /usr/bin/file -b --mime-type "$tmp" | /usr/bin/grep -q '^image/' && \
-            /usr/bin/mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
+            printf '%s' "$b64" | base64 -d > "$tmp" 2>/dev/null && \
+            file -b --mime-type "$tmp" | grep -q '^image/' && \
+            mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
         `, "_", payload, artFilePath, root.cacheDirectory]
 
         onExited: (exitCode) => {
@@ -470,7 +484,7 @@ QtObject {
         property string targetFile: ""
         property string artFilePath: ""
 
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             target="$1"
             out="$2"
             dir="$3"
@@ -478,9 +492,9 @@ QtObject {
             if [ -s "$out" ]; then exit 0; fi
             mkdir -p "$dir"
             tmp="$out.tmp.$$"
-            /usr/bin/curl -fsSL --connect-timeout 4 --max-time 12 "$target" -o "$tmp" && \
-            [ -s "$tmp" ] && /usr/bin/file -b --mime-type "$tmp" | /usr/bin/grep -q '^image/' && \
-            /usr/bin/mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
+            curl -fsSL --connect-timeout 4 --max-time 12 "$target" -o "$tmp" && \
+            [ -s "$tmp" ] && file -b --mime-type "$tmp" | grep -q '^image/' && \
+            mv -f "$tmp" "$out" || { rm -f "$tmp"; exit 1; }
         `, "_", targetFile, artFilePath, root.cacheDirectory]
 
         onExited: (exitCode) => {
@@ -493,7 +507,8 @@ QtObject {
             } else if (root._retryCount < root._maxRetries) {
                 root._retryCount += 1;
                 retryTimer.restart();
-            } else if (root._pathFromFileUrl(root.displaySource) === artFilePath) {
+            } else {
+                // Nothing to show for this track: the cover held from the one before must not stand in for it.
                 root.ready = false;
                 root.displaySource = "";
             }

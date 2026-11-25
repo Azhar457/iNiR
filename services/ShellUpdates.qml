@@ -18,16 +18,27 @@ import Quickshell.Services.Notifications
  * The actual repo location is stored in version.json during installation.
  */
 Singleton {
+    /// Shell update checker. Monitors the git repo for new commits and shows an update overlay.
     IpcHandler {
         target: "shellUpdate"
+        /// Open/close update overlay
         function toggle(): void { root.overlayOpen ? root.closeOverlay() : root.openOverlay() }
+        /// Open update overlay
         function open(): void { root.openOverlay() }
+        /// Close update overlay
         function close(): void { root.closeOverlay() }
+        /// Check for updates now
         function check(): void { root.check() }
+        /// Run the update
         function performUpdate(): void { root.performUpdate() }
+        /// Dismiss update notification
         function dismiss(): void { root.dismiss() }
+        /// Un-dismiss update notification
         function undismiss(): void { root.undismiss() }
+        /// Dump update state as JSON
         function diagnose(): string { return root.getDiagnostics() }
+        /// `on` fakes a pending update to see the bubble, card and notification, `off` clears it; git and config are
+        /// untouched and Update only plays a pretend run in the terminal. For testing
         function simulate(state: string): string { return root.simulate(state) }
     }
     id: root
@@ -193,7 +204,7 @@ Singleton {
         if (!hasUpdate || !available || !initialUpdateCheckDone || isDismissed) return
         if (remoteCommit.length === 0) return
         if (root.simulated) {
-            root.postUpdateNotice("iNiR Update Available (simulated)", "3 commits behind.")
+            root.postUpdateNotice(Translation.tr("An iNiR update is ready") + " (simulated)", Translation.tr("Your settings and edits stay as they are. Update from “What changed”, or run `inir update`."))
             return
         }
         const now = Date.now()
@@ -202,22 +213,25 @@ Singleton {
             if (now - root.lastNotifiedAt < root.remindDays * 86400000) return
         }
 
-        const version = root.remoteVersion.length > 0 ? (" v" + root.remoteVersion) : ""
-        const commits = root.repoDiverged
-            ? "Repository history changed upstream. iNiR will preserve local work and recover clean published checkouts automatically."
-            : (root.commitsBehind > 0 ? (root.commitsBehind + " commits behind") : "New version available")
-        root.postUpdateNotice("iNiR Update Available" + version,
-            commits + ". Run `inir update`, or open it from the shell's own updater.")
+        // Saved before the notice goes out: a shell that died right after it notified again at
+        // every start (#329), the debounced write never landed.
         Config.setNestedValues({
             "shellUpdates.lastNotifiedCommit": remoteCommit,
             "shellUpdates.lastNotifiedAt": now
         })
+        Config.flushWrites()
+        const version = root.remoteVersion.length > 0 ? (" v" + root.remoteVersion) : ""
+        root.postUpdateNotice(version.length > 0 ? Translation.tr("iNiR %1 is ready").arg(version.trim()) : Translation.tr("An iNiR update is ready"),
+            root.repoDiverged
+                ? Translation.tr("iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.")
+                : Translation.tr("Your settings and edits stay as they are. Update from “What changed”, or run `inir update`."))
         print("[ShellUpdates] Notification sent: Update available" + version)
     }
 
     function postUpdateNotice(summary: string, body: string): void {
         updateNotice.running = false
-        updateNotice.command = ["/usr/bin/notify-send", "-a", "iNiR", "-u", "normal", "-t", "15000", "-w",
+        // -w waits until the notice closes; a server that keeps it in its history never says so.
+        updateNotice.command = ["timeout", "60", "notify-send", "-a", "iNiR", "-u", "normal", "-t", "15000", "-w",
             "-A", "open=" + Translation.tr("What changed"), "--", summary, body]
         updateNotice.running = true
     }
@@ -239,13 +253,60 @@ Singleton {
     }
 
     function check(): void {
-        if (!enabled || isChecking || isUpdating || managedExternally || simulated) return
+        if (!enabled || isChecking || isUpdating || simulated) return
         root._clock = Date.now()
         root.waitingForNetwork = !Network.online
         if (root.waitingForNetwork) return
+        // A package brings the base (Nix, a distro package): only the hub's items are this shell's to check
+        if (managedExternally) {
+            hubCheck.running = true
+            return
+        }
         root.isChecking = true
         root.lastError = ""
         fetchProc.running = true
+        hubCheck.running = true
+    }
+
+    // Families, themes and widgets carry their own versions in the hub: the base can be current while they are not.
+    property var hubPending: []
+    readonly property string lastNotifiedHub: Config.options?.shellUpdates?.lastNotifiedHub ?? ""
+    readonly property real lastNotifiedHubAt: Number(Config.options?.shellUpdates?.lastNotifiedHubAt ?? 0)
+
+    Process {
+        id: hubCheck
+        command: [Quickshell.shellPath("scripts/inir"), "hub", "status", "--json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let items = []
+                try {
+                    items = JSON.parse(text).items ?? []
+                } catch (e) {
+                    return
+                }
+                root.hubPending = items.filter(item => item.update === true && item.compatible === true)
+                root.maybeNotifyHub()
+            }
+        }
+    }
+
+    // A base update brings the hub's too, so its notice covers both.
+    function maybeNotifyHub(): void {
+        if (root.hubPending.length === 0 || root.hasUpdate) return
+        const key = root.hubPending.map(item => item.id + "@" + item.version).sort().join(" ")
+        const now = Date.now()
+        if (key === root.lastNotifiedHub
+                && (root.remindDays <= 0 || now - root.lastNotifiedHubAt < root.remindDays * 86400000)) return
+        const names = root.hubPending.map(item => item.name || item.id).join(", ")
+        // One item says what it brings; several are named.
+        const only = root.hubPending.length === 1 ? root.hubPending[0] : null
+        const news = Array.from(only?.news?.[0]?.notes ?? [])
+        const what = news.length > 0 ? `${names} ${only.version}: ${news.slice(0, 2).join("; ")}` : names
+        root.postUpdateNotice(Translation.tr("Hub updates ready"), Translation.tr("%1. Update them in Settings › Hub, or run `inir update`.").arg(what))
+        Config.setNestedValues({
+            "shellUpdates.lastNotifiedHub": key,
+            "shellUpdates.lastNotifiedHubAt": now
+        })
     }
 
     // Fetch detailed info for the overlay (commit log, changelog, local mods)
@@ -362,7 +423,7 @@ Singleton {
             print("[ShellUpdates] Update launched in terminal (" + termBin + ") from: " + repoDir)
         } else {
             // Detached background — same path as before the terminal toggle existed.
-            Quickshell.execDetached(["/usr/bin/bash", "-c", bashCmd])
+            Quickshell.execDetached(["bash", "-c", bashCmd])
             print("[ShellUpdates] Update launched (detached) from: " + repoDir)
         }
         print("[ShellUpdates] Log: " + logPath + " | Status: " + statusPath)
@@ -424,7 +485,8 @@ Singleton {
     // Initial check after startup delay
     Timer {
         id: startupDelay
-        interval: 5000  // 5s after shell starts (quick first check)
+        // After the desktop settles: a fetch at boot competed with the shell's own start.
+        interval: 30000
         repeat: false
         running: root.enabled && Config.ready
         onTriggered: {
@@ -452,23 +514,23 @@ Singleton {
     Process {
         id: updateResumeReader
         running: false
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             status_file="$1"
             if [ ! -f "$status_file" ]; then exit 1; fi
 
-            now=$(/usr/bin/date +%s)
+            now=$(date +%s)
             if read -r uptime _ < /proc/uptime; then
-                uptime_s=$(/usr/bin/printf '%s\n' "$uptime" | /usr/bin/cut -d. -f1)
+                uptime_s=$(printf '%s\n' "$uptime" | cut -d. -f1)
             else
                 uptime_s=0
             fi
             boot_epoch=$((now - uptime_s))
-            mtime=$(/usr/bin/stat -c %Y "$status_file" 2>/dev/null || echo 0)
+            mtime=$(stat -c %Y "$status_file" 2>/dev/null || echo 0)
 
             if [ "$mtime" -lt "$boot_epoch" ]; then
                 echo "stale"
             else
-                /usr/bin/cat "$status_file"
+                cat "$status_file"
             fi
         `, "_", Directories.updateStatusPath]
         stdout: StdioCollector {
@@ -579,6 +641,7 @@ Singleton {
                         root.initialUpdateCheckDone = true
                         root.available = false
                         print("[ShellUpdates] Update strategy is managed externally: " + root.updateStrategy)
+                        root.check()
                         return
                     }
                     if (storedRepoPath.length > 0) {
@@ -607,7 +670,7 @@ Singleton {
         id: preferConfigRepoProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "p='" + root.configDir + "'; [[ -e \"$p/.git\" && -f \"$p/setup\" && -f \"$p/shell.qml\" ]] && echo OK || echo ''"
         ]
         stdout: StdioCollector {
@@ -650,7 +713,7 @@ Singleton {
         id: validateRepoPathProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "p='" + root.repoPath + "'; [[ -e \"$p/.git\" && -f \"$p/setup\" && -f \"$p/shell.qml\" ]] && echo OK || echo ''"
         ]
         stdout: StdioCollector {
@@ -677,7 +740,7 @@ Singleton {
         id: searchRepoProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             // First check if config dir itself is a git repo (dev setup)
             "if [[ -e \"" + root.configDir + "/.git\" ]]; then echo \"" + root.configDir + "\"; exit 0; fi; " +
             // Search for a git repo containing setup + shell.qml (our repo signature)
@@ -723,28 +786,14 @@ Singleton {
         id: persistRepoPathProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
-            "vfile='" + Directories.shellConfig + "/version.json'; " +
-            "if [[ -s \"$vfile\" ]] && command -v jq &>/dev/null; then " +
-            "  tmp=$(mktemp); " +
-            "  jq --arg p '" + root.repoPath + "' --arg m '" + root.installMode + "' --arg u '" + root.updateStrategy + "' '.repo_path = $p | .repoPath = $p | .install_mode = $m | .installMode = $m | .update_strategy = $u | .updateStrategy = $u' \"$vfile\" > \"$tmp\" && mv \"$tmp\" \"$vfile\" && " +
-            "  echo 'Updated'; " +
-            "elif command -v python3 &>/dev/null; then " +
-            "  tmp=$(mktemp); " +
-            "  python3 -c 'import json,sys; path=sys.argv[1]; repo=sys.argv[2]; " +
-            "\ntry: data=json.load(open(path,\"r\",encoding=\"utf-8\"))" +
-            "\nexcept Exception: data={}" +
-            "\ndata[\"repo_path\"]=repo" +
-            "\ndata[\"repoPath\"]=repo" +
-            "\ndata[\"install_mode\"]=sys.argv[3]" +
-            "\ndata[\"installMode\"]=sys.argv[3]" +
-            "\ndata[\"update_strategy\"]=sys.argv[4]" +
-            "\ndata[\"updateStrategy\"]=sys.argv[4]" +
-            "\njson.dump(data, sys.stdout, ensure_ascii=False, indent=2)' \"$vfile\" '" + root.repoPath + "' '" + root.installMode + "' '" + root.updateStrategy + "' > \"$tmp\" " +
-            "    && mv \"$tmp\" \"$vfile\" && echo 'Updated' || echo 'Skipped'; " +
-            "else " +
-            "  echo 'Skipped'; " +
-            "fi"
+            "bash", "-c",
+            // A missing or unreadable version.json is written fresh: the update reads repo_path from it.
+            "vfile=\"$1/version.json\"; tmp=$(mktemp) || exit 0; " +
+            "set -- --arg p \"$2\" --arg m \"$3\" --arg u \"$4\"; " +
+            "filter='.repo_path = $p | .repoPath = $p | .install_mode = $m | .installMode = $m | .update_strategy = $u | .updateStrategy = $u'; " +
+            "if jq -e 'type == \"object\"' \"$vfile\" >/dev/null 2>&1; then jq \"$@\" \"$filter\" \"$vfile\"; else jq -n \"$@\" \"{} | $filter\"; fi > \"$tmp\" " +
+            "  && mv \"$tmp\" \"$vfile\" && echo 'Updated' || { rm -f \"$tmp\"; echo 'Skipped'; }",
+            "_", Directories.shellConfig, root.repoPath, root.installMode, root.updateStrategy
         ]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -761,7 +810,7 @@ Singleton {
         id: periodicCheck
         interval: root.checkIntervalMs
         repeat: true
-        running: root.enabled && root.available && Config.ready
+        running: root.enabled && (root.available || root.managedExternally) && Config.ready
         onTriggered: root.check()
     }
 
@@ -776,9 +825,10 @@ Singleton {
     }
 
     // Lightweight git command prefix — disables LFS filter and auto-gc to prevent
-    // CPU spikes from global git-lfs config on repos with zero LFS objects.
+    // CPU spikes from global git-lfs config on repos with zero LFS objects. Background work,
+    // so it yields to everything else (nice 19).
     readonly property var _gitCmd: [
-        "git",
+        "nice", "-n", "19", "git",
         "-c", "filter.lfs.process=",
         "-c", "filter.lfs.required=false",
         "-c", "filter.lfs.smudge=",
@@ -814,7 +864,7 @@ Singleton {
         id: manifestInfoProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "manifest='" + root.manifestPath + "'; " +
             "[[ -f \"$manifest\" ]] || exit 1; " +
             "head -3 \"$manifest\" | grep -E '^# (generated|commit):' | sed 's/^# //'"
@@ -863,7 +913,7 @@ Singleton {
         id: localVersionStartupProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "cat '" + root.repoPath + "/VERSION' 2>/dev/null || cat '" + root.configDir + "/VERSION' 2>/dev/null || echo ''"
         ]
         stdout: StdioCollector {
@@ -886,17 +936,28 @@ Singleton {
         id: fetchProc
         running: false
         command: [...root._gitCmd, "fetch", "origin", "--quiet", "--no-tags"]
+        stderr: StdioCollector { id: fetchErr }
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
                 root.isChecking = false
                 root.consecutiveFetchErrors++
                 print("[ShellUpdates] Fetch failed (attempt " + root.consecutiveFetchErrors + ")")
+                // A server down (5xx, 429) is named, so a GitHub outage is not read as iNiR broken (11-09)
+                const err = fetchErr.text ?? ""
+                const code = (err.match(/returned error: (5\d\d|429)\b/) ?? [])[1] ?? ""
+                const host = (err.match(/'[a-z+]+:\/\/(?:[^@\/']*@)?([^\/:']+)/) ?? [])[1] ?? ""
+                const who = /(^|\.)(github\.com|githubusercontent\.com|github\.io)$/.test(host) ? "GitHub" : host
+                const down = code.length > 0 && who.length > 0
+                    ? Translation.tr("%1 is having trouble right now (error %2). That's %1, not iNiR or your connection: iNiR checks again by itself.").arg(who).arg(code)
+                    : ""
+                root.lastError = down
 
                 // Notify after 3 consecutive failures (persistent problem)
                 if (root.consecutiveFetchErrors >= 3 && !root.fetchErrorNotificationShown) {
                     root.fetchErrorNotificationShown = true
-                    const title = "iNiR Update Check Failed"
-                    const body = "Cannot reach remote repository. Check your internet connection or run './setup doctor'."
+                    const title = Translation.tr("Can't check for iNiR updates")
+                    const body = down.length > 0 ? down
+                        : Translation.tr("iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.")
                     Notifications.send(title, body, "low", 8000)
                     print("[ShellUpdates] Notification sent: Persistent fetch errors")
                 }
@@ -1120,7 +1181,7 @@ Singleton {
         id: localVersionProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "cat '" + root.repoPath + "/VERSION' 2>/dev/null || cat '" + root.configDir + "/VERSION' 2>/dev/null || echo ''"
         ]
         stdout: StdioCollector {
@@ -1138,7 +1199,7 @@ Singleton {
         id: remoteChangelogProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "git -C '" + root.repoPath + "' show 'origin/" + root._remoteBranch + ":CHANGELOG.md' 2>/dev/null | head -200"
         ]
         stdout: StdioCollector {
@@ -1156,7 +1217,7 @@ Singleton {
         id: localModsProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "manifest='" + root.manifestPath + "'; " +
             "target='" + root.configDir + "'; " +
             "repo='" + root.repoPath + "'; " +

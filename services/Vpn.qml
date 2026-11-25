@@ -2,10 +2,10 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Dialogs
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.services
 
 /**
@@ -432,10 +432,9 @@ Singleton {
             }
         }
     }
-    FileDialog {
+    FilePickerDialog {
         id: importDialog
         title: Translation.tr("Import a VPN profile")
-        fileMode: FileDialog.OpenFile
         currentFolder: "file://" + Directories.homePath
         nameFilters: [Translation.tr("WireGuard, OpenVPN, sing-box or share link") + " (*.conf *.ovpn *.opvn *.json *.txt)", Translation.tr("All files") + " (*)"]
         onAccepted: root.importProfile(String(selectedFile))
@@ -490,7 +489,8 @@ Singleton {
     Process {
         id: tailscaleProc
         running: false
-        command: ["tailscale", "status", "--json"]
+        // Asked through sh so a machine without Tailscale answers 127 quietly instead of a failed start in the log
+        command: ["sh", "-c", "command -v tailscale >/dev/null || exit 127; exec tailscale status --json"]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.trim().length === 0) return
@@ -523,19 +523,32 @@ Singleton {
         onExited: exitCode => { if (exitCode !== 0 && exitCode !== 1) root.tailscaleInstalled = false }
     }
 
+    /// NetworkManager VPN profiles (OpenVPN, WireGuard, anything with an NM plugin) and Tailscale, as the VPN piece
+    /// and its card show them.
+    ///
+    /// ```kdl
+    /// Super+Alt+V { spawn "inir" "vpn" "toggle"; }
+    /// ```
     IpcHandler {
         target: "vpn"
+        /// Print the state as JSON: connected, through what, Tailscale's state, its devices and how many are online,
+        /// your profiles
         function status(): string {
             return JSON.stringify({ connected: root.connected, through: root.activeName, details: root.details,
                 tailscale: root.tailscaleInstalled ? root.tailscaleState : "", devices: root.tailscaleDevices.length,
                 online: root.tailscaleOnline, profiles: root.profiles.map(entry => entry.name + (entry.active ? " (on)" : "")) })
         }
+        /// Turn every active VPN off, or connect Tailscale (else your first profile) when none is on
         function toggle(): string { root.toggle(); return root.connected ? "disconnecting" : "connecting" }
+        /// `on`, `off` or `toggle` the card's details: addresses, name, account, exit node, devices and live traffic
         function details(state: string): string {
             root.setDetails(state === "toggle" ? !root.details : state === "on")
             return state === "toggle" ? (!root.details ? "on" : "off") : state
         }
+        /// Read profiles and Tailscale again
         function refresh(): void { root.refresh() }
+        /// Add a WireGuard `.conf` or OpenVPN `.ovpn` file as a NetworkManager profile; with no path, open the file
+        /// chooser (*Import a file…* in the card)
         function importFile(path: string): string {
             if (String(path ?? "").length === 0) { root.chooseProfileFile(); return "choosing" }
             root.importProfile(path)
@@ -545,6 +558,8 @@ Singleton {
             root.importLink(link)
             return "importing"
         }
+        /// Create a VPN in NetworkManager's connection editor: `wireguard`, or `vpn` for the installed plugins
+        /// (OpenVPN, L2TP…); `nmtui` in your terminal when the editor is not installed
         function add(kind: string): string {
             if (!root.canCreate) return root.missingEditorText
             root.newProfile(kind)

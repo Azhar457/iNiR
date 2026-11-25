@@ -28,7 +28,21 @@ Singleton {
 
     readonly property string previewDir: FileUtils.trimFileProtocol(Directories.genericCache) + "/inir/window-previews"
     readonly property string sessionMarkerPath: previewDir + "/.niri-session"
-    readonly property string sessionKey: NiriService.socketPath ?? ""
+    // Niri's window ids live as long as its session; Umbriel's are strings NiriService numbers per shell run, so there
+    // a preview file belongs to this run only.
+    readonly property string sessionKey: (NiriService.socketPath ?? "") + (CompositorService.isUmbriel ? "#" + root._runStamp : "")
+    readonly property string _runStamp: String(Date.now())
+
+    // The capture command for these window numbers: Niri's screenshot-window, or grim on Umbriel's toplevel ids.
+    function _captureCommand(ids: var, all: bool): var {
+        if (CompositorService.isUmbriel)
+            return ["bash", Quickshell.shellPath("scripts/capture-windows-umbriel.sh")]
+                .concat(ids.map(id => id + "=" + (NiriService.umbrielWindowKey(id) ?? "")))
+        const cmd = ShellExec.supportsFish()
+            ? ["fish", Quickshell.shellPath("scripts/capture-windows.fish")]
+            : ["bash", Quickshell.shellPath("scripts/capture-windows.sh")]
+        return all ? cmd.concat(["--all"]) : cmd.concat(ids.map(id => id.toString()))
+    }
     
     // Map of windowId -> { path, timestamp }
     property var previewCache: ({})
@@ -164,13 +178,13 @@ Singleton {
     
     Process {
         id: ensureDirProcess
-        command: ["/usr/bin/mkdir", "-p", root.previewDir]
+        command: ["mkdir", "-p", root.previewDir]
         onExited: sessionReadProcess.running = true
     }
 
     Process {
         id: sessionReadProcess
-        command: ["/usr/bin/cat", root.sessionMarkerPath]
+        command: ["cat", root.sessionMarkerPath]
         stdout: StdioCollector { id: sessionReadOutput }
         onExited: exitCode => {
             if (!root.initialized || root.sessionReady) return
@@ -193,7 +207,7 @@ Singleton {
     Process {
         id: sessionResetProcess
         command: [
-            "/usr/bin/find", root.previewDir,
+            "find", root.previewDir,
             "-maxdepth", "1", "-type", "f",
             "-name", "window-*.png", "-delete"
         ]
@@ -211,7 +225,7 @@ Singleton {
     Process {
         id: scanProcess
         command: [
-            "/usr/bin/find", root.previewDir,
+            "find", root.previewDir,
             "-maxdepth", "1", "-type", "f",
             "-name", "window-*.png",
             "-printf", "%f\\t%T@\\n"
@@ -263,7 +277,7 @@ Singleton {
             dirtyWindowIds = Object.assign({}, dirtyWindowIds)
             
             // Delete files
-            const cmd = ["/usr/bin/rm", "-f"]
+            const cmd = ["rm", "-f"]
             for (const id of toDelete) {
                 cmd.push(root.previewDir + "/window-" + id + ".png")
             }
@@ -339,16 +353,8 @@ Singleton {
         initialCapturesDone = true
         Cliphist.suppressRefresh = true
         
-        // Build command with IDs
-        const cmd = ShellExec.supportsFish()
-            ? ["/usr/bin/fish", Quickshell.shellPath("scripts/capture-windows.fish")]
-            : ["/usr/bin/bash", Quickshell.shellPath("scripts/capture-windows.sh")]
-        for (const id of idsToCapture) {
-            cmd.push(id.toString())
-        }
-        
         captureProcess.idsToCapture = idsToCapture
-        captureProcess.command = cmd
+        captureProcess.command = root._captureCommand(idsToCapture, false)
         captureProcess.running = true
     }
     
@@ -368,9 +374,7 @@ Singleton {
         
         const ids = windows.map(w => w.id)
         captureProcess.idsToCapture = ids
-        captureProcess.command = ShellExec.supportsFish()
-            ? ["/usr/bin/fish", Quickshell.shellPath("scripts/capture-windows.fish"), "--all"]
-            : ["/usr/bin/bash", Quickshell.shellPath("scripts/capture-windows.sh"), "--all"]
+        captureProcess.command = root._captureCommand(ids, true)
         captureProcess.running = true
     }
     
@@ -462,7 +466,7 @@ Singleton {
     }
     
     function clearPreviews(): void {
-        Quickshell.execDetached(["/usr/bin/rm", "-rf", previewDir])
+        Quickshell.execDetached(["rm", "-rf", previewDir])
         previewCache = {}
     }
 }

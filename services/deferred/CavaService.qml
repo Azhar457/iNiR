@@ -25,7 +25,9 @@ Singleton {
 
     property int _legacySubscribers: 0
     property var _sampleRequests: []
-    property int _nextSampleRequestId: 1
+    // Ids start somewhere new per instance: across a reload the old consumer's release carried id 1 and dropped
+    // the new consumer's id 1, and the visualiser froze.
+    property int _nextSampleRequestId: 1 + Math.floor(Math.random() * 1000000000)
     property bool _suppressConfigRestart: false
     property int _generationBars: 0
     property int _processBars: 0
@@ -290,7 +292,7 @@ Singleton {
     Process {
         id: configGen
         running: false
-        command: ["/usr/bin/bash", root.scriptPath, root.configPath,
+        command: ["bash", root.scriptPath, root.configPath,
             String(root.cfgFramerate), String(root.cfgSensitivity),
             String(root._generationBars), String(root.cfgStereo),
             root.playerDesktopEntry, root.cfgBlockedAppsJson]
@@ -317,6 +319,9 @@ Singleton {
         id: cavaProc
         running: false
         command: ["cava", "-p", root.configPath]
+        // A source that goes away (the one stream captured beside a filtered app, an unplugged sink) ends cava
+        // instead of PipeWire relinking it to the microphone; the exit re-resolves the source.
+        environment: ({ PIPEWIRE_PROPS: "{ node.dont-reconnect = true }" })
         onRunningChanged: {
             if (!running) {
                 if (root._pendingRestart && root.active) {

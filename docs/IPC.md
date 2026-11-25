@@ -29,13 +29,13 @@ binds {
 }
 ```
 
-The examples below are lines for that block.
+The examples further down are lines for that block.
 
 For low-level debugging, `inir ipc <target> <function>` still works.
 
----
+## Every target
 
-## Available Targets
+Every target and function the shell answers, and what each one does. The list is built from the shell's code, so it never falls behind; `inir help` and tab completion read the same list.
 
 Everything iNiR can do, exposed for your scripting pleasure.
 
@@ -1352,6 +1352,9 @@ launches via hand-written lines outside the markers are detected and shown as
 "External" (read-only) in the list.
 
 ---
+<!-- ipc reference -->
+The full list is on [inir.space/docs/ipc](https://inir.space/docs/ipc/), or run `inir help` on your machine.
+<!-- /ipc reference -->
 
 ## Standalone Commands
 
@@ -1359,10 +1362,9 @@ These are top-level `inir` commands that work directly, without going through IP
 
 ### colorpicker
 
-Launch `hyprpicker` to pick a color from anywhere on the screen. The hex value is copied to the clipboard (`-a` flag).
+Take a colour from anywhere on the screen: every screen stands still under a loupe, a click copies that pixel's hex
+to the clipboard (Esc or a right click cancels). Same as `inir colorPicker pick`.
 
 ```kdl
 Super+Shift+C { spawn "inir" "colorpicker"; }
 ```
-
-Requires `hyprpicker` installed.

@@ -84,6 +84,7 @@ Singleton {
     FileView {
         id: tabsFileView
         path: Qt.resolvedUrl(root.tabsFilePath)
+        printErrors: false
 
         onLoaded: {
             if (root._saving) { root._saving = false; return }
@@ -116,6 +117,7 @@ Singleton {
     // genuinely missing/invalid (path assigned above).
     FileView {
         id: legacyFileView
+        printErrors: false
 
         onLoaded: {
             const content = legacyFileView.text()
@@ -124,10 +126,12 @@ Singleton {
             root._save()
         }
 
-        onLoadFailed: {
+        onLoadFailed: error => {
+            if (error !== FileViewError.FileNotFound)
+                console.log("[Notepad] Error loading legacy notepad:", error)
             // No legacy file either — fresh start
             const parentDir = root.tabsFilePath.substring(0, root.tabsFilePath.lastIndexOf('/'))
-            Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
+            Quickshell.execDetached(["mkdir", "-p", parentDir])
             root.tabs = [{ title: "Note 1", text: "" }]
             root.currentTab = 0
             root._save()

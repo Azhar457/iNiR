@@ -1,0 +1,14 @@
+# 90 — Yours. iNiR creates this file once and never touches it again. What you change in Settings goes to
+# 95-settings.toml, which loads after this one: a key set in both follows Settings.
+#
+# Examples:
+#
+#   [keybinds]
+#   "Mod+T" = "spawn foot"        # rebind a key
+#   "Mod+W" = ""                  # unbind one of iNiR's
+#
+#   [output.DP-1]
+#   mode = "2560x1440@165"
+#   scale = 1.25
+#
+# Every key Umbriel knows: umbriel config schema --json. Check a change: umbriel config validate.

@@ -10,6 +10,7 @@ SHELL_ROOT="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)"
 
 # shellcheck source=scripts/lib/config-path.sh
 source "$SCRIPT_DIR/../lib/config-path.sh"
+source "$SCRIPT_DIR/../lib/compositor.sh"
 SHELL_CONFIG_FILE="$(inir_config_file)"
 TEMPLATE_DIR="$XDG_CONFIG_HOME/matugen"
 terminalscheme="$SCRIPT_DIR/terminal/scheme-base.json"
@@ -77,20 +78,23 @@ write_generated_wallpaper_path() {
 get_max_monitor_resolution() {
     local width=1920
     local height=1080
-    # Try Niri first
-    if command -v niri >/dev/null 2>&1 && niri msg outputs >/dev/null 2>&1; then
-        # Parse niri msg outputs for resolution (e.g., "  Current mode: 1920x1080@60.000")
-        local res=$(niri msg outputs 2>/dev/null | grep -oP 'Current mode: \K\d+x\d+' | sort -t'x' -k1 -nr | head -1)
-        if [[ -n "$res" ]]; then
-            width=$(echo "$res" | cut -d'x' -f1)
-            height=$(echo "$res" | cut -d'x' -f2)
-        fi
-    # Fallback to Hyprland
+    local res
+    res=$(compositor_max_resolution)
+    if [[ -n "$res" ]]; then
+        width=${res%x*}
+        height=${res#*x}
+    # Hyprland reports its own shape
     elif command -v hyprctl >/dev/null 2>&1; then
         width="$(hyprctl monitors -j 2>/dev/null | jq '([.[].width] | max)' | xargs)"
         height="$(hyprctl monitors -j 2>/dev/null | jq '([.[].height] | max)' | xargs)"
     fi
     echo "$width $height"
+}
+
+# A notification with a button waits for the answer. Bounded: when nobody answers (it expired, or the
+# server keeps it in its history without closing it), the prompt gives up instead of living forever.
+notify_action() {
+    timeout 120 notify-send -t 60000 "$@" 2>/dev/null
 }
 
 check_and_prompt_upscale() {
@@ -113,7 +117,7 @@ check_and_prompt_upscale() {
             img_height=$(identify -format "%h" "$img" 2>/dev/null)
         fi
         if [[ "$img_width" -lt "$min_width_desired" || "$img_height" -lt "$min_height_desired" ]]; then
-            action=$(notify-send "Upscale?" \
+            action=$(notify_action "Upscale?" \
                 "Image resolution (${img_width}x${img_height}) is lower than screen resolution (${min_width_desired}x${min_height_desired})" \
                 -A "open_upscayl=Open Upscayl"\
                 -a "Wallpaper switcher")
@@ -123,7 +127,7 @@ check_and_prompt_upscale() {
                 elif command -v yay >/dev/null 2>&1 || command -v paru >/dev/null 2>&1; then
                     local aur_helper
                     aur_helper="$(command -v yay >/dev/null 2>&1 && printf yay || printf paru)"
-                    action2=$(notify-send \
+                    action2=$(notify_action \
                         -a "Wallpaper switcher" \
                         -c "im.error" \
                         -A "install_upscayl=Install Upscayl (Arch)" \
@@ -231,16 +235,8 @@ set_backdrop_thumbnail_path() {
 }
 
 get_focused_monitor_name() {
-    if command -v niri >/dev/null 2>&1 && niri msg -j focused-output >/dev/null 2>&1; then
-        niri msg -j focused-output 2>/dev/null | jq -r '.name // ""'
-        return
-    fi
-    if command -v hyprctl >/dev/null 2>&1; then
-        hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused == true) | .name' | head -1
-        return
-    fi
-    echo ""
- }
+    compositor_focused_output
+}
 
  resolve_effective_theming_wallpaper() {
     jq -r --arg focused_monitor "$(get_focused_monitor_name)" '
@@ -410,7 +406,7 @@ switch() {
                 echo "Missing dependency: ffmpeg"
                 if command -v xbps-install >/dev/null 2>&1; then
                     echo "Void: sudo xbps-install -S ffmpeg"
-                    action=$(notify-send \
+                    action=$(notify_action \
                         -a "Wallpaper switcher" \
                         -c "im.error" \
                         -A "install_void=Install (Void)" \
@@ -421,7 +417,7 @@ switch() {
                     fi
                 elif command -v pacman >/dev/null 2>&1; then
                     echo "Arch: sudo pacman -S ffmpeg"
-                    action=$(notify-send \
+                    action=$(notify_action \
                         -a "Wallpaper switcher" \
                         -c "im.error" \
                         -A "install_arch=Install (Arch)" \
@@ -596,17 +592,8 @@ switch() {
     [[ "$cfg_soften_colors" == "true" ]] && generate_colors_material_args+=(--soften)
     [[ "$cfg_color_invert" == "true" ]] && generate_colors_material_args+=(--invert-hue)
 
-    # Generate colors and render templates in one unified Python pass
-    if [[ -n "${INIR_VENV:-}" ]]; then
-        _ii_venv="$(eval echo "$INIR_VENV")"
-    elif [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
-        _ii_venv="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
-    else
-        _ii_venv="$HOME/.local/state/quickshell/.venv"
-    fi
-    source "$_ii_venv/bin/activate" 2>/dev/null || true
-    _ii_python="$_ii_venv/bin/python3"
-    [[ ! -x "$_ii_python" ]] && _ii_python="python3"
+    # Generate colors and render templates in one inir-accel pass
+    source "$SCRIPT_DIR/../lib/accel.sh"
 
     _scss_tmp="$STATE_DIR/user/generated/material_colors.scss.tmp"
     _json_tmp="$STATE_DIR/user/generated/colors.json.tmp"
@@ -622,7 +609,7 @@ switch() {
     force_dark_terminal="$cfg_force_dark_terminal"
 
     # 1) Generate authoritative shell/UI colors.json + render app templates.
-    if "$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_material_args[@]}" \
+    if "$INIR_ACCEL" material-colors "${generate_colors_material_args[@]}" \
         --json-output "$_json_tmp" \
         --palette-output "$_palette_tmp" \
         --app-palette-output "$_app_palette_tmp" \
@@ -645,6 +632,7 @@ switch() {
         fi
     else
         echo "[switchwall] Warning: colors.json generation failed, keeping previous JSON" >&2
+        [[ -x "$INIR_ACCEL" ]] || notify-send -a iNiR "Colours not updated" "inir-accel is missing. Run: inir update" 2>/dev/null || true
         rm -f "$_json_tmp"
         rm -f "$_palette_tmp"
         rm -f "$_app_palette_tmp"
@@ -663,7 +651,7 @@ switch() {
         done
         _terminal_force_tmp="$STATE_DIR/user/generated/terminal.json.force.tmp"
 
-        scss_cmd=("$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${scss_generate_args[@]}")
+        scss_cmd=("$INIR_ACCEL" material-colors "${scss_generate_args[@]}")
         scss_cmd+=(--terminal-output "$_terminal_force_tmp")
 
         if "${scss_cmd[@]}" > "$_scss_tmp" 2>/dev/null && [[ -s "$_scss_tmp" && -s "$_terminal_force_tmp" ]]; then
@@ -721,12 +709,12 @@ main() {
             (.background.thumbnailPath // ""),
             (.appearance.wallpaperTheming.useBackdropForColors // false),
             (.panelFamily // "ii"),
-            (.waffles.background.backdrop.useMainWallpaper // true),
+            (.waffles.background.backdrop.useMainWallpaper != false),
             (.waffles.background.backdrop.wallpaperPath // ""),
-            (.background.backdrop.useMainWallpaper // true),
+            (.background.backdrop.useMainWallpaper != false),
             (.background.backdrop.wallpaperPath // ""),
-            (.appearance.wallpaperTheming.enableAppsAndShell // true),
-            (.appearance.wallpaperTheming.enableTerminal // true),
+            (.appearance.wallpaperTheming.enableAppsAndShell != false),
+            (.appearance.wallpaperTheming.enableTerminal != false),
             (.appearance.wallpaperTheming.terminalColorAdjustments.saturation // 0.65),
             (.appearance.wallpaperTheming.terminalColorAdjustments.brightness // 0.60),
             (.appearance.wallpaperTheming.terminalColorAdjustments.harmony // .appearance.wallpaperTheming.terminalGenerationProps.harmony // 0.40),
@@ -736,13 +724,13 @@ main() {
             (.appearance.wallpaperTheming.terminalGenerationProps.termFgBoost // 0.35),
             (.appearance.softenColors | tostring),
             (.appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode // false),
-            (.appearance.wallpaperTheming.enableVesktop // true),
+            (.appearance.wallpaperTheming.enableVesktop != false),
             (.background.hideUpscaleNotification // false),
             (if .appearance.customTheme.darkmode == null then true else .appearance.customTheme.darkmode end),
             (.appearance.wallpaperTheming.autoDarkLightMode // false),
             (.appearance.colorInvert // false),
             (.iris.appearance.scheme // "auto"),
-            (.iris.appearance.materialForApps // true)
+            (.iris.appearance.materialForApps != false)
         ] | .[]' "$SHELL_CONFIG_FILE" 2>/dev/null)
     fi
     cfg_palette_type="${_cfg[0]:-auto}"

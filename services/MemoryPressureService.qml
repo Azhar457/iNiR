@@ -35,7 +35,7 @@ Singleton {
     function restart(): void {
         _log("user requested restart")
         Quickshell.execDetached([
-            "/usr/bin/notify-send",
+            "notify-send",
             "iNiR",
             Translation.tr("Restarting shell..."),
             "-a", "Shell",
@@ -90,7 +90,7 @@ Singleton {
         const mbEstimate = Math.round(root.currentDeletedMappings * 0.5)  // ~0.5 MB per mapping
 
         Quickshell.execDetached([
-            "/usr/bin/notify-send",
+            "notify-send",
             "iNiR",
             Translation.tr("Memory usage is high (~%1 MB accumulated). A restart would free it. Run: inir memory restart").arg(mbEstimate),
             "-u", "critical",
@@ -138,12 +138,19 @@ Singleton {
     }
 
     // ── IPC ───────────────────────────────────────────────────────────────
+    /// Memory pressure monitoring for JSGCHeap accumulation (Qt V4 memfd leak). Notifies user when memory is high,
+    /// lets them decide when to restart.
     IpcHandler {
         target: "memory"
+        /// Force JavaScript garbage collection
         function collect(): string { root.forceGc(); return "gc() called" }
+        /// Return JSON with deleted mappings count, threshold, and state
         function stats(): string { return root.getStats() }
+        /// Restart the shell to free accumulated memory
         function restart(): string { root.restart(); return "restarting..." }
+        /// Dismiss the memory warning notification
         function dismiss(): string { root.dismiss(); return "dismissed" }
+        /// Reset notification state (re-enables warnings)
         function reset(): string { root.reset(); return "reset" }
     }
 
