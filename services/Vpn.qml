@@ -143,19 +143,24 @@ Singleton {
         root.lastError = ""
         actionProc.exec(["nmcli", "connection", "modify", "uuid", uuid, "connection.autoconnect", on ? "yes" : "no"])
     }
-    // A WireGuard .conf or an OpenVPN .ovpn becomes a NetworkManager profile; its name comes from the file.
+    // A WireGuard .conf or an OpenVPN .ovpn (the .opvpn typo ships, too)
+    // becomes a NetworkManager profile; its name comes from the file.
     function importProfile(path: string): void {
         const file = String(path ?? "").replace(/^file:\/\//, "")
         if (file.length === 0) return
         root.lastError = ""
         // Anything that is not an NM profile (a sing-box JSON, a file with a share link) goes to vpn-import.
-        if (!/\.(conf|ovpn)$/i.test(file)) { root.importLink(file); return }
-        if (/\.ovpn$/i.test(file) && !root.hasOpenvpnPlugin) { root.lastError = "missing plugin"; return }
+        if (!/\.(conf|ovpn|opvpn)$/i.test(file)) { root.importLink(file); return }
+        if (/\.(ovpn|opvpn)$/i.test(file) && !root.hasOpenvpnPlugin) { root.lastError = "missing plugin"; return }
         root.busy = true
-        actionProc.exec(["nmcli", "connection", "import", "type", /\.ovpn$/i.test(file) ? "openvpn" : "wireguard", "file", file])
+        actionProc.exec(["nmcli", "connection", "import", "type", /\.(ovpn|opvpn)$/i.test(file) ? "openvpn" : "wireguard", "file", file])
     }
     // Windows the card hands off to: it closes first, so they never open under it.
     signal handOff()
+    // A widget (or any client) asks for the manage panel to open/close. Fired by
+    // `inir vpn panelToggle` from a Niri keybind; the widget's Vpn.qml listens and
+    // flips its own panelOpen state.
+    signal panelToggleRequested()
     function chooseProfileFile(): void { root.handOff(); importDialog.open() }
     // `kind`: "wireguard" or "vpn" (a plugin's own chooser); nmtui asks for the type itself.
     function newProfile(kind: string): void {
@@ -174,7 +179,7 @@ Singleton {
     function inTerminal(command: var): void {
         const configured = String(Config.options?.apps?.terminal ?? "kitty").trim()
         const terminal = /^[A-Za-z0-9._+-]+$/.test(configured) ? configured : "kitty"
-        Quickshell.execDetached(terminal === "wezterm" ? [terminal, "start", "--", ...command] : [terminal, "-e", ...command])
+        Quickshell.execDetached(ShellExec.terminalExecArgs(terminal, command))
     }
     // Tailscale's own login: it prints a URL and waits; the URL reaches `status --json` and the browser opens on it.
     function signInTailscale(): void {
@@ -324,7 +329,11 @@ Singleton {
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
-                const path = text.trim().split("\n").pop() ?? ""
+                // One import prints its path; a multi import prints ACTIVE=<path>
+                // first, then one path per profile.
+                const lines = text.trim().split("\n").map(line => line.trim()).filter(line => line.length > 0)
+                const activeLine = lines.find(line => line.startsWith("ACTIVE="))
+                const path = activeLine ? activeLine.slice(7) : (lines.filter(line => line.endsWith(".json")).pop() ?? "")
                 if (path.endsWith(".json")) root.singboxConfig = path
             }
         }
@@ -428,7 +437,7 @@ Singleton {
         title: Translation.tr("Import a VPN profile")
         fileMode: FileDialog.OpenFile
         currentFolder: "file://" + Directories.homePath
-        nameFilters: [Translation.tr("WireGuard, OpenVPN, sing-box or share link") + " (*.conf *.ovpn *.json *.txt)", Translation.tr("All files") + " (*)"]
+        nameFilters: [Translation.tr("WireGuard, OpenVPN, sing-box or share link") + " (*.conf *.ovpn *.opvn *.json *.txt)", Translation.tr("All files") + " (*)"]
         onAccepted: root.importProfile(String(selectedFile))
     }
     Process {
@@ -540,6 +549,10 @@ Singleton {
             if (!root.canCreate) return root.missingEditorText
             root.newProfile(kind)
             return root.hasEditor ? "nm-connection-editor " + (kind === "vpn" ? "vpn" : "wireguard") : "nmtui"
+        }
+        function panelToggle(): string {
+            root.panelToggleRequested()
+            return "panel"
         }
     }
 

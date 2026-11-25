@@ -2,7 +2,7 @@
 # Auto-generated from QML IpcHandler declarations + docs/IPC.md metadata.
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
-# IPC.md hash: 23477f52760b72d4
+# IPC.md hash: 5da23d348c838bfb
 # Targets: 74
 
 declare -gA IPC_TARGET_DESC=(
@@ -221,7 +221,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [taskview]="toggle close open"
   [tiling]="toggle open hide cycle showOsd promote"
   [voiceSearch]="start stop toggle refresh status"
-  [vpn]="status toggle details refresh importFile importLink add"
+  [vpn]="status toggle details refresh importFile importLink add panelToggle"
   [wactionCenter]="toggle close open"
   [waffleAltSwitcher]="open close toggle next previous"
   [wallpaperLauncher]="next previous applyCurrent status"
@@ -617,6 +617,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["vpn:importFile"]="Add a WireGuard \`.conf\` or OpenVPN \`.ovpn\` file as a NetworkManager profile; anything else (a sing-box JSON, a file holding a share link) goes to \`importLink\`; with no path, open the file chooser (*Import a file…* in the card)"
   ["vpn:importLink"]="Import a \`trojan://\`, \`vmess://\`, \`vless://\` or \`ss://\` share link (or a file holding one, or a full sing-box JSON) as a local sing-box profile, make it the active pick and connect to it"
   ["vpn:add"]="Create a VPN in NetworkManager's connection editor: \`wireguard\`, or \`vpn\` for the installed plugins (OpenVPN, L2TP…); \`nmtui\` in your terminal when the editor is not installed"
+  ["vpn:panelToggle"]="Ask the VPN widget's manage panel to open (or close): fires a shell-side signal every mounted widget instance listens to"
   ["wactionCenter:toggle"]="Open/close action center"
   ["wactionCenter:close"]="Close action center"
   ["wactionCenter:open"]="Open action center"
@@ -820,7 +821,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["shellUpdate:simulate"]="<state>"
   ["vpn:details"]="<state>"
   ["vpn:importFile"]="<path>"
-  ["vpn:importLink"]="<share link>"
+  ["vpn:importLink"]="<link>"
   ["vpn:add"]="<kind>"
   ["wallpaperSelector:openLauncher"]="<mode>"
   ["wallpaperSelector:toggleOnMonitor"]="<monitorName>"
@@ -911,6 +912,7 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["shellLayout:setProperty"]="sizeMode height thickness"
   ["shellUpdate:simulate"]="on off"
   ["vpn:details"]="on off toggle"
+  ["vpn:importFile"]="importLink"
   ["vpn:add"]="wireguard vpn nmtui"
   ["wallpaperSelector:openLauncher"]="static animated"
   ["wallpaperSelector:shuffle"]="on off status"
@@ -953,7 +955,8 @@ Ctrl+Shift+S { spawn "inir" "region" "menu"; }'
   [settings]='Super+Comma { spawn "inir" "settings"; }'
   [shellLayout]='Super+W { spawn "inir" "shellLayout" "toggle"; }'
   [voiceSearch]='Super+Shift+V { spawn "inir" "voiceSearch" "toggle"; }'
-  [vpn]='Super+Alt+V { spawn "inir" "vpn" "toggle"; }'
+  [vpn]='Super+Alt+V { spawn "inir" "vpn" "toggle"; }
+Mod+Shift+V { spawn "inir" "vpn" "panelToggle"; }'
   [wallpaperSelector]='Ctrl+Alt+T { spawn "inir" "wallpaperSelector" "toggle"; }
 Ctrl+Alt+L { spawn "inir" "wallpaperSelector" "browse" "live" "-"; }
 Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'

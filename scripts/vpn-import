@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
-"""Turn a share link into a sing-box client config.
+"""Turn a share link or a subscription into sing-box client configs.
 
-Usage: vpn-import '<share link>' | <file containing a link> | <sing-box JSON>
+Usage: vpn-import '<share link>' | <file> | <subscription URL> | <sing-box JSON>
 
-Supported schemes: trojan://, vmess://, vless://, ss:// — a full sing-box JSON
-(config with inbounds, or a bare outbound with "type" and "server") passes
-through as-is. The result lands in ~/.config/sing-box/<name>.json, the
-`active` symlink is pointed at it, and the config path is printed on stdout.
+Supported link schemes: trojan://, vmess://, vless://, ss://, hysteria2://,
+hy2:// and tuic://. A full sing-box JSON (config with inbounds, or a bare
+outbound with "type" and "server") passes through as-is. Text that holds
+several links (one per line), a base64 v2ray subscription or a Clash YAML
+`proxies:` block is imported profile by profile with the first one active.
+An http(s) URL is fetched first, then handled as that text.
+
+Results land in ~/.config/sing-box/<name>.json and the `active` symlink is
+pointed at the first one; imported paths are printed on stdout, one per line
+(a single import keeps printing just its path; a multi import prints an
+`ACTIVE=<path>` line first).
 
 ponytail: TLS verification defaults to off (insecure) because free providers
 ship expired/broken certificates; pass allowInsecure=0 in the link to enforce
@@ -19,9 +26,11 @@ import re
 import shutil
 import subprocess
 import sys
-from urllib.parse import parse_qs, unquote, urlsplit
+import urllib.request
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-SCHEMES = ("trojan", "vmess", "vless", "ss")
+SCHEMES = ("trojan", "vmess", "vless", "ss", "hysteria2", "hy2", "tuic")
+LINK_RE = re.compile("\\b(?:%s)://\\S+" % "|".join(sorted(SCHEMES, key=len, reverse=True)))
 
 
 def fail(message):
@@ -41,6 +50,10 @@ def int_or(value, default):
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def first(values, default=""):
+    return (values or [default])[0]
 
 
 def transport_of(query, params):
@@ -76,6 +89,13 @@ def tls_of(query, params, server_name):
         }
         tls.setdefault("utls", {"enabled": True, "fingerprint": fp or "chrome"})
     return tls
+
+
+def insecure_flag(query, default=True):
+    """allowInsecure style flag; free providers ship broken certs."""
+    raw = (query.get("allowInsecure") or query.get("allow_insecure")
+           or query.get("insecure") or [str(int(default))])[0]
+    return raw not in ("0", "false")
 
 
 def parse_trojan(uri):
@@ -185,7 +205,54 @@ def parse_ss(uri):
     return name, outbound
 
 
-PARSERS = {"trojan": parse_trojan, "vmess": parse_vmess, "vless": parse_vless, "ss": parse_ss}
+def parse_hysteria2(uri):
+    parts = urlsplit(uri)
+    secret = parts.password if parts.password is not None else parts.username
+    if not parts.hostname or not secret:
+        fail("hysteria2 link needs password@host:port")
+    query = parse_qs(parts.query)
+    sni = first(query.get("sni")) or first(query.get("peer")) or parts.hostname
+    outbound = {
+        "type": "hysteria2",
+        "server": parts.hostname,
+        "server_port": int_or(parts.port, 443),
+        "password": unquote(secret),
+        "tls": {"enabled": True, "server_name": sni, "insecure": insecure_flag(query),
+                "alpn": ["h3"]},
+    }
+    obfs = first(query.get("obfs"))
+    if obfs and obfs != "none":
+        outbound["obfs"] = {"type": obfs, "password": first(query.get("obfs-password"))}
+    name = unquote(parts.fragment) if parts.fragment else f"hy2-{parts.hostname}"
+    return name, outbound
+
+
+def parse_tuic(uri):
+    parts = urlsplit(uri)
+    if not parts.hostname or not parts.username:
+        fail("tuic link needs uuid:password@host:port")
+    query = parse_qs(parts.query)
+    sni = first(query.get("sni")) or parts.hostname
+    password = unquote(parts.password) if parts.password is not None else unquote(first(query.get("password")))
+    outbound = {
+        "type": "tuic",
+        "server": parts.hostname,
+        "server_port": int_or(parts.port, 443),
+        "uuid": unquote(parts.username),
+        "password": password,
+        "congestion_control": first(query.get("congestion_control"), "cubic"),
+        "udp_relay_mode": first(query.get("udp_relay_mode"), "native"),
+        "tls": {"enabled": True, "server_name": sni,
+                "insecure": insecure_flag(query),
+                "alpn": [a for a in first(query.get("alpn"), "h3").split(",") if a] or ["h3"]},
+    }
+    name = unquote(parts.fragment) if parts.fragment else f"tuic-{parts.hostname}"
+    return name, outbound
+
+
+PARSERS = {"trojan": parse_trojan, "vmess": parse_vmess, "vless": parse_vless,
+           "ss": parse_ss, "hysteria2": parse_hysteria2, "hy2": parse_hysteria2,
+           "tuic": parse_tuic}
 
 
 def client_config(proxy):
@@ -210,65 +277,273 @@ def client_config(proxy):
     }
 
 
-def main():
-    if len(sys.argv) < 2 or not sys.argv[1].strip():
-        fail("usage: vpn-import '<share link>' | <file> | <sing-box JSON>")
-    arg = sys.argv[1].strip()
-    proxy = None
-    name = None
+# ── Subscriptions ────────────────────────────────────────────────────────────
 
-    payload = None
-    if arg.startswith("{"):  # raw JSON on the command line
-        payload = json.loads(arg)
-    elif os.path.isfile(arg):
-        text = open(arg, encoding="utf-8", errors="replace").read().strip()
-        match = re.search(r"^(%s)://\S+" % "|".join(SCHEMES), text, re.M)
-        if match:
-            arg = match.group(0).strip()
-        elif text.startswith("{"):
-            payload = json.loads(text)
-        else:
-            fail(f"{arg}: no share link or JSON found inside")
-    elif re.match(r"^[a-z0-9-]+://", arg):
-        pass  # a link on its own
-    else:
-        fail("argument is neither a share link nor an existing file")
+def fetch_subscription(url):
+    """Download a subscription and hand its body to the text handler."""
+    request = urllib.request.Request(url, headers={
+        "User-Agent": "ClashMetaForAndroid/2.11.3.Meta", "Accept": "*/*"})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return response.read().decode("utf-8", errors="replace").strip()
+    except Exception as error:
+        fail(f"couldn't fetch {url}: {error}")
 
-    if payload is not None:
-        if "inbounds" in payload:
-            name, config = "imported", payload          # full client config as-is
-        elif "type" in payload and "server" in payload:
-            name, proxy = "imported", payload           # bare outbound → wrap
-            config = client_config(proxy)
-        else:
-            fail("JSON has neither inbounds nor a type/server outbound")
-    else:
-        scheme = arg.split("://", 1)[0].lower()
-        if scheme not in PARSERS:
-            fail(f"unsupported scheme '{scheme}' (supported: {', '.join(SCHEMES)})")
-        name, proxy = PARSERS[scheme](arg)
-        config = client_config(proxy)
 
-    slug = re.sub(r"[^a-z0-9._-]+", "-", name.lower()).strip("-.")[:48] or "imported"
+def extract_links(text):
+    """v2ray subscriptions: direct links, a base64 body of links, or Clash YAML."""
+    linked = re.findall(LINK_RE, text)
+    if linked:
+        return linked
+    if "proxies:" in text:
+        return clash_links(text)
+    # A subscription body is usually the whole blob base64 of line-separated links.
+    try:
+        decoded = b64(text).decode("utf-8", errors="replace")
+    except Exception:
+        return []
+    return re.findall(LINK_RE, decoded)
+
+
+# ── Clash YAML (minimal: the shapes providers actually ship) ─────────────────
+
+def inline_pair(pair):
+    key, value = pair.split(":", 1)
+    return key.strip(), value.strip().strip("'\"")
+
+
+def clash_links(text):
+    """Parse the `proxies:` block of a Clash YAML into our share links.
+
+    Handles both inline `- {name: x, server: y, ...}` entries and the block
+    style (`- name: x` followed by indented keys). Entries that do not map to
+    a supported type are skipped with a warning instead of failing the import.
+    """
+    proxies = []
+    in_block = False
+    entry = None
+    stack = []  # (indent, dict) containers like ws-opts waiting for their keys
+    containers = ("ws-opts", "grpc-opts", "h2-opts", "reality-opts", "headers", "http-opts")
+    for line in text.splitlines():
+        if not in_block:
+            if re.match(r"^proxies\s*:\s*$", line):
+                in_block = True
+            continue
+        if re.match(r"^\S", line):  # the next top-level key ends the block
+            break
+        if re.match(r"^(\s*)-\s*(\{.*\}|name\s*:)", line):
+            if entry:
+                proxies.append(entry)
+                entry = None
+            stack = []
+            body = line[re.match(r"^(\s*)-", line).end(0):].strip()
+            if body.startswith("{"):
+                entry = dict(inline_pair(pair) for pair in body.strip("{}").split(",") if ":" in pair)
+            elif re.match(r"^name\s*:", body):
+                entry = {"name": body.split(":", 1)[1].strip().strip("'\"")}
+            else:
+                entry = {}
+        elif entry is not None:
+            match = re.match(r"^(\s+)(\S+?)\s*:\s*(.*)$", line)
+            if not match:
+                continue
+            indent, key, value = len(match.group(1)), match.group(2), match.group(3).strip().strip("'\"")
+            while stack and indent <= stack[-1][0]:
+                stack.pop()
+            target = stack[-1][1] if stack else entry
+            if key in containers and value == "":
+                sub = {}
+                target[key] = sub
+                stack.append((indent, sub))
+            else:
+                target[key] = value
+    if entry:
+        proxies.append(entry)
+    out = []
+    for proxy in proxies:
+        try:
+            out.append(clash_proxy_link(proxy))
+        except Exception as error:
+            sys.stderr.write(f"warning: skipped proxy '{proxy.get('name', '?')}': {error}\n")
+    return out
+
+
+def clash_proxy_link(proxy):
+    """Turn one clash proxy map into one of our supported share links."""
+    kind = str(proxy.get("type", "")).lower()
+    server = str(proxy.get("server", ""))
+    name = str(proxy.get("name", "") or server or "imported")
+    port = int_or(proxy.get("port"), 443)
+    query = {}
+    sni = proxy.get("sni") or proxy.get("servername")
+    if sni:
+        query["sni"] = sni
+    skip = str(proxy.get("skip-cert-verify", "")).lower() in ("1", "true", "yes")
+    query["allowInsecure"] = "1" if skip else "0"
+    if proxy.get("client-fingerprint"):
+        query["fp"] = proxy["client-fingerprint"]
+    network = str(proxy.get("network", "tcp"))
+    if network == "ws":
+        opts = proxy.get("ws-opts") or {}
+        headers = opts.get("headers") or {}
+        query.update({"type": "ws", "path": opts.get("path", "/")})
+        if headers.get("Host"):
+            query["host"] = headers["Host"]
+    elif network == "grpc":
+        opts = proxy.get("grpc-opts") or {}
+        query.update({"type": "grpc", "path": opts.get("grpc-service-name", "")})
+    elif network in ("h2", "http"):
+        opts = proxy.get("h2-opts") or {}
+        hosts = opts.get("host") or []
+        query.update({"type": "h2", "path": opts.get("path", ""), "host": hosts[0] if hosts else ""})
+    tls_on = proxy.get("tls") in (True, "true", "True") or kind in ("trojan", "tuic", "hysteria2")
+    frag = quote(name)
+    if kind == "trojan":
+        hostport = server if port == 443 else f"{server}:{port}"
+        querys = "&".join(f"{k}={quote(str(v))}" for k, v in query.items() if v)
+        return f"trojan://{quote(str(proxy.get('password', '')))}@{hostport}?{querys}#{frag}"
+    if kind == "ss":
+        userinfo = f"{proxy.get('cipher', 'aes-256-gcm')}:{proxy.get('password', '')}"
+        payload = base64.urlsafe_b64encode(userinfo.encode()).decode().rstrip("=")
+        return f"ss://{payload}@{server}:{port}#{frag}"
+    if kind == "vmess":
+        data = {"add": server, "port": port, "id": proxy.get("uuid", ""),
+                "aid": int_or(proxy.get("alterId"), 0), "scy": proxy.get("cipher", "auto"),
+                "net": network, "path": query.get("path", ""), "host": query.get("host", ""),
+                "tls": "tls" if tls_on else "", "sni": query.get("sni", ""), "ps": name}
+        return "vmess://" + base64.urlsafe_b64encode(json.dumps(data).encode()).decode().rstrip("=")
+    if kind == "vless":
+        hostport = server if port == 443 else f"{server}:{port}"
+        if proxy.get("flow"):
+            query["flow"] = proxy["flow"]
+        reality = proxy.get("reality-opts") or {}
+        if reality.get("public-key"):
+            query["security"] = "reality"
+            query["pbk"] = reality["public-key"]
+            if reality.get("short-id"):
+                query["sid"] = reality["short-id"]
+        elif tls_on:
+            query["security"] = "tls"
+        querys = "&".join(f"{k}={quote(str(v))}" for k, v in query.items() if v)
+        return f"vless://{proxy.get('uuid', '')}@{hostport}?{querys}#{frag}"
+    raise ValueError(f"unsupported clash type '{kind}'")
+
+
+# ── Import plumbing ──────────────────────────────────────────────────────────
+
+def configs_directory():
     directory = os.path.join(os.path.expanduser("~"), ".config", "sing-box")
     os.makedirs(directory, exist_ok=True)
-    path = os.path.join(directory, slug + ".json")
+    return directory
+
+
+def check_config(path):
+    checker = shutil.which("sing-box")
+    if not checker:
+        return
+    result = subprocess.run([checker, "check", "-c", path], capture_output=True, text=True)
+    if result.returncode != 0:
+        raise ValueError(f"sing-box check failed: {(result.stderr or result.stdout).strip()}")
+
+
+def import_one(link, used_names):
+    """Import one share link as its own config. Returns the written path."""
+    scheme = link.split("://", 1)[0].lower()
+    if scheme not in PARSERS:
+        raise ValueError(f"unsupported scheme '{scheme}'")
+    name, proxy = PARSERS[scheme](link)
+    config = client_config(proxy)
+    slug = re.sub(r"[^a-z0-9._-]+", "-", name.lower()).strip("-.")[:48] or "imported"
+    base, count = slug, 1
+    while slug in used_names:
+        slug = f"{base}-{count}"
+        count += 1
+    used_names.add(slug)
+    path = os.path.join(configs_directory(), slug + ".json")
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(config, handle, indent=4)
         handle.write("\n")
-    active = os.path.join(directory, "active")
+    check_config(path)
+    return path
+
+
+def set_active(path):
+    active = os.path.join(os.path.dirname(path), "active")
     try:
         os.remove(active)
     except FileNotFoundError:
         pass
     os.symlink(path, active)
 
-    checker = shutil.which("sing-box")
-    if checker:
-        result = subprocess.run([checker, "check", "-c", path], capture_output=True, text=True)
-        if result.returncode != 0:
-            fail(f"sing-box check failed: {(result.stderr or result.stdout).strip()}")
-    print(path)
+
+def import_json(payload):
+    if "inbounds" in payload:
+        config = payload                      # full client config as-is
+    elif "type" in payload and "server" in payload:
+        config = client_config(payload)       # bare outbound → wrap
+    else:
+        fail("JSON has neither inbounds nor a type/server outbound")
+    path = os.path.join(configs_directory(), "imported.json")
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(config, handle, indent=4)
+        handle.write("\n")
+    check_config(path)
+    set_active(path)
+    return path
+
+
+def main():
+    if len(sys.argv) < 2 or not sys.argv[1].strip():
+        fail("usage: vpn-import '<share link>' | <file> | <subscription URL> | <sing-box JSON>")
+    arg = sys.argv[1].strip()
+
+    payload = None
+    links = []
+    bare_json = False
+
+    if arg.startswith("{"):  # raw JSON on the command line
+        payload = json.loads(arg)
+        bare_json = True
+    elif arg.startswith(("http://", "https://")):
+        links = extract_links(fetch_subscription(arg))
+        if not links:
+            fail(f"{arg}: subscription returned no known links (trojan/vmess/vless/ss/hy2/tuic)")
+    elif os.path.isfile(arg):
+        text = open(arg, encoding="utf-8", errors="replace").read().strip()
+        links = extract_links(text)
+        if not links and text.startswith("{"):
+            payload = json.loads(text)
+            bare_json = True
+        elif not links:
+            fail(f"{arg}: no share link, subscription, clash proxies or JSON found inside")
+    elif re.match(r"^[a-z0-9-]+://", arg):
+        links = [arg]  # a link on its own
+    else:
+        fail("argument is neither a share link, a subscription URL nor an existing file")
+
+    if bare_json:
+        print(import_json(payload))
+        return
+
+    used_names = {entry[:-len(".json")] for entry in os.listdir(configs_directory())
+                  if entry.endswith(".json")}
+    imported, errors = [], []
+    for index, link in enumerate(links, start=1):
+        try:
+            imported.append(import_one(link, used_names))
+        except Exception as error:
+            errors.append(f"#{index}: {error}")
+            sys.stderr.write(f"error: {error}\n")
+    if not imported:
+        fail("nothing imported: " + ("; ".join(errors) if errors else "no links"))
+    set_active(imported[0])
+    if len(imported) == 1:
+        print(imported[0])
+        return
+    # Several profiles: the first one becomes the active pick.
+    print(f"ACTIVE={imported[0]}")
+    for path in imported:
+        print(path)
 
 
 if __name__ == "__main__":
